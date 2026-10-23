@@ -12,7 +12,8 @@ use strata_core::id::Identifier;
 
 impl Session {
     pub(super) fn reload_resources(&mut self) -> Result<(), ClientError> {
-        let Some((content, ui)) = self.launcher.reload_resources() else {
+        let enabled = &self.applied.game.resource_packs;
+        let Some((content, ui)) = self.launcher.reload_resources(enabled) else {
             self.reload_failed(&"unusable packs");
             return Ok(());
         };
@@ -53,6 +54,7 @@ impl Session {
         self.content = Arc::new(content);
         self.screens
             .replace_assets(&self.gpu, format, ui, &self.content);
+        self.screens.available_packs = self.launcher.resource_packs();
         self.remesh()?;
         tracing::info!("resources reloaded");
         Ok(())

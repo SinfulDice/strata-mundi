@@ -150,8 +150,12 @@ impl Launcher for GameLauncher {
         crash::mark_seen(&path);
     }
 
-    fn reload_resources(&self) -> Option<(Content, UiAssets)> {
-        match content::load(&self.args, &self.dimension) {
+    fn resource_packs(&self) -> Vec<String> {
+        content::available_resource_packs(&self.args.resource_packs_dir)
+    }
+
+    fn reload_resources(&self, enabled: &[String]) -> Option<(Content, UiAssets)> {
+        match content::load(&self.args, &self.dimension, enabled) {
             Ok(loaded) => Some((loaded.content, loaded.ui)),
             Err(error) => {
                 tracing::warn!(%error, "resources not reloaded");

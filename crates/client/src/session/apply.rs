@@ -17,6 +17,11 @@ impl Session {
         self.apply_graphics(&old);
         self.apply_controls(&old);
         self.launcher.configure(&self.applied);
+        if self.applied.game.resource_packs != old.game.resource_packs
+            && let Err(error) = self.reload_resources()
+        {
+            tracing::error!(%error, "resource packs not applied");
+        }
     }
 
     fn apply_graphics(&mut self, old: &Settings) {

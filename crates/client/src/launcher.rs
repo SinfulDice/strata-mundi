@@ -54,6 +54,9 @@ pub trait Launcher {
     fn unreported_crash(&self) -> bool;
     /// Opens a pre-filled report of that crash in the browser (`report`), or forgets it.
     fn settle_crash(&mut self, report: bool);
-    /// Packs and interface files read again from disk; `None` if they are unusable.
-    fn reload_resources(&self) -> Option<(Content, UiAssets)>;
+    /// Resource packs that can be enabled, by folder name.
+    fn resource_packs(&self) -> Vec<String>;
+    /// Packs and interface files read again from disk, with the `enabled` resource packs
+    /// (lowest priority first); `None` if they are unusable.
+    fn reload_resources(&self, enabled: &[String]) -> Option<(Content, UiAssets)>;
 }

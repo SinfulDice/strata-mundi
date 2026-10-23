@@ -81,6 +81,8 @@ pub struct Screens {
     /// The font drawn into the atlas and its density, redrawn when either changes.
     atlas_font: (FontChoice, u32),
     console: ConsoleLog,
+    /// Resource packs found on disk, for the options.
+    pub available_packs: Vec<String>,
 }
 
 impl Screens {
@@ -122,6 +124,7 @@ impl Screens {
             newer_version: None,
             atlas_font: (font, 1),
             console: ConsoleLog::default(),
+            available_packs: Vec::new(),
         }
     }
 
@@ -275,6 +278,7 @@ impl Screens {
             key_labels: &key_labels,
             newer_version: self.newer_version.as_deref(),
             console: &self.console,
+            packs: &self.available_packs,
             effects: &mut self.effects,
         };
         let mut model = menu::model(menu, shared);
@@ -385,6 +389,7 @@ impl Screens {
                 key_labels: &key_labels,
                 newer_version: self.newer_version.as_deref(),
                 console: &self.console,
+                packs: &self.available_packs,
                 effects: &mut Vec::new(),
             };
             let def = menu.def(&self.assets.screens);

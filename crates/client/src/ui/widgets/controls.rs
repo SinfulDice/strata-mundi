@@ -155,6 +155,8 @@ pub(super) fn slider(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     d.hit(id, 0, rect, HitKind::Slider);
 }
 
+const TAB_GAP: u32 = 2;
+
 pub(super) fn tabs(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     let Node::Tabs {
         id,
@@ -167,9 +169,11 @@ pub(super) fn tabs(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     };
     let rect = parent.place(*anchor, d.ctx.offset(id, *at), *size);
     let selected = d.model.selected(id);
+    let titles = d.model.tabs(id);
+    let pad = tab_padding(d, &titles, rect.w);
     let mut x = rect.x;
-    for (index, title) in d.model.tabs(id).iter().enumerate() {
-        let width = d.painter.text_width(title) + 8;
+    for (index, title) in titles.iter().enumerate() {
+        let width = d.painter.text_width(title) + 2 * pad;
         let tab = Rect::new(x, rect.y, width, rect.h);
         let active = selected == Some(index);
         let focused = d.is_focused(id, index);
@@ -186,13 +190,22 @@ pub(super) fn tabs(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         };
         let (shadow, focus) = (theme.text_shadow.0, theme.focus.0);
         d.painter.fill(tab, fill);
-        d.painter.text(x + 4, rect.y + 1, title, color, shadow);
+        d.painter
+            .text(x + pad as i32, rect.y + 1, title, color, shadow);
         if focused {
             d.painter.bevel(tab, focus, focus);
         }
         d.hit(id, index, tab, HitKind::Button);
-        x += width as i32 + 2;
+        x += (width + TAB_GAP) as i32;
     }
+}
+
+/// Room on each side of a tab title: 4 pixels, less when the tabs would not fit.
+fn tab_padding(d: &Draw<'_, '_>, titles: &[String], width: u32) -> u32 {
+    let count = titles.len().max(1) as u32;
+    let text: u32 = titles.iter().map(|t| d.painter.text_width(t)).sum();
+    let spare = width.saturating_sub(text + TAB_GAP * (count - 1));
+    (spare / (2 * count)).clamp(1, 4)
 }
 
 /// On-screen keyboard: each character is a key; the model receives its index.

@@ -1,7 +1,7 @@
 use crate::cli::Args;
 use crate::paths;
 use anyhow::Context;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use strata_client::preview::load_preview;
 use strata_client::ui::UiAssets;
@@ -18,13 +18,15 @@ pub struct Loaded {
     pub assets: PathBuf,
 }
 
-/// Game packs from `assets/packs`, then the resource packs chosen on the command line.
+/// Game packs from `assets/packs`, then the resource packs enabled in the options
+/// (`enabled`, lowest priority first) and those given on the command line.
 /// Pack problems are logged, never fatal; only a missing dimension stops the game.
-pub fn load(args: &Args, dimension: &DimensionId) -> anyhow::Result<Loaded> {
+pub fn load(args: &Args, dimension: &DimensionId, enabled: &[String]) -> anyhow::Result<Loaded> {
     let assets = paths::assets_dir().context("assets folder not found")?;
     let mut errors = Vec::new();
     let packs = PackSet::discover(&assets.join("packs"), &mut errors);
-    let resource_packs = PackSet::named(&args.resource_packs_dir, &args.resource_pack, &mut errors);
+    let names: Vec<String> = enabled.iter().chain(&args.resource_pack).cloned().collect();
+    let resource_packs = PackSet::named(&args.resource_packs_dir, &names, &mut errors);
     let (content, more) = Content::load(&packs, &resource_packs);
     errors.extend(more);
     let worldgen = WorldgenContent::load(&packs, &content.blocks, &dimension.0, &mut errors);
@@ -62,4 +64,18 @@ fn report(errors: &[PackError]) {
     for error in errors {
         tracing::warn!("{error}");
     }
+}
+
+/// Folders of the resource packs folder holding a `pack.ron`, by name.
+pub fn available_resource_packs(dir: &Path) -> Vec<String> {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut names: Vec<String> = entries
+        .flatten()
+        .filter(|entry| entry.path().join("pack.ron").is_file())
+        .filter_map(|entry| entry.file_name().to_str().map(str::to_owned))
+        .collect();
+    names.sort();
+    names
 }

@@ -13,6 +13,8 @@ pub struct GameSettings {
     pub backups_kept: u32,
     /// Render only a few frames per second while the window is in the background.
     pub idle_when_unfocused: bool,
+    /// Enabled resource packs (folder names), lowest priority first.
+    pub resource_packs: Vec<String>,
 }
 
 impl Default for GameSettings {
@@ -22,6 +24,7 @@ impl Default for GameSettings {
             autosave_minutes: 5,
             backups_kept: 3,
             idle_when_unfocused: true,
+            resource_packs: Vec::new(),
         }
     }
 }

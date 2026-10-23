@@ -114,6 +114,7 @@ impl Session {
             suspended: false,
             debug: DebugOverlay::default(),
         };
+        session.screens.available_packs = session.launcher.resource_packs();
         match config.start {
             Some(running) => session.enter_world(running)?,
             None => {

@@ -106,6 +106,8 @@ pub struct Shared<'a> {
     /// A newer version of the game, for the title screen.
     pub newer_version: Option<&'a str>,
     pub console: &'a ConsoleLog,
+    /// Resource packs that can be enabled.
+    pub packs: &'a [String],
     pub effects: &'a mut Vec<Effect>,
 }
 

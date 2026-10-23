@@ -32,7 +32,16 @@ fn main() -> anyhow::Result<()> {
     crash::install(crash_reports.clone(), logging::init()?);
     tracing::info!(version = env!("CARGO_PKG_VERSION"), "starting Strata Mundi");
     let dimension = DimensionId(args.dimension.clone());
-    let loaded = content::load(&args, &dimension)?;
+    let settings_path = data.join("config/settings.toml");
+    let mut settings = settings_for(&args, &settings_path);
+    // Tools render the base packs only, whatever the player enabled.
+    let tool = args.texture_sheet.is_some() || args.screenshot.is_some();
+    let saved_packs = if tool {
+        Vec::new()
+    } else {
+        settings.game.resource_packs.clone()
+    };
+    let loaded = content::load(&args, &dimension, &saved_packs)?;
     let tool_preset = args.preset.unwrap_or(Preset::High);
     let graphics = GraphicsSettings::for_preset(tool_preset);
     if let Some(path) = &args.texture_sheet {
@@ -57,8 +66,10 @@ fn main() -> anyhow::Result<()> {
         .map(|name| load_bench(&loaded.assets, name, tool_preset, args.report_dir.clone()))
         .transpose()?;
     tracing::info!(path = %data.display(), "data folder");
-    let settings_path = data.join("config/settings.toml");
-    let settings = settings_for(&args, &settings_path, bench.is_some());
+    if bench.is_some() {
+        settings.graphics.vsync = false;
+        settings.graphics.fps_limit = 0;
+    }
     let content = Arc::new(loaded.content);
     let direct = bench.is_some() || args.seed.is_some();
     let mut launcher = GameLauncher {
@@ -88,19 +99,15 @@ fn main() -> anyhow::Result<()> {
     })?)
 }
 
-/// The saved settings, with the command line on top (`--preset`, `--lang`); benchmarks
-/// run without frame limit or VSync, so they measure the machine.
-fn settings_for(args: &cli::Args, path: &Path, bench: bool) -> Settings {
+/// The saved settings, with the command line on top (`--preset`, `--lang`). Benchmarks
+/// then run without frame limit or VSync, so they measure the machine.
+fn settings_for(args: &cli::Args, path: &Path) -> Settings {
     let mut settings = Settings::load(path);
     if let Some(preset) = args.preset {
         settings.apply_preset(preset);
     }
     if let Some(language) = &args.lang {
         settings.interface.language.clone_from(language);
-    }
-    if bench {
-        settings.graphics.vsync = false;
-        settings.graphics.fps_limit = 0;
     }
     settings
 }
