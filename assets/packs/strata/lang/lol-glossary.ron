@@ -34,4 +34,10 @@
     "Stone": "ROCK",
     "Water": "WATUR",
     "You died!": "U DIED. OH NOES!!1",
+    "Desert": "HOT SANDZ",
+    "Forest": "LOTZ OF TREEZ",
+    "Mountains": "BIG ROCKZ",
+    "Ocean": "BIG WATUR",
+    "Plains": "FLAT GRAS",
+    "Snowy Tundra": "COLD FLAT LAND",
 }

@@ -1,0 +1,8 @@
+Biome(
+    climate: (temperature: 0.1, humidity: 0.4, continentalness: 0.2, erosion: 0.3),
+    surface: "strata:grass_block",
+    subsurface: "strata:dirt",
+    underwater: "strata:gravel",
+    spawn: true,
+    features: [(feature: "strata:oak_tree", per_column: 7.0)],
+)

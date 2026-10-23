@@ -19,7 +19,14 @@ pub struct Sourced<T> {
 pub struct Removals(HashMap<String, Vec<Identifier>>);
 
 /// Categories `remove.ron` may name.
-pub const REMOVABLE: [&str; 3] = ["blocks", "items", "textures"];
+pub const REMOVABLE: [&str; 6] = [
+    "blocks",
+    "items",
+    "textures",
+    "biomes",
+    "features",
+    "dimensions",
+];
 
 impl Removals {
     pub fn unknown_categories(&self) -> impl Iterator<Item = &str> {

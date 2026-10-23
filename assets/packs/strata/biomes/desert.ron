@@ -1,0 +1,8 @@
+Biome(
+    climate: (temperature: 0.6, humidity: -0.5, continentalness: 0.25, erosion: 0.3),
+    surface: "strata:sand",
+    subsurface: "strata:sandstone",
+    subsurface_depth: 5,
+    underwater: "strata:sand",
+    features: [(feature: "strata:cactus", per_column: 1.2)],
+)

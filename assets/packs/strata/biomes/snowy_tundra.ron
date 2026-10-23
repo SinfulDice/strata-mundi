@@ -1,0 +1,8 @@
+Biome(
+    climate: (temperature: -0.55, humidity: 0.0, continentalness: 0.2, erosion: 0.3),
+    surface: "strata:snowy_grass_block",
+    subsurface: "strata:dirt",
+    underwater: "strata:gravel",
+    frozen: true,
+    features: [(feature: "strata:fir_tree", per_column: 0.4)],
+)

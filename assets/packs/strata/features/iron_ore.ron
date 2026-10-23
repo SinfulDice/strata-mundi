@@ -1,0 +1,9 @@
+// Small veins in stone; the deep variant replaces deep stone.
+Ore(
+    block: "strata:iron_ore",
+    deep_block: Some("strata:deep_iron_ore"),
+    vein_size: 8,
+    per_column: 9.0,
+    min_y: 5,
+    max_y: 180,
+)

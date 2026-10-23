@@ -1,0 +1,15 @@
+// Terra, the world of mortals.
+Dimension(
+    terrain: (
+        sea_level: 120,
+        deep_level: 64,
+        stone: "strata:stone",
+        deep_stone: "strata:deep_stone",
+        bedrock: "strata:bedrock",
+        water: "strata:water",
+        ice: "strata:ice",
+        biome_scale: 1.0,
+        caves: true,
+        ores: ["strata:coal_ore", "strata:iron_ore", "strata:gold_ore", "strata:diamond_ore"],
+    ),
+)

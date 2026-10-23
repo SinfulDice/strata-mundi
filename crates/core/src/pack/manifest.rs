@@ -44,7 +44,9 @@ impl Pack {
         if let Some(category) = removals.unknown_categories().next() {
             return Err(PackError::invalid(
                 &removals_path,
-                format!("unknown category `{category}` (expected blocks, items or textures)"),
+                format!(
+                    "unknown category `{category}` (expected blocks, items, textures, biomes, features or dimensions)"
+                ),
             ));
         }
         Ok(Self {

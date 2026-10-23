@@ -645,6 +645,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastnoise-lite"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e5f3c3cc9081e5d0e18bcd50e80cd33cba47fc22f88a9da9c33ecd1c87ea5c0"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "fdeflate"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -855,6 +864,9 @@ name = "glam"
 version = "0.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc148d4ddd3930c52f9e5ae79b89805c6f07e9ff417e7b083e0348cea60a5aba"
+dependencies = [
+ "serde_core",
+]
 
 [[package]]
 name = "gpu-allocator"
@@ -2249,6 +2261,7 @@ dependencies = [
  "strata-core",
  "strata-protocol",
  "strata-server",
+ "strata-worldgen",
  "tracing",
  "tracing-subscriber",
  "tracing-tracy",
@@ -2303,6 +2316,7 @@ dependencies = [
 name = "strata-server"
 version = "0.1.0"
 dependencies = [
+ "crossbeam-channel",
  "strata-core",
  "strata-protocol",
  "strata-worldgen",
@@ -2313,7 +2327,11 @@ dependencies = [
 name = "strata-worldgen"
 version = "0.1.0"
 dependencies = [
+ "criterion",
+ "fastnoise-lite",
+ "serde",
  "strata-core",
+ "tracing",
 ]
 
 [[package]]

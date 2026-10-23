@@ -8,6 +8,16 @@ license.workspace = true
 
 [dependencies]
 strata-core.workspace = true
+fastnoise-lite.workspace = true
+serde.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "generation"
+harness = false
 
 [lints]
 workspace = true

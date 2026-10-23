@@ -1,0 +1,7 @@
+Tree(
+    log: "strata:oak_log",
+    leaves: "strata:oak_leaves",
+    height: (4, 6),
+    crown: Round(radius: 2),
+    on: ["strata:grass_block"],
+)

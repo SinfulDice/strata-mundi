@@ -1,0 +1,6 @@
+Biome(
+    climate: (temperature: 0.0, humidity: 0.0, continentalness: -0.6, erosion: 0.0),
+    surface: "strata:sand",
+    subsurface: "strata:sand",
+    underwater: "strata:gravel",
+)
