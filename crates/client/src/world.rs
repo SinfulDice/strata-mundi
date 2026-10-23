@@ -12,6 +12,38 @@ pub struct ClientWorld {
 }
 
 impl ClientWorld {
+    pub fn insert(&mut self, column: Column) {
+        self.columns.insert(column.pos, column);
+    }
+
+    pub fn remove(&mut self, pos: ColumnPos) {
+        self.columns.remove(&pos);
+    }
+
+    pub fn column_count(&self) -> usize {
+        self.columns.len()
+    }
+
+    /// The column and its eight neighbours are loaded: it can be meshed correctly.
+    pub fn is_complete(&self, pos: ColumnPos) -> bool {
+        (-1..=1).all(|dz| {
+            (-1..=1).all(|dx| {
+                self.columns.contains_key(&ColumnPos {
+                    x: pos.x + dx,
+                    z: pos.z + dz,
+                })
+            })
+        })
+    }
+
+    /// Non-empty sections of one column, as mesh keys.
+    pub fn column_section_keys(&self, pos: ColumnPos) -> Vec<SectionKey> {
+        self.columns
+            .get(&pos)
+            .map(|column| section_keys_of(column).collect())
+            .unwrap_or_default()
+    }
+
     /// Creates the column if needed (used to build scenes on the client).
     pub fn set_block(&mut self, x: i32, y: i32, z: i32, block: BlockId) {
         let pos = column_of(x, z);
@@ -46,14 +78,7 @@ impl ClientWorld {
 
     /// Non-empty sections, as mesh keys.
     pub fn section_keys(&self) -> impl Iterator<Item = SectionKey> + '_ {
-        self.columns.values().flat_map(|column| {
-            column
-                .sections()
-                .iter()
-                .enumerate()
-                .filter(|(_, section)| !section.is_empty())
-                .map(move |(index, _)| (column.pos.x, column.pos.z, index))
-        })
+        self.columns.values().flat_map(section_keys_of)
     }
 
     /// Section `key` plus a one-block border, with the 3×3 neighbouring columns looked up once.
@@ -74,6 +99,15 @@ impl ClientWorld {
             near[dz][dx].map_or(BlockId::AIR, |column| column.get(lx, base_y + y, lz))
         })
     }
+}
+
+fn section_keys_of(column: &Column) -> impl Iterator<Item = SectionKey> + '_ {
+    column
+        .sections()
+        .iter()
+        .enumerate()
+        .filter(|(_, section)| !section.is_empty())
+        .map(move |(index, _)| (column.pos.x, column.pos.z, index))
 }
 
 fn column_of(x: i32, z: i32) -> ColumnPos {

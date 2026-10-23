@@ -2,6 +2,7 @@
 
 mod block_pipeline;
 mod depth;
+mod frustum;
 mod gpu;
 mod mesh;
 mod offscreen;
@@ -16,11 +17,12 @@ use crate::camera::Camera;
 use crate::mesher::{SectionKey, SectionMesh};
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use depth::DepthBuffer;
+use frustum::Frustum;
 use glam::DVec3;
 use mesh::GpuMesh;
 use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
-use strata_core::coords::SECTION_SIZE;
+use strata_core::coords::{SECTION_SIZE, SECTIONS_PER_COLUMN};
 use texture_array::TextureArray;
 
 /// Clear color (sRGB) until the sky arrives in v0.2.
@@ -54,7 +56,8 @@ struct GpuSection {
 pub struct Renderer {
     blocks: BlockPipeline,
     depth: DepthBuffer,
-    sections: HashMap<SectionKey, GpuSection>,
+    /// Section meshes grouped by column, so unloading a column is a single removal.
+    columns: HashMap<(i32, i32), Vec<Option<GpuSection>>>,
     /// Ambient occlusion strength, 0 (off) to 1.
     pub ambient_occlusion: f32,
     /// Sections farther than this above or below the camera's section are not drawn.
@@ -78,7 +81,7 @@ impl Renderer {
         Ok(Self {
             blocks: BlockPipeline::new(&gpu.device, color_format, &textures),
             depth: DepthBuffer::new(&gpu.device, (1, 1)),
-            sections: HashMap::new(),
+            columns: HashMap::new(),
             ambient_occlusion: 1.0,
             vertical_distance: u32::MAX,
         })
@@ -86,8 +89,15 @@ impl Renderer {
 
     /// Replaces the meshes of a section (an empty mesh removes it).
     pub fn upload_section(&mut self, gpu: &Gpu, key: SectionKey, mesh: &SectionMesh) {
+        let slots = self
+            .columns
+            .entry((key.0, key.1))
+            .or_insert_with(|| (0..SECTIONS_PER_COLUMN).map(|_| None).collect());
+        let Some(slot) = slots.get_mut(key.2) else {
+            return;
+        };
         if mesh.is_empty() {
-            self.sections.remove(&key);
+            *slot = None;
             return;
         }
         let origin = DVec3::new(
@@ -100,7 +110,7 @@ impl Renderer {
             cutout: GpuMesh::upload(&gpu.device, &mesh.opaque),
             translucent: GpuMesh::upload(&gpu.device, &mesh.translucent),
         };
-        self.sections.insert(key, section);
+        *slot = Some(section);
     }
 
     pub fn render(
@@ -113,10 +123,12 @@ impl Renderer {
     ) {
         self.depth.ensure_size(&gpu.device, target.size);
         let aspect = target.size.0 as f32 / target.size.1.max(1) as f32;
+        let view_projection = camera.view_projection(aspect);
+        let frustum = Frustum::from_view_projection(view_projection);
         self.blocks.write_camera(
             &gpu.queue,
             &CameraUniform {
-                view_proj: camera.view_projection(aspect).to_cols_array_2d(),
+                view_proj: view_projection.to_cols_array_2d(),
                 options: [self.ambient_occlusion, 0.0, 0.0, 0.0],
             },
         );
@@ -144,28 +156,45 @@ impl Renderer {
             multiview_mask: None,
         });
         self.blocks.bind(&mut pass, BlockPass::Cutout);
-        for section in self.visible_sections(camera) {
+        for section in self.visible_sections(camera, &frustum) {
             if let Some(mesh) = &section.cutout {
                 BlockPipeline::set_section_offset(&mut pass, camera.relative(section.origin));
                 mesh.draw(&mut pass);
             }
         }
-        self.draw_translucent(&mut pass, camera);
+        self.draw_translucent(&mut pass, camera, &frustum);
     }
 
-    fn visible_sections(&self, camera: &Camera) -> impl Iterator<Item = &GpuSection> {
+    /// Within the vertical distance and inside the view frustum.
+    fn visible_sections<'a>(
+        &'a self,
+        camera: &'a Camera,
+        frustum: &'a Frustum,
+    ) -> impl Iterator<Item = &'a GpuSection> {
         let size = f64::from(SECTION_SIZE);
         let camera_section = (camera.position.y / size).floor();
         let range = f64::from(self.vertical_distance);
-        self.sections
-            .values()
-            .filter(move |s| ((s.origin.y / size) - camera_section).abs() <= range)
+        self.columns.values().flatten().flatten().filter(move |s| {
+            let min = camera.relative(s.origin);
+            ((s.origin.y / size) - camera_section).abs() <= range
+                && frustum.intersects_box(min, min + glam::Vec3::splat(SECTION_SIZE as f32))
+        })
+    }
+
+    /// Drops every section of a column that left the view distance.
+    pub fn remove_column(&mut self, x: i32, z: i32) {
+        self.columns.remove(&(x, z));
     }
 
     /// Back to front, so that blending sees what is behind each surface.
-    fn draw_translucent(&self, pass: &mut wgpu::RenderPass<'_>, camera: &Camera) {
+    fn draw_translucent(
+        &self,
+        pass: &mut wgpu::RenderPass<'_>,
+        camera: &Camera,
+        frustum: &Frustum,
+    ) {
         let mut translucent: Vec<(f64, &GpuSection)> = self
-            .visible_sections(camera)
+            .visible_sections(camera, frustum)
             .filter(|s| s.translucent.is_some())
             .map(|s| {
                 (

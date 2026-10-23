@@ -6,7 +6,7 @@ pub const SECTION_VOLUME: usize = (SECTION_SIZE * SECTION_SIZE * SECTION_SIZE) a
 
 /// 16×16×16 blocks stored as a small palette of block ids plus packed indices into it:
 /// a section with few kinds of blocks takes little memory, an all-air section almost none.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Section {
     palette: Vec<BlockId>,
     indices: PackedArray,

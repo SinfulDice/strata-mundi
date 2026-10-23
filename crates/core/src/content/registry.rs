@@ -79,7 +79,10 @@ impl<K: RegistryId, T> Registry<K, T> {
 macro_rules! registry_id {
     ($(#[$doc:meta])* $name:ident) => {
         $(#[$doc])*
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+        #[derive(
+            Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord,
+            serde::Serialize, serde::Deserialize,
+        )]
         pub struct $name(pub u16);
 
         impl RegistryId for $name {

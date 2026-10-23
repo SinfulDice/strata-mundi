@@ -31,6 +31,7 @@ Contrôles par défaut (vol libre du jalon 1) :
 | Sprint | Ctrl gauche | clic stick gauche |
 | Regarder | souris | stick droit |
 | Libérer le curseur | Échap | Start |
+| Distance de rendu − / + | F7 / F8 | — |
 
 ## Où c'est dans le code
 

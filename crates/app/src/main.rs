@@ -3,6 +3,7 @@
 mod cli;
 mod content;
 mod logging;
+mod offline;
 mod paths;
 
 use anyhow::Context;
@@ -12,52 +13,106 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
+use strata_client::camera::EYE_HEIGHT;
 use strata_client::screenshot::{View, capture};
 use strata_client::settings::{GraphicsSettings, Preset};
 use strata_client::texture_sheet::write_texture_sheet;
-use strata_client::{ClientConfig, run};
-use strata_server::IntegratedServer;
-
-const DEFAULT_FOV: f32 = 70.0;
+use strata_client::{ClientConfig, DEFAULT_FOV, run};
+use strata_core::dimension::DimensionId;
+use strata_server::{IntegratedServer, ServerConfig};
+use strata_worldgen::{Generator, Seed};
 
 fn main() -> anyhow::Result<()> {
     let args = cli::Args::parse();
     logging::init()?;
     tracing::info!(version = env!("CARGO_PKG_VERSION"), preset = %args.preset, "starting Strata Mundi");
-    let loaded = content::load(&args)?;
-    let camera = initial_camera(&args);
-    if let Some(path) = &args.texture_sheet {
-        return Ok(write_texture_sheet(&loaded.content, &loaded.preview, path)?);
-    }
+    let dimension = DimensionId(args.dimension.clone());
+    let loaded = content::load(&args, &dimension)?;
     let graphics = GraphicsSettings::for_preset(args.preset);
+    if let Some(path) = &args.texture_sheet {
+        return Ok(write_texture_sheet(
+            &loaded.content,
+            &content::preview(&loaded),
+            path,
+        )?);
+    }
+    let seed = args
+        .seed
+        .as_deref()
+        .map_or_else(random_seed, Seed::from_text);
+    tracing::info!(seed = seed.0 as i64, "world seed");
+    let generator = Arc::new(Generator::new(seed, Arc::clone(&loaded.worldgen)));
     if let Some(path) = &args.screenshot {
-        let view = View {
-            camera,
-            size: args.size,
-            graphics,
-        };
-        return Ok(capture(&loaded.content, &loaded.preview, &view, path)?);
+        return screenshot(&args, &loaded, &generator, graphics, path);
     }
     let bench = args
         .bench_scene
         .as_deref()
         .map(|name| load_bench(&loaded.assets, name, args.preset, args.report_dir.clone()))
         .transpose()?;
-    play(ClientConfig {
-        content: Arc::new(loaded.content),
-        world: loaded.preview,
-        graphics,
-        language: args.lang.clone(),
-        camera,
-        vsync: bench.is_none(),
-        bench,
-    })
+    let server = ServerConfig {
+        dimension,
+        generator,
+        generation_threads: graphics.generation_threads,
+        view_distance: graphics.render_distance,
+    };
+    play(
+        ClientConfig {
+            content: Arc::new(loaded.content),
+            language: args.lang.clone(),
+            camera: args.pos.map(|pos| camera(pos, &args)),
+            vsync: bench.is_none(),
+            graphics,
+            bench,
+        },
+        server,
+    )
 }
 
-fn play(config: ClientConfig) -> anyhow::Result<()> {
-    let (client, server) = strata_protocol::local_pair();
-    let server = IntegratedServer::spawn(server).context("could not start the server thread")?;
-    let result = run(config, client);
+/// With `--seed`, a freshly generated world around `--pos` (or the spawn point);
+/// without it, the preview diorama.
+fn screenshot(
+    args: &cli::Args,
+    loaded: &content::Loaded,
+    generator: &Arc<Generator>,
+    graphics: GraphicsSettings,
+    path: &Path,
+) -> anyhow::Result<()> {
+    let (world, position) = if args.seed.is_some() {
+        let position = args.pos.unwrap_or_else(|| {
+            let spawn = generator.spawn_point();
+            [
+                f64::from(spawn.x) + 0.5,
+                f64::from(spawn.y) + EYE_HEIGHT,
+                f64::from(spawn.z) + 0.5,
+            ]
+        });
+        let world = offline::generate_around(
+            generator,
+            position[0],
+            position[2],
+            graphics.render_distance,
+        );
+        (world, position)
+    } else {
+        (
+            content::preview(loaded),
+            args.pos.unwrap_or([-12.0, 15.5, 14.0]),
+        )
+    };
+    let view = View {
+        camera: camera(position, args),
+        size: args.size,
+        graphics,
+    };
+    Ok(capture(&loaded.content, &world, &view, path)?)
+}
+
+fn play(client: ClientConfig, server: ServerConfig) -> anyhow::Result<()> {
+    let (client_end, server_end) = strata_protocol::local_pair();
+    let server =
+        IntegratedServer::spawn(server_end, server).context("could not start the server thread")?;
+    let result = run(client, client_end);
     if server.join().is_err() {
         tracing::error!("server thread panicked");
     }
@@ -79,8 +134,15 @@ fn load_bench(
     })
 }
 
-fn initial_camera(args: &cli::Args) -> Camera {
-    let [x, y, z] = args.pos.unwrap_or([-9.5, 13.5, 11.0]);
-    let [yaw, pitch] = args.look.unwrap_or([41.0, -27.0]);
+fn camera([x, y, z]: [f64; 3], args: &cli::Args) -> Camera {
+    let [yaw, pitch] = args.look.unwrap_or([0.0, -20.0]);
     Camera::new(DVec3::new(x, y, z), yaw, pitch, DEFAULT_FOV)
+}
+
+/// Like Minecraft, a world without a chosen seed gets a random one.
+fn random_seed() -> Seed {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_nanos());
+    Seed((nanos as u64) ^ ((nanos >> 64) as u64)).mixed()
 }

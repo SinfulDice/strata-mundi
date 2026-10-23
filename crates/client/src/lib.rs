@@ -12,7 +12,8 @@ pub mod render;
 pub mod screenshot;
 mod session;
 pub mod settings;
+mod streaming;
 pub mod texture_sheet;
 pub mod world;
 
-pub use app::{ClientConfig, ClientError, run};
+pub use app::{ClientConfig, ClientError, DEFAULT_FOV, run};

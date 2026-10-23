@@ -15,8 +15,12 @@ Messages actuels :
 
 | Message | Sens | Rôle |
 |---|---|---|
+| `ClientMessage::PlayerView` | client → serveur | Position et regard du joueur (vol libre jusqu'au jalon 6). |
+| `ClientMessage::ViewDistance` | client → serveur | Distance de rendu souhaitée. |
 | `ClientMessage::Disconnect` | client → serveur | Le joueur quitte : le serveur s'arrête. |
+| `ServerMessage::Welcome` | serveur → client | Dimension et point de départ. |
 | `ServerMessage::Tick { tick }` | serveur → client | Numéro du tick qui vient d'être simulé. |
+| `ServerMessage::Column` / `UnloadColumn` | serveur → client | Une colonne de blocs arrive ou doit être oubliée (voir [Monde infini](monde-infini.md)). |
 
 ## Où c'est dans le code
 

@@ -1,0 +1,16 @@
+// Reference scene: two minutes of straight flight eastward from the spawn, columns
+// streaming in all the way. It checks there is no freeze or hole in the terrain and
+// measures frame times while generating. Positions are relative to the spawn point.
+// First minute at creative flight speed (~11 blocks/s, 60 blocks up), second minute at
+// ~25 blocks/s and 150 blocks up, above most mountains.
+(
+    warmup: 3.0,
+    duration: 120.0,
+    keyframes: [
+        (time: 0.0, pos: (0.0, 60.0, 0.0), yaw: 90.0, pitch: -15.0),
+        (time: 30.0, pos: (330.0, 60.0, 0.0), yaw: 60.0, pitch: -20.0),
+        (time: 60.0, pos: (660.0, 80.0, 0.0), yaw: 120.0, pitch: -20.0),
+        (time: 70.0, pos: (910.0, 150.0, 0.0), yaw: 90.0, pitch: -30.0),
+        (time: 120.0, pos: (2160.0, 150.0, 0.0), yaw: 90.0, pitch: -30.0),
+    ],
+)

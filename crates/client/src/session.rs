@@ -1,22 +1,28 @@
-use crate::app::{ClientConfig, ClientError};
+use crate::app::{ClientConfig, ClientError, DEFAULT_FOV};
 use crate::bench::BenchRun;
-use crate::camera::Camera;
+use crate::camera::{Camera, EYE_HEIGHT};
 use crate::fly::FlyController;
 use crate::input::{Action, Binding, Bindings, Gamepads, InputState};
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::BlockTable;
 use crate::render::{Acquired, Gpu, Renderer, Target, WindowSurface};
 use crate::settings::GraphicsSettings;
+use crate::streaming::WorldView;
 use crate::world::ClientWorld;
-use glam::Vec2;
+use glam::{DVec3, Vec2};
 use std::sync::Arc;
-use std::time::Instant;
-use strata_protocol::{ClientConnection, Disconnected, ServerMessage};
+use std::time::{Duration, Instant};
+use strata_protocol::{
+    ClientConnection, ClientMessage, Disconnected, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE,
+    ServerMessage,
+};
 use winit::event::{DeviceEvent, ElementState, WindowEvent};
 use winit::keyboard::PhysicalKey;
 use winit::window::{CursorGrabMode, Window};
 
 const MAX_FRAME_SECONDS: f32 = 0.1;
+/// How often the client tells the server where the player is.
+const VIEW_REPORT_PERIOD: Duration = Duration::from_millis(100);
 
 /// Everything that lives while the game window is open.
 pub struct Session {
@@ -25,10 +31,12 @@ pub struct Session {
     pub connection: ClientConnection,
     pub bench: Option<BenchRun>,
     renderer: Renderer,
-    world: ClientWorld,
-    meshing: MeshScheduler,
+    view: WorldView,
     graphics: GraphicsSettings,
     camera: Camera,
+    /// The camera waits for the server's spawn point unless a position was given.
+    camera_placed: bool,
+    last_view_report: Instant,
     fly: FlyController,
     input: InputState,
     gamepads: Gamepads,
@@ -57,23 +65,27 @@ impl Session {
         let table = Arc::new(BlockTable::new(
             config.content.blocks.iter().map(|(_, _, b)| b),
         ));
-        let mut meshing =
+        let meshing =
             MeshScheduler::new(table, graphics.worker_threads, graphics.ambient_occlusion)
                 .map_err(ClientError::Threads)?;
-        for key in config.world.section_keys() {
-            meshing.mark_dirty(key);
-        }
         let bench = config.bench.map(|bench| BenchRun::new(bench, &gpu));
+        let render_distance = graphics
+            .render_distance
+            .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
+        connection.send(ClientMessage::ViewDistance(render_distance));
         Ok(Self {
             gpu,
             surface,
             connection,
             bench,
             renderer,
-            world: config.world,
-            meshing,
+            view: WorldView::new(ClientWorld::default(), meshing),
             graphics: config.graphics,
-            camera: config.camera,
+            camera_placed: config.camera.is_some(),
+            camera: config
+                .camera
+                .unwrap_or_else(|| Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV)),
+            last_view_report: Instant::now(),
             fly: FlyController::default(),
             input: InputState::new(Bindings::default()),
             gamepads: Gamepads::connect(),
@@ -158,9 +170,18 @@ impl Session {
         if self.input.just_pressed(Action::Pause) {
             self.set_cursor_captured(false);
         }
+        if self.input.just_pressed(Action::RenderDistanceDown) {
+            self.set_render_distance(self.graphics.render_distance.saturating_sub(1));
+        }
+        if self.input.just_pressed(Action::RenderDistanceUp) {
+            self.set_render_distance(self.graphics.render_distance + 1);
+        }
+        let settled = self
+            .view
+            .is_settled(settled_columns(self.graphics.render_distance));
         match &mut self.bench {
-            // The bench starts once the initial world is meshed, so loading is not measured.
-            Some(bench) if self.meshing.pending() == 0 => {
+            // The bench starts once the initial world is loaded, so loading is not measured.
+            Some(bench) if settled || bench.started() => {
                 bench.advance(frame_seconds, &mut self.camera)
             }
             Some(_) => {}
@@ -171,8 +192,8 @@ impl Session {
             ),
         }
         self.input.end_frame();
-        self.meshing.update(
-            &self.world,
+        self.report_view();
+        self.view.update(
             &self.gpu,
             &mut self.renderer,
             self.camera.position,
@@ -184,11 +205,48 @@ impl Session {
     fn receive_messages(&mut self) -> Result<(), ClientError> {
         loop {
             match self.connection.try_recv() {
-                Ok(Some(ServerMessage::Tick { tick })) => self.server_tick = tick,
+                Ok(Some(message)) => self.apply(message),
                 Ok(None) => return Ok(()),
                 Err(Disconnected) => return Err(ClientError::ServerGone),
             }
         }
+    }
+
+    fn apply(&mut self, message: ServerMessage) {
+        match message {
+            ServerMessage::Welcome { spawn, .. } => {
+                if !self.camera_placed {
+                    self.camera.position = DVec3::new(spawn[0], spawn[1] + EYE_HEIGHT, spawn[2]);
+                    self.camera_placed = true;
+                }
+                if let Some(bench) = &mut self.bench {
+                    bench.set_origin(DVec3::from(spawn));
+                }
+            }
+            ServerMessage::Tick { tick } => self.server_tick = tick,
+            ServerMessage::Column(column) => self.view.insert(*column),
+            ServerMessage::UnloadColumn(pos) => self.view.remove(pos, &mut self.renderer),
+        }
+    }
+
+    /// Changes how far the world is loaded, while playing.
+    pub fn set_render_distance(&mut self, distance: u32) {
+        let distance = distance.clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
+        tracing::info!(distance, "render distance");
+        self.graphics.render_distance = distance;
+        self.connection.send(ClientMessage::ViewDistance(distance));
+    }
+
+    fn report_view(&mut self) {
+        if self.last_view_report.elapsed() < VIEW_REPORT_PERIOD || !self.camera_placed {
+            return;
+        }
+        self.last_view_report = Instant::now();
+        self.connection.send(ClientMessage::PlayerView {
+            position: self.camera.position.to_array(),
+            yaw: self.camera.yaw,
+            pitch: self.camera.pitch,
+        });
     }
 
     /// Returns the CPU time spent building and submitting the frame, in seconds,
@@ -242,4 +300,10 @@ impl Session {
         window.set_cursor_visible(!captured);
         self.cursor_captured = captured;
     }
+}
+
+/// About 80 % of the columns inside the view circle: enough to call the world loaded.
+fn settled_columns(render_distance: u32) -> usize {
+    let r = f64::from(render_distance);
+    (std::f64::consts::PI * r * r * 0.8) as usize
 }

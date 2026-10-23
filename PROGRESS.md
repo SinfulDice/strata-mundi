@@ -3,11 +3,13 @@
 ## État
 
 - **Version en cours** : v0.1 — Fondations
-- **Jalon en cours** : 4 — Monde infini
+- **Jalon en cours** : 6 — Joueur et interaction
 - **Dernière session** : 23/10/2026
 
 ## Fait
 
+- **Jalon 5 — Génération de terrain** : crate `worldgen` (bruit `fastnoise-lite` en f64), 4 cartes de climat, relief continu (mer 120, collines, montagnes en crêtes jusqu'à ~400), 6 biomes en pack (plaines, forêt, désert, océan, montagnes, toundra) avec frontières bruitées, couches (socle irrégulier, roche profonde, sous-sol, surface, plages), eau statique et glace, grottes spaghetti (grille 4³ interpolée, plafond sous le sol voisin), filons de minerais par profondeur avec variantes profondes, chênes, sapins, cactus placés depuis les 9 colonnes voisines, point de départ accueillant (plaines/forêt, arbres, eau proche, deux blocs d'air libres). Tests : déterminisme quel que soit l'ordre, graines différentes, 6 biomes atteignables et traduits, hauteurs, socle et mer, départ, arbres entiers à cheval sur les colonnes. ~2 ms par colonne.
+- **Jalon 4 — Monde infini** : serveur qui charge un disque de colonnes autour du joueur (proches et devant d'abord, ordre mis en cache), threads de génération à file bornée, envoi limité par tick, déchargement avec hystérésis, positions client validées et bornées ; client : colonnes maillées quand leurs 8 voisines sont là, frustum culling, déchargement en O(1), distance de rendu réglable à chaud (F7/F8), threads de maillage et de génération par préréglage, `--seed`, `--dimension`, captures sur monde généré. Vol de 2 min (scène `flyover`) sans plantage, 20 TPS tenus.
 - **Jalon 3 — Chunks et maillage** : sections 16³ à palette compressée (indices empaquetés 0-16 bits), colonnes de 32 sections, mailleur (culling, fusion gloutonne, AO par sommet à 4 niveaux réglable, opaque/découpé + translucide trié), sommets de 8 octets, maillage sur threads de travail (`crossbeam-channel`, file bornée, versions), envoi GPU limité à 4 ms/image, distance verticale réglable (maillage et rendu), sections enfouies ignorées, réglages graphiques par préréglage (distance verticale, AO, threads). Bench : ~0,27 ms par section de surface, ~1,3 ms au pire.
 - **Jalon 2 — Registres et packs** : packs RON par priorité avec ajout/remplacement/retrait (`PackSet`, `remove.ron`), erreurs localisées (fichier:ligne:colonne) sans plantage, registres à identifiants texte et numériques (`Registry`, `BlockId`, `ItemId`, `TextureId`), propriétés de bloc (solide, rendu, opacité lumineuse, dureté, textures par face, son, catégorie), objet automatique par bloc, textures procédurales depuis une **palette globale** (`Material`, `Overlay`, `Ore`, `Sprite`, `Recolor`), PNG 16/32/64 px avec mise à l'échelle, tableau de textures GPU depuis le registre, packs de ressources (`--resource-pack`), traductions Fluent fr/en/lol + test de clés manquantes + glossaire LOLcat, `--texture-sheet`, `docs/guide-textures.md`, scène d'aperçu en RON, **3 planches d'essai** dans `docs/maquettes/` ; **style classique choisi** (D017) et textures v0.1 complètes (33 blocs : pierre, roche profonde, socle, terre, herbe, herbe enneigée, sable, grès, gravier, neige, glace, eau, verre, cactus, chêne et sapin, minerais normaux et profonds). Revue appliquée : recettes bornées, minerais/franges composés sur des bases PNG haute résolution, retraits et doublons signalés, limite de couches GPU vérifiée, `max_stack`/`cull_same` en pack.
 - **Jalon 1 — Fenêtre et rendu minimal** : fenêtre `winit`, `wgpu` Vulkan seul, serveur intégré sur son thread à 20 TPS (`TickClock`) et rendu découplé, messages `protocol` sur canaux en mémoire, caméra libre en `f64` (rendu relatif, reverse-Z, plan lointain infini), entrées unifiées (actions, liaisons physiques, manette `gilrs`, zone morte, dernier périphérique, tactile prévu), cube texturé procédural (`core::texture`), `--screenshot` headless, `--bench-scene` + rapport Markdown, reconfiguration de surface (redimensionnement, perte), logs `tracing`.
@@ -32,6 +34,7 @@ Benchmarks CPU (cloud, `cargo bench`) :
 |---|---|---|---|
 | 23/10/2026 | Maillage d'une section de surface | 0,27 ms | `meshing/mesh_section_terrain` |
 | 23/10/2026 | Maillage pire cas (damier) | 1,32 ms | `meshing/mesh_section_checkerboard` |
+| 23/10/2026 | Génération d'une colonne | 2,08 ms | `generation/generate_column` |
 
 ## Limitations connues
 

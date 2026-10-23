@@ -1,5 +1,9 @@
 // Reference screenshots checked by the `visual-tester` agent, in the `ultra` and `ds` presets.
 // Fields mirror the command line: `strata --screenshot screenshots/<name>-<preset>.png ...`
+// Without `pos`, the camera starts at the spawn point of the seed.
 [
     (name: "preview", pos: (-12.0, 15.5, 14.0), look: (41.0, -28.0)),
+    (name: "spawn-42", seed: "42", look: (30.0, -20.0)),
+    (name: "aerial-7", seed: "7", pos: (0.0, 230.0, 0.0), look: (45.0, -30.0)),
+    (name: "aerial-99", seed: "99", pos: (0.0, 230.0, 0.0), look: (45.0, -30.0)),
 ]

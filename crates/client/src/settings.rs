@@ -74,27 +74,38 @@ mod tests {
 /// Graphics settings that exist so far; the full options screen arrives at milestone 8.
 #[derive(Debug, Clone, PartialEq)]
 pub struct GraphicsSettings {
+    /// Columns loaded around the player, in each direction; can change while playing.
+    pub render_distance: u32,
     /// Sections meshed above and below the player's section.
     pub vertical_distance: u32,
     pub ambient_occlusion: bool,
-    /// Background threads for meshing (and generation, from milestone 4).
+    /// Background threads for meshing.
     pub worker_threads: usize,
+    /// Background threads for world generation (integrated server).
+    pub generation_threads: usize,
 }
 
 impl GraphicsSettings {
     pub fn for_preset(preset: Preset) -> Self {
-        let (vertical_distance, ambient_occlusion) = match preset {
-            Preset::VeryLow => (2, false),
-            Preset::Low => (3, false),
-            Preset::Medium => (4, true),
-            Preset::High => (6, true),
-            Preset::Ultra => (8, true),
-            Preset::Ds => (3, true),
+        let (render_distance, vertical_distance, ambient_occlusion) = match preset {
+            Preset::VeryLow => (4, 3, false),
+            Preset::Low => (6, 4, false),
+            Preset::Medium => (8, 6, true),
+            Preset::High => (12, 8, true),
+            Preset::Ultra => (16, 12, true),
+            Preset::Ds => (6, 4, true),
+        };
+        let workers = if preset == Preset::Ds {
+            1
+        } else {
+            default_worker_threads()
         };
         Self {
+            render_distance,
             vertical_distance,
             ambient_occlusion,
-            worker_threads: default_worker_threads(),
+            worker_threads: workers,
+            generation_threads: workers,
         }
     }
 }

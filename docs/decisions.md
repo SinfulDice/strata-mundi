@@ -103,3 +103,17 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Threads** : `crossbeam-channel` 0.5 (file bornée multi-consommateurs, très maintenue) ; versions par section pour jeter les résultats obsolètes ; budget d'envoi GPU de 4 ms par image.
 - **Benchmarks** : `criterion` sur une section de surface et sur le pire cas (damier).
 - **Limites connues** : le translucide est trié par section, pas à l'intérieur d'une section (artefacts possibles entre deux surfaces d'eau d'une même section, à revoir avec les fluides en v0.2). Les sections enfouies (une seule sorte de bloc opaque, entourées de sections identiques) ne sont pas maillées. AO désactivée = coins tous éclairés, ce qui permet aussi plus de fusions.
+
+## D019 — Génération : `fastnoise-lite`, climat à 4 cartes (v0.1, jalon 5)
+
+- **Bruit** : `fastnoise-lite` 1.1 (portage officiel de FastNoiseLite, MIT, sans dépendance lourde) avec la feature `f64` pour la précision loin de l'origine. Alternative écartée : `noise` (plus lent, API plus lourde).
+- **Modèle** : 4 cartes (température, humidité, continentalité, érosion) façon Minecraft 1.18. La hauteur ne dépend pas du biome (transitions sans falaise) ; biome = plus proche voisin dans l'espace climatique (continentalité pondérée ×3 pour garder les océans entiers), frontière légèrement bruitée. Montagnes = érosion faible × bruit en crêtes.
+- **Contenu en packs** : `dimensions/`, `biomes/`, `features/` (arbres, piliers, minerais). `remove.ron` accepte ces catégories.
+- **Déterminisme** : générateurs pseudo-aléatoires par colonne (SplitMix64 initialisé par graine + position + usage) ; les éléments de surface sont placés depuis les 9 colonnes voisines, dans un ordre absolu, pour ne pas dépendre de l'ordre de génération. Testé.
+- **Grottes** : bruit 3D double sur grille 4×4×4 interpolée.
+
+## D020 — Chargement du monde (v0.1, jalon 4)
+
+- **Serveur** : disque de colonnes autour du joueur, priorité distance × orientation, file de génération bornée (4 travaux par thread), envoi limité à 48 colonnes/tick, déchargement avec 2 colonnes d'hystérésis. Les colonnes voyagent en `ServerMessage::Column(Box<Column>)` (structures `serde`).
+- **Client** : maillage d'une colonne quand ses 8 voisines sont présentes (jamais de remaillage pour une voisine arrivée plus tard) ; frustum culling (plans latéraux + proche) ; le bench commence quand ~80 % du disque est chargé et maillé.
+- **Distance verticale** : relevée (DS 4 sections, ultra 12) après essais, une valeur plus faible coupait les reliefs vus d'en haut.

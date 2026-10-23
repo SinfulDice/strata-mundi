@@ -1,6 +1,6 @@
 /// Fixed-length array of small unsigned integers packed into `u64` words, never straddling
 /// two words. With 0 bits per entry it stores nothing (every entry is 0).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PackedArray {
     bits: u8,
     len: usize,

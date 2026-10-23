@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 use strata_client::settings::Preset;
+use strata_core::id::Identifier;
 
 /// Strata Mundi — voxel sandbox.
 #[derive(Debug, Parser)]
@@ -9,6 +10,14 @@ pub struct Args {
     /// Render a single frame without a window and save it as PNG, then quit.
     #[arg(long, value_name = "PNG")]
     pub screenshot: Option<PathBuf>,
+
+    /// World seed: a number or any text. Random if omitted.
+    #[arg(long, allow_hyphen_values = true)]
+    pub seed: Option<String>,
+
+    /// Dimension to play in.
+    #[arg(long, default_value = "strata:terra")]
+    pub dimension: Identifier,
 
     /// Camera position `x,y,z` (screenshot and initial position).
     #[arg(long, value_name = "X,Y,Z", value_parser = parse_vec3, allow_hyphen_values = true)]

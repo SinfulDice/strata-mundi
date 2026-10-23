@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 pub const SECTION_SIZE: i32 = 16;
 pub const SECTIONS_PER_COLUMN: i32 = 32;
 pub const WORLD_HEIGHT: i32 = SECTION_SIZE * SECTIONS_PER_COLUMN;
+/// Default distance from the origin to the world border, in blocks (settable per world).
+pub const DEFAULT_WORLD_BORDER: i32 = 10_000_000;
 
 /// Absolute block position. `y` ranges over `0..WORLD_HEIGHT`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

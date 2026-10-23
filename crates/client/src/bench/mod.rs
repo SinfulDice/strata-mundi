@@ -11,6 +11,7 @@ pub use scene::{BenchScene, SceneError};
 
 use crate::camera::Camera;
 use crate::render::Gpu;
+use glam::DVec3;
 use gpu_timer::GpuTimer;
 use report::Report;
 use stats::Samples;
@@ -30,6 +31,7 @@ const MEMORY_SAMPLE_PERIOD: f32 = 0.5;
 pub struct BenchRun {
     config: BenchConfig,
     elapsed: f32,
+    origin: DVec3,
     frames: Samples,
     cpu: Samples,
     gpu: Vec<f32>,
@@ -48,6 +50,7 @@ impl BenchRun {
         Self {
             config,
             elapsed: 0.0,
+            origin: DVec3::ZERO,
             frames: Samples::default(),
             cpu: Samples::default(),
             gpu: Vec::new(),
@@ -59,10 +62,21 @@ impl BenchRun {
         }
     }
 
+    /// Keyframe positions are relative to this point (the world spawn).
+    pub fn set_origin(&mut self, origin: DVec3) {
+        self.origin = origin;
+    }
+
+    /// Whether measuring has begun (it never pauses once started).
+    pub fn started(&self) -> bool {
+        self.elapsed > 0.0
+    }
+
     /// Moves the camera along the scripted path.
     pub fn advance(&mut self, dt: f32, camera: &mut Camera) {
         self.elapsed += dt;
         self.config.scene.pose(self.measured_time(), camera);
+        camera.position += self.origin;
     }
 
     pub fn timestamp_writes(&mut self) -> Option<wgpu::RenderPassTimestampWrites<'_>> {

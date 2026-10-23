@@ -117,8 +117,8 @@ impl Report<'_> {
         }
         let _ = writeln!(
             text,
-            "\n> v0.1 : les réglages graphiques des profils arrivent au jalon 8 ; \
-             d'ici là, tous les profils rendent la même scène."
+            "\n> v0.1 : les profils règlent pour l'instant les distances de rendu, l'occlusion \
+             ambiante et les threads ; les autres réglages arrivent au jalon 8."
         );
         text
     }

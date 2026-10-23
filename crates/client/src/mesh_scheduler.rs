@@ -5,7 +5,7 @@ use glam::DVec3;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use strata_core::coords::SECTION_SIZE;
+use strata_core::coords::{ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 
 /// Time the main thread may spend uploading finished meshes each frame.
 const UPLOAD_BUDGET: Duration = Duration::from_millis(4);
@@ -18,8 +18,13 @@ pub struct MeshScheduler {
     table: Arc<BlockTable>,
     max_in_flight: usize,
     dirty: HashSet<SectionKey>,
+    /// Latest request per section. Versions come from one global counter, so a section
+    /// that is forgotten then reloaded can never accept a result from before.
     versions: HashMap<SectionKey, u64>,
+    next_version: u64,
     in_flight: HashSet<SectionKey>,
+    /// Dirty sections within the vertical distance that could not be submitted yet.
+    waiting: usize,
 }
 
 impl MeshScheduler {
@@ -40,18 +45,31 @@ impl MeshScheduler {
             max_in_flight,
             dirty: HashSet::new(),
             versions: HashMap::new(),
+            next_version: 0,
             in_flight: HashSet::new(),
+            waiting: 0,
         })
     }
 
     pub fn mark_dirty(&mut self, key: SectionKey) {
-        *self.versions.entry(key).or_default() += 1;
+        self.next_version += 1;
+        self.versions.insert(key, self.next_version);
         self.dirty.insert(key);
     }
 
-    /// Sections still waiting to be meshed or uploaded.
+    /// Stops tracking a column that left the view distance.
+    pub fn forget_column(&mut self, pos: ColumnPos) {
+        for index in 0..SECTIONS_PER_COLUMN as usize {
+            let key = (pos.x, pos.z, index);
+            self.dirty.remove(&key);
+            self.versions.remove(&key);
+        }
+    }
+
+    /// Visible sections still waiting to be meshed or uploaded (sections beyond the
+    /// vertical distance wait without counting).
     pub fn pending(&self) -> usize {
-        self.dirty.len() + self.in_flight.len()
+        self.waiting + self.in_flight.len()
     }
 
     /// Submits the nearest dirty sections within `vertical_distance` sections of the camera,
@@ -85,22 +103,21 @@ impl MeshScheduler {
         camera: DVec3,
         vertical_distance: u32,
     ) {
+        let camera_section = (camera.y / f64::from(SECTION_SIZE)).floor() as i64;
+        let eligible = |key: &SectionKey| {
+            !self.in_flight.contains(key)
+                && (key.2 as i64 - camera_section).unsigned_abs() <= u64::from(vertical_distance)
+        };
         let room = self.max_in_flight.saturating_sub(self.in_flight.len());
-        if room == 0 || self.dirty.is_empty() {
+        if room == 0 {
+            self.waiting = self.dirty.iter().filter(|key| eligible(key)).count();
             return;
         }
-        let camera_section = (camera.y / f64::from(SECTION_SIZE)).floor() as i64;
-        let mut candidates: Vec<SectionKey> = self
-            .dirty
-            .iter()
-            .copied()
-            .filter(|key| !self.in_flight.contains(key))
-            .filter(|key| {
-                (key.2 as i64 - camera_section).unsigned_abs() <= u64::from(vertical_distance)
-            })
-            .collect();
+        let mut candidates: Vec<SectionKey> = self.dirty.iter().copied().filter(eligible).collect();
+        self.waiting = candidates.len();
         candidates.sort_by_cached_key(|key| distance_key(*key, camera));
         for key in candidates.into_iter().take(room) {
+            self.waiting -= 1;
             self.dirty.remove(&key);
             if world.is_buried(key, &self.table) {
                 renderer.upload_section(gpu, key, &SectionMesh::default());
@@ -111,15 +128,12 @@ impl MeshScheduler {
                 version: self.versions.get(&key).copied().unwrap_or_default(),
                 blocks: world.neighborhood(key),
             };
-            match self.workers.submit(job) {
-                Ok(()) => {
-                    self.in_flight.insert(key);
-                }
-                Err(_) => {
-                    self.dirty.insert(key);
-                    break;
-                }
+            if self.workers.submit(job).is_err() {
+                self.dirty.insert(key);
+                self.waiting += 1;
+                break;
             }
+            self.in_flight.insert(key);
         }
     }
 }

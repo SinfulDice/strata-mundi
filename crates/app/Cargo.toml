@@ -16,6 +16,7 @@ profiling = ["dep:tracing-tracy"]
 [dependencies]
 strata-server.workspace = true
 strata-protocol.workspace = true
+strata-worldgen.workspace = true
 strata-client.workspace = true
 strata-core.workspace = true
 anyhow.workspace = true

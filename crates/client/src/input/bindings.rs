@@ -67,6 +67,8 @@ impl Default for Bindings {
                 (Key(KeyCode::ShiftLeft), Sneak),
                 (Key(KeyCode::ControlLeft), Sprint),
                 (Key(KeyCode::Escape), Pause),
+                (Key(KeyCode::F7), RenderDistanceDown),
+                (Key(KeyCode::F8), RenderDistanceUp),
                 (Pad(PadButton::DPadUp), MoveForward),
                 (Pad(PadButton::DPadDown), MoveBackward),
                 (Pad(PadButton::DPadLeft), MoveLeft),

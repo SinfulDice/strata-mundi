@@ -9,10 +9,12 @@ pub enum Action {
     Sneak,
     Sprint,
     Pause,
+    RenderDistanceDown,
+    RenderDistanceUp,
 }
 
 impl Action {
-    pub const COUNT: usize = 8;
+    pub const COUNT: usize = 10;
 
     pub const fn index(self) -> usize {
         self as usize

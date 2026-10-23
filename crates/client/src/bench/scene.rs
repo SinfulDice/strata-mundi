@@ -20,7 +20,8 @@ pub enum SceneError {
     Empty(String),
 }
 
-/// Scripted camera path, described in `assets/bench-scenes/<name>.ron`.
+/// Scripted camera path, described in `assets/bench-scenes/<name>.ron`. Positions are
+/// relative to the world spawn point.
 #[derive(Debug, Clone, Deserialize)]
 pub struct BenchScene {
     /// Seconds rendered before measuring (shader warm-up, initial loading).

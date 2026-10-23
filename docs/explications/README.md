@@ -11,7 +11,9 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 5. [Entrées](entrees.md) : clavier, souris, manette, actions.
 6. [Mesures et captures](bench-et-captures.md) : `--screenshot`, `--bench-scene`.
 7. [Chunks et maillage](chunks-et-maillage.md) : stockage des blocs, faces visibles, fusion, occlusion.
-8. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
+8. [Génération du monde](generation-du-monde.md) : climat, relief, biomes, grottes, arbres.
+9. [Monde infini](monde-infini.md) : chargement autour du joueur, frustum.
+10. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

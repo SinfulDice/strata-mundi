@@ -3,7 +3,6 @@ use crate::camera::Camera;
 use crate::render::GpuError;
 use crate::session::Session;
 use crate::settings::GraphicsSettings;
-use crate::world::ClientWorld;
 use std::sync::Arc;
 use strata_core::content::Content;
 use strata_protocol::{ClientConnection, ClientMessage};
@@ -29,13 +28,15 @@ pub enum ClientError {
     Threads(std::io::Error),
 }
 
+/// Vertical field of view, in degrees, until the options screen (milestone 8).
+pub const DEFAULT_FOV: f32 = 70.0;
+
 pub struct ClientConfig {
     pub content: Arc<Content>,
-    /// Blocks shown until the generated world streams in (milestones 4-5).
-    pub world: ClientWorld,
     pub graphics: GraphicsSettings,
     pub language: String,
-    pub camera: Camera,
+    /// Starting camera; `None` = at the spawn point chosen by the server.
+    pub camera: Option<Camera>,
     pub vsync: bool,
     pub bench: Option<BenchConfig>,
 }

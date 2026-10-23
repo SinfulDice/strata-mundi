@@ -3,7 +3,7 @@ use crate::content::BlockId;
 use crate::coords::{ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 
 /// A vertical stack of 32 sections (y 0 to 511) at one horizontal position.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Column {
     pub pos: ColumnPos,
     sections: Vec<Section>,
