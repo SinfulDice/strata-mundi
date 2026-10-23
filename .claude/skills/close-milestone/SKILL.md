@@ -7,7 +7,7 @@ description: Clôturer un jalon de Strata Mundi — vérification complète, cap
 
 1. **Vérification** (tout doit passer) :
    - `cargo fmt --all`
-   - `cargo clippy --all-targets -- -D warnings`
+   - `cargo clippy --all-targets -- -D warnings` et `cargo clippy --release --all-targets -- -D warnings` (la CI compile aussi en release)
    - `cargo test --workspace` (+ `cargo bench` si le jalon touche une opération mesurée)
 2. **Captures** (si changement visible) : agent `visual-tester`, préréglages ultra et DS, PNG dans `screenshots/` **ouverts et inspectés**. Rendu impossible : noter dans `PROGRESS.md` (« Blocages »).
 3. **Revue** : agent `reviewer` sur le diff du jalon ; corrige ce qui est pertinent, relance la vérification.
