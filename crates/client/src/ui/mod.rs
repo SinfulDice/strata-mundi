@@ -20,8 +20,9 @@ pub use rect::Rect;
 pub use theme::Theme;
 pub use widgets::{UiContext, draw_screen};
 
+use crate::settings::FontChoice;
 use std::path::Path;
-use strata_core::font::Font;
+use strata_core::font::FontSource;
 use strata_core::pack::{PackError, PackSet, read_ron};
 
 /// Every screen layout, one file each in `assets/ui/`.
@@ -59,14 +60,24 @@ impl ScreenDefs {
     }
 }
 
-/// Interface files: theme, screen layouts and the font.
+/// Interface files: theme, screen layouts and the fonts.
 pub struct UiAssets {
     pub theme: Theme,
     pub screens: ScreenDefs,
-    pub font: Font,
+    pub font: FontSource,
+    /// Accessibility option; the pixel font stays in use if it is missing or broken.
+    pub readable_font: Option<FontSource>,
 }
 
 impl UiAssets {
+    /// The font for `choice`, falling back to the pixel font.
+    pub fn font_for(&self, choice: FontChoice) -> &FontSource {
+        match (choice, &self.readable_font) {
+            (FontChoice::Readable, Some(font)) => font,
+            _ => &self.font,
+        }
+    }
+
     /// `None` (with the errors) if a required file is missing or broken.
     pub fn load(ui_dir: &Path, packs: &PackSet, errors: &mut Vec<PackError>) -> Option<Self> {
         let mut read =
@@ -86,11 +97,17 @@ impl UiAssets {
             crash: read("crash")?,
         };
         let theme = read_or_report(&ui_dir.join("theme.ron"), errors);
-        let font = Font::load(packs, "pixel", errors);
+        let font = FontSource::load(packs, "pixel", errors);
+        let mut optional_errors = Vec::new();
+        let readable_font = FontSource::load(packs, "readable", &mut optional_errors);
+        for error in optional_errors {
+            tracing::warn!(%error, "readable font unavailable");
+        }
         Some(Self {
             theme: theme?,
             screens,
             font: font?,
+            readable_font,
         })
     }
 

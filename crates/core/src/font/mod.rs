@@ -1,4 +1,10 @@
-//! Bitmap fonts described in packs (`fonts/<name>.ron`), drawn into an atlas image.
+//! Fonts described in packs, drawn into an atlas image: pixel fonts written in RON
+//! (`fonts/<name>.ron`), or TrueType files (`fonts/<name>.ttf` beside a `TrueType(…)`
+//! description, see `truetype`).
+
+mod truetype;
+
+pub use truetype::TrueTypeSource;
 
 use crate::pack::{PackError, PackSet, read_ron};
 use crate::texture::{Rgba, RgbaImage};
@@ -21,7 +27,8 @@ struct GlyphDef {
     rows: Vec<String>,
 }
 
-/// Where a character sits in the atlas and how far the pen moves after it.
+/// Where a character sits in the atlas and how far the pen moves after it, in atlas
+/// pixels (`Font::density` of them per interface pixel).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Glyph {
     pub x: u32,
@@ -33,9 +40,20 @@ pub struct Glyph {
 #[derive(Debug, Clone)]
 pub struct Font {
     pub atlas: RgbaImage,
+    /// In interface pixels.
     pub line_height: u32,
+    /// Atlas pixels per interface pixel: 1 for pixel fonts; TrueType fonts are rasterized
+    /// at the screen resolution so they stay smooth at any interface scale.
+    pub density: u32,
     glyphs: BTreeMap<char, Glyph>,
     fallback: Glyph,
+}
+
+/// A font as found in the packs, before it is drawn for a given density.
+#[derive(Debug, Clone)]
+pub enum FontSource {
+    Pixel(Font),
+    TrueType(TrueTypeSource),
 }
 
 const ATLAS_COLUMNS: u32 = 16;
@@ -43,8 +61,15 @@ const ATLAS_COLUMNS: u32 = 16;
 pub const MAX_FONT_ATLAS: u32 = 512;
 const SPACING: u32 = 1;
 const INK: Rgba = Rgba([255, 255, 255, 255]);
+/// The small box drawn at the start of every atlas, for unknown characters.
+const FALLBACK: Glyph = Glyph {
+    x: 0,
+    y: 0,
+    width: 3,
+    advance: 4,
+};
 
-impl Font {
+impl FontSource {
     /// The last pack defining `fonts/<name>.ron` wins (resource packs included).
     pub fn load(packs: &PackSet, name: &str, errors: &mut Vec<PackError>) -> Option<Self> {
         let path = packs
@@ -53,11 +78,41 @@ impl Font {
             .rev()
             .map(|pack| pack.root.join("fonts").join(format!("{name}.ron")))
             .find(|path| path.is_file())?;
-        let built = read_ron::<FontFile>(&path)
-            .and_then(|file| Self::build(&file).map_err(|m| PackError::invalid(&path, m)));
+        let ttf = path.with_extension("ttf");
+        let built = if ttf.is_file() {
+            read_ron::<truetype::TrueTypeDef>(&path).and_then(|def| {
+                let bytes =
+                    std::fs::read(&ttf).map_err(|e| PackError::invalid(&ttf, e.to_string()))?;
+                TrueTypeSource::new(bytes, def)
+                    .map(Self::TrueType)
+                    .map_err(|m| PackError::invalid(&ttf, m))
+            })
+        } else {
+            read_ron::<FontFile>(&path).and_then(|file| {
+                Font::build(&file)
+                    .map(Self::Pixel)
+                    .map_err(|m| PackError::invalid(&path, m))
+            })
+        };
         built.map_err(|error| errors.push(error)).ok()
     }
 
+    /// Drawn again for each interface scale (pixel fonts are drawn once).
+    pub fn is_scalable(&self) -> bool {
+        matches!(self, Self::TrueType(_))
+    }
+
+    /// The font drawn for `density` atlas pixels per interface pixel, or the largest
+    /// density below it whose atlas fits.
+    pub fn font(&self, density: u32) -> Font {
+        match self {
+            Self::Pixel(font) => font.clone(),
+            Self::TrueType(source) => source.font(density),
+        }
+    }
+}
+
+impl Font {
     /// Fails on glyphs taller than a line or a font too big for the interface atlas.
     fn build(file: &FontFile) -> Result<Self, String> {
         let cap = file.ascent.saturating_sub(7);
@@ -99,18 +154,13 @@ impl Font {
                 },
             );
         }
-        let fallback = Glyph {
-            x: 0,
-            y: 0,
-            width: 3,
-            advance: 4,
-        };
         draw_box(&mut atlas, file.ascent, file.line_height);
         Ok(Self {
             atlas,
             line_height: cell_h,
+            density: 1,
             glyphs,
-            fallback,
+            fallback: FALLBACK,
         })
     }
 
@@ -119,11 +169,13 @@ impl Font {
         self.glyphs.get(&ch).copied().unwrap_or(self.fallback)
     }
 
+    /// In interface pixels, rounded up.
     pub fn width(&self, text: &str) -> u32 {
         text.chars()
             .map(|c| self.glyph(c).advance)
             .sum::<u32>()
             .saturating_sub(SPACING)
+            .div_ceil(self.density)
     }
 }
 

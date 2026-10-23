@@ -71,14 +71,14 @@ impl UiAtlas {
         Some(Rect::new(x as i32, y as i32, ICON_SIZE.0, ICON_SIZE.1))
     }
 
-    /// Glyph rectangle in the atlas.
+    /// Glyph rectangle in the atlas and pen advance, in atlas pixels.
     pub fn glyph(&self, ch: char) -> (Rect, u32) {
         let glyph = self.font.glyph(ch);
         let rect = Rect::new(
             glyph.x as i32,
             glyph.y as i32,
             glyph.width,
-            self.font.line_height,
+            self.font.line_height * self.font.density,
         );
         (rect, glyph.advance)
     }

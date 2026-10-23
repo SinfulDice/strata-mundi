@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 fluent-bundle.workspace = true
+fontdue.workspace = true
 glam.workspace = true
 fluent-syntax.workspace = true
 png.workspace = true

@@ -17,7 +17,7 @@ use crate::gameplay::Gameplay;
 use crate::hotbar::Hotbar;
 use crate::input::{Action, InputDevice, KeyNames};
 use crate::render::{Gpu, UiPipeline};
-use crate::settings::Settings;
+use crate::settings::{FontChoice, Settings};
 use crate::ui::{
     Hit, ICON_SIZE, Node, Rect, ScreenDef, ScreenModel, UiAssets, UiAtlas, UiContext, auto_scale,
     draw_screen,
@@ -75,6 +75,8 @@ pub struct Screens {
     device: InputDevice,
     /// Announced on the title screen.
     pub newer_version: Option<String>,
+    /// The font drawn into the atlas and its density, redrawn when either changes.
+    atlas_font: (FontChoice, u32),
 }
 
 impl Screens {
@@ -86,7 +88,8 @@ impl Screens {
         settings: Settings,
         settings_path: PathBuf,
     ) -> Self {
-        let atlas = UiAtlas::build(content, assets.font.clone());
+        let font = settings.interface.font;
+        let atlas = UiAtlas::build(content, assets.font_for(font).font(1));
         let pipeline = UiPipeline::new(gpu, color_format, &atlas.image);
         Self {
             assets,
@@ -113,6 +116,7 @@ impl Screens {
             labels_stale: true,
             device: InputDevice::KeyboardMouse,
             newer_version: None,
+            atlas_font: (font, 1),
         }
     }
 
@@ -145,6 +149,19 @@ impl Screens {
             scroll: 0,
         });
         self.reset_focus();
+    }
+
+    /// World captures in the atlas are lost: lists upload them again when opened.
+    fn refresh_font(&mut self, gpu: &Gpu, content: &Content) {
+        let choice = self.settings.interface.font;
+        let source = self.assets.font_for(choice);
+        let density = if source.is_scalable() { self.scale } else { 1 };
+        if (choice, density) == self.atlas_font {
+            return;
+        }
+        self.atlas_font = (choice, density);
+        self.atlas = UiAtlas::build(content, source.font(density));
+        self.pipeline.write_atlas(gpu, 0, 0, &self.atlas.image);
     }
 
     pub fn show_crash(&mut self) {
@@ -271,6 +288,7 @@ impl Screens {
             0 => fitting,
             chosen => chosen.min(auto_scale(size.0, size.1, u32::MAX)),
         };
+        self.refresh_font(gpu, content);
         let screen = Rect::new(0, 0, size.0 / self.scale, size.1 / self.scale);
         let editor = matches!(self.stack.last(), Some(Menu::HudEditor { .. }));
         let language = self.settings.interface.language.clone();

@@ -25,6 +25,7 @@ dirs = "7"
 crossbeam-channel = "0.5"
 fastnoise-lite = { version = "1.1", features = ["f64"] }
 fluent-bundle = "0.16"
+fontdue = "0.9"
 fluent-syntax = "0.12"
 gilrs = "0.11"
 glam = { version = "0.34", features = ["serde"] }

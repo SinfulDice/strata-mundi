@@ -173,7 +173,7 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 - **Choix** : `config/settings.toml` remplace `interface.toml` ; quatre sections (`graphics`, `interface`, `controls`, `game`) et un `preset` (absent = « personnalisé »). Toute valeur manquante ou invalide reprend sa valeur par défaut, le reste du fichier est gardé. Les touches sont écrites par action (`MoveForward = [{ Key = "KeyW" }, …]`) pour rester modifiables à la main.
 - **Application à chaud** : l'écran d'options modifie une copie ; chaque image, la session la compare à la copie en vigueur et ne refait que ce qui a changé (re-maillage, échantillonneur, VSync…).
-- **Passe finale** (`render/post.rs`) uniquement si l'échelle de rendu ≠ 100 % ou si un filtre daltonien est actif : coût nul sinon. Filtres : simulation (Machado 2009) puis correction « daltonize ».
+- **Passe finale** (`render/post.rs`) uniquement si l'échelle de rendu ≠ 100 % ou si un filtre daltonien est actif : coût nul sinon. Filtres : méthode « daltonize » de Fidaner, Lin et Ozguven (simulation LMS, puis report de l’écart vers des couleurs distinguables).
 - **Option `--preset`** : appliquée au lancement sans être écrite, sauf si le joueur modifie ensuite un réglage.
 
 ## D030 — Mises à jour et plantages : `ureq` et `open` (v0.1, jalon 8)

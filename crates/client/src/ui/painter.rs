@@ -77,21 +77,33 @@ impl<'a> Painter<'a> {
         self.atlas.font.line_height
     }
 
+    /// Glyph sizes are in atlas pixels, `density` per interface pixel: a dense font
+    /// lands on whole screen pixels when the density matches the interface scale.
     fn text_plain(&mut self, x: i32, y: i32, text: &str, color: Rgba, size: u32) -> u32 {
-        let mut pen = x;
+        let step = size as f32 / self.atlas.font.density as f32;
+        let mut pen = x as f32;
         for ch in text.chars() {
             let (source, advance) = self.atlas.glyph(ch);
-            let dest = Rect::new(pen, y, source.w * size, source.h * size);
-            self.quad(dest, source, color);
-            pen += (advance * size) as i32;
+            let (w, h) = (source.w as f32 * step, source.h as f32 * step);
+            self.quad_at([pen, y as f32], [w, h], source, color);
+            pen += advance as f32 * step;
         }
-        (pen - x).max(0) as u32
+        (pen - x as f32).ceil().max(0.0) as u32
     }
 
     fn quad(&mut self, dest: Rect, source: Rect, color: Rgba) {
+        let (origin, size) = (
+            [dest.x as f32, dest.y as f32],
+            [dest.w as f32, dest.h as f32],
+        );
+        self.quad_at(origin, size, source, color);
+    }
+
+    /// `origin` and `size` in interface pixels, possibly fractional.
+    fn quad_at(&mut self, origin: [f32; 2], size: [f32; 2], source: Rect, color: Rgba) {
         let s = self.scale as f32;
-        let (x0, y0) = (dest.x as f32 * s, dest.y as f32 * s);
-        let (x1, y1) = (x0 + dest.w as f32 * s, y0 + dest.h as f32 * s);
+        let (x0, y0) = ((origin[0] * s).round(), (origin[1] * s).round());
+        let (x1, y1) = (x0 + (size[0] * s).round(), y0 + (size[1] * s).round());
         let (u0, v0) = (source.x as f32, source.y as f32);
         let (u1, v1) = (u0 + source.w as f32, v0 + source.h as f32);
         let base = self.vertices.len() as u32;

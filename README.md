@@ -62,6 +62,7 @@ Le manuel technique, écrit pour les débutants, est dans [`docs/explications/`]
 
 - **Code** : licence MIT (`LICENSE`).
 - **Contenu** (textures, sons, musiques, textes, lore, traductions, textes du wiki) : **CC BY-NC 4.0** (`LICENSE-CONTENT`) — partage et modification libres avec attribution, sans usage commercial.
+- **Police lisible** (option d'accessibilité) : DejaVu Sans, sous sa propre licence libre (`assets/packs/strata/fonts/readable-LICENSE.txt`).
 
 ## Contribuer
 
