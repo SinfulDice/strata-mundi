@@ -1,8 +1,14 @@
 // Global palette: every texture takes its colors here, dark to light.
 // A resource pack can restyle the whole game by replacing ramps.
-// Style « classique » (proche de Minecraft), en attente de validation.
+// Style « classique » (proche de Minecraft), choisi le 23/10/2026.
 {
     "stone": ["#5e5e64", "#727278", "#85858b", "#9a9aa0"],
+    "deep_stone": ["#34343c", "#43434c", "#52525c", "#62626c"],
+    "sandstone": ["#b89a62", "#c9ad74", "#d8be86", "#e4cd98"],
+    "ice": ["#7fa8e0c8", "#93b8eac8", "#a8c8f2c8", "#c0dafac8"],
+    "fir_bark": ["#2e2014", "#3b2a1b", "#4a3522", "#59412a"],
+    "fir_wood": ["#5e4428", "#735432", "#87643c", "#9a7547"],
+    "fir_leaves": ["#1c3f24", "#25502e", "#2f6238", "#3a7343"],
     "dirt": ["#5b3d27", "#6e4b30", "#82593a", "#956847"],
     "grass": ["#3f6e2a", "#4f8434", "#5f9a3e", "#72ad4b"],
     "sand": ["#c9b27c", "#d6c08a", "#e0cc98", "#e9d8a8"],

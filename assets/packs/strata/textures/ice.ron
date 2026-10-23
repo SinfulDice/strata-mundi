@@ -1,0 +1,1 @@
+Material(ramp: "ice", pattern: Noise(cells: (2, 2), octaves: 2))

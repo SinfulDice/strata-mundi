@@ -1,5 +1,7 @@
 # Maquettes — choix du style des textures (v0.1, jalon 2)
 
+> **Choix : style 1, classique** (23/10/2026, voir `docs/decisions.md`, D017). Les autres palettes restent ici comme exemples de packs de ressources.
+
 Trois planches d'essai, générées par le jeu (`strata --texture-sheet`) sur le même échantillon. Seule la **palette globale** change : les dessins (motifs procéduraux et sprites) sont identiques.
 
 | Planche | Style | Idée |

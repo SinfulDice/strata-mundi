@@ -9,6 +9,8 @@ pub enum GpuError {
     NoDevice(#[from] wgpu::RequestDeviceError),
     #[error("could not create the window surface: {0}")]
     Surface(#[from] wgpu::CreateSurfaceError),
+    #[error("{count} textures exceed what this graphics card supports ({max})")]
+    TooManyTextures { count: usize, max: u32 },
 }
 
 /// The graphics device shared by every window and off-screen target.

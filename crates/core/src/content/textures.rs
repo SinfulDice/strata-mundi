@@ -1,8 +1,10 @@
-use super::png_file::{missing_texture, read_texture_png, upscale};
+use super::png_file::{missing_texture, read_texture_png};
 use super::registry::{Registry, TextureId};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, category_files, read_ron};
-use crate::texture::{BASE_SIZE, Palette, PaletteFile, RgbaImage, Source, TextureRecipe, generate};
+use crate::texture::{
+    BASE_SIZE, Palette, PaletteFile, RgbaImage, Source, TextureRecipe, generate, upscale,
+};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
@@ -43,12 +45,20 @@ impl TextureLibrary {
                 errors.push(PackError::invalid(path, message));
                 missing_texture(BASE_SIZE)
             });
-            images.insert(id.clone(), upscale(&image, resolution));
+            if images
+                .insert(id.clone(), upscale(&image, resolution))
+                .is_none()
+            {
+                errors.push(PackError::invalid(
+                    path,
+                    "too many textures (65 536 at most)",
+                ));
+            }
         }
         Self { images, resolution }
     }
 
-    /// Layer of `id`, or the "missing" layer.
+    /// Layer of `id`, if such a texture exists.
     pub fn layer(&self, id: &Identifier) -> Option<TextureId> {
         self.images.key(id)
     }
@@ -96,7 +106,10 @@ fn layered_sources(
             }
         }
         for id in pack.removals.get("textures") {
-            sources.remove(id);
+            if sources.remove(id).is_none() {
+                let message = format!("cannot remove `{id}`: no such texture");
+                errors.push(PackError::invalid(&pack.root.join("remove.ron"), message));
+            }
         }
     }
     sources

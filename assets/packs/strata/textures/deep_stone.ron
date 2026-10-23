@@ -1,0 +1,1 @@
+Material(ramp: "deep_stone", pattern: Noise(cells: (8, 4), octaves: 2))

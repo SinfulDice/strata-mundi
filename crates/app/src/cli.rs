@@ -31,7 +31,7 @@ pub struct Args {
     pub resource_packs_dir: PathBuf,
 
     /// Language: fr, en or lol.
-    #[arg(long, default_value = "fr", value_parser = ["fr", "en", "lol"])]
+    #[arg(long, default_value = "fr", value_parser = strata_core::lang::LANGUAGES)]
     pub lang: String,
 
     /// Run a scripted scene from `assets/bench-scenes/<SCENE>.ron` and write a report

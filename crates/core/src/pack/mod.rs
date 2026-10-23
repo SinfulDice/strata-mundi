@@ -30,6 +30,15 @@ impl PackSet {
             (a.manifest.priority, &a.manifest.namespace)
                 .cmp(&(b.manifest.priority, &b.manifest.namespace))
         });
+        for pair in packs.windows(2) {
+            if pair[0].manifest.namespace == pair[1].manifest.namespace {
+                let message = format!(
+                    "namespace `{}` is used by two packs",
+                    pair[1].manifest.namespace
+                );
+                errors.push(PackError::invalid(&pair[1].root, message));
+            }
+        }
         Self { packs }
     }
 

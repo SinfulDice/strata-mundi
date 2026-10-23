@@ -61,14 +61,18 @@ pub struct Target<'a> {
 }
 
 impl Renderer {
-    pub fn new(gpu: &Gpu, color_format: wgpu::TextureFormat, textures: &TextureLibrary) -> Self {
+    pub fn new(
+        gpu: &Gpu,
+        color_format: wgpu::TextureFormat,
+        textures: &TextureLibrary,
+    ) -> Result<Self, GpuError> {
         let layers: Vec<_> = textures.images.iter().map(|(_, _, image)| image).collect();
-        let textures = TextureArray::new(&gpu.device, &gpu.queue, &layers);
-        Self {
+        let textures = TextureArray::new(&gpu.device, &gpu.queue, &layers)?;
+        Ok(Self {
             blocks: BlockPipeline::new(&gpu.device, color_format, &textures),
             depth: DepthBuffer::new(&gpu.device, (1, 1)),
             objects: Vec::new(),
-        }
+        })
     }
 
     pub fn add_object(&mut self, gpu: &Gpu, mesh: &MeshData, origin: DVec3) {

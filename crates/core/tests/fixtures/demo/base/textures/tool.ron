@@ -1,0 +1,21 @@
+Sprite(
+    colors: {'x': ("grey", 1)},
+    rows: [
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+    ],
+)

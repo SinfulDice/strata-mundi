@@ -8,7 +8,7 @@ mod textures;
 
 pub use block::{Block, BlockDef, BlockTextures, Face, RenderKind};
 pub use item::{Item, ItemDef, ItemKind};
-pub use png_file::{ACCEPTED_SIZES, missing_texture, upscale};
+pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, ItemId, Registry, RegistryId, TextureId};
 pub use textures::{TextureLibrary, missing_id};
 
@@ -120,8 +120,15 @@ fn load_blocks(
             sound: value.sound,
             category: value.category,
             has_item: value.has_item,
+            max_stack: value.max_stack.max(1),
+            cull_same: value.cull_same,
         };
-        blocks.insert(id, block);
+        if blocks.insert(id, block).is_none() {
+            errors.push(PackError::invalid(
+                &source,
+                "too many blocks (65 536 at most)",
+            ));
+        }
     }
     blocks
 }
@@ -137,7 +144,7 @@ fn load_items(
         items.insert(
             id.clone(),
             Item {
-                max_stack: 64,
+                max_stack: block.max_stack,
                 category: block.category.clone(),
                 kind: ItemKind::Block(block_id),
             },

@@ -1,3 +1,4 @@
+use super::GpuError;
 use strata_core::texture::RgbaImage;
 
 /// All block textures in one GPU texture array: one layer per texture, nearest filtering.
@@ -8,7 +9,18 @@ pub struct TextureArray {
 
 impl TextureArray {
     /// Layers all have the library resolution (`TextureLibrary` scales them on load).
-    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, layers: &[&RgbaImage]) -> Self {
+    pub fn new(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        layers: &[&RgbaImage],
+    ) -> Result<Self, GpuError> {
+        let max = device.limits().max_texture_array_layers;
+        if layers.len() > max as usize {
+            return Err(GpuError::TooManyTextures {
+                count: layers.len(),
+                max,
+            });
+        }
         let (width, height) = layers.first().map_or((1, 1), |l| (l.width(), l.height()));
         let size = wgpu::Extent3d {
             width,
@@ -62,6 +74,6 @@ impl TextureArray {
             min_filter: wgpu::FilterMode::Nearest,
             ..Default::default()
         });
-        Self { view, sampler }
+        Ok(Self { view, sampler })
     }
 }

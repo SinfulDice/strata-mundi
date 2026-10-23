@@ -18,7 +18,17 @@ pub struct Sourced<T> {
 #[serde(transparent)]
 pub struct Removals(HashMap<String, Vec<Identifier>>);
 
+/// Categories `remove.ron` may name.
+pub const REMOVABLE: [&str; 3] = ["blocks", "items", "textures"];
+
 impl Removals {
+    pub fn unknown_categories(&self) -> impl Iterator<Item = &str> {
+        self.0
+            .keys()
+            .map(String::as_str)
+            .filter(|c| !REMOVABLE.contains(c))
+    }
+
     pub fn get(&self, category: &str) -> &[Identifier] {
         self.0.get(category).map_or(&[], Vec::as_slice)
     }
@@ -49,7 +59,10 @@ impl PackSet {
                 }
             }
             for id in pack.removals.get(category) {
-                entries.remove(id);
+                if entries.remove(id).is_none() {
+                    let message = format!("cannot remove `{id}`: no such entry in `{category}`");
+                    errors.push(PackError::invalid(&pack.root.join("remove.ron"), message));
+                }
             }
         }
         entries

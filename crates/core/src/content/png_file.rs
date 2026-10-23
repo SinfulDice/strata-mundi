@@ -42,25 +42,6 @@ fn to_rgba(pixel: &[u8]) -> Rgba {
     }
 }
 
-/// Nearest-neighbour upscale to `size` (a multiple of the image size), keeping pixel art crisp.
-pub fn upscale(image: &RgbaImage, size: u32) -> RgbaImage {
-    if image.width() == size {
-        return image.clone();
-    }
-    let factor = (size / image.width().max(1)).max(1);
-    let mut scaled = RgbaImage::new(size, size, Rgba([0; 4]));
-    for y in 0..size {
-        for x in 0..size {
-            let source = (
-                (x / factor).min(image.width() - 1),
-                (y / factor).min(image.height() - 1),
-            );
-            scaled.set(x, y, image.get(source.0, source.1));
-        }
-    }
-    scaled
-}
-
 /// Magenta and black checkerboard shown wherever a texture is missing or broken.
 pub fn missing_texture(size: u32) -> RgbaImage {
     let mut image = RgbaImage::new(size, size, Rgba([0, 0, 0, 255]));

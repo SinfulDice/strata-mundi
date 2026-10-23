@@ -43,7 +43,7 @@ impl Session {
             .map_err(crate::render::GpuError::from)?;
         let gpu = Gpu::new(instance, Some(&surface))?;
         let surface = WindowSurface::new(&gpu, window, surface, config.vsync);
-        let mut renderer = Renderer::new(&gpu, surface.format(), &config.content.textures);
+        let mut renderer = Renderer::new(&gpu, surface.format(), &config.content.textures)?;
         renderer.add_object(&gpu, &config.scene, glam::DVec3::ZERO);
         Ok(Self {
             gpu,

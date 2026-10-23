@@ -6,7 +6,8 @@ use crate::render::MeshData;
 use crate::screenshot::{ScreenshotError, render_image, write_png};
 use glam::DVec3;
 use std::path::Path;
-use strata_core::content::{Content, TextureId, upscale};
+use strata_core::content::{Content, TextureId};
+use strata_core::texture::upscale;
 use strata_core::texture::{Rgba, RgbaImage};
 
 const TILE: u32 = 64;

@@ -88,3 +88,9 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 ## D016 — PNG dans `core` (v0.1, jalon 2)
 
 - **Choix** : la crate `png` (déjà utilisée par le client) est aussi utilisée par `core` pour lire les textures des packs : `core` reste sans GPU et testable partout.
+
+## D017 — Style des textures : « classique » (v0.1, jalon 2)
+
+- **Contexte** : trois planches d'essai (classique, chaleureux, pastel) produites avec `--texture-sheet` sur le même échantillon (`docs/maquettes/`).
+- **Choix de l'utilisateur (23/10/2026)** : style **1, classique** — tons naturels proches de Minecraft, contrastes moyens. Sa palette est celle de `assets/packs/strata/palette.ron`.
+- Les deux autres palettes restent dans `docs/maquettes/styles/` comme exemples de packs de ressources.

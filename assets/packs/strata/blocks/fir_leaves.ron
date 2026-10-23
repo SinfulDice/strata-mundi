@@ -1,0 +1,9 @@
+Block(
+    textures: All("strata:fir_leaves"),
+    render: Cutout,
+    cull_same: false,
+    light_opacity: 1,
+    hardness: 0.2,
+    sound: Some("strata:grass"),
+    category: Some("strata:natural"),
+)

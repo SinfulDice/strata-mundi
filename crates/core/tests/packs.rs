@@ -53,6 +53,10 @@ fn broken_pack_gives_clear_errors_without_crashing() {
         "{messages:#?}"
     );
     assert!(mentions("reference loop"), "{messages:#?}");
+    assert!(
+        mentions("`octaves` is 99, the maximum is 6"),
+        "{messages:#?}"
+    );
     let fine = content.blocks.by_identifier(&id("good:fine")).unwrap();
     assert_ne!(fine.faces[0], TextureId::MISSING);
     let missing = content
@@ -98,4 +102,70 @@ fn every_text_is_translated_in_every_language() {
         content.translations.text("lol", "block-strata-stone"),
         "ROCK"
     );
+}
+
+fn texture(content: &Content, name: &str) -> strata_core::texture::RgbaImage {
+    content
+        .textures
+        .images
+        .by_identifier(&id(name))
+        .unwrap()
+        .clone()
+}
+
+#[test]
+fn ores_are_painted_on_high_resolution_png_bases() {
+    let (content, errors) = load(&fixtures("hires"));
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(content.textures.resolution, 32);
+    let ore = texture(&content, "base:ore");
+    assert_eq!((ore.width(), ore.height()), (32, 32));
+    assert_ne!(ore, texture(&content, "base:stone"));
+}
+
+#[test]
+fn generated_textures_are_deterministic() {
+    let (first, _) = load(&game_packs());
+    let (second, _) = load(&game_packs());
+    for (texture_id, name, image) in first.textures.images.iter() {
+        assert_eq!(
+            second.textures.images.get(texture_id),
+            Some(image),
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn recolors_chain_their_swaps() {
+    let (content, _) = load(&fixtures("demo"));
+    let blue = strata_core::texture::Rgba([0, 0, 0x80, 255]);
+    assert_eq!(texture(&content, "base:tool_blue").get(3, 3), blue);
+}
+
+#[test]
+fn resource_packs_restyle_palettes_and_replace_textures() {
+    let mut errors = Vec::new();
+    let packs = PackSet::discover(&fixtures("demo"), &mut errors);
+    let resources = PackSet::named(&fixtures("resource"), &["restyle".into()], &mut errors);
+    let (plain, _) = Content::load(&packs, &PackSet::default());
+    let (styled, more) = Content::load(&packs, &resources);
+    errors.extend(more);
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_ne!(texture(&plain, "base:rock"), texture(&styled, "base:rock"));
+    let red = strata_core::texture::Rgba([255, 0, 0, 255]);
+    assert_eq!(texture(&styled, "base:tool").get(0, 0), red);
+}
+
+#[test]
+fn missing_translations_are_reported() {
+    let (content, _) = load(&fixtures("lang"));
+    let missing = content.translations.missing(&[]);
+    for expected in [("en", "bye"), ("lol", "hello"), ("lol", "bye")] {
+        assert!(
+            missing.contains(&(expected.0, expected.1.to_string())),
+            "{expected:?} not in {missing:?}"
+        );
+    }
+    assert_eq!(missing.len(), 3);
 }

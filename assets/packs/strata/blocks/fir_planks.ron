@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:fir_planks"),
+    hardness: 2.0,
+    sound: Some("strata:wood"),
+    category: Some("strata:building"),
+)

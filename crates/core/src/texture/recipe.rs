@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 
 /// Size of procedurally generated textures, in pixels.
 pub const BASE_SIZE: u32 = 16;
+const MAX_OCTAVES: u32 = 6;
+const MAX_CLUSTERS: u32 = 64;
 
 /// How a texture is drawn, from a `textures/<name>.ron` file. Colors always come from
 /// named ramps of the global palette, so a resource pack can restyle everything at once.
@@ -105,26 +107,17 @@ impl TextureRecipe {
         }
     }
 
-    /// `base` is the already generated base texture, when `self.base()` is `Some`.
-    pub fn paint(
-        &self,
-        painter: &Painter<'_>,
-        base: Option<RgbaImage>,
-    ) -> Result<RgbaImage, String> {
-        let base = || {
-            base.clone()
-                .ok_or_else(|| "missing base texture".to_string())
-        };
+    /// Paints this recipe's own pixels on a transparent `BASE_SIZE` canvas; the caller
+    /// composes it over the base texture, whatever the base resolution.
+    pub fn paint_layer(&self, painter: &Painter<'_>) -> Result<RgbaImage, String> {
+        self.validate()?;
+        let blank = RgbaImage::new(BASE_SIZE, BASE_SIZE, Rgba([0; 4]));
         match self {
-            Self::Material { ramp, pattern } => {
-                let blank = RgbaImage::new(BASE_SIZE, BASE_SIZE, Rgba([0; 4]));
+            Self::Material { ramp, pattern } | Self::Overlay { ramp, pattern, .. } => {
                 patterns::paint(blank, painter.ramp(ramp)?, pattern, painter)
             }
-            Self::Overlay { ramp, pattern, .. } => {
-                patterns::paint(base()?, painter.ramp(ramp)?, pattern, painter)
-            }
             Self::Ore { ramp, clusters, .. } => Ok(patterns::ore(
-                base()?,
+                blank,
                 painter.ramp(ramp)?,
                 *clusters,
                 painter.seed,
@@ -132,5 +125,34 @@ impl TextureRecipe {
             Self::Sprite { colors, rows } => sprite::draw(colors, rows, painter),
             Self::Recolor { .. } => Err("recolors are resolved by `generate`".into()),
         }
+    }
+
+    /// Pack data must never freeze or crash the game: parameters are bounded.
+    fn validate(&self) -> Result<(), String> {
+        match self {
+            Self::Ore { clusters, .. } => at_most("clusters", *clusters, MAX_CLUSTERS),
+            Self::Material { pattern, .. } | Self::Overlay { pattern, .. } => match pattern {
+                Pattern::Noise { cells, octaves } => {
+                    at_most("octaves", *octaves, MAX_OCTAVES)?;
+                    at_most("cells", cells.0.max(cells.1), BASE_SIZE)
+                }
+                Pattern::Planks { boards } => at_most("boards", *boards, BASE_SIZE),
+                Pattern::Stripes { period } => at_most("period", *period, BASE_SIZE),
+                Pattern::TopFringe { depth } => at_most("depth", *depth, BASE_SIZE),
+                Pattern::Leaves { holes } if !(0.0..=1.0).contains(holes) => {
+                    Err("`holes` must be between 0 and 1".into())
+                }
+                Pattern::Leaves { .. } | Pattern::Rings { .. } | Pattern::Frame => Ok(()),
+            },
+            Self::Sprite { .. } | Self::Recolor { .. } => Ok(()),
+        }
+    }
+}
+
+fn at_most(name: &str, value: u32, max: u32) -> Result<(), String> {
+    if value <= max {
+        Ok(())
+    } else {
+        Err(format!("`{name}` is {value}, the maximum is {max}"))
     }
 }

@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:deep_diamond_ore"),
+    hardness: 4.5,
+    sound: Some("strata:stone"),
+    category: Some("strata:natural"),
+)

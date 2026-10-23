@@ -1,6 +1,6 @@
-use super::RgbaImage;
 use super::color::Palette;
-use super::recipe::{BASE_SIZE, Painter, TextureRecipe};
+use super::recipe::{Painter, TextureRecipe};
+use super::{Rgba, RgbaImage};
 use crate::id::Identifier;
 use std::collections::BTreeMap;
 
@@ -39,23 +39,37 @@ fn generate_inner<'a>(
     if let TextureRecipe::Recolor { base, swap: inner } = recipe {
         return generate_inner(base, lookup, palette, &compose(inner, swap), depth + 1);
     }
-    let base = recipe
-        .base()
-        .map(|base| generate_inner(base, lookup, palette, swap, depth + 1))
-        .transpose()?;
-    if let Some(base) = &base
-        && (base.width(), base.height()) != (BASE_SIZE, BASE_SIZE)
-    {
-        return Err(format!(
-            "base of `{id}` must be {BASE_SIZE}×{BASE_SIZE} to be painted on"
-        ));
-    }
     let painter = Painter {
         palette,
         swap,
         seed: seed_of(id),
     };
-    recipe.paint(&painter, base)
+    let layer = recipe.paint_layer(&painter)?;
+    let Some(base) = recipe.base() else {
+        return Ok(layer);
+    };
+    let mut image = generate_inner(base, lookup, palette, swap, depth + 1)?;
+    image.draw(&upscale(&layer, image.width()), 0, 0);
+    Ok(image)
+}
+
+/// Nearest-neighbour upscale to `size` (a multiple of the image size), keeping pixel art crisp.
+pub fn upscale(image: &RgbaImage, size: u32) -> RgbaImage {
+    if image.width() == size {
+        return image.clone();
+    }
+    let factor = (size / image.width().max(1)).max(1);
+    let mut scaled = RgbaImage::new(size, size, Rgba([0; 4]));
+    for y in 0..size {
+        for x in 0..size {
+            let source = (
+                (x / factor).min(image.width() - 1),
+                (y / factor).min(image.height() - 1),
+            );
+            scaled.set(x, y, image.get(source.0, source.1));
+        }
+    }
+    scaled
 }
 
 /// `inner` renames first, then `outer` renames the result.

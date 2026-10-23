@@ -130,6 +130,16 @@ pub struct BlockDef {
     /// Whether an item is created for this block.
     #[serde(default = "yes")]
     pub has_item: bool,
+    /// Stack size of the block's item.
+    #[serde(default = "default_stack")]
+    pub max_stack: u16,
+    /// Hide the face between two identical non-opaque blocks (water, glass); leaves keep it.
+    #[serde(default = "yes")]
+    pub cull_same: bool,
+}
+
+fn default_stack() -> u16 {
+    64
 }
 
 fn yes() -> bool {
@@ -156,6 +166,8 @@ pub struct Block {
     pub sound: Option<Identifier>,
     pub category: Option<Identifier>,
     pub has_item: bool,
+    pub max_stack: u16,
+    pub cull_same: bool,
 }
 
 impl Block {
@@ -169,6 +181,8 @@ impl Block {
             sound: None,
             category: None,
             has_item: false,
+            max_stack: 64,
+            cull_same: true,
         }
     }
 

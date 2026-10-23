@@ -1,0 +1,1 @@
+Material(ramp: "fir_bark", pattern: Noise(cells: (8, 2), octaves: 2))

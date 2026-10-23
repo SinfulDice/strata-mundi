@@ -156,9 +156,10 @@ pub fn ore(mut image: RgbaImage, ramp: &Ramp, clusters: u32, seed: u64) -> RgbaI
         }
     }
     let last = ramp.len().saturating_sub(1);
+    let wrap = |v: i32| v.rem_euclid(S as i32);
     for &(x, y) in &cells {
-        let lit = !cells.contains(&(x - 1, y - 1));
-        let shaded = !cells.contains(&(x + 1, y + 1));
+        let lit = !cells.contains(&(wrap(x - 1), wrap(y - 1)));
+        let shaded = !cells.contains(&(wrap(x + 1), wrap(y + 1)));
         let index = match (lit, shaded) {
             (true, false) => last,
             (false, true) => 0,

@@ -1,0 +1,1 @@
+Overlay(base: "strata:dirt", ramp: "snow", pattern: TopFringe(depth: 4))

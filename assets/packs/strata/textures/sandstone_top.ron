@@ -1,0 +1,1 @@
+Material(ramp: "sandstone", pattern: Noise(cells: (8, 8), octaves: 1))

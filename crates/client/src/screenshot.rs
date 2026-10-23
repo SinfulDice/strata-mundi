@@ -53,7 +53,7 @@ pub fn render_image(
     size: (u32, u32),
 ) -> Result<RgbaImage, ScreenshotError> {
     let gpu = Gpu::new(Gpu::create_instance(), None)?;
-    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures);
+    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures)?;
     renderer.add_object(&gpu, scene, DVec3::ZERO);
     let target = OffscreenTarget::new(&gpu, size);
     let mut encoder = gpu.device.create_command_encoder(&Default::default());

@@ -10,6 +10,6 @@ mod recipe;
 mod sprite;
 
 pub use color::{HexColor, Palette, PaletteFile, Ramp, parse_hex};
-pub use generate::{Source, generate, seed_of};
+pub use generate::{Source, generate, seed_of, upscale};
 pub use image::{Rgba, RgbaImage};
 pub use recipe::{BASE_SIZE, ColorRef, Pattern, TextureRecipe};

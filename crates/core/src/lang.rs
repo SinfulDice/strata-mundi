@@ -119,6 +119,9 @@ impl Translations {
         let pattern = bundle.get_message(key)?.value()?;
         let mut errors = Vec::new();
         let text = bundle.format_pattern(pattern, args, &mut errors);
+        for error in errors {
+            tracing::warn!(%error, key, language, "translation could not be formatted");
+        }
         Some(text.into_owned())
     }
 
