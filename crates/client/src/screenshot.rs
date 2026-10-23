@@ -1,11 +1,12 @@
 use crate::camera::Camera;
 use crate::render::{
-    Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, Renderer, Target,
+    Gpu, GpuError, MeshData, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, Renderer, Target,
 };
-use crate::test_scene;
+use glam::DVec3;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
+use strata_core::content::Content;
 use strata_core::texture::RgbaImage;
 use thiserror::Error;
 
@@ -34,11 +35,27 @@ pub struct ScreenshotRequest {
 }
 
 /// Renders one frame without any window (works headless with Mesa lavapipe) and saves it as PNG.
-pub fn capture(request: &ScreenshotRequest) -> Result<(), ScreenshotError> {
+pub fn capture(
+    content: &Content,
+    scene: &MeshData,
+    request: &ScreenshotRequest,
+) -> Result<(), ScreenshotError> {
+    let image = render_image(content, scene, &request.camera, request.size)?;
+    write_png(&request.path, &image)?;
+    tracing::info!(path = %request.path.display(), "screenshot saved");
+    Ok(())
+}
+
+pub fn render_image(
+    content: &Content,
+    scene: &MeshData,
+    camera: &Camera,
+    size: (u32, u32),
+) -> Result<RgbaImage, ScreenshotError> {
     let gpu = Gpu::new(Gpu::create_instance(), None)?;
-    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &test_scene::textures());
-    test_scene::populate(&mut renderer, &gpu);
-    let target = OffscreenTarget::new(&gpu, request.size);
+    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures);
+    renderer.add_object(&gpu, scene, DVec3::ZERO);
+    let target = OffscreenTarget::new(&gpu, size);
     let mut encoder = gpu.device.create_command_encoder(&Default::default());
     renderer.render(
         &gpu,
@@ -47,13 +64,10 @@ pub fn capture(request: &ScreenshotRequest) -> Result<(), ScreenshotError> {
             view: &target.view,
             size: target.size,
         },
-        &request.camera,
+        camera,
         None,
     );
-    let image = target.read(&gpu, encoder)?;
-    write_png(&request.path, &image)?;
-    tracing::info!(path = %request.path.display(), "screenshot saved");
-    Ok(())
+    Ok(target.read(&gpu, encoder)?)
 }
 
 pub fn write_png(path: &Path, image: &RgbaImage) -> Result<(), ScreenshotError> {

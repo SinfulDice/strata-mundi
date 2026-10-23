@@ -1,16 +1,20 @@
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 mod cli;
+mod content;
 mod logging;
 mod paths;
 
 use anyhow::Context;
 use clap::Parser;
 use glam::DVec3;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
 use strata_client::screenshot::{ScreenshotRequest, capture};
+use strata_client::settings::Preset;
+use strata_client::texture_sheet::write_texture_sheet;
 use strata_client::{ClientConfig, run};
 use strata_server::IntegratedServer;
 
@@ -20,20 +24,28 @@ fn main() -> anyhow::Result<()> {
     let args = cli::Args::parse();
     logging::init()?;
     tracing::info!(version = env!("CARGO_PKG_VERSION"), preset = %args.preset, "starting Strata Mundi");
+    let loaded = content::load(&args)?;
     let camera = initial_camera(&args);
-    if let Some(path) = args.screenshot {
-        return Ok(capture(&ScreenshotRequest {
+    if let Some(path) = &args.texture_sheet {
+        return Ok(write_texture_sheet(&loaded.content, &loaded.scene, path)?);
+    }
+    if let Some(path) = args.screenshot.clone() {
+        let request = ScreenshotRequest {
             path,
             size: args.size,
             camera,
-        })?);
+        };
+        return Ok(capture(&loaded.content, &loaded.scene, &request)?);
     }
     let bench = args
         .bench_scene
         .as_deref()
-        .map(|name| load_bench(name, args.preset, args.report_dir.clone()))
+        .map(|name| load_bench(&loaded.assets, name, args.preset, args.report_dir.clone()))
         .transpose()?;
     play(ClientConfig {
+        content: Arc::new(loaded.content),
+        scene: loaded.scene,
+        language: args.lang.clone(),
         camera,
         vsync: bench.is_none(),
         bench,
@@ -51,11 +63,11 @@ fn play(config: ClientConfig) -> anyhow::Result<()> {
 }
 
 fn load_bench(
+    assets: &Path,
     name: &str,
-    preset: strata_client::settings::Preset,
+    preset: Preset,
     report_dir: PathBuf,
 ) -> anyhow::Result<BenchConfig> {
-    let assets = paths::assets_dir().context("assets folder not found")?;
     let scene = BenchScene::load(&assets.join("bench-scenes").join(format!("{name}.ron")))?;
     Ok(BenchConfig {
         scene_name: name.to_owned(),
@@ -66,7 +78,7 @@ fn load_bench(
 }
 
 fn initial_camera(args: &cli::Args) -> Camera {
-    let [x, y, z] = args.pos.unwrap_or([0.5, 0.5, 3.0]);
-    let [yaw, pitch] = args.look.unwrap_or([0.0, 0.0]);
+    let [x, y, z] = args.pos.unwrap_or([-9.5, 13.5, 11.0]);
+    let [yaw, pitch] = args.look.unwrap_or([41.0, -27.0]);
     Camera::new(DVec3::new(x, y, z), yaw, pitch, DEFAULT_FOV)
 }

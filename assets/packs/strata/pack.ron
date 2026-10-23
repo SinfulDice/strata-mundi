@@ -1,0 +1,5 @@
+(
+    namespace: "strata",
+    priority: 0,
+    description: "Contenu de base de Strata Mundi",
+)

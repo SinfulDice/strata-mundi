@@ -1,0 +1,26 @@
+// Small diorama used by `--texture-sheet` and the window until the chunk world exists
+// (milestones 3-4). Fills are applied in order; later ones overwrite earlier ones.
+(
+    fills: [
+        (from: (-6, 0, -6), to: (6, 0, 6), block: "strata:bedrock"),
+        (from: (-6, 1, -6), to: (6, 3, 6), block: "strata:stone"),
+        (from: (-6, 4, -6), to: (6, 5, 6), block: "strata:dirt"),
+        (from: (-6, 6, -6), to: (6, 6, 6), block: "strata:grass_block"),
+        (from: (2, 4, -6), to: (6, 6, -2), block: "strata:sand"),
+        (from: (3, 6, -6), to: (6, 6, -3), block: "strata:water"),
+        (from: (-6, 1, 6), to: (6, 6, 6), block: "strata:stone"),
+        (from: (-5, 2, 6), to: (-5, 2, 6), block: "strata:coal_ore"),
+        (from: (-3, 3, 6), to: (-3, 3, 6), block: "strata:iron_ore"),
+        (from: (-1, 2, 6), to: (-1, 2, 6), block: "strata:gold_ore"),
+        (from: (1, 1, 6), to: (1, 1, 6), block: "strata:diamond_ore"),
+        (from: (3, 4, 6), to: (3, 4, 6), block: "strata:gravel"),
+        (from: (-6, 6, 6), to: (6, 6, 6), block: "strata:grass_block"),
+        (from: (-3, 7, -2), to: (-3, 11, -2), block: "strata:oak_log"),
+        (from: (-5, 10, -4), to: (-1, 11, 0), block: "strata:oak_leaves"),
+        (from: (-4, 12, -3), to: (-2, 12, -1), block: "strata:oak_leaves"),
+        (from: (4, 7, 2), to: (4, 9, 2), block: "strata:cactus"),
+        (from: (1, 7, 3), to: (2, 8, 4), block: "strata:oak_planks"),
+        (from: (0, 7, 3), to: (0, 8, 3), block: "strata:glass"),
+        (from: (-6, 7, 4), to: (-4, 7, 6), block: "strata:snow_block"),
+    ],
+)

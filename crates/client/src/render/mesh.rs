@@ -1,4 +1,5 @@
 use bytemuck::{Pod, Zeroable};
+use strata_core::content::{Face, TextureId};
 use wgpu::util::DeviceExt;
 
 #[repr(C)]
@@ -58,50 +59,56 @@ impl GpuMesh {
     }
 }
 
-/// Unit cube from (0,0,0) to (1,1,1), every face using texture `layer`.
-pub fn cube(layer: u32) -> MeshData {
-    const FACES: [([[f32; 3]; 4], f32); 6] = [
-        (
-            [[0., 1., 1.], [1., 1., 1.], [1., 1., 0.], [0., 1., 0.]],
-            1.0,
-        ),
-        (
-            [[0., 0., 0.], [1., 0., 0.], [1., 0., 1.], [0., 0., 1.]],
-            0.5,
-        ),
-        (
-            [[0., 1., 0.], [1., 1., 0.], [1., 0., 0.], [0., 0., 0.]],
-            0.8,
-        ),
-        (
-            [[1., 1., 1.], [0., 1., 1.], [0., 0., 1.], [1., 0., 1.]],
-            0.8,
-        ),
-        (
-            [[1., 1., 0.], [1., 1., 1.], [1., 0., 1.], [1., 0., 0.]],
-            0.6,
-        ),
-        (
-            [[0., 1., 1.], [0., 1., 0.], [0., 0., 0.], [0., 0., 1.]],
-            0.6,
-        ),
-    ];
-    const UVS: [[f32; 2]; 4] = [[0., 0.], [1., 0.], [1., 1.], [0., 1.]];
-    let mut mesh = MeshData::default();
-    for (corners, shade) in FACES {
-        let base = mesh.vertices.len() as u32;
-        for (position, uv) in corners.into_iter().zip(UVS) {
-            mesh.vertices.push(BlockVertex {
-                position,
+/// Corners (counter-clockwise seen from outside) and directional shade of each face,
+/// in `Face::ALL` order: up, down, north (-Z), south (+Z), east (+X), west (-X).
+const FACES: [([[f32; 3]; 4], f32); 6] = [
+    (
+        [[0., 1., 1.], [1., 1., 1.], [1., 1., 0.], [0., 1., 0.]],
+        1.0,
+    ),
+    (
+        [[0., 0., 0.], [1., 0., 0.], [1., 0., 1.], [0., 0., 1.]],
+        0.5,
+    ),
+    (
+        [[0., 1., 0.], [1., 1., 0.], [1., 0., 0.], [0., 0., 0.]],
+        0.8,
+    ),
+    (
+        [[1., 1., 1.], [0., 1., 1.], [0., 0., 1.], [1., 0., 1.]],
+        0.8,
+    ),
+    (
+        [[1., 1., 0.], [1., 1., 1.], [1., 0., 1.], [1., 0., 0.]],
+        0.6,
+    ),
+    (
+        [[0., 1., 1.], [0., 1., 0.], [0., 0., 0.], [0., 0., 1.]],
+        0.6,
+    ),
+];
+const UVS: [[f32; 2]; 4] = [[0., 0.], [1., 0.], [1., 1.], [0., 1.]];
+
+impl MeshData {
+    /// Adds one face of the unit cube placed at `origin`.
+    pub fn push_face(&mut self, origin: [f32; 3], face: Face, layer: TextureId) {
+        let (corners, shade) = FACES[face.index()];
+        let base = self.vertices.len() as u32;
+        for (corner, uv) in corners.into_iter().zip(UVS) {
+            self.vertices.push(BlockVertex {
+                position: [
+                    origin[0] + corner[0],
+                    origin[1] + corner[1],
+                    origin[2] + corner[2],
+                ],
                 uv,
-                layer,
+                layer: u32::from(layer.0),
                 shade,
             });
         }
-        mesh.indices
+        self.indices
             .extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
     }
-    mesh
 }
 
 #[cfg(test)]
@@ -111,7 +118,10 @@ mod tests {
 
     #[test]
     fn cube_faces_wind_counter_clockwise_outward() {
-        let mesh = cube(0);
+        let mut mesh = MeshData::default();
+        for face in Face::ALL {
+            mesh.push_face([0.0; 3], face, TextureId(0));
+        }
         assert_eq!(mesh.indices.len(), 36);
         for triangle in mesh.indices.chunks(3) {
             let [a, b, c] =

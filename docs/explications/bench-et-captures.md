@@ -9,8 +9,8 @@ Deux outils en ligne de commande permettent de vérifier le jeu sans y jouer :
 ## Comment ça marche
 
 ```sh
-strata --screenshot screenshots/test.png --pos 2.2,1.8,2.6 --look -39,-28 --size 1280x720
-strata --bench-scene cube-orbit --preset ds
+strata --screenshot screenshots/test.png --pos=-12,15.5,14 --look 41,-28 --size 1280x720
+strata --bench-scene preview-orbit --preset ds
 ```
 
 - `--pos x,y,z` : position de la caméra ; `--look lacet,tangage` en degrés (0,0 regarde vers le nord, −Z ; 90 regarde vers l'est, +X ; un tangage positif regarde vers le haut).

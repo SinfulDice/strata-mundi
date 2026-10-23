@@ -1,5 +1,5 @@
 // Reference screenshots checked by the `visual-tester` agent, in the `ultra` and `ds` presets.
 // Fields mirror the command line: `strata --screenshot screenshots/<name>-<preset>.png ...`
 [
-    (name: "test-cube", pos: (2.2, 1.8, 2.6), look: (-39.0, -28.0)),
+    (name: "preview", pos: (-12.0, 15.5, 14.0), look: (41.0, -28.0)),
 ]

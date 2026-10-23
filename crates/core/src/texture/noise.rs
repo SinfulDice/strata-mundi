@@ -12,30 +12,45 @@ pub fn hash(seed: u64, x: i32, y: i32) -> u32 {
     h as u32
 }
 
-fn unit(seed: u64, x: i32, y: i32) -> f32 {
+/// Uniform value in `[0, 1]` for a lattice point.
+pub fn unit(seed: u64, x: i32, y: i32) -> f32 {
     hash(seed, x, y) as f32 / u32::MAX as f32
 }
 
-/// Smooth value noise in `[0, 1]`, with a lattice of `cells` per `period` pixels, wrapping at `period`.
-pub fn tileable_value(seed: u64, x: u32, y: u32, period: u32, cells: u32) -> f32 {
-    let cells = cells.max(1);
-    let fx = x as f32 * cells as f32 / period as f32;
-    let fy = y as f32 * cells as f32 / period as f32;
+/// Smooth value noise in `[0, 1]` with `cells` lattice cells across `period` pixels on each
+/// axis (anisotropic: `(8, 2)` gives vertical streaks), wrapping at `period`.
+pub fn tileable_value(seed: u64, x: u32, y: u32, period: u32, cells: (u32, u32)) -> f32 {
+    let (cx, cy) = (cells.0.max(1), cells.1.max(1));
+    let fx = x as f32 * cx as f32 / period as f32;
+    let fy = y as f32 * cy as f32 / period as f32;
     let (x0, y0) = (fx.floor() as i32, fy.floor() as i32);
     let (tx, ty) = (smooth(fx - x0 as f32), smooth(fy - y0 as f32));
-    let wrap = |v: i32| v.rem_euclid(cells as i32);
-    let corner = |dx: i32, dy: i32| unit(seed, wrap(x0 + dx), wrap(y0 + dy));
+    let corner = |dx: i32, dy: i32| {
+        unit(
+            seed,
+            (x0 + dx).rem_euclid(cx as i32),
+            (y0 + dy).rem_euclid(cy as i32),
+        )
+    };
     let top = lerp(corner(0, 0), corner(1, 0), tx);
     let bottom = lerp(corner(0, 1), corner(1, 1), tx);
     lerp(top, bottom, ty)
 }
 
 /// Sum of octaves of `tileable_value`, normalized to `[0, 1]`.
-pub fn tileable_fractal(seed: u64, x: u32, y: u32, period: u32, cells: u32, octaves: u32) -> f32 {
+pub fn tileable_fractal(
+    seed: u64,
+    x: u32,
+    y: u32,
+    period: u32,
+    cells: (u32, u32),
+    octaves: u32,
+) -> f32 {
     let (mut total, mut weight, mut amplitude) = (0.0, 0.0, 1.0);
     for octave in 0..octaves.max(1) {
         let octave_seed = seed.wrapping_add(u64::from(octave) * 0x5851_F42D);
-        total += amplitude * tileable_value(octave_seed, x, y, period, cells << octave);
+        let octave_cells = (cells.0 << octave, cells.1 << octave);
+        total += amplitude * tileable_value(octave_seed, x, y, period, octave_cells);
         weight += amplitude;
         amplitude *= 0.5;
     }
@@ -57,8 +72,8 @@ mod tests {
     #[test]
     fn noise_wraps_at_period() {
         for y in 0..16 {
-            let left = tileable_value(3, 0, y, 16, 4);
-            let wrapped = tileable_value(3, 16, y, 16, 4);
+            let left = tileable_value(3, 0, y, 16, (4, 2));
+            let wrapped = tileable_value(3, 16, y, 16, (4, 2));
             assert!((left - wrapped).abs() < 1e-6);
         }
     }
@@ -66,7 +81,7 @@ mod tests {
     #[test]
     fn fractal_stays_in_unit_range() {
         for (x, y) in (0..16).flat_map(|x| (0..16).map(move |y| (x, y))) {
-            let value = tileable_fractal(9, x, y, 16, 2, 3);
+            let value = tileable_fractal(9, x, y, 16, (2, 2), 3);
             assert!((0.0..=1.0).contains(&value));
         }
     }

@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:gravel"),
+    hardness: 0.6,
+    sound: Some("strata:gravel"),
+    category: Some("strata:natural"),
+)

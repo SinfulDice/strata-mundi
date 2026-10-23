@@ -66,3 +66,25 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Captures** : rendu hors écran (`Rgba8UnormSrgb`) puis relecture et encodage avec la crate `png` (légère, pure Rust ; `image` serait bien plus lourd).
 - **Bench** : scènes en RON (`assets/bench-scenes/`), horodatage GPU par requêtes de timestamps lues en différé (4 emplacements tournants), mémoire et description de la machine via `sysinfo` 0.39 (multi-plateforme, maintenu), date via `chrono` (sans fuseau horaire embarqué). Rapport `perf-reports/<date>-<machine>-<profil>-<scène>.md`.
 - **Headless** : en cloud, Mesa **lavapipe** suffit pour `--screenshot` ; la fenêtre et le bench se testent sous **Xvfb** (`xvfb-run`). Sous X11, `winit` charge `libxkbcommon-x11.so.0` à l'exécution (paquet `libxkbcommon-x11-0`).
+
+## D013 — Format des packs (v0.1, jalon 2)
+
+- **Choix** : un fichier RON par entrée (`blocks/<nom>.ron`), le nom du fichier donne l'identifiant ; un sous-dossier portant un namespace sert à **remplacer** l'entrée d'un autre pack ; `remove.ron` retire des entrées. Ordre de chargement : `priority` puis namespace. Erreurs collectées avec fichier, ligne et colonne ; jamais de plantage.
+- **Remplacement complet** (pas de fusion champ par champ) : plus simple à comprendre, et les champs par défaut gardent les fichiers courts. Une fusion partielle pourra s'ajouter en v1.1 si le modding le demande.
+- **Air** : intégré au moteur (`strata:air`, `BlockId` 0), non définissable par un pack.
+- **Numéros de registre** attribués dans l'ordre alphabétique des identifiants, valables seulement en mémoire ; les sauvegardes stockeront les identifiants texte.
+
+## D014 — Textures : palette globale + recettes (v0.1, jalon 2)
+
+- **Choix** : toutes les couleurs viennent de **rampes nommées** d'une palette globale (`palette.ron`, fusionnée entre packs). Les textures sont des **recettes** RON (`Material`, `Overlay`, `Ore`, `Sprite`, `Recolor`) ou des PNG (16/32/64 px, agrandis au plus grand format présent, plus proche voisin). Un style complet = une palette ; c'est ainsi que sont produites les planches d'essai.
+- **Bruit** maison (hachage entier + bruit de valeur périodique) : textures qui se répètent sans couture, identiques sur toutes les plateformes, sans dépendance.
+- **Alternatives écartées** : PNG dessinés à la main uniquement (contraire à « généré par code ») ; couleurs écrites dans chaque recette (impossible de restyler le jeu d'un coup).
+
+## D015 — Traductions : `fluent-bundle` (v0.1, jalon 2)
+
+- **Choix** : `fluent-bundle` 0.16 (version `concurrent`, partageable entre threads) + `fluent-syntax` (liste des clés d'un fichier) + `unic-langid`. Le LOLcat utilise les règles de grammaire anglaises. Isolation Unicode désactivée (les marques invisibles s'afficheraient en carrés dans une police bitmap).
+- **Clés** dérivées des identifiants : `block-strata-stone`, `item-…`, `category-…`.
+
+## D016 — PNG dans `core` (v0.1, jalon 2)
+
+- **Choix** : la crate `png` (déjà utilisée par le client) est aussi utilisée par `core` pour lire les textures des packs : `core` reste sans GPU et testable partout.

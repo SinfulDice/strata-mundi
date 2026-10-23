@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:iron_ore"),
+    hardness: 3.0,
+    sound: Some("strata:stone"),
+    category: Some("strata:natural"),
+)

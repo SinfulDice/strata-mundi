@@ -36,5 +36,9 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     let texel = textureSample(block_textures, block_sampler, input.uv, input.layer);
+    // Cutout blocks (leaves, glass frames): pixels are either kept or dropped.
+    if texel.a < 0.5 {
+        discard;
+    }
     return vec4<f32>(texel.rgb * input.shade, texel.a);
 }

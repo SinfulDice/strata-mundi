@@ -7,8 +7,8 @@ pub struct TextureArray {
 }
 
 impl TextureArray {
-    /// Every layer must have the size of the first one.
-    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, layers: &[RgbaImage]) -> Self {
+    /// Layers all have the library resolution (`TextureLibrary` scales them on load).
+    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, layers: &[&RgbaImage]) -> Self {
         let (width, height) = layers.first().map_or((1, 1), |l| (l.width(), l.height()));
         let size = wgpu::Extent3d {
             width,

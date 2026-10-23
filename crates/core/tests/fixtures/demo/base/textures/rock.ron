@@ -1,0 +1,1 @@
+Material(ramp: "grey", pattern: Noise(cells: (4, 4), octaves: 2))

@@ -9,7 +9,7 @@ mod surface;
 mod texture_array;
 
 pub use gpu::{Gpu, GpuError};
-pub use mesh::{MeshData, cube};
+pub use mesh::MeshData;
 pub use offscreen::{OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError};
 pub use surface::{Acquired, WindowSurface};
 
@@ -18,7 +18,7 @@ use block_pipeline::{BlockPipeline, CameraUniform};
 use depth::DepthBuffer;
 use glam::DVec3;
 use mesh::GpuMesh;
-use strata_core::texture::RgbaImage;
+use strata_core::content::TextureLibrary;
 use texture_array::TextureArray;
 
 /// Clear color (sRGB) until the sky arrives in v0.2.
@@ -61,8 +61,9 @@ pub struct Target<'a> {
 }
 
 impl Renderer {
-    pub fn new(gpu: &Gpu, color_format: wgpu::TextureFormat, textures: &[RgbaImage]) -> Self {
-        let textures = TextureArray::new(&gpu.device, &gpu.queue, textures);
+    pub fn new(gpu: &Gpu, color_format: wgpu::TextureFormat, textures: &TextureLibrary) -> Self {
+        let layers: Vec<_> = textures.images.iter().map(|(_, _, image)| image).collect();
+        let textures = TextureArray::new(&gpu.device, &gpu.queue, &layers);
         Self {
             blocks: BlockPipeline::new(&gpu.device, color_format, &textures),
             depth: DepthBuffer::new(&gpu.device, (1, 1)),

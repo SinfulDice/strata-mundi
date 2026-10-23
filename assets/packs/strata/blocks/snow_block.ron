@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:snow"),
+    hardness: 0.2,
+    sound: Some("strata:snow"),
+    category: Some("strata:natural"),
+)

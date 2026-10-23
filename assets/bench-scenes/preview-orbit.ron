@@ -1,0 +1,16 @@
+// Reference scene until the chunk world exists: one slow turn around the preview diorama.
+(
+    warmup: 2.0,
+    duration: 10.0,
+    keyframes: [
+        (time: 0.0, pos: (0.0, 14.0, 15.0), yaw: 0.0, pitch: -25.0),
+        (time: 1.25, pos: (10.61, 14.0, 10.61), yaw: -45.0, pitch: -25.0),
+        (time: 2.5, pos: (15.0, 14.0, 0.0), yaw: -90.0, pitch: -25.0),
+        (time: 3.75, pos: (10.61, 14.0, -10.61), yaw: -135.0, pitch: -25.0),
+        (time: 5.0, pos: (0.0, 14.0, -15.0), yaw: -180.0, pitch: -25.0),
+        (time: 6.25, pos: (-10.61, 14.0, -10.61), yaw: -225.0, pitch: -25.0),
+        (time: 7.5, pos: (-15.0, 14.0, -0.0), yaw: -270.0, pitch: -25.0),
+        (time: 8.75, pos: (-10.61, 14.0, 10.61), yaw: -315.0, pitch: -25.0),
+        (time: 10.0, pos: (-0.0, 14.0, 15.0), yaw: -360.0, pitch: -25.0),
+    ],
+)

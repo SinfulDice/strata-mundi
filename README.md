@@ -28,8 +28,8 @@ cargo bench --workspace        # lance les benchmarks
 Le binaire s'appelle `strata` (`target/release/strata`). `strata --help` liste les options de ligne de commande, notamment :
 
 ```sh
-strata --screenshot capture.png --pos 2.2,1.8,2.6 --look -39,-28   # image fixe sans fenêtre
-strata --bench-scene cube-orbit --preset ds                        # mesure de performance (voir perf-reports/)
+strata --screenshot capture.png --pos=-12,15.5,14 --look 41,-28   # image fixe sans fenêtre
+strata --bench-scene preview-orbit --preset ds                     # mesure de performance (voir perf-reports/)
 ```
 
 Contrôles (vol libre pour l'instant) : clic pour capturer la souris, ZQSD/WASD, Espace/Maj pour monter/descendre, Ctrl pour accélérer, Échap pour libérer la souris ; à la manette, sticks, A pour monter, B pour descendre, Start.

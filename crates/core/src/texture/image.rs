@@ -53,6 +53,17 @@ impl RgbaImage {
         self.bytes[start..start + 4].copy_from_slice(&color.0);
     }
 
+    /// Draws `source` with its top-left corner at `(x, y)`, alpha-blended, clipped to bounds.
+    pub fn draw(&mut self, source: &RgbaImage, x: u32, y: u32) {
+        for sy in 0..source.height.min(self.height.saturating_sub(y)) {
+            for sx in 0..source.width.min(self.width.saturating_sub(x)) {
+                let over = source.get(sx, sy);
+                let under = self.get(x + sx, y + sy);
+                self.set(x + sx, y + sy, blend(over, under));
+            }
+        }
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -61,4 +72,16 @@ impl RgbaImage {
         debug_assert!(x < self.width && y < self.height);
         (y * self.width + x) as usize * 4
     }
+}
+
+/// `over` on top of an opaque `under`.
+fn blend(over: Rgba, under: Rgba) -> Rgba {
+    let alpha = u16::from(over.0[3]);
+    let mix = |o: u8, u: u8| ((u16::from(o) * alpha + u16::from(u) * (255 - alpha)) / 255) as u8;
+    Rgba([
+        mix(over.0[0], under.0[0]),
+        mix(over.0[1], under.0[1]),
+        mix(over.0[2], under.0[2]),
+        under.0[3].max(over.0[3]),
+    ])
 }

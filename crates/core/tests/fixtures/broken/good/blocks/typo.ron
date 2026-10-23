@@ -1,0 +1,4 @@
+Block(
+    textures: All("good:rock"),
+    hardnes: 2.0,
+)

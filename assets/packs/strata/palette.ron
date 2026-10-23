@@ -1,0 +1,26 @@
+// Global palette: every texture takes its colors here, dark to light.
+// A resource pack can restyle the whole game by replacing ramps.
+// Style « classique » (proche de Minecraft), en attente de validation.
+{
+    "stone": ["#5e5e64", "#727278", "#85858b", "#9a9aa0"],
+    "dirt": ["#5b3d27", "#6e4b30", "#82593a", "#956847"],
+    "grass": ["#3f6e2a", "#4f8434", "#5f9a3e", "#72ad4b"],
+    "sand": ["#c9b27c", "#d6c08a", "#e0cc98", "#e9d8a8"],
+    "gravel": ["#5d5856", "#77716e", "#8f8986", "#aaa4a0"],
+    "bedrock": ["#1e1e22", "#38383d", "#56565c", "#7a7a80"],
+    "oak_bark": ["#3e2d1a", "#4f3a22", "#61482b", "#735634"],
+    "oak_wood": ["#7a5c35", "#9d7a4a", "#b08b55", "#c29c62"],
+    "oak_leaves": ["#2c5a1e", "#3a7027", "#488630", "#57993b"],
+    "coal": ["#101012", "#232327", "#38383d", "#4d4d53"],
+    "iron": ["#6e6a69", "#a8a3a0", "#d8d4d0", "#f4f2ee"],
+    "iron_ore": ["#7a5440", "#b5876a", "#d9ae90", "#f0d2b8"],
+    "gold": ["#8a5f0a", "#d19b1f", "#f2cf45", "#fff2a6"],
+    "diamond": ["#136e6a", "#2fb3ab", "#6ae3dc", "#c9fbf7"],
+    "water": ["#2b4ea8b8", "#3460c0b8", "#3d70d0b8", "#4a80dcb8"],
+    "glass": ["#8fb8c8", "#b4d6e2", "#d8eef5", "#ffffff"],
+    "snow": ["#dfe8ee", "#eaf1f5", "#f3f8fa", "#ffffff"],
+    "cactus": ["#1f5a22", "#2b7330", "#378a3c", "#4ea152"],
+    "stick": ["#4a3420", "#6b4c2c", "#8c6a40"],
+    "wool": ["#b9b4ad", "#d3cec7", "#e8e4de", "#f7f4ef"],
+    "sheep_skin": ["#6d4f3f", "#9b7660", "#b8927b"],
+}

@@ -1,0 +1,8 @@
+Block(
+    textures: All("strata:water"),
+    solid: false,
+    render: Translucent,
+    light_opacity: 2,
+    hardness: -1.0,
+    has_item: false,
+)

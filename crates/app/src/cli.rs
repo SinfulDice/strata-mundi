@@ -18,6 +18,22 @@ pub struct Args {
     #[arg(long, value_name = "YAW,PITCH", value_parser = parse_vec2, allow_hyphen_values = true)]
     pub look: Option<[f32; 2]>,
 
+    /// Save every texture side by side above a render of the preview scene, then quit.
+    #[arg(long, value_name = "PNG")]
+    pub texture_sheet: Option<PathBuf>,
+
+    /// Activate a resource pack from the resource packs folder (repeatable; last wins).
+    #[arg(long, value_name = "NAME")]
+    pub resource_pack: Vec<String>,
+
+    /// Folder containing resource packs.
+    #[arg(long, value_name = "DIR", default_value = "resourcepacks")]
+    pub resource_packs_dir: PathBuf,
+
+    /// Language: fr, en or lol.
+    #[arg(long, default_value = "fr", value_parser = ["fr", "en", "lol"])]
+    pub lang: String,
+
     /// Run a scripted scene from `assets/bench-scenes/<SCENE>.ron` and write a report
     /// in `perf-reports/`.
     #[arg(long, value_name = "SCENE")]

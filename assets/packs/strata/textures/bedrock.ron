@@ -1,0 +1,1 @@
+Material(ramp: "bedrock", pattern: Noise(cells: (8, 8), octaves: 2))

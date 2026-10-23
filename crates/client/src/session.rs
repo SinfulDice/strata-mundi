@@ -1,10 +1,9 @@
-use crate::app::ClientError;
+use crate::app::{ClientConfig, ClientError};
 use crate::bench::BenchRun;
 use crate::camera::Camera;
 use crate::fly::FlyController;
 use crate::input::{Action, Binding, Bindings, Gamepads, InputState};
 use crate::render::{Acquired, Gpu, Renderer, Target, WindowSurface};
-use crate::test_scene;
 use glam::Vec2;
 use std::sync::Arc;
 use std::time::Instant;
@@ -35,8 +34,7 @@ pub struct Session {
 impl Session {
     pub fn new(
         window: Arc<Window>,
-        camera: Camera,
-        vsync: bool,
+        config: &ClientConfig,
         connection: ClientConnection,
     ) -> Result<Self, ClientError> {
         let instance = Gpu::create_instance();
@@ -44,16 +42,16 @@ impl Session {
             .create_surface(Arc::clone(&window))
             .map_err(crate::render::GpuError::from)?;
         let gpu = Gpu::new(instance, Some(&surface))?;
-        let surface = WindowSurface::new(&gpu, window, surface, vsync);
-        let mut renderer = Renderer::new(&gpu, surface.format(), &test_scene::textures());
-        test_scene::populate(&mut renderer, &gpu);
+        let surface = WindowSurface::new(&gpu, window, surface, config.vsync);
+        let mut renderer = Renderer::new(&gpu, surface.format(), &config.content.textures);
+        renderer.add_object(&gpu, &config.scene, glam::DVec3::ZERO);
         Ok(Self {
             gpu,
             surface,
             connection,
             bench: None,
             renderer,
-            camera,
+            camera: config.camera.clone(),
             fly: FlyController::default(),
             input: InputState::new(Bindings::default()),
             gamepads: Gamepads::connect(),

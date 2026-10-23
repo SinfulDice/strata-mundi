@@ -1,0 +1,1 @@
+game-title = Strata Mundi

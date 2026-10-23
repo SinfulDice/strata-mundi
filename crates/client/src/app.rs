@@ -1,8 +1,9 @@
 use crate::bench::{BenchConfig, BenchRun};
 use crate::camera::Camera;
-use crate::render::GpuError;
+use crate::render::{GpuError, MeshData};
 use crate::session::Session;
 use std::sync::Arc;
+use strata_core::content::Content;
 use strata_protocol::{ClientConnection, ClientMessage};
 use thiserror::Error;
 use winit::application::ApplicationHandler;
@@ -25,6 +26,10 @@ pub enum ClientError {
 }
 
 pub struct ClientConfig {
+    pub content: Arc<Content>,
+    /// Mesh drawn until the chunk world exists (milestones 3-4).
+    pub scene: MeshData,
+    pub language: String,
     pub camera: Camera,
     pub vsync: bool,
     pub bench: Option<BenchConfig>,
@@ -63,11 +68,15 @@ impl ClientApp {
         config: ClientConfig,
         connection: ClientConnection,
     ) -> Result<Session, ClientError> {
+        let title = config
+            .content
+            .translations
+            .text(&config.language, "game-title");
         let attributes = Window::default_attributes()
-            .with_title("Strata Mundi")
+            .with_title(title)
             .with_inner_size(winit::dpi::LogicalSize::new(1280, 720));
         let window = Arc::new(event_loop.create_window(attributes)?);
-        let mut session = Session::new(window, config.camera, config.vsync, connection)?;
+        let mut session = Session::new(window, &config, connection)?;
         if let Some(bench) = config.bench {
             session.bench = Some(BenchRun::new(bench, &session.gpu));
         }
