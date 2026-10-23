@@ -1,26 +1,31 @@
+mod apply;
 mod transitions;
 
-use crate::app::{ClientConfig, ClientError, DEFAULT_FOV};
+use crate::app::{ClientConfig, ClientError};
 use crate::bench::BenchRun;
 use crate::camera::Camera;
-use crate::input::{Action, Binding, Bindings, Gamepads, InputState, KeyNames};
+use crate::input::{Action, Binding, Gamepads, InputState};
 use crate::launcher::Launcher;
 use crate::mesher::BlockTable;
-use crate::render::{Acquired, Gpu, Renderer, Target, WindowSurface};
+use crate::render::{
+    Acquired, Gpu, PostProcess, RenderOptions, Renderer, Target, TextureFiltering, WindowSurface,
+};
 use crate::screens::{Screens, UiFrame};
-use crate::settings::{ControlSettings, GraphicsSettings};
+use crate::settings::Settings;
 use crate::sleep::SleepWatcher;
 use crate::stage::Stage;
 use glam::{DVec3, Vec2};
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use strata_core::content::Content;
-use strata_protocol::{ClientMessage, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE};
+use strata_protocol::{MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE};
 use winit::event::{DeviceEvent, MouseScrollDelta, WindowEvent};
 use winit::keyboard::PhysicalKey;
 use winit::window::{CursorGrabMode, Window};
 
 const MAX_FRAME_SECONDS: f32 = 0.1;
+/// Frames per second while the window is in the background (the world goes on).
+const BACKGROUND_FPS: u32 = 5;
 /// Pixels of trackpad scrolling counted as one wheel notch.
 const PIXELS_PER_NOTCH: f64 = 40.0;
 
@@ -29,18 +34,18 @@ pub struct Session {
     pub gpu: Gpu,
     pub surface: WindowSurface,
     renderer: Renderer,
+    post: PostProcess,
     screens: Screens,
     stage: Stage,
     launcher: Box<dyn Launcher>,
     content: Arc<Content>,
     table: Arc<BlockTable>,
-    graphics: GraphicsSettings,
-    controls: ControlSettings,
+    /// The settings in effect (the screens own the edited copy; changes are diffed).
+    applied: Settings,
     bench: Option<BenchRun>,
     input: InputState,
     idle: InputState,
     gamepads: Gamepads,
-    key_names: KeyNames,
     cursor_captured: bool,
     focused: bool,
     quit: bool,
@@ -57,11 +62,18 @@ impl Session {
             .create_surface(Arc::clone(&window))
             .map_err(crate::render::GpuError::from)?;
         let gpu = Gpu::new(instance, Some(&surface))?;
-        let surface = WindowSurface::new(&gpu, window, surface, config.vsync);
-        let mut renderer = Renderer::new(&gpu, surface.format(), &config.content.textures)?;
-        let graphics = config.graphics;
-        renderer.ambient_occlusion = f32::from(u8::from(graphics.ambient_occlusion));
-        renderer.vertical_distance = graphics.vertical_distance;
+        let surface = WindowSurface::new(&gpu, window, surface, config.settings.graphics.vsync);
+        let graphics = &config.settings.graphics;
+        let filtering = TextureFiltering {
+            mipmaps: graphics.mipmaps,
+            anisotropy: graphics.anisotropy.clamp(1, 16) as u16,
+        };
+        let mut renderer =
+            Renderer::new(&gpu, surface.format(), &config.content.textures, filtering)?;
+        let applied = config.settings.clone();
+        renderer.ambient_occlusion = f32::from(u8::from(applied.graphics.ambient_occlusion));
+        renderer.vertical_distance = applied.graphics.vertical_distance;
+        renderer.options = RenderOptions::from_settings(&applied);
         let table = Arc::new(BlockTable::new(
             config.content.blocks.iter().map(|(_, _, b)| b),
         ));
@@ -71,10 +83,12 @@ impl Session {
             surface.format(),
             config.ui,
             &config.content,
-            config.interface,
-            config.interface_path,
+            config.settings,
+            config.settings_path,
         );
+        let post = PostProcess::new(&gpu, surface.format());
         let mut session = Self {
+            post,
             gpu,
             surface,
             renderer,
@@ -83,13 +97,11 @@ impl Session {
             launcher: config.launcher,
             content: config.content,
             table,
-            graphics,
-            controls: config.controls,
+            input: input_for(&applied),
+            idle: input_for(&applied),
+            applied,
             bench,
-            input: InputState::new(Bindings::default()),
-            idle: InputState::new(Bindings::default()),
             gamepads: Gamepads::connect(),
-            key_names: KeyNames::default(),
             cursor_captured: false,
             focused: true,
             quit: false,
@@ -118,7 +130,7 @@ impl Session {
                 if let (PhysicalKey::Code(code), Some(text), true) =
                     (event.physical_key, &event.text, pressed)
                 {
-                    self.key_names.learn(code, text);
+                    self.screens.learn_key(code, text);
                     self.input.add_text(text);
                 }
                 if let (PhysicalKey::Code(code), false) = (event.physical_key, event.repeat) {
@@ -148,6 +160,17 @@ impl Session {
             self.input
                 .add_mouse_motion(Vec2::new(delta.0 as f32, delta.1 as f32));
         }
+    }
+
+    /// When the next frame may start: `None` for "now" (no limit).
+    pub fn next_frame_at(&self) -> Option<Instant> {
+        let idle = !self.focused && self.applied.game.idle_when_unfocused && self.bench.is_none();
+        let fps = match self.applied.graphics.fps_limit {
+            _ if idle => BACKGROUND_FPS,
+            0 => return None,
+            limit => limit,
+        };
+        Some(self.last_frame + Duration::from_secs_f64(1.0 / f64::from(fps)))
     }
 
     /// Updates and renders one frame. Returns `false` when the client should quit.
@@ -187,6 +210,7 @@ impl Session {
         for action in handled.actions {
             self.perform(action)?;
         }
+        self.apply_settings();
         let menu_open = self.screens.is_menu_open();
         let playing = matches!(self.stage, Stage::Playing(_));
         self.set_cursor_captured(playing && !menu_open && self.focused);
@@ -208,7 +232,7 @@ impl Session {
             }
             Stage::Playing(world) => {
                 world.set_paused(pause);
-                let wanted = settled_columns(self.graphics.render_distance);
+                let wanted = settled_columns(self.applied.graphics.render_distance);
                 let settled = world.game.view.is_settled(wanted);
                 let dt = frame_seconds.min(MAX_FRAME_SECONDS);
                 match &mut self.bench {
@@ -231,16 +255,16 @@ impl Session {
             &self.gpu,
             &mut self.renderer,
             camera,
-            self.graphics.vertical_distance,
+            self.applied.graphics.vertical_distance,
         );
     }
 
     fn handle_system_actions(&mut self) {
         if self.input.just_pressed(Action::RenderDistanceDown) {
-            self.set_render_distance(self.graphics.render_distance.saturating_sub(1));
+            self.set_render_distance(self.applied.graphics.render_distance.saturating_sub(1));
         }
         if self.input.just_pressed(Action::RenderDistanceUp) {
-            self.set_render_distance(self.graphics.render_distance + 1);
+            self.set_render_distance(self.applied.graphics.render_distance + 1);
         }
     }
 
@@ -248,17 +272,17 @@ impl Session {
     pub fn set_render_distance(&mut self, distance: u32) {
         let distance = distance.clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
         tracing::info!(distance, "render distance");
-        self.graphics.render_distance = distance;
-        if let Stage::Playing(world) = &self.stage {
-            world.connection.send(ClientMessage::ViewDistance(distance));
-        }
+        self.screens.change_settings(|s| {
+            s.graphics.render_distance = distance;
+            s.preset = None;
+        });
     }
 
     fn camera(&self) -> Camera {
         match &self.stage {
             Stage::Title(title) => title.camera.clone(),
             Stage::Playing(world) => world.game.camera.clone(),
-            Stage::Empty => Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV),
+            Stage::Empty => Camera::new(DVec3::ZERO, 0.0, 0.0, self.applied.graphics.fov as f32),
         }
     }
 
@@ -271,14 +295,7 @@ impl Session {
         };
         let view = frame.texture.create_view(&Default::default());
         let mut encoder = self.gpu.device.create_command_encoder(&Default::default());
-        let camera = self.camera();
-        let timestamps = self.bench.as_mut().and_then(BenchRun::timestamp_writes);
-        let target = Target {
-            view: &view,
-            size: self.surface.size(),
-        };
-        self.renderer
-            .render(&self.gpu, &mut encoder, target, &camera, timestamps);
+        self.render_world(&mut encoder, &view);
         self.draw_interface(&mut encoder, &view);
         if let Some(bench) = &self.bench {
             bench.resolve(&mut encoder);
@@ -293,19 +310,35 @@ impl Session {
         Some(cpu)
     }
 
+    /// The 3D image, straight into the frame or through the final pass when the render
+    /// scale or a colour filter needs it.
+    fn render_world(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
+        let camera = self.camera();
+        let timestamps = self.bench.as_mut().and_then(BenchRun::timestamp_writes);
+        let options = self.renderer.options;
+        let size = self.surface.size();
+        if !options.needs_post() {
+            let target = Target { view, size };
+            self.renderer
+                .render(&self.gpu, encoder, target, &camera, timestamps);
+            return;
+        }
+        let scaled = size.0 as f32 * options.render_scale;
+        let scene_size = (scaled as u32, (size.1 as f32 * options.render_scale) as u32);
+        self.post.prepare(&self.gpu, scene_size);
+        if let Some(scene) = self.post.scene_view() {
+            let target = Target {
+                view: scene,
+                size: (scene_size.0.max(1), scene_size.1.max(1)),
+            };
+            self.renderer
+                .render(&self.gpu, encoder, target, &camera, timestamps);
+        }
+        self.post
+            .draw(&self.gpu, encoder, view, options.color_filter);
+    }
+
     fn draw_interface(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
-        let language = self.screens.language().to_owned();
-        let (key_names, input, content) = (&self.key_names, &self.input, &self.content);
-        let key_label = |name: &str| match Action::from_name(name) {
-            Some(action) => key_names.label(
-                input.bindings(),
-                input.last_device(),
-                action,
-                &content.translations,
-                &language,
-            ),
-            None => name.to_owned(),
-        };
         let game = match &mut self.stage {
             Stage::Playing(world) => Some(&mut world.game),
             _ => None,
@@ -315,8 +348,7 @@ impl Session {
             view,
             size: self.surface.size(),
         };
-        self.screens
-            .draw(&self.gpu, frame, content, game, &key_label);
+        self.screens.draw(&self.gpu, frame, &self.content, game);
     }
 
     fn set_cursor_captured(&mut self, captured: bool) {
@@ -343,4 +375,13 @@ impl Session {
 fn settled_columns(render_distance: u32) -> usize {
     let r = f64::from(render_distance);
     (std::f64::consts::PI * r * r * 0.8) as usize
+}
+
+fn input_for(settings: &Settings) -> InputState {
+    let mut input = InputState::new(settings.controls.bindings.clone());
+    input.configure(
+        &settings.controls.bindings,
+        settings.controls.dead_zone_fraction(),
+    );
+    input
 }

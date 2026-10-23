@@ -132,6 +132,7 @@ fn draw_node(node: &Node, parent: Rect, d: &mut Draw<'_, '_>) {
         Node::Tabs { .. } => controls::tabs(d, node, parent),
         Node::KeyGrid { .. } => controls::key_grid(d, node, parent),
         Node::List { .. } => list::list(d, node, parent),
+        Node::OptionList { .. } => list::options(d, node, parent),
         Node::ItemGrid { .. } => items::grid(d, node, parent),
         Node::Slots { .. } => items::slots(d, node, parent),
         Node::Crosshair { .. } => items::crosshair(d, node, parent),

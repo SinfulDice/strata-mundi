@@ -3,11 +3,13 @@
 
 use super::editor::EditorModel;
 use super::inventory::{InventoryModel, InventoryState};
-use super::pause::{NoticeModel, OptionsModel, PauseModel};
+use super::options::{OptionsModel, OptionsState};
+use super::pause::{NoticeModel, PauseModel};
 use super::title::TitleModel;
 use super::worlds::{ConfirmModel, CreateForm, CreateModel, WorldsModel};
 use crate::hotbar::Hotbar;
-use crate::interface_settings::InterfaceSettings;
+use crate::input::Action;
+use crate::settings::Settings;
 use crate::ui::{Rect, ScreenDef, ScreenDefs, ScreenModel};
 use strata_core::content::Content;
 use strata_protocol::{NewWorld, WorldSummary};
@@ -24,7 +26,7 @@ pub enum Menu {
         name: String,
     },
     Pause,
-    Options,
+    Options(OptionsState),
     Inventory(InventoryState),
     HudEditor {
         selected: Option<String>,
@@ -42,7 +44,7 @@ impl Menu {
             Self::CreateWorld(_) => &defs.create_world,
             Self::ConfirmDelete { .. } => &defs.confirm_delete,
             Self::Pause => &defs.pause,
-            Self::Options => &defs.options,
+            Self::Options(_) => &defs.options,
             Self::Inventory(_) => &defs.inventory,
             Self::HudEditor { .. } => &defs.hud_editor,
             Self::Notice { .. } => &defs.notice,
@@ -50,8 +52,8 @@ impl Menu {
     }
 
     /// The pause menu always stops the world; others only with "pause in all menus".
-    pub fn pauses(&self, settings: &InterfaceSettings) -> bool {
-        matches!(self, Self::Pause) || settings.pause_in_menus
+    pub fn pauses(&self, settings: &Settings) -> bool {
+        matches!(self, Self::Pause) || settings.interface.pause_in_menus
     }
 }
 
@@ -80,23 +82,29 @@ pub enum UiAction {
 /// What every model may read or change besides its own state.
 pub struct Shared<'a> {
     pub content: &'a Content,
-    pub settings: &'a mut InterfaceSettings,
+    pub settings: &'a mut Settings,
     pub worlds: &'a [WorldSummary],
     /// Atlas place of each world's capture, in list order.
     pub icons: &'a [Option<Rect>],
     pub hotbar: Option<&'a mut Hotbar>,
+    /// The focused element (id, index), for models that describe it.
+    pub focus: Option<(String, usize)>,
+    /// Keyboard and gamepad labels of an action's bindings.
+    pub key_labels: &'a dyn Fn(Action) -> (String, String),
     pub effects: &'a mut Vec<Effect>,
 }
 
 impl Shared<'_> {
     pub fn tr(&self, key: &str) -> String {
-        self.content.translations.text(&self.settings.language, key)
+        self.content
+            .translations
+            .text(&self.settings.interface.language, key)
     }
 
     pub fn tr_with(&self, key: &str, args: &[(&str, String)]) -> String {
         self.content
             .translations
-            .text_with(&self.settings.language, key, args)
+            .text_with(&self.settings.interface.language, key, args)
     }
 }
 
@@ -116,7 +124,11 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
         Menu::CreateWorld(form) => Box::new(CreateModel { form, shared }),
         Menu::ConfirmDelete { id, name } => Box::new(ConfirmModel { id, name, shared }),
         Menu::Pause => Box::new(PauseModel { shared }),
-        Menu::Options => Box::new(OptionsModel { shared }),
+        Menu::Options(state) => Box::new(OptionsModel {
+            state,
+            key_labels: shared.key_labels,
+            shared,
+        }),
         Menu::HudEditor { selected } => Box::new(EditorModel { selected, shared }),
         Menu::Notice { key } => Box::new(NoticeModel { key, shared }),
         Menu::Inventory(state) => match shared.hotbar {
@@ -124,7 +136,7 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
                 state,
                 hotbar,
                 shared.content,
-                &shared.settings.language,
+                &shared.settings.interface.language,
             )),
             None => Box::new(Empty),
         },

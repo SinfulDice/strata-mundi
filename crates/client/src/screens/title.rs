@@ -19,7 +19,7 @@ impl ScreenModel for TitleModel<'_> {
     fn activate(&mut self, id: &str, _: usize) {
         let effect = match id {
             "play" => Effect::Action(UiAction::ShowWorlds),
-            "options" => Effect::Push(Menu::Options),
+            "options" => Effect::Push(Menu::Options(Default::default())),
             "quit" => Effect::Action(UiAction::Quit),
             _ => return,
         };

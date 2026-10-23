@@ -56,9 +56,10 @@ pub struct Args {
     #[arg(long, value_name = "DIR", default_value = "perf-reports")]
     pub report_dir: PathBuf,
 
-    /// Quality preset: very-low, low, medium, high, ultra, ds.
-    #[arg(long, default_value = "high")]
-    pub preset: Preset,
+    /// Quality preset: very-low, low, medium, high, ultra, ds. For the game, it replaces
+    /// the graphics settings; captures and benchmarks default to `high`.
+    #[arg(long)]
+    pub preset: Option<Preset>,
 
     /// Screenshot size `WIDTHxHEIGHT`.
     #[arg(long, value_name = "WxH", value_parser = parse_size, default_value = "1280x720")]

@@ -11,6 +11,8 @@ pub struct Camera {
     /// Radians. Positive looks up.
     pub pitch: f32,
     pub fov_y_degrees: f32,
+    /// Multiplies the field of view for effects (sprinting widens it); 1 = none.
+    pub zoom: f32,
 }
 
 const MAX_PITCH: f32 = 89.9_f32 * std::f32::consts::PI / 180.0;
@@ -23,6 +25,7 @@ impl Camera {
             yaw: yaw_degrees.to_radians(),
             pitch: 0.0,
             fov_y_degrees,
+            zoom: 1.0,
         };
         camera.rotate(0.0, pitch_degrees.to_radians());
         camera
@@ -55,7 +58,9 @@ impl Camera {
     pub fn view_projection(&self, aspect_ratio: f32) -> Mat4 {
         let view = view::look_to_mat4(Vec3::ZERO, self.forward(), Vec3::Y);
         let projection = directx::perspective_infinite_reverse(
-            self.fov_y_degrees.to_radians(),
+            (self.fov_y_degrees * self.zoom)
+                .clamp(1.0, 170.0)
+                .to_radians(),
             aspect_ratio.max(0.01),
             NEAR_PLANE,
         );

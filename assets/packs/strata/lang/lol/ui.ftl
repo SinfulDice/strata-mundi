@@ -45,11 +45,7 @@ ui-pause-options = OPSHUNZ
 ui-pause-save-quit = SAEV AN BAI
 
 ui-options-title = OPSHUNZ
-ui-option-language = SPEEK: LOLCAT
-ui-option-scale = STUFF SIZE: { $value }
 ui-scale-auto = AUTO
-ui-option-pause-menus = PAWS IN ALL MENUZ: { $value }
-ui-option-hud = MOOV TEH HUD…
 
 ui-editor-title = HUD MOOVR
 ui-editor-help-select = <key:Attack>: PIK

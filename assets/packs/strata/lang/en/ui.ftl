@@ -45,11 +45,7 @@ ui-pause-options = Options
 ui-pause-save-quit = Save and quit
 
 ui-options-title = Options
-ui-option-language = Language: English
-ui-option-scale = Interface: { $value }
 ui-scale-auto = auto
-ui-option-pause-menus = Pause in every menu: { $value }
-ui-option-hud = Arrange the HUD…
 
 ui-editor-title = HUD layout
 ui-editor-help-select = <key:Attack>: pick

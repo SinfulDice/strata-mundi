@@ -4,11 +4,13 @@
 use super::editor::{STEP, move_element};
 use super::keyboard::Keyboard;
 use super::menu::{Effect, Menu};
+use super::options::bind_captured;
 use super::{Screens, UiAction};
 use crate::gameplay::Gameplay;
-use crate::input::{Action, InputDevice, InputState};
+use crate::input::{Action, Binding, InputDevice, InputState};
 use crate::ui::{Direction, Hit, HitKind, navigate};
 use strata_core::content::Content;
+use winit::keyboard::KeyCode;
 
 /// Result of one frame of menu input.
 pub struct Handled {
@@ -36,6 +38,8 @@ impl Screens {
         mut game: Option<&mut Gameplay>,
         content: &Content,
     ) -> Handled {
+        self.device = input.last_device();
+        self.refresh_labels(content);
         if self.in_world && self.stack.is_empty() {
             let menu = if input.just_pressed(Action::Inventory) {
                 Menu::Inventory(Default::default())
@@ -75,6 +79,9 @@ impl Screens {
         mut game: Option<&mut Gameplay>,
         content: &Content,
     ) {
+        if self.capture_binding(input) {
+            return;
+        }
         let cursor = self.cursor(input);
         self.follow_mouse(input, cursor);
         if self.handle_editor(input, cursor) {
@@ -89,13 +96,15 @@ impl Screens {
             return;
         }
         let focus = self.focus.clone();
-        let slider = focus.clone().filter(|f| f.kind == HitKind::Slider);
+        let slider = focus
+            .clone()
+            .filter(|f| matches!(f.kind, HitKind::Slider | HitKind::Option));
         let step = i32::from(input.just_pressed(Action::MenuRight))
             - i32::from(input.just_pressed(Action::MenuLeft));
         match (&slider, step) {
             (Some(slider), step) if step != 0 => {
                 self.with_model(game.as_deref_mut(), content, |m| {
-                    m.adjust(&slider.id, step, None)
+                    m.adjust(&slider.id, slider.index, step, None)
                 });
             }
             _ => self.navigate_or_scroll(input, game.as_deref_mut(), content),
@@ -122,6 +131,26 @@ impl Screens {
         }
     }
 
+    /// Options, keys tab: the next input pressed becomes the action's binding (Escape
+    /// cancels). Returns whether the input was taken.
+    fn capture_binding(&mut self, input: &InputState) -> bool {
+        let Some(Menu::Options(state)) = self.stack.last_mut() else {
+            return false;
+        };
+        if state.capturing.is_none() {
+            return false;
+        }
+        match input.fresh_binding() {
+            Some(Binding::Key(KeyCode::Escape)) => state.capturing = None,
+            Some(binding) => {
+                bind_captured(state, &mut self.settings, binding);
+                self.effects.push(Effect::SettingsChanged);
+            }
+            None => {}
+        }
+        true
+    }
+
     fn activate(
         &mut self,
         input: &InputState,
@@ -143,7 +172,7 @@ impl Screens {
                     self.dragging = Some(hit.clone());
                 }
                 let fraction = fraction.filter(|_| by_mouse);
-                self.with_model(game, content, |m| m.adjust(&hit.id, 1, fraction));
+                self.with_model(game, content, |m| m.adjust(&hit.id, hit.index, 1, fraction));
             }
             _ => {
                 self.with_model(game, content, |m| m.activate(&hit.id, hit.index));
@@ -190,7 +219,9 @@ impl Screens {
         };
         if drag.kind == HitKind::Slider && input.cursor_moved() {
             let fraction = (x - drag.rect.x) as f32 / drag.rect.w.max(1) as f32;
-            self.with_model(game, content, |m| m.adjust(&drag.id, 0, Some(fraction)));
+            self.with_model(game, content, |m| {
+                m.adjust(&drag.id, drag.index, 0, Some(fraction))
+            });
         }
     }
 
@@ -238,7 +269,12 @@ impl Screens {
             delta = (delta.0 + now.0 - before.0, delta.1 + now.1 - before.1);
         }
         if delta != (0, 0) {
-            move_element(&mut self.settings, &self.assets.screens.hud, &id, delta);
+            move_element(
+                &mut self.settings.interface,
+                &self.assets.screens.hud,
+                &id,
+                delta,
+            );
             self.effects.push(Effect::SettingsChanged);
         }
         self.last_cursor = cursor;
@@ -400,7 +436,10 @@ impl Screens {
                     self.stack.truncate(usize::from(!self.in_world));
                     self.reset_focus();
                 }
-                Effect::SettingsChanged => self.settings_dirty = true,
+                Effect::SettingsChanged => {
+                    self.settings_dirty = true;
+                    self.labels_stale = true;
+                }
                 Effect::Action(action) => actions.push(action),
             }
         }

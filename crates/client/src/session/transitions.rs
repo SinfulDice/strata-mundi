@@ -1,7 +1,7 @@
 //! Moving between the title screen and worlds, and what a world sends back.
 
 use super::Session;
-use crate::app::{ClientError, DEFAULT_FOV};
+use crate::app::ClientError;
 use crate::camera::Camera;
 use crate::gameplay::Gameplay;
 use crate::interaction::BlockInfo;
@@ -21,15 +21,31 @@ use strata_protocol::{
 };
 
 impl Session {
-    fn new_view(&self, world: ClientWorld) -> Result<WorldView, ClientError> {
-        let meshing = MeshScheduler::new(
+    fn new_meshing(&self) -> Result<MeshScheduler, ClientError> {
+        let graphics = &self.applied.graphics;
+        MeshScheduler::new(
             Arc::clone(&self.table),
-            self.graphics.worker_threads,
-            self.graphics.ambient_occlusion,
+            graphics.meshing_threads(),
+            graphics.ambient_occlusion,
         )
-        .map_err(ClientError::Threads)?;
-        Ok(WorldView::new(world, meshing))
+        .map_err(ClientError::Threads)
     }
+
+    fn new_view(&self, world: ClientWorld) -> Result<WorldView, ClientError> {
+        Ok(WorldView::new(world, self.new_meshing()?))
+    }
+    /// Meshing restarted with the current settings, for the world on screen.
+    pub(super) fn remesh(&mut self) -> Result<(), ClientError> {
+        let meshing = self.new_meshing()?;
+        let view = match &mut self.stage {
+            Stage::Title(title) => &mut title.view,
+            Stage::Playing(world) => &mut world.game.view,
+            Stage::Empty => return Ok(()),
+        };
+        view.replace_meshing(meshing);
+        Ok(())
+    }
+
     pub(super) fn enter_title(&mut self) -> Result<(), ClientError> {
         self.renderer.clear();
         let panorama = self.launcher.panorama();
@@ -37,7 +53,7 @@ impl Session {
         self.stage = Stage::Title(Box::new(TitleScene::new(
             view,
             panorama.center,
-            DEFAULT_FOV,
+            self.applied.graphics.fov as f32,
         )));
         self.screens.show_title();
         Ok(())
@@ -45,16 +61,18 @@ impl Session {
     pub(super) fn enter_world(&mut self, running: RunningWorld) -> Result<(), ClientError> {
         self.renderer.clear();
         let distance = self
+            .applied
             .graphics
             .render_distance
             .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
         running
             .connection
             .send(ClientMessage::ViewDistance(distance));
-        let camera = Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV);
+        let camera = Camera::new(DVec3::ZERO, 0.0, 0.0, self.applied.graphics.fov as f32);
         let view = self.new_view(ClientWorld::default())?;
         let info = BlockInfo::new(Arc::clone(&self.content));
-        let game = Gameplay::new(view, camera, info, self.controls.clone());
+        let mut game = Gameplay::new(view, camera, info, self.applied.controls.clone());
+        game.camera_effects = !self.applied.interface.reduce_camera_effects;
         self.stage = Stage::Playing(Box::new(InWorld::new(running, game)));
         self.screens.enter_world();
         Ok(())

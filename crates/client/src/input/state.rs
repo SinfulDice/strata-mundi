@@ -10,8 +10,6 @@ pub enum InputDevice {
     Touch,
 }
 
-const STICK_DEAD_ZONE: f32 = 0.15;
-
 /// Input collected during one frame, queried by the game through actions.
 pub struct InputState {
     bindings: Bindings,
@@ -28,6 +26,10 @@ pub struct InputState {
     left_stick: Vec2,
     right_stick: Vec2,
     last_device: InputDevice,
+    /// First input pressed this frame (to bind it in the options).
+    fresh: Option<Binding>,
+    /// Stick movements below this length are ignored.
+    dead_zone: f32,
 }
 
 impl InputState {
@@ -44,6 +46,8 @@ impl InputState {
             left_stick: Vec2::ZERO,
             right_stick: Vec2::ZERO,
             last_device: InputDevice::KeyboardMouse,
+            fresh: None,
+            dead_zone: 0.15,
         }
     }
 
@@ -57,6 +61,7 @@ impl InputState {
             return;
         }
         if self.pressed.insert(binding) {
+            self.fresh = self.fresh.or(Some(binding));
             for action in self.bindings.actions_for(binding) {
                 self.just_pressed[action.index()] = true;
             }
@@ -104,7 +109,10 @@ impl InputState {
 
     /// Stick values in `[-1, 1]`, y up.
     pub fn set_sticks(&mut self, left: Vec2, right: Vec2) {
-        let (left, right) = (dead_zone(left), dead_zone(right));
+        let (left, right) = (
+            dead_zone(left, self.dead_zone),
+            dead_zone(right, self.dead_zone),
+        );
         if left != Vec2::ZERO || right != Vec2::ZERO {
             self.note_device(InputDevice::Gamepad);
         }
@@ -152,6 +160,20 @@ impl InputState {
         &self.bindings
     }
 
+    /// New bindings or dead zone from the options.
+    pub fn configure(&mut self, bindings: &Bindings, dead_zone: f32) {
+        if self.bindings != *bindings {
+            self.bindings = bindings.clone();
+            self.release_all();
+        }
+        self.dead_zone = dead_zone.clamp(0.0, 0.9);
+    }
+
+    /// The first key, button or gamepad button pressed this frame.
+    pub fn fresh_binding(&self) -> Option<Binding> {
+        self.fresh
+    }
+
     pub fn last_device(&self) -> InputDevice {
         self.last_device
     }
@@ -159,6 +181,7 @@ impl InputState {
     /// Clears per-frame data; held buttons and stick positions persist.
     pub fn end_frame(&mut self) {
         self.just_pressed = [false; Action::COUNT];
+        self.fresh = None;
         self.cursor_moved = false;
         self.mouse_delta = Vec2::ZERO;
         self.scroll = 0.0;
@@ -181,12 +204,12 @@ impl InputState {
 }
 
 /// Radial dead zone, rescaled so the output still covers the full range.
-fn dead_zone(stick: Vec2) -> Vec2 {
+fn dead_zone(stick: Vec2, zone: f32) -> Vec2 {
     let length = stick.length();
-    if length <= STICK_DEAD_ZONE {
+    if length <= zone {
         return Vec2::ZERO;
     }
-    let scaled = ((length - STICK_DEAD_ZONE) / (1.0 - STICK_DEAD_ZONE)).min(1.0);
+    let scaled = ((length - zone) / (1.0 - zone)).min(1.0);
     stick / length * scaled
 }
 

@@ -72,6 +72,14 @@ pub enum Node {
         size: (u32, u32),
         row_height: u32,
     },
+    /// Settings, one per row: name on the left, value on the right.
+    OptionList {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        size: (u32, u32),
+        row_height: u32,
+    },
     /// On-screen keyboard: one string per row, one key per character (gamepad typing).
     KeyGrid {
         id: String,
@@ -127,6 +135,7 @@ impl Node {
             | Self::Button { at, .. }
             | Self::Slider { at, .. }
             | Self::List { at, .. }
+            | Self::OptionList { at, .. }
             | Self::KeyGrid { at, .. }
             | Self::TextField { at, .. }
             | Self::Tabs { at, .. }
@@ -145,6 +154,7 @@ impl Node {
             | Self::Button { id, .. }
             | Self::Slider { id, .. }
             | Self::List { id, .. }
+            | Self::OptionList { id, .. }
             | Self::KeyGrid { id, .. }
             | Self::TextField { id, .. }
             | Self::Tabs { id, .. }

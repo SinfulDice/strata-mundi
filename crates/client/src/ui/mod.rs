@@ -14,7 +14,7 @@ mod widgets;
 pub use atlas::{ICON_SIZE, UiAtlas};
 pub use def::{Node, ScreenDef};
 pub use focus::{Direction, navigate};
-pub use model::{Hit, HitKind, ListRow, ScreenModel};
+pub use model::{Hit, HitKind, ListRow, OptionRow, ScreenModel};
 pub use painter::{Painter, UiVertex, auto_scale};
 pub use rect::Rect;
 pub use theme::Theme;

@@ -1,17 +1,17 @@
 use crate::bench::BenchConfig;
-use crate::interface_settings::InterfaceSettings;
 use crate::launcher::{Launcher, RunningWorld};
 use crate::render::GpuError;
 use crate::session::Session;
-use crate::settings::{ControlSettings, GraphicsSettings};
+use crate::settings::Settings;
 use crate::ui::UiAssets;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Instant;
 use strata_core::content::Content;
 use thiserror::Error;
 use winit::application::ApplicationHandler;
 use winit::event::{DeviceEvent, DeviceId, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, EventLoop};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowId};
 
 #[derive(Debug, Error)]
@@ -30,18 +30,15 @@ pub enum ClientError {
     Threads(std::io::Error),
 }
 
-/// Vertical field of view, in degrees, until the options screen (milestone 8).
+/// Vertical field of view, in degrees, of the tools without settings (captures).
 pub const DEFAULT_FOV: f32 = 70.0;
 
 pub struct ClientConfig {
     pub content: Arc<Content>,
-    pub graphics: GraphicsSettings,
-    pub controls: ControlSettings,
     pub ui: UiAssets,
-    pub interface: InterfaceSettings,
-    /// Where interface changes (HUD layout, language…) are written.
-    pub interface_path: PathBuf,
-    pub vsync: bool,
+    pub settings: Settings,
+    /// Where setting changes are written.
+    pub settings_path: PathBuf,
     pub bench: Option<BenchConfig>,
     pub launcher: Box<dyn Launcher>,
     /// Start in this world directly (benchmarks, `--seed`) instead of the title screen.
@@ -80,7 +77,7 @@ impl ClientApp {
         let title = config
             .content
             .translations
-            .text(&config.interface.language, "game-title");
+            .text(&config.settings.interface.language, "game-title");
         let attributes = Window::default_attributes()
             .with_title(title)
             .with_inner_size(winit::dpi::LogicalSize::new(1280, 720));
@@ -121,9 +118,20 @@ impl ApplicationHandler for ClientApp {
         }
     }
 
-    fn about_to_wait(&mut self, _: &ActiveEventLoop) {
-        if let Some(session) = &self.session {
-            session.surface.window.request_redraw();
+    /// Draws at once, or sleeps until the next frame allowed by the FPS limit (or the
+    /// slow pace of a window in the background).
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        let Some(session) = &self.session else {
+            return;
+        };
+        match session.next_frame_at() {
+            Some(at) if at > Instant::now() => {
+                event_loop.set_control_flow(ControlFlow::WaitUntil(at));
+            }
+            _ => {
+                event_loop.set_control_flow(ControlFlow::Poll);
+                session.surface.window.request_redraw();
+            }
         }
     }
 }

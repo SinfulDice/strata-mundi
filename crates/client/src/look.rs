@@ -1,28 +1,16 @@
 use crate::camera::Camera;
 use crate::input::InputState;
+use crate::settings::ControlSettings;
 
-/// Camera rotation from the mouse and the right stick. Values become options at
-/// milestone 8.
-pub struct LookSettings {
-    /// Radians per mouse pixel.
-    pub mouse_sensitivity: f32,
-    /// Radians per second at full stick deflection.
-    pub stick_speed: f32,
-}
-
-impl Default for LookSettings {
-    fn default() -> Self {
-        Self {
-            mouse_sensitivity: 0.0025,
-            stick_speed: 3.0,
-        }
-    }
-}
-
-impl LookSettings {
-    pub fn apply(&self, camera: &mut Camera, input: &InputState, dt: f32) {
-        let mouse = input.mouse_delta() * self.mouse_sensitivity;
-        let stick = input.look_stick() * self.stick_speed * dt;
-        camera.rotate(mouse.x + stick.x, -mouse.y + stick.y);
-    }
+/// Turns the camera with the mouse and the right stick, as set in the options.
+pub fn apply_look(camera: &mut Camera, input: &InputState, dt: f32, controls: &ControlSettings) {
+    let mouse = input.mouse_delta() * controls.mouse_radians();
+    let stick = input.look_stick() * controls.stick_radians() * dt;
+    let vertical = -mouse.y + stick.y;
+    let vertical = if controls.invert_y {
+        -vertical
+    } else {
+        vertical
+    };
+    camera.rotate(mouse.x + stick.x, vertical);
 }

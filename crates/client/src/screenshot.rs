@@ -2,6 +2,7 @@ use crate::camera::Camera;
 use crate::mesher::{BlockTable, mesh_section};
 use crate::render::{
     Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, Renderer, Target,
+    TextureFiltering,
 };
 use crate::settings::GraphicsSettings;
 use crate::world::ClientWorld;
@@ -56,7 +57,11 @@ pub fn render_image(
     view: &View,
 ) -> Result<RgbaImage, ScreenshotError> {
     let gpu = Gpu::new(Gpu::create_instance(), None)?;
-    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures)?;
+    let filtering = TextureFiltering {
+        mipmaps: view.graphics.mipmaps,
+        anisotropy: view.graphics.anisotropy.clamp(1, 16) as u16,
+    };
+    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures, filtering)?;
     let ao = view.graphics.ambient_occlusion;
     renderer.ambient_occlusion = f32::from(u8::from(ao));
     renderer.vertical_distance = view.graphics.vertical_distance;

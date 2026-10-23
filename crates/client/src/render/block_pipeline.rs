@@ -7,8 +7,10 @@ use bytemuck::{Pod, Zeroable};
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
 pub struct CameraUniform {
     pub view_proj: [[f32; 4]; 4],
-    /// x: ambient occlusion strength.
+    /// x: ambient occlusion strength; y, z: fog start and end (blocks); w: fog on (1).
     pub options: [f32; 4],
+    /// Sky color, linear.
+    pub sky: [f32; 4],
 }
 
 pub const SECTION_OFFSET_SIZE: u32 = 16;
@@ -20,6 +22,7 @@ pub struct BlockPipeline {
     camera_buffer: wgpu::Buffer,
     pub camera_layout: wgpu::BindGroupLayout,
     camera_bind_group: wgpu::BindGroup,
+    texture_layout: wgpu::BindGroupLayout,
     texture_bind_group: wgpu::BindGroup,
 }
 
@@ -51,20 +54,7 @@ impl BlockPipeline {
                 resource: camera_buffer.as_entire_binding(),
             }],
         });
-        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("block textures"),
-            layout: &texture_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&textures.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&textures.sampler),
-                },
-            ],
-        });
+        let texture_bind_group = texture_group(device, &texture_layout, textures);
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("block pipeline layout"),
             bind_group_layouts: &[Some(&camera_layout), Some(&texture_layout)],
@@ -83,8 +73,13 @@ impl BlockPipeline {
             camera_buffer,
             camera_layout,
             camera_bind_group,
+            texture_layout,
             texture_bind_group,
         }
+    }
+
+    pub fn set_textures(&mut self, device: &wgpu::Device, textures: &TextureArray) {
+        self.texture_bind_group = texture_group(device, &self.texture_layout, textures);
     }
 
     pub fn write_camera(&self, queue: &wgpu::Queue, camera: &CameraUniform) {
@@ -196,6 +191,27 @@ fn texture_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
                 visibility: wgpu::ShaderStages::FRAGMENT,
                 ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                 count: None,
+            },
+        ],
+    })
+}
+
+fn texture_group(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    textures: &TextureArray,
+) -> wgpu::BindGroup {
+    device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("block textures"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(&textures.view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Sampler(&textures.sampler),
             },
         ],
     })

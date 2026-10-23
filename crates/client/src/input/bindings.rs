@@ -1,9 +1,11 @@
 use super::Action;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use winit::event::MouseButton;
 use winit::keyboard::KeyCode;
 
 /// Gamepad buttons, laid out like a New 3DS (ABXY named by position).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PadButton {
     South,
     East,
@@ -24,17 +26,48 @@ pub enum PadButton {
 }
 
 /// A physical input. Keys are physical codes: `KeyW` is the key labelled Z on AZERTY.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Binding {
     Key(KeyCode),
     Mouse(MouseButton),
     Pad(PadButton),
 }
 
-/// Which inputs trigger which action. Remappable (options screen, milestone 8).
-#[derive(Debug, Clone)]
+/// Which inputs trigger which action; remappable in the options.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(from = "ByAction", into = "ByAction")]
 pub struct Bindings {
     entries: Vec<(Binding, Action)>,
+}
+
+/// File form: each action with its inputs, easier to read and edit by hand.
+type ByAction = BTreeMap<Action, Vec<Binding>>;
+
+/// Order does not matter, only which input triggers which action.
+impl PartialEq for Bindings {
+    fn eq(&self, other: &Self) -> bool {
+        ByAction::from(self.clone()) == ByAction::from(other.clone())
+    }
+}
+
+impl From<ByAction> for Bindings {
+    fn from(map: ByAction) -> Self {
+        let entries = map
+            .into_iter()
+            .flat_map(|(action, inputs)| inputs.into_iter().map(move |b| (b, action)))
+            .collect();
+        Self { entries }
+    }
+}
+
+impl From<Bindings> for ByAction {
+    fn from(bindings: Bindings) -> Self {
+        let mut map = ByAction::new();
+        for (binding, action) in bindings.entries {
+            map.entry(action).or_default().push(binding);
+        }
+        map
+    }
 }
 
 impl Bindings {
@@ -43,6 +76,22 @@ impl Bindings {
             .iter()
             .filter(move |(b, _)| *b == binding)
             .map(|(_, action)| *action)
+    }
+
+    /// Binds `binding` to `action`, replacing the action's previous binding of the same
+    /// kind (keyboard and mouse, or gamepad).
+    pub fn rebind(&mut self, action: Action, binding: Binding) {
+        let pad = matches!(binding, Binding::Pad(_));
+        self.entries
+            .retain(|(b, a)| *a != action || matches!(b, Binding::Pad(_)) != pad);
+        self.entries.push((binding, action));
+    }
+
+    /// Takes `binding` away from every action in `actions` but `keep`, so one key does not
+    /// end up moving forward and backward at once.
+    pub fn release(&mut self, binding: Binding, actions: &[Action], keep: Action) {
+        self.entries
+            .retain(|(b, a)| *b != binding || *a == keep || !actions.contains(a));
     }
 
     pub fn bindings_for(&self, action: Action) -> impl Iterator<Item = Binding> + '_ {
@@ -112,5 +161,36 @@ impl Default for Bindings {
                 (Pad(PadButton::L1), HotbarPrevious),
             ],
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rebinding_replaces_only_the_same_kind_of_input() {
+        let mut bindings = Bindings::default();
+        bindings.rebind(Action::Jump, Binding::Key(KeyCode::KeyJ));
+        let jump: Vec<_> = bindings.bindings_for(Action::Jump).collect();
+        assert!(jump.contains(&Binding::Key(KeyCode::KeyJ)));
+        assert!(!jump.contains(&Binding::Key(KeyCode::Space)));
+        assert!(
+            jump.contains(&Binding::Pad(PadButton::South)),
+            "gamepad kept"
+        );
+    }
+
+    #[test]
+    fn a_key_given_to_one_action_leaves_the_others() {
+        let mut bindings = Bindings::default();
+        let w = Binding::Key(KeyCode::KeyW);
+        let moves = [Action::MoveForward, Action::MoveBackward];
+        bindings.release(w, &moves, Action::MoveBackward);
+        bindings.rebind(Action::MoveBackward, w);
+        assert_eq!(
+            bindings.actions_for(w).collect::<Vec<_>>(),
+            [Action::MoveBackward]
+        );
     }
 }

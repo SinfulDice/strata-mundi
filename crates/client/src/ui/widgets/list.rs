@@ -54,3 +54,72 @@ pub(super) fn list(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         d.hit(id, index, line, HitKind::Button);
     }
 }
+
+/// Settings rows: name left, value right, a gauge under ranges.
+pub(super) fn options(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
+    let Node::OptionList {
+        id,
+        anchor,
+        at,
+        size,
+        row_height,
+    } = node
+    else {
+        return;
+    };
+    let rect = parent.place(*anchor, d.ctx.offset(id, *at), *size);
+    let fitting = (rect.h / (*row_height).max(1)) as usize;
+    for (index, row) in d
+        .model
+        .option_rows(id)
+        .into_iter()
+        .take(fitting)
+        .enumerate()
+    {
+        let y = rect.y + (index as u32 * row_height) as i32;
+        let line = Rect::new(rect.x, y, rect.w, row_height - 1);
+        let focused = d.is_focused(id, index);
+        let theme = d.theme();
+        let fill = if focused {
+            theme.panel_light.0
+        } else {
+            theme.panel_dark.0
+        };
+        let (text, accent, shadow, field) = (
+            theme.text.0,
+            theme.accent.0,
+            theme.text_shadow.0,
+            theme.field.0,
+        );
+        let value_color = if row.highlight || focused {
+            accent
+        } else {
+            text
+        };
+        d.painter.fill(line, fill);
+        let text_y = y + (*row_height as i32 - d.painter.line_height() as i32) / 2;
+        d.painter.text(line.x + 4, text_y, &row.label, text, shadow);
+        let value_width = d.painter.text_width(&row.value) as i32;
+        let value_x = line.x + line.w as i32 - value_width - 4;
+        if let Some(gauge) = row.gauge {
+            let bar_w = (line.w / 3).max(10);
+            let bar = Rect::new(
+                line.x + line.w as i32 - bar_w as i32 - 2,
+                y + 1,
+                bar_w,
+                row_height - 3,
+            );
+            let filled = (gauge.clamp(0.0, 1.0) * bar.w as f32).round() as u32;
+            d.painter.fill(bar, field);
+            d.painter
+                .fill(Rect::new(bar.x, bar.y, filled, bar.h), theme_bar(d));
+        }
+        d.painter
+            .text(value_x, text_y, &row.value, value_color, shadow);
+        d.hit(id, index, line, HitKind::Option);
+    }
+}
+
+fn theme_bar(d: &Draw<'_, '_>) -> strata_core::texture::Rgba {
+    d.theme().panel.0
+}

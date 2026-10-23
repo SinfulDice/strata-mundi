@@ -1,5 +1,7 @@
 /// What the player wants to do, independent of the device used.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
+)]
 pub enum Action {
     MoveForward,
     MoveBackward,

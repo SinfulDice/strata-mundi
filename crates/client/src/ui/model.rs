@@ -25,6 +25,10 @@ pub trait ScreenModel {
     fn rows(&self, _id: &str) -> Vec<ListRow> {
         Vec::new()
     }
+    /// Rows of an options list (already scrolled).
+    fn option_rows(&self, _id: &str) -> Vec<OptionRow> {
+        Vec::new()
+    }
     /// Slider position (0 to 1) and caption.
     fn slider(&self, _id: &str) -> Option<(f32, String)> {
         None
@@ -35,8 +39,8 @@ pub trait ScreenModel {
     }
     /// Clicked, or confirmed with Enter / the A button.
     fn activate(&mut self, _id: &str, _index: usize) {}
-    /// Left/right on a focused slider (or a click at `fraction` of its width).
-    fn adjust(&mut self, _id: &str, _step: i32, _fraction: Option<f32>) {}
+    /// Left/right on a focused slider or option row (or a click at `fraction` of its width).
+    fn adjust(&mut self, _id: &str, _index: usize, _step: i32, _fraction: Option<f32>) {}
     /// Wheel or page keys over a list or grid.
     fn scroll(&mut self, _id: &str, _rows: i32) {}
     /// Number key `slot` pressed while pointing at an element (item → hotbar slot).
@@ -56,6 +60,17 @@ pub struct ListRow {
     pub dim: bool,
 }
 
+/// One line of an `OptionList`: a name, its current value and, for ranges, a gauge.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct OptionRow {
+    pub label: String,
+    pub value: String,
+    /// Position of a range setting (0 to 1), drawn as a bar.
+    pub gauge: Option<f32>,
+    /// Waiting for something (a key to bind).
+    pub highlight: bool,
+}
+
 /// One interactive element on screen, for clicks and focus navigation.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Hit {
@@ -70,6 +85,8 @@ pub enum HitKind {
     Button,
     TextField,
     Slider,
+    /// A row of an options list: left/right change it, confirm toggles or opens it.
+    Option,
     Slot,
     /// Not interactive in play; selectable in the HUD editor.
     Element,

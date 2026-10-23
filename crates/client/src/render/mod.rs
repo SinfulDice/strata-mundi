@@ -7,17 +7,20 @@ mod gpu;
 mod mesh;
 mod offscreen;
 mod outline;
+mod post;
 mod surface;
 mod texture_array;
 mod ui_pipeline;
 
 pub use gpu::{Gpu, GpuError};
 pub use offscreen::{OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError};
+pub use post::PostProcess;
 pub use surface::{Acquired, WindowSurface};
 pub use ui_pipeline::UiPipeline;
 
 use crate::camera::Camera;
 use crate::mesher::{SectionKey, SectionMesh};
+use crate::settings::{ColorFilter, Settings};
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use depth::DepthBuffer;
 use frustum::Frustum;
@@ -30,26 +33,36 @@ use strata_core::content::TextureLibrary;
 use strata_core::coords::BlockPos;
 use strata_core::coords::{SECTION_SIZE, SECTIONS_PER_COLUMN};
 use texture_array::TextureArray;
+pub use texture_array::TextureFiltering;
 
 /// Clear color (sRGB) until the sky arrives in v0.2.
 const SKY_SRGB: [u8; 3] = [0x78, 0xa7, 0xff];
 
+/// Fog starts at this fraction of the render distance.
+const FOG_START: f32 = 0.6;
+
+fn srgb_to_linear(c: u8) -> f64 {
+    let c = f64::from(c) / 255.0;
+    if c <= 0.04045 {
+        c / 12.92
+    } else {
+        ((c + 0.055) / 1.055).powf(2.4)
+    }
+}
+
 /// Render targets are sRGB: the clear color must be given in linear space.
 fn linear_color([r, g, b]: [u8; 3]) -> wgpu::Color {
-    let linear = |c: u8| {
-        let c = f64::from(c) / 255.0;
-        if c <= 0.04045 {
-            c / 12.92
-        } else {
-            ((c + 0.055) / 1.055).powf(2.4)
-        }
-    };
     wgpu::Color {
-        r: linear(r),
-        g: linear(g),
-        b: linear(b),
+        r: srgb_to_linear(r),
+        g: srgb_to_linear(g),
+        b: srgb_to_linear(b),
         a: 1.0,
     }
+}
+
+fn linear_rgba([r, g, b]: [u8; 3]) -> [f32; 4] {
+    let [r, g, b] = [r, g, b].map(|c| srgb_to_linear(c) as f32);
+    [r, g, b, 1.0]
 }
 
 /// GPU meshes of one section.
@@ -71,6 +84,46 @@ pub struct Renderer {
     pub ambient_occlusion: f32,
     /// Sections farther than this above or below the camera's section are not drawn.
     pub vertical_distance: u32,
+    pub options: RenderOptions,
+}
+
+/// Image settings that need no rebuild, taken from the player's settings.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RenderOptions {
+    pub fog: bool,
+    /// Where the fog is complete, in blocks (the edge of the loaded world).
+    pub fog_end: f32,
+    /// 3D resolution, as a fraction of the window.
+    pub render_scale: f32,
+    pub color_filter: ColorFilter,
+}
+
+impl Default for RenderOptions {
+    fn default() -> Self {
+        Self {
+            fog: false,
+            fog_end: f32::MAX,
+            render_scale: 1.0,
+            color_filter: ColorFilter::None,
+        }
+    }
+}
+
+impl RenderOptions {
+    pub fn from_settings(settings: &Settings) -> Self {
+        let graphics = &settings.graphics;
+        Self {
+            fog: graphics.fog,
+            fog_end: (graphics.render_distance as f32 - 0.5) * SECTION_SIZE as f32,
+            render_scale: graphics.render_scale as f32 / 100.0,
+            color_filter: settings.interface.color_filter,
+        }
+    }
+
+    /// Whether the image goes through the final pass (scaling, colour filter).
+    pub fn needs_post(&self) -> bool {
+        (self.render_scale - 1.0).abs() > f32::EPSILON || self.color_filter != ColorFilter::None
+    }
 }
 
 /// Where and how big the frame is.
@@ -84,9 +137,9 @@ impl Renderer {
         gpu: &Gpu,
         color_format: wgpu::TextureFormat,
         textures: &TextureLibrary,
+        filtering: TextureFiltering,
     ) -> Result<Self, GpuError> {
-        let layers: Vec<_> = textures.images.iter().map(|(_, _, image)| image).collect();
-        let textures = TextureArray::new(&gpu.device, &gpu.queue, &layers)?;
+        let textures = texture_array(gpu, textures, filtering)?;
         let blocks = BlockPipeline::new(&gpu.device, color_format, &textures);
         Ok(Self {
             outline_pipeline: OutlinePipeline::new(
@@ -100,7 +153,26 @@ impl Renderer {
             columns: HashMap::new(),
             ambient_occlusion: 1.0,
             vertical_distance: u32::MAX,
+            options: RenderOptions::default(),
         })
+    }
+
+    /// Rebuilds the block textures with new mipmap and anisotropy settings.
+    pub fn set_texture_filtering(
+        &mut self,
+        gpu: &Gpu,
+        textures: &TextureLibrary,
+        mipmaps: bool,
+        anisotropy: u32,
+    ) {
+        let filtering = TextureFiltering {
+            mipmaps,
+            anisotropy: anisotropy.clamp(1, 16) as u16,
+        };
+        match texture_array(gpu, textures, filtering) {
+            Ok(array) => self.blocks.set_textures(&gpu.device, &array),
+            Err(error) => tracing::error!(%error, "texture settings not applied"),
+        }
     }
 
     /// Replaces the meshes of a section (an empty mesh removes it).
@@ -145,7 +217,13 @@ impl Renderer {
             &gpu.queue,
             &CameraUniform {
                 view_proj: view_projection.to_cols_array_2d(),
-                options: [self.ambient_occlusion, 0.0, 0.0, 0.0],
+                options: [
+                    self.ambient_occlusion,
+                    self.options.fog_end * FOG_START,
+                    self.options.fog_end,
+                    f32::from(u8::from(self.options.fog)),
+                ],
+                sky: linear_rgba(SKY_SRGB),
             },
         );
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -249,3 +327,12 @@ impl Renderer {
 }
 
 const SECTION_CENTER: DVec3 = DVec3::splat(SECTION_SIZE as f64 / 2.0);
+
+fn texture_array(
+    gpu: &Gpu,
+    textures: &TextureLibrary,
+    filtering: TextureFiltering,
+) -> Result<TextureArray, GpuError> {
+    let layers: Vec<_> = textures.images.iter().map(|(_, _, image)| image).collect();
+    TextureArray::new(&gpu.device, &gpu.queue, &layers, filtering)
+}

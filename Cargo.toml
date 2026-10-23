@@ -41,7 +41,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-tracy = "0.12"
 unic-langid = "0.9"
 wgpu = { version = "30", default-features = false, features = ["std", "parking_lot", "vulkan", "wgsl"] }
-winit = "0.30"
+winit = { version = "0.30", features = ["serde"] }
 zbus = { version = "5.19", default-features = false, features = ["async-io", "blocking-api"] }
 zstd = { version = "0.14", default-features = false }
 

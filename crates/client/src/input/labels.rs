@@ -14,14 +14,35 @@ pub struct KeyNames {
 }
 
 impl KeyNames {
-    pub fn learn(&mut self, code: KeyCode, text: &str) {
+    /// Returns whether the name of the key changed.
+    pub fn learn(&mut self, code: KeyCode, text: &str) -> bool {
         let mut chars = text.chars();
-        if let (Some(ch), None) = (chars.next(), chars.next())
-            && !ch.is_control()
-            && !ch.is_whitespace()
-        {
-            self.learned.insert(code, ch.to_uppercase().collect());
+        let (Some(ch), None) = (chars.next(), chars.next()) else {
+            return false;
+        };
+        if ch.is_control() || ch.is_whitespace() {
+            return false;
         }
+        let name: String = ch.to_uppercase().collect();
+        self.learned.insert(code, name.clone()) != Some(name)
+    }
+
+    /// Keyboard and gamepad labels of every action, by `Action::index`.
+    pub fn table(
+        &self,
+        bindings: &Bindings,
+        translations: &Translations,
+        language: &str,
+    ) -> Vec<(String, String)> {
+        Action::ALL
+            .map(|action| {
+                let label = |device| self.label(bindings, device, action, translations, language);
+                (
+                    label(InputDevice::KeyboardMouse),
+                    label(InputDevice::Gamepad),
+                )
+            })
+            .to_vec()
     }
 
     /// Label of the first binding of `action` for the last device used.

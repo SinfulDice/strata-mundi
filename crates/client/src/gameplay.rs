@@ -4,7 +4,7 @@ use crate::camera::Camera;
 use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
 use crate::interaction::{BlockInfo, Interaction};
-use crate::look::LookSettings;
+use crate::look::apply_look;
 use crate::player::LocalPlayer;
 use crate::render::Renderer;
 use crate::settings::ControlSettings;
@@ -15,6 +15,10 @@ use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
 use strata_core::physics::{EYE_HEIGHT, MoveInput, solid_at};
 use strata_protocol::{ClientConnection, ClientMessage, HotbarState, ServerMessage};
 
+/// Field of view widening while sprinting, and how fast it eases in and out (per second).
+const SPRINT_ZOOM: f32 = 1.1;
+const ZOOM_SPEED: f32 = 8.0;
+
 pub struct Gameplay {
     pub view: WorldView,
     pub camera: Camera,
@@ -22,8 +26,9 @@ pub struct Gameplay {
     pub interaction: Interaction,
     pub info: BlockInfo,
     pub controls: ControlSettings,
+    /// Off with "reduce camera effects".
+    pub camera_effects: bool,
     player: Option<LocalPlayer>,
-    look: LookSettings,
     border: i32,
     /// Last hotbar sent to the server, to send only changes.
     sent_hotbar: HotbarState,
@@ -43,8 +48,8 @@ impl Gameplay {
             interaction: Interaction::default(),
             info,
             controls,
+            camera_effects: true,
             player: None,
-            look: LookSettings::default(),
             border: DEFAULT_WORLD_BORDER,
             sent_hotbar: HotbarState::default(),
         }
@@ -92,7 +97,7 @@ impl Gameplay {
 
     /// Player-driven frame: look, move (fixed ticks), aim and build.
     pub fn update(&mut self, dt: f32, input: &InputState, connection: &ClientConnection) {
-        self.look.apply(&mut self.camera, input, dt);
+        apply_look(&mut self.camera, input, dt, &self.controls);
         self.select_hotbar(input);
         let move_input = MoveInput {
             wish: input.movement().to_array(),
@@ -103,6 +108,7 @@ impl Gameplay {
             sprint: input.is_held(Action::Sprint),
             toggle_flight: false,
         };
+        self.ease_sprint_zoom(dt, move_input.sprint && move_input.wish != [0.0; 2]);
         let solid = solid_lookup(&self.view.world, &self.info, self.border);
         if let Some(player) = &mut self.player {
             for (sequence, input) in player.advance(f64::from(dt), move_input, &solid) {
@@ -121,6 +127,16 @@ impl Gameplay {
         if let Some(message) = message {
             connection.send(message);
         }
+    }
+
+    fn ease_sprint_zoom(&mut self, dt: f32, sprinting: bool) {
+        let target = if sprinting && self.camera_effects {
+            SPRINT_ZOOM
+        } else {
+            1.0
+        };
+        let blend = (dt * ZOOM_SPEED).min(1.0);
+        self.camera.zoom += (target - self.camera.zoom) * blend;
     }
 
     /// Tells the server about hotbar changes (from play or from the inventory).

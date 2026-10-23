@@ -1,6 +1,7 @@
 //! What the menus need from the program around the client: the saved worlds and a way
 //! to start a server for one. The client never touches the files itself.
 
+use crate::settings::Settings;
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::thread::JoinHandle;
@@ -43,4 +44,6 @@ pub trait Launcher {
     fn open(&mut self, id: &str) -> Result<RunningWorld, LaunchError>;
     fn delete(&mut self, id: &str) -> Result<(), LaunchError>;
     fn panorama(&self) -> Panorama;
+    /// Settings changed: the next worlds start with them (threads, autosave, backups).
+    fn configure(&mut self, settings: &Settings);
 }

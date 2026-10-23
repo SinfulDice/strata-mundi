@@ -3,7 +3,7 @@
 //! window size or ratio.
 
 use super::menu::{Effect, Shared};
-use crate::interface_settings::InterfaceSettings;
+use crate::settings::InterfaceSettings;
 use crate::ui::{ScreenDef, ScreenModel};
 
 /// Pixels moved per arrow press.
@@ -18,7 +18,7 @@ impl ScreenModel for EditorModel<'_> {
     fn activate(&mut self, id: &str, _: usize) {
         let effect = match id {
             "reset" => {
-                self.shared.settings.hud.clear();
+                self.shared.settings.interface.hud.clear();
                 Effect::SettingsChanged
             }
             "done" => Effect::Pop,

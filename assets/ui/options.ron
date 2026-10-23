@@ -1,4 +1,6 @@
-// Interface options (the full settings screen arrives at milestone 8).
+// Settings: one tab per family, one row per setting (left/right or click to change),
+// and below, what the focused setting does and costs. 11 rows at once
+// (`VISIBLE_ROWS` in screens/options.rs).
 Screen(
     root: [
         Shade,
@@ -6,14 +8,14 @@ Screen(
             id: "window",
             anchor: Center,
             at: (0, 0),
-            size: (200, 136),
+            size: (300, 218),
             children: [
-                Label(id: "title", anchor: Top, at: (0, 6), text: "ui-options-title"),
-                Button(id: "language", anchor: Top, at: (0, 22), size: (180, 18), text: "@language"),
-                Slider(id: "scale", anchor: Top, at: (0, 44), size: (180, 18)),
-                Button(id: "pause", anchor: Top, at: (0, 66), size: (180, 18), text: "@pause"),
-                Button(id: "hud", anchor: Top, at: (0, 88), size: (180, 18), text: "ui-option-hud"),
-                Button(id: "back", anchor: Top, at: (0, 110), size: (180, 18), text: "ui-back"),
+                Label(id: "title", anchor: TopLeft, at: (8, 4), text: "ui-options-title"),
+                Tabs(id: "tabs", anchor: TopLeft, at: (8, 17), size: (284, 13)),
+                OptionList(id: "options", anchor: TopLeft, at: (8, 34), size: (284, 143), row_height: 13),
+                Label(id: "description", anchor: TopLeft, at: (8, 181), text: "@description", dim: true),
+                Button(id: "back", anchor: BottomRight, at: (-8, -5), size: (70, 16), text: "ui-back"),
+                Label(id: "help", anchor: BottomLeft, at: (8, -8), text: "ui-options-help", dim: true),
             ],
         ),
     ],

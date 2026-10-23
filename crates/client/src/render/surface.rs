@@ -9,6 +9,7 @@ pub struct WindowSurface {
     config: wgpu::SurfaceConfiguration,
     /// Reconfiguring while a frame is alive is invalid: it waits for the next acquire.
     needs_reconfigure: bool,
+    present_modes: Vec<wgpu::PresentMode>,
 }
 
 pub enum Acquired {
@@ -40,6 +41,7 @@ impl WindowSurface {
             surface,
             config,
             needs_reconfigure: false,
+            present_modes: capabilities.present_modes,
         }
     }
 
@@ -49,6 +51,12 @@ impl WindowSurface {
 
     pub fn present_mode(&self) -> wgpu::PresentMode {
         self.config.present_mode
+    }
+
+    /// Switches vertical synchronisation at the next frame.
+    pub fn set_vsync(&mut self, vsync: bool) {
+        self.config.present_mode = present_mode(&self.present_modes, vsync);
+        self.needs_reconfigure = true;
     }
 
     pub fn size(&self) -> (u32, u32) {

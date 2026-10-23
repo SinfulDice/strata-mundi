@@ -7,7 +7,6 @@ mod gameplay;
 mod hotbar;
 pub mod input;
 mod interaction;
-pub mod interface_settings;
 pub mod launcher;
 mod look;
 mod mesh_scheduler;

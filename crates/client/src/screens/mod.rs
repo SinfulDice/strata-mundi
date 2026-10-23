@@ -6,6 +6,7 @@ mod hud;
 mod inventory;
 mod keyboard;
 mod menu;
+mod options;
 mod pause;
 mod title;
 mod worlds;
@@ -14,8 +15,9 @@ pub use menu::UiAction;
 
 use crate::gameplay::Gameplay;
 use crate::hotbar::Hotbar;
-use crate::interface_settings::InterfaceSettings;
+use crate::input::{Action, InputDevice, KeyNames};
 use crate::render::{Gpu, UiPipeline};
+use crate::settings::Settings;
 use crate::ui::{
     Hit, ICON_SIZE, Node, Rect, ScreenDef, ScreenModel, UiAssets, UiAtlas, UiContext, auto_scale,
     draw_screen,
@@ -27,6 +29,7 @@ use std::path::PathBuf;
 use strata_core::content::Content;
 use strata_core::texture::RgbaImage;
 use strata_protocol::WorldSummary;
+use winit::keyboard::KeyCode;
 
 /// Where the interface is drawn: over the frame in `view`.
 pub struct UiFrame<'a> {
@@ -42,7 +45,7 @@ pub struct Screens {
     assets: UiAssets,
     atlas: UiAtlas,
     pipeline: UiPipeline,
-    pub settings: InterfaceSettings,
+    pub settings: Settings,
     settings_path: PathBuf,
     stack: Vec<Menu>,
     in_world: bool,
@@ -61,6 +64,13 @@ pub struct Screens {
     effects: Vec<Effect>,
     /// Settings changed but not written yet (see `handle`).
     settings_dirty: bool,
+    key_names: KeyNames,
+    /// Keyboard and gamepad label of each action, rebuilt when bindings, language or
+    /// learned key names change.
+    key_labels: Vec<(String, String)>,
+    labels_stale: bool,
+    /// Last device used: prompts show its keys or buttons.
+    device: InputDevice,
 }
 
 impl Screens {
@@ -69,7 +79,7 @@ impl Screens {
         color_format: wgpu::TextureFormat,
         assets: UiAssets,
         content: &Content,
-        settings: InterfaceSettings,
+        settings: Settings,
         settings_path: PathBuf,
     ) -> Self {
         let atlas = UiAtlas::build(content, assets.font.clone());
@@ -94,11 +104,11 @@ impl Screens {
             last_cursor: None,
             effects: Vec::new(),
             settings_dirty: false,
+            key_names: KeyNames::default(),
+            key_labels: Vec::new(),
+            labels_stale: true,
+            device: InputDevice::KeyboardMouse,
         }
-    }
-
-    pub fn language(&self) -> &str {
-        &self.settings.language
     }
 
     /// Back to the title screen (after leaving a world).
@@ -168,6 +178,28 @@ impl Screens {
         self.last_cursor = None;
     }
 
+    /// Changes settings from outside the menus (F7/F8); written like menu changes.
+    pub fn change_settings(&mut self, change: impl FnOnce(&mut Settings)) {
+        change(&mut self.settings);
+        self.settings_dirty = true;
+    }
+
+    /// A key typed something: its printed name may now be known.
+    pub fn learn_key(&mut self, code: KeyCode, text: &str) {
+        self.labels_stale |= self.key_names.learn(code, text);
+    }
+
+    fn refresh_labels(&mut self, content: &Content) {
+        if self.labels_stale {
+            let bindings = &self.settings.controls.bindings;
+            let language = &self.settings.interface.language;
+            self.key_labels = self
+                .key_names
+                .table(bindings, &content.translations, language);
+            self.labels_stale = false;
+        }
+    }
+
     /// Runs `f` on the model of the menu on top, if any.
     fn with_model<R>(
         &mut self,
@@ -176,12 +208,16 @@ impl Screens {
         f: impl FnOnce(&mut dyn ScreenModel) -> R,
     ) -> Option<R> {
         let menu = self.stack.last_mut()?;
+        let labels = &self.key_labels;
+        let key_labels = |action: Action| labels.get(action.index()).cloned().unwrap_or_default();
         let shared = Shared {
             content,
             settings: &mut self.settings,
             worlds: &self.worlds,
             icons: &self.icons,
             hotbar: game.map(|g| &mut g.hotbar),
+            focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
+            key_labels: &key_labels,
             effects: &mut self.effects,
         };
         let mut model = menu::model(menu, shared);
@@ -196,7 +232,7 @@ impl Screens {
             keyboard,
             rows: key_rows(&self.assets.screens.keyboard),
             translations: &content.translations,
-            language: &self.settings.language,
+            language: &self.settings.interface.language,
             typed: &mut typed,
             done: &mut done,
         };
@@ -212,7 +248,6 @@ impl Screens {
         frame: UiFrame<'_>,
         content: &Content,
         game: Option<&mut Gameplay>,
-        key_label: &dyn Fn(&str) -> String,
     ) {
         let UiFrame {
             encoder,
@@ -220,19 +255,28 @@ impl Screens {
             size,
         } = frame;
         let fitting = auto_scale(size.0, size.1, MAX_AUTO_SCALE);
-        self.scale = match self.settings.scale {
+        self.scale = match self.settings.interface.scale {
             0 => fitting,
             chosen => chosen.min(auto_scale(size.0, size.1, u32::MAX)),
         };
         let screen = Rect::new(0, 0, size.0 / self.scale, size.1 / self.scale);
         let editor = matches!(self.stack.last(), Some(Menu::HudEditor { .. }));
-        let language = self.settings.language.clone();
+        let language = self.settings.interface.language.clone();
+        let labels = &self.key_labels;
+        let pad = self.device == InputDevice::Gamepad;
+        let key_label = |name: &str| {
+            Action::from_name(name)
+                .and_then(|action| labels.get(action.index()))
+                .map(|(keys, buttons)| if pad { buttons } else { keys }.clone())
+                .unwrap_or_else(|| name.to_owned())
+        };
+        let key_labels = |action: Action| labels.get(action.index()).cloned().unwrap_or_default();
         let mut painter = crate::ui::Painter::new(&self.atlas, self.scale);
         let ctx = UiContext {
             theme: &self.assets.theme,
             translations: &content.translations,
             language: &language,
-            key_label,
+            key_label: &key_label,
             offsets: None,
             editing: false,
         };
@@ -250,7 +294,7 @@ impl Screens {
                 },
             };
             let hud_ctx = UiContext {
-                offsets: Some(&self.settings.hud),
+                offsets: Some(&self.settings.interface.hud),
                 editing: editor,
                 ..ctx
             };
@@ -265,6 +309,8 @@ impl Screens {
                 worlds: &self.worlds,
                 icons: &self.icons,
                 hotbar: game.map(|g| &mut g.hotbar),
+                focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
+                key_labels: &key_labels,
                 effects: &mut Vec::new(),
             };
             let def = menu.def(&self.assets.screens);
@@ -356,9 +402,6 @@ const CODE_KEYS: &[&str] = &[
     "ui-play-time-minutes",
     "ui-on",
     "ui-off",
-    "ui-option-language",
-    "ui-option-pause-menus",
-    "ui-option-scale",
     "ui-scale-auto",
     "ui-key-erase",
     "ui-key-shift",
@@ -385,6 +428,7 @@ mod tests {
         let mut keys = ui.translation_keys();
         keys.extend(super::CODE_KEYS.iter().map(|k| (*k).to_owned()));
         keys.extend(key_translation_keys());
+        keys.extend(super::options::translation_keys());
         let missing = content.translations.missing(&keys);
         assert!(missing.is_empty(), "missing translations: {missing:#?}");
     }

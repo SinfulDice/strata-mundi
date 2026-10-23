@@ -7,12 +7,13 @@ use glam::DVec3;
 use std::path::PathBuf;
 use std::sync::Arc;
 use strata_client::launcher::{LaunchError, Launcher, Panorama, RunningWorld};
+use strata_client::settings::Settings;
 use strata_core::content::Content;
 use strata_core::coords::DEFAULT_WORLD_BORDER;
 use strata_core::dimension::DimensionId;
 use strata_protocol::{GameMode, NewWorld, WorldSummary};
 use strata_server::save::{self, FORMAT_VERSION, SaveError, WorldFolder, WorldMeta};
-use strata_server::{IntegratedServer, ServerConfig, WorldSettings};
+use strata_server::{IntegratedServer, ServerConfig, TICKS_PER_SECOND, WorldSettings};
 use strata_worldgen::{Generator, Seed, WorldgenContent};
 
 /// Columns around the title screen camera.
@@ -107,6 +108,14 @@ impl Launcher for GameLauncher {
 
     fn delete(&mut self, id: &str) -> Result<(), LaunchError> {
         save::delete(&self.saves, id).map_err(reported)
+    }
+
+    fn configure(&mut self, settings: &Settings) {
+        let game = &settings.game;
+        self.autosave_ticks = u64::from(game.autosave_minutes) * 60 * u64::from(TICKS_PER_SECOND);
+        self.backups_kept = game.backups_kept as usize;
+        self.generation_threads = settings.graphics.world_threads();
+        self.view_distance = settings.graphics.render_distance;
     }
 
     fn panorama(&self) -> Panorama {

@@ -23,6 +23,17 @@ impl WorldView {
         Self { world, meshing }
     }
 
+    /// New meshing settings (ambient occlusion, threads): every section is meshed again;
+    /// the old meshes stay on screen until their replacement arrives.
+    pub fn replace_meshing(&mut self, meshing: MeshScheduler) {
+        self.meshing = meshing;
+        for key in self.world.section_keys() {
+            if self.world.is_complete(ColumnPos { x: key.0, z: key.1 }) {
+                self.meshing.mark_dirty(key);
+            }
+        }
+    }
+
     pub fn insert(&mut self, column: Column) {
         let pos = column.pos;
         self.world.insert(column);

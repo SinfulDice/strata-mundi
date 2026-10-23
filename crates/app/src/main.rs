@@ -14,27 +14,23 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
-use strata_client::interface_settings::InterfaceSettings;
+use strata_client::launcher::Launcher;
 use strata_client::screenshot::{View, capture};
-use strata_client::settings::{ControlSettings, GraphicsSettings, Preset};
+use strata_client::settings::{GraphicsSettings, Preset, Settings};
 use strata_client::texture_sheet::write_texture_sheet;
 use strata_client::{ClientConfig, DEFAULT_FOV, run};
 use strata_core::dimension::DimensionId;
 use strata_core::physics::EYE_HEIGHT;
-use strata_server::TICKS_PER_SECOND;
 use strata_worldgen::{Generator, Seed};
-
-/// Copies of a world kept, made each time it is opened.
-const BACKUPS_KEPT: usize = 3;
-const AUTOSAVE_MINUTES: u64 = 5;
 
 fn main() -> anyhow::Result<()> {
     let args = cli::Args::parse();
     logging::init()?;
-    tracing::info!(version = env!("CARGO_PKG_VERSION"), preset = %args.preset, "starting Strata Mundi");
+    tracing::info!(version = env!("CARGO_PKG_VERSION"), "starting Strata Mundi");
     let dimension = DimensionId(args.dimension.clone());
     let loaded = content::load(&args, &dimension)?;
-    let graphics = GraphicsSettings::for_preset(args.preset);
+    let tool_preset = args.preset.unwrap_or(Preset::High);
+    let graphics = GraphicsSettings::for_preset(tool_preset);
     if let Some(path) = &args.texture_sheet {
         return Ok(write_texture_sheet(
             &loaded.content,
@@ -54,41 +50,53 @@ fn main() -> anyhow::Result<()> {
     let bench = args
         .bench_scene
         .as_deref()
-        .map(|name| load_bench(&loaded.assets, name, args.preset, args.report_dir.clone()))
+        .map(|name| load_bench(&loaded.assets, name, tool_preset, args.report_dir.clone()))
         .transpose()?;
     let data = paths::data_dir(args.data_dir.clone());
     tracing::info!(path = %data.display(), "data folder");
-    let interface_path = data.join("config/interface.toml");
-    let mut interface = InterfaceSettings::load(&interface_path);
-    if let Some(language) = &args.lang {
-        interface.language.clone_from(language);
-    }
+    let settings_path = data.join("config/settings.toml");
+    let settings = settings_for(&args, &settings_path, bench.is_some());
     let content = Arc::new(loaded.content);
-    let launcher = GameLauncher {
+    let mut launcher = GameLauncher {
         content: Arc::clone(&content),
         worldgen: Arc::clone(&loaded.worldgen),
         dimension,
         saves: data.join("saves"),
         backups: data.join("backups"),
-        backups_kept: BACKUPS_KEPT,
-        autosave_ticks: AUTOSAVE_MINUTES * 60 * u64::from(TICKS_PER_SECOND),
-        generation_threads: graphics.generation_threads,
-        view_distance: graphics.render_distance,
+        backups_kept: 0,
+        autosave_ticks: 0,
+        generation_threads: 1,
+        view_distance: 2,
     };
+    launcher.configure(&settings);
     let direct = bench.is_some() || args.seed.is_some();
     let start = direct.then(|| launcher.temporary(seed)).transpose()?;
     Ok(run(ClientConfig {
         content,
-        controls: ControlSettings::default(),
         ui: loaded.ui,
-        interface,
-        interface_path,
-        vsync: bench.is_none(),
-        graphics,
+        settings,
+        settings_path,
         bench,
         launcher: Box::new(launcher),
         start,
     })?)
+}
+
+/// The saved settings, with the command line on top (`--preset`, `--lang`); benchmarks
+/// run without frame limit or VSync, so they measure the machine.
+fn settings_for(args: &cli::Args, path: &Path, bench: bool) -> Settings {
+    let mut settings = Settings::load(path);
+    if let Some(preset) = args.preset {
+        settings.apply_preset(preset);
+    }
+    if let Some(language) = &args.lang {
+        settings.interface.language.clone_from(language);
+    }
+    if bench {
+        settings.graphics.vsync = false;
+        settings.graphics.fps_limit = 0;
+    }
+    settings
 }
 
 /// With `--seed`, a freshly generated world around `--pos` (or the spawn point);
