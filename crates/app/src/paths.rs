@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Finds the `assets/` folder: next to the executable (installed game), in the working
 /// directory, or, in debug builds only, at the workspace root (`cargo run` from anywhere).
@@ -18,7 +18,7 @@ pub fn assets_dir() -> Option<PathBuf> {
 
 #[cfg(debug_assertions)]
 fn workspace_assets() -> Option<PathBuf> {
-    Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets"))
+    Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets"))
 }
 
 #[cfg(not(debug_assertions))]
