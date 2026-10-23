@@ -2,7 +2,7 @@
 # System packages needed to build Strata Mundi and render headless with Mesa lavapipe.
 set -euo pipefail
 packages=(mesa-vulkan-drivers vulkan-tools libvulkan-dev pkg-config libudev-dev
-  libasound2-dev libxkbcommon-dev libwayland-dev libx11-dev)
+  libasound2-dev libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libx11-dev)
 missing=()
 for package in "${packages[@]}"; do
   dpkg -s "$package" >/dev/null 2>&1 || missing+=("$package")

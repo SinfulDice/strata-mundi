@@ -38,3 +38,31 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Benchmarks** (`bench.yml`, séparé pour ne pas rendre la CI principale rouge à cause du bruit des machines partagées) : `criterion` sur le dernier tag `v*` (baseline `release`), puis sur `main` ; `scripts/bench-compare.sh` échoue si une moyenne ralentit de plus de 10 %.
 - **Release** (`release.yml`, sur tag `v*`) : Linux compilé sur Ubuntu 22.04 (glibc plus ancienne, binaire plus portable) → `.tar.gz` et AppImage (`appimagetool`) ; Flatpak (`flatpak-builder`, runtime freedesktop 24.08) à partir du même binaire ; Windows → `.zip` et `.msi` (`cargo-wix`, WiX 3). Puis publication de la release et régénération de la branche orpheline `wiki` (force-push d'un seul commit).
 - **Identifiant d'application** : `io.github.sinfuldice.StrataMundi`.
+
+## D008 — Fenêtre, rendu et maths : `winit`, `wgpu` (Vulkan seul), `glam` (v0.1, jalon 1)
+
+- **Choix** : `winit` 0.30 (fenêtre, clavier, souris ; référence de l'écosystème), `wgpu` 30 compilé **uniquement avec la feature `vulkan`** (plus `wgsl`), `glam` 0.34 (module `camera` pour les matrices). `pollster` pour attendre les quelques appels `async` d'initialisation, `bytemuck` pour envoyer les sommets sans `unsafe`.
+- **Alternatives écartées** : backends GL/DX12/Metal (plusieurs chemins à tester), `nalgebra` (plus lourd), `cgmath` (peu maintenu).
+
+## D009 — Rendu relatif à la caméra, reverse-Z, immediates (v0.1, jalon 1)
+
+- **Caméra** en `f64` ; chaque maillage est dessiné avec son origine relative à la caméra, envoyée en **immediates** (ex-*push constants*, 16 octets par draw, feature `IMMEDIATES` requise : tous les GPU Vulkan la supportent). Pas de tremblement à 10 millions de blocs.
+- **Reverse-Z + plan lointain infini** (`Depth32Float`, test `Greater`, effacement à 0) : précision de profondeur quasi uniforme, pas de z-fighting lointain.
+- **Convention** : lacet 0 = nord (−Z), 90 = est (+X) ; tangage positif vers le haut ; Y vers le haut, repère main droite.
+- **Alternative écartée** : décalage dans le uniform de caméra (une écriture de buffer par objet, inutilisable avec plusieurs objets dans une même passe).
+
+## D010 — Manettes : `gilrs` (v0.1, jalon 1)
+
+- **Choix** : `gilrs` 0.11 (Linux evdev, Windows XInput/WGI), boutons nommés par position (South/East…) donc indépendants de la marque. Facultatif : sans manette ou sans droits, le jeu tourne au clavier.
+- **Couche d'actions** maison (`Action`, `Bindings`, `InputState`) : clavier en **codes physiques** (`KeyCode`), plusieurs liaisons par action, zone morte radiale de 15 %, dernier périphérique mémorisé pour les invites, tactile déjà prévu comme périphérique.
+
+## D011 — Boucle de jeu et transport local (v0.1, jalon 1)
+
+- **Serveur** sur son propre thread, horloge à pas fixe (`TickClock`, 20 TPS, rattrapage plafonné à 10 ticks). **Client** sur le thread principal (exigé par `winit`), rendu aussi vite que permis (VSync par défaut).
+- **Transport solo** : canaux `std::sync::mpsc` typés (`ClientMessage`/`ServerMessage`, tous `Serialize`). `crossbeam-channel` n'est pas nécessaire tant qu'il n'y a qu'un producteur par sens.
+
+## D012 — Captures et bench (v0.1, jalon 1)
+
+- **Captures** : rendu hors écran (`Rgba8UnormSrgb`) puis relecture et encodage avec la crate `png` (légère, pure Rust ; `image` serait bien plus lourd).
+- **Bench** : scènes en RON (`assets/bench-scenes/`), horodatage GPU par requêtes de timestamps lues en différé (4 emplacements tournants), mémoire et description de la machine via `sysinfo` 0.39 (multi-plateforme, maintenu), date via `chrono` (sans fuseau horaire embarqué). Rapport `perf-reports/<date>-<machine>-<profil>-<scène>.md`.
+- **Headless** : en cloud, Mesa **lavapipe** suffit pour `--screenshot` ; la fenêtre et le bench se testent sous **Xvfb** (`xvfb-run`). Sous X11, `winit` charge `libxkbcommon-x11.so.0` à l'exécution (paquet `libxkbcommon-x11-0`).

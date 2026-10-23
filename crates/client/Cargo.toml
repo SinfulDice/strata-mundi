@@ -9,7 +9,19 @@ license.workspace = true
 [dependencies]
 strata-core.workspace = true
 strata-protocol.workspace = true
+bytemuck.workspace = true
+chrono.workspace = true
+gilrs.workspace = true
+glam.workspace = true
+png.workspace = true
+pollster.workspace = true
+ron.workspace = true
+serde.workspace = true
+sysinfo.workspace = true
+thiserror.workspace = true
 tracing.workspace = true
+wgpu.workspace = true
+winit.workspace = true
 
 [lints]
 workspace = true

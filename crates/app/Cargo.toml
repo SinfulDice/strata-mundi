@@ -14,11 +14,12 @@ path = "src/main.rs"
 profiling = ["dep:tracing-tracy"]
 
 [dependencies]
-strata-core.workspace = true
 strata-server.workspace = true
+strata-protocol.workspace = true
 strata-client.workspace = true
 anyhow.workspace = true
 clap.workspace = true
+glam.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tracing-tracy = { workspace = true, optional = true }

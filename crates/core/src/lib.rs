@@ -2,3 +2,4 @@
 
 pub mod coords;
 pub mod dimension;
+pub mod texture;

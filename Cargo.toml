@@ -17,15 +17,24 @@ strata-protocol = { path = "crates/protocol" }
 strata-client = { path = "crates/client" }
 
 anyhow = "1"
+bytemuck = { version = "1", features = ["derive"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 clap = { version = "4", features = ["derive"] }
 criterion = "0.8"
+gilrs = "0.11"
+glam = "0.34"
+png = "0.18"
+pollster = "1"
 ron = "0.12"
 serde = { version = "1", features = ["derive"] }
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 thiserror = "2"
 toml = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-tracy = "0.12"
+wgpu = { version = "30", default-features = false, features = ["std", "parking_lot", "vulkan", "wgsl"] }
+winit = "0.30"
 
 [workspace.lints.rust]
 unsafe_code = "deny"

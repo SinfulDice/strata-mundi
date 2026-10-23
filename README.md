@@ -14,7 +14,7 @@
   ./scripts/install-linux-deps.sh
   ```
 
-  (installe `mesa-vulkan-drivers vulkan-tools libvulkan-dev pkg-config libudev-dev libasound2-dev libxkbcommon-dev libwayland-dev libx11-dev`).
+  (installe `mesa-vulkan-drivers vulkan-tools libvulkan-dev pkg-config libudev-dev libasound2-dev libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libx11-dev`).
 - **Windows** : un pilote graphique à jour suffit.
 
 ## Compiler et lancer
@@ -25,7 +25,14 @@ cargo test --workspace         # lance les tests
 cargo bench --workspace        # lance les benchmarks
 ```
 
-Le binaire s'appelle `strata` (`target/release/strata`). `strata --help` liste les options de ligne de commande.
+Le binaire s'appelle `strata` (`target/release/strata`). `strata --help` liste les options de ligne de commande, notamment :
+
+```sh
+strata --screenshot capture.png --pos 2.2,1.8,2.6 --look -39,-28   # image fixe sans fenêtre
+strata --bench-scene cube-orbit --preset ds                        # mesure de performance (voir perf-reports/)
+```
+
+Contrôles (vol libre pour l'instant) : clic pour capturer la souris, ZQSD/WASD, Espace/Maj pour monter/descendre, Ctrl pour accélérer, Échap pour libérer la souris ; à la manette, sticks, A pour monter, B pour descendre, Start.
 
 ### Profilage avec Tracy
 

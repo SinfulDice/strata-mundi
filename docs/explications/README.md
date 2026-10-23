@@ -5,7 +5,13 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 ## Ordre de lecture conseillé
 
 1. Ce sommaire et la carte des crates ci-dessous.
-2. Les fichiers par système, au fur et à mesure qu'ils apparaissent (boucle de jeu, client/serveur, rendu, chunks, génération, packs, sauvegarde, interface, entrées, réglages…).
+2. [Boucle de jeu](boucle-de-jeu.md) : ticks à 20 par seconde, rendu découplé.
+3. [Client et serveur](client-serveur.md) : qui décide de quoi, les messages.
+4. [Rendu avec wgpu](rendu-wgpu.md) : de la scène à l'image.
+5. [Entrées](entrees.md) : clavier, souris, manette, actions.
+6. [Mesures et captures](bench-et-captures.md) : `--screenshot`, `--bench-scene`.
+
+Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 
 ## Carte des crates
 

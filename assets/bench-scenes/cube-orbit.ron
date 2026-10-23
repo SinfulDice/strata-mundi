@@ -1,0 +1,12 @@
+// Milestone 1 reference scene: a slow circle around the test cube.
+(
+    warmup: 2.0,
+    duration: 10.0,
+    keyframes: [
+        (time: 0.0, pos: (0.5, 2.0, 4.0), yaw: 0.0, pitch: -20.0),
+        (time: 2.5, pos: (4.0, 2.0, 0.5), yaw: -90.0, pitch: -20.0),
+        (time: 5.0, pos: (0.5, 2.0, -3.0), yaw: -180.0, pitch: -20.0),
+        (time: 7.5, pos: (-3.0, 2.0, 0.5), yaw: -270.0, pitch: -20.0),
+        (time: 10.0, pos: (0.5, 2.0, 4.0), yaw: -360.0, pitch: -20.0),
+    ],
+)
