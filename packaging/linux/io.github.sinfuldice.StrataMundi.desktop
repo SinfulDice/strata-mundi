@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Strata Mundi
+Comment=Voxel sandbox
+Exec=strata
+Icon=io.github.sinfuldice.StrataMundi
+Categories=Game;
+Terminal=false

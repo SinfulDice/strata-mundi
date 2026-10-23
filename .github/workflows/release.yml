@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    # Oldest supported runner, so the binaries run on older glibc versions.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/install-linux-deps.sh && sudo apt-get install -y libfuse2
+      - run: rustup show
+      - run: cargo build --release -p strata-app
+      - run: ./scripts/package-linux.sh "${GITHUB_REF_NAME#v}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/*.tar.gz
+            dist/*.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-stage
+          path: dist/strata-linux
+
+  flatpak:
+    needs: linux
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-stage
+          path: dist/strata-linux
+      - run: chmod +x dist/strata-linux/strata
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: strata-${{ github.ref_name }}-x86_64.flatpak
+          manifest-path: packaging/flatpak/io.github.sinfuldice.StrataMundi.yml
+          upload-artifact: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flatpak
+          path: "*.flatpak"
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show
+      - run: cargo install cargo-wix --locked
+      - run: cargo build --release -p strata-app
+      - shell: pwsh
+        run: ./scripts/package-windows.ps1 -Version $env:GITHUB_REF_NAME.TrimStart('v')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            dist/*.zip
+            dist/*.msi
+
+  publish:
+    needs: [linux, flatpak, windows]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: "{linux,flatpak,windows}"
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+
+  wiki:
+    # Renders images with Mesa lavapipe (no GPU on runners), then replaces the orphan `wiki` branch.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/install-linux-deps.sh
+      - run: rustup show
+      - uses: Swatinem/rust-cache@v2
+      - name: Generate wiki
+        run: |
+          if [ ! -d crates/wikigen ]; then echo "wikigen not available yet"; exit 0; fi
+          ./scripts/build-wiki.sh
+      - name: Publish on the wiki branch
+        run: |
+          [ -d wiki ] || exit 0
+          cd wiki
+          git init -q -b wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "docs(wiki): ${GITHUB_REF_NAME}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" wiki

@@ -1,0 +1,27 @@
+[package]
+name = "strata-app"
+description = "Strata Mundi game binary: integrated server + client."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "strata"
+path = "src/main.rs"
+
+[features]
+profiling = ["dep:tracing-tracy"]
+
+[dependencies]
+strata-core.workspace = true
+strata-server.workspace = true
+strata-client.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-tracy = { workspace = true, optional = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,7 @@
+/target
+/wiki/
+/saves/
+/crash-reports/
+/screenshots/*.tmp.png
+*.swp
+.DS_Store

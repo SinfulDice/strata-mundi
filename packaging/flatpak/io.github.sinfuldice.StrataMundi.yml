@@ -1,0 +1,28 @@
+app-id: io.github.sinfuldice.StrataMundi
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+command: strata
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=all
+  - --share=network
+modules:
+  - name: strata
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 strata /app/lib/strata/strata
+      - cp -r assets /app/lib/strata/ || true
+      - mkdir -p /app/bin && ln -s /app/lib/strata/strata /app/bin/strata
+      - install -Dm644 io.github.sinfuldice.StrataMundi.desktop /app/share/applications/io.github.sinfuldice.StrataMundi.desktop
+      - install -Dm644 strata.png /app/share/icons/hicolor/256x256/apps/io.github.sinfuldice.StrataMundi.png
+    sources:
+      - type: dir
+        path: ../../dist/strata-linux
+      - type: file
+        path: ../linux/io.github.sinfuldice.StrataMundi.desktop
+      - type: file
+        path: ../icons/strata.png

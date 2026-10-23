@@ -1,0 +1,14 @@
+name: Idée / Idea
+description: Une suggestion de contenu ou d'amélioration / A content or improvement suggestion
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: L'idée / The idea
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Pourquoi ce serait bien / Why it would be nice

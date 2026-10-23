@@ -1,0 +1,41 @@
+name: Benchmarks
+
+# Compares criterion benchmarks with the last `v*` tag and fails on a regression above 10 %.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  bench:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install system packages
+        run: ./scripts/install-linux-deps.sh
+      - run: rustup show
+      - uses: Swatinem/rust-cache@v2
+      - name: Baseline from the last tag
+        id: baseline
+        run: |
+          tag=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [ -n "$tag" ]; then
+            git worktree add ../baseline "$tag"
+            (cd ../baseline && CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" cargo bench --workspace -- --save-baseline release)
+          fi
+      - name: Current benchmarks
+        run: |
+          if [ -n "${{ steps.baseline.outputs.tag }}" ]; then
+            cargo bench --workspace -- --baseline release
+          else
+            cargo bench --workspace
+          fi
+      - name: Regression check (> 10 %)
+        if: steps.baseline.outputs.tag != ''
+        run: ./scripts/bench-compare.sh target/criterion 0.10

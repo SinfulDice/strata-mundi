@@ -1,0 +1,15 @@
+[package]
+name = "strata-client"
+description = "Rendering (wgpu/Vulkan), input, UI, audio and interpolation."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+strata-core.workspace = true
+strata-protocol.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

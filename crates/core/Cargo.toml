@@ -1,0 +1,13 @@
+[package]
+name = "strata-core"
+description = "Pure game types: blocks, items, chunks, registries, packs. No GPU."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,22 @@
+name: Plantage / Crash
+description: Le jeu s'est fermé brutalement / The game crashed
+labels: [crash]
+body:
+  - type: textarea
+    id: report
+    attributes:
+      label: Rapport de plantage / Crash report
+      description: Contenu du fichier `crash-reports/…` / Content of the `crash-reports/…` file
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Que faisiez-vous ? / What were you doing?
+  - type: input
+    id: version
+    attributes:
+      label: Version du jeu / Game version
+    validations:
+      required: true

@@ -1,0 +1,16 @@
+[package]
+name = "strata-server"
+description = "Authoritative simulation at 20 TPS: dimensions, entities, saving."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+strata-core.workspace = true
+strata-worldgen.workspace = true
+strata-protocol.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true
