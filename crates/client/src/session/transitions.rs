@@ -112,6 +112,19 @@ impl Session {
                 self.launcher.settle_crash(report);
                 return Ok(());
             }
+            UiAction::Command(line) => {
+                if let Stage::Playing(world) = &self.stage {
+                    world.connection.send(ClientMessage::Command(line));
+                }
+                return Ok(());
+            }
+            UiAction::PlayCinematic(id) => {
+                let shot = self.content.cinematics.get(&id).cloned();
+                if let (Stage::Playing(world), Some(shot)) = (&mut self.stage, shot) {
+                    world.game.play(shot);
+                }
+                return Ok(());
+            }
         };
         match started {
             Ok(running) => self.enter_world(running),

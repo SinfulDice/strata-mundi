@@ -1,6 +1,7 @@
 //! What the player does in the world: moving (predicted), looking, aiming, building.
 
 use crate::camera::Camera;
+use crate::cinematic::PlayingShot;
 use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
 use crate::interaction::{BlockInfo, Interaction};
@@ -11,8 +12,10 @@ use crate::settings::ControlSettings;
 use crate::streaming::WorldView;
 use crate::world::ClientWorld;
 use glam::DVec3;
+use strata_core::cinematic::Cinematic;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
 use strata_core::physics::{EYE_HEIGHT, MoveInput, solid_at};
+use strata_protocol::commands::Feedback;
 use strata_protocol::{ClientConnection, ClientMessage, HotbarState, ServerMessage};
 
 /// Field of view widening while sprinting, and how fast it eases in and out (per second).
@@ -28,6 +31,10 @@ pub struct Gameplay {
     pub controls: ControlSettings,
     /// Off with "reduce camera effects".
     pub camera_effects: bool,
+    /// A cinematic has the camera; the player stands still meanwhile.
+    pub cinematic: Option<PlayingShot>,
+    /// Answers to console commands, not shown yet.
+    pub feedback: Vec<Feedback>,
     player: Option<LocalPlayer>,
     border: i32,
     /// Last hotbar sent to the server, to send only changes.
@@ -49,6 +56,8 @@ impl Gameplay {
             info,
             controls,
             camera_effects: true,
+            cinematic: None,
+            feedback: Vec::new(),
             player: None,
             border: DEFAULT_WORLD_BORDER,
             sent_hotbar: HotbarState::default(),
@@ -91,12 +100,36 @@ impl Gameplay {
             ServerMessage::Column(column) => self.view.insert(*column),
             ServerMessage::UnloadColumn(pos) => self.view.remove(pos, renderer),
             ServerMessage::BlockChanged { pos, block } => self.view.set_block(pos, block),
+            ServerMessage::Hotbar(hotbar) => {
+                self.hotbar.restore(&hotbar);
+                self.sent_hotbar = hotbar;
+            }
+            ServerMessage::Feedback(feedback) => self.feedback.push(feedback),
             ServerMessage::Tick { .. } | ServerMessage::Saved => {}
+        }
+    }
+
+    /// Starts `shot` around the player's eyes.
+    pub fn play(&mut self, shot: Cinematic) {
+        let origin = self.camera.position;
+        self.interaction.target = None;
+        self.cinematic = Some(PlayingShot::new(shot, origin, &self.camera));
+    }
+
+    pub fn stop_cinematic(&mut self) {
+        if let Some(playing) = self.cinematic.take() {
+            playing.restore(&mut self.camera);
         }
     }
 
     /// Player-driven frame: look, move (fixed ticks), aim and build.
     pub fn update(&mut self, dt: f32, input: &InputState, connection: &ClientConnection) {
+        if let Some(playing) = &mut self.cinematic {
+            if !playing.advance(dt, &mut self.camera) {
+                self.stop_cinematic();
+            }
+            return;
+        }
         apply_look(&mut self.camera, input, dt, &self.controls);
         self.select_hotbar(input);
         let move_input = MoveInput {

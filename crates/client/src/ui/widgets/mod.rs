@@ -136,5 +136,6 @@ fn draw_node(node: &Node, parent: Rect, d: &mut Draw<'_, '_>) {
         Node::ItemGrid { .. } => items::grid(d, node, parent),
         Node::Slots { .. } => items::slots(d, node, parent),
         Node::Crosshair { .. } => items::crosshair(d, node, parent),
+        Node::Log { .. } => list::log(d, node, parent),
     }
 }

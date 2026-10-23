@@ -1,6 +1,7 @@
 //! The menus that can be open, what they ask of the rest of the client, and the model
 //! answering for each one.
 
+use super::console::{ConsoleLog, ConsoleModel, ConsoleState};
 use super::editor::EditorModel;
 use super::inventory::{InventoryModel, InventoryState};
 use super::options::{OptionsModel, OptionsState};
@@ -12,6 +13,7 @@ use crate::input::Action;
 use crate::settings::Settings;
 use crate::ui::{Rect, ScreenDef, ScreenDefs, ScreenModel};
 use strata_core::content::Content;
+use strata_core::id::Identifier;
 use strata_protocol::{NewWorld, WorldSummary};
 
 pub enum Menu {
@@ -36,6 +38,7 @@ pub enum Menu {
     },
     /// The game crashed last time: report it or not.
     Crash,
+    Console(ConsoleState),
 }
 
 impl Menu {
@@ -51,6 +54,7 @@ impl Menu {
             Self::HudEditor { .. } => &defs.hud_editor,
             Self::Notice { .. } => &defs.notice,
             Self::Crash => &defs.crash,
+            Self::Console(_) => &defs.console,
         }
     }
 
@@ -82,6 +86,9 @@ pub enum UiAction {
     Quit,
     /// Open a pre-filled report of the last crash (true) or forget it (false).
     SettleCrash(bool),
+    /// A console line for the server, without the `/`.
+    Command(String),
+    PlayCinematic(Identifier),
 }
 
 /// What every model may read or change besides its own state.
@@ -98,6 +105,7 @@ pub struct Shared<'a> {
     pub key_labels: &'a dyn Fn(Action) -> (String, String),
     /// A newer version of the game, for the title screen.
     pub newer_version: Option<&'a str>,
+    pub console: &'a ConsoleLog,
     pub effects: &'a mut Vec<Effect>,
 }
 
@@ -139,6 +147,11 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
         Menu::HudEditor { selected } => Box::new(EditorModel { selected, shared }),
         Menu::Notice { key } => Box::new(NoticeModel { key, shared }),
         Menu::Crash => Box::new(CrashModel { shared }),
+        Menu::Console(state) => Box::new(ConsoleModel {
+            state,
+            log: shared.console,
+            shared,
+        }),
         Menu::Inventory(state) => match shared.hotbar {
             Some(hotbar) => Box::new(InventoryModel::new(
                 state,

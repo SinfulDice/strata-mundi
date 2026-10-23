@@ -30,6 +30,7 @@ pub enum Action {
     RenderDistanceUp,
     ToggleDebug,
     ReloadResources,
+    OpenConsole,
     MenuUp,
     MenuDown,
     MenuLeft,
@@ -37,10 +38,12 @@ pub enum Action {
     MenuConfirm,
     MenuBack,
     Erase,
+    /// Tab in the console: complete the word being typed.
+    Complete,
 }
 
 impl Action {
-    pub const COUNT: usize = 34;
+    pub const COUNT: usize = 36;
     pub const ALL: [Action; Self::COUNT] = [
         Self::MoveForward,
         Self::MoveBackward,
@@ -69,6 +72,7 @@ impl Action {
         Self::RenderDistanceUp,
         Self::ToggleDebug,
         Self::ReloadResources,
+        Self::OpenConsole,
         Self::MenuUp,
         Self::MenuDown,
         Self::MenuLeft,
@@ -76,6 +80,7 @@ impl Action {
         Self::MenuConfirm,
         Self::MenuBack,
         Self::Erase,
+        Self::Complete,
     ];
 
     /// Names used in `<key:…>` markup, in the order of `ALL`.
@@ -107,6 +112,7 @@ impl Action {
         "RenderDistanceUp",
         "ToggleDebug",
         "ReloadResources",
+        "OpenConsole",
         "MenuUp",
         "MenuDown",
         "MenuLeft",
@@ -114,6 +120,7 @@ impl Action {
         "MenuConfirm",
         "MenuBack",
         "Erase",
+        "Complete",
     ];
 
     /// By its name in the code (`Inventory`), as written in `<key:…>` markup.

@@ -1,4 +1,5 @@
 use crate::TickClock;
+use crate::commands::Console;
 use crate::game::{BlockChange, Game};
 use crate::generation::GenerationWorkers;
 use crate::loader::{ColumnLoader, LoadEvent, Viewer};
@@ -37,6 +38,7 @@ pub struct IntegratedServer {
     tick: u64,
     /// Capture sent with `Disconnect`, written by the final save.
     leaving_icon: Option<Vec<u8>>,
+    content: Arc<Content>,
 }
 
 impl IntegratedServer {
@@ -99,6 +101,7 @@ impl IntegratedServer {
             paused: false,
             tick: 0,
             leaving_icon: None,
+            content: config.content,
         })
     }
 
@@ -166,8 +169,23 @@ impl IntegratedServer {
                 self.leaving_icon = icon;
                 return false;
             }
+            ClientMessage::Command(line) => self.run_command(&line),
         }
         true
+    }
+
+    fn run_command(&mut self, line: &str) {
+        let mut console = Console {
+            game: &mut self.game,
+            meta: &mut self.persistence.meta,
+            content: &self.content,
+        };
+        let ran = console.run(line);
+        tracing::info!(line, answer = %ran.feedback.key, "command");
+        if let Some(hotbar) = ran.hotbar {
+            self.connection.send(ServerMessage::Hotbar(hotbar));
+        }
+        self.connection.send(ServerMessage::Feedback(ran.feedback));
     }
 
     fn save(&mut self, icon: Option<&[u8]>) {

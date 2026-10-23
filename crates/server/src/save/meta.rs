@@ -23,6 +23,9 @@ pub struct WorldMeta {
     pub created: i64,
     pub last_played: i64,
     pub play_ticks: u64,
+    /// Time of day in ticks (`0..DAY_TICKS`, 0 = sunrise); the sky follows it from v0.2.
+    #[serde(default)]
+    pub day_time: u64,
 }
 
 /// Only the version, readable whatever the rest of the file looks like.

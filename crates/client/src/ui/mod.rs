@@ -14,7 +14,7 @@ mod widgets;
 pub use atlas::{ICON_SIZE, UiAtlas};
 pub use def::{Node, ScreenDef};
 pub use focus::{Direction, navigate};
-pub use model::{Hit, HitKind, ListRow, OptionRow, ScreenModel};
+pub use model::{Hit, HitKind, ListRow, LogLine, OptionRow, ScreenModel, Tone};
 pub use painter::{Painter, UiVertex, auto_scale};
 pub use rect::Rect;
 pub use theme::Theme;
@@ -39,10 +39,11 @@ pub struct ScreenDefs {
     pub keyboard: ScreenDef,
     pub notice: ScreenDef,
     pub crash: ScreenDef,
+    pub console: ScreenDef,
 }
 
 impl ScreenDefs {
-    fn all(&self) -> [&ScreenDef; 12] {
+    fn all(&self) -> [&ScreenDef; 13] {
         [
             &self.hud,
             &self.inventory,
@@ -56,6 +57,7 @@ impl ScreenDefs {
             &self.keyboard,
             &self.notice,
             &self.crash,
+            &self.console,
         ]
     }
 }
@@ -95,6 +97,7 @@ impl UiAssets {
             keyboard: read("keyboard")?,
             notice: read("notice")?,
             crash: read("crash")?,
+            console: read("console")?,
         };
         let theme = read_or_report(&ui_dir.join("theme.ron"), errors);
         let font = FontSource::load(packs, "pixel", errors);

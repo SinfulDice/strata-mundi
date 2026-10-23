@@ -213,10 +213,14 @@ impl Session {
         }
         self.receive_messages()?;
         self.watch_sleep();
-        let game = match &mut self.stage {
+        let mut game = match &mut self.stage {
             Stage::Playing(world) => Some(&mut world.game),
             _ => None,
         };
+        if let Some(game) = game.as_deref_mut() {
+            let feedback = std::mem::take(&mut game.feedback);
+            self.screens.print_feedback(&feedback, &self.content);
+        }
         let handled = self.screens.handle(&self.input, game, &self.content);
         for action in handled.actions {
             self.perform(action)?;

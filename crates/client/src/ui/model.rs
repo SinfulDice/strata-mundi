@@ -33,6 +33,10 @@ pub trait ScreenModel {
     fn slider(&self, _id: &str) -> Option<(f32, String)> {
         None
     }
+    /// Lines of a log, oldest first.
+    fn log_lines(&self, _id: &str) -> Vec<LogLine> {
+        Vec::new()
+    }
     /// Tooltip for an element (item names).
     fn tooltip(&self, _id: &str, _index: usize) -> Option<String> {
         None
@@ -47,6 +51,21 @@ pub trait ScreenModel {
     fn quick_slot(&mut self, _id: &str, _index: usize, _slot: usize) {}
     /// Characters typed into a text field (`\u{8}` erases one).
     fn type_text(&mut self, _id: &str, _text: &str) {}
+}
+
+/// One line of a `Log` widget.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LogLine {
+    pub text: String,
+    pub tone: Tone,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Tone {
+    Normal,
+    /// Echo of what the player typed.
+    Dim,
+    Error,
 }
 
 /// One line of a `List` widget.

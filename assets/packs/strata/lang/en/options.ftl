@@ -114,3 +114,4 @@ action-render-distance-down = See less far
 action-render-distance-up = See farther
 action-toggle-debug = Debug info
 action-reload-resources = Reload resources
+action-open-console = Console

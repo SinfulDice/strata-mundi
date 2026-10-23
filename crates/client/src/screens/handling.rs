@@ -1,6 +1,7 @@
 //! Menu input: focus (mouse, arrows, d-pad), activation, typing, the on-screen
 //! keyboard and moving HUD elements in the editor.
 
+use super::console::ConsoleState;
 use super::editor::{STEP, move_element};
 use super::keyboard::Keyboard;
 use super::menu::{Effect, Menu};
@@ -29,6 +30,18 @@ const MOVES: [(Action, Direction); 4] = [
     (Action::MenuRight, Direction::Right),
 ];
 
+/// During a cinematic only skipping is possible (if the shot allows it).
+fn skip_cinematic(input: &InputState, game: &mut Gameplay) -> Handled {
+    let skip = input.just_pressed(Action::Pause) || input.just_pressed(Action::MenuBack);
+    if skip && game.cinematic.as_ref().is_some_and(|c| c.skippable()) {
+        game.stop_cinematic();
+    }
+    Handled {
+        used: true,
+        actions: Vec::new(),
+    }
+}
+
 impl Screens {
     /// Opens, drives and closes menus. In a world without a menu, only the inventory
     /// and pause keys are looked at.
@@ -41,10 +54,15 @@ impl Screens {
         self.device = input.last_device();
         self.refresh_labels(content);
         if self.in_world && self.stack.is_empty() {
+            if let Some(game) = game.filter(|g| g.cinematic.is_some()) {
+                return skip_cinematic(input, game);
+            }
             let menu = if input.just_pressed(Action::Inventory) {
                 Menu::Inventory(Default::default())
             } else if input.just_pressed(Action::Pause) {
                 Menu::Pause
+            } else if input.just_pressed(Action::OpenConsole) {
+                Menu::Console(ConsoleState::new())
             } else {
                 return Handled {
                     used: false,
@@ -52,6 +70,8 @@ impl Screens {
                 };
             };
             self.effects.push(Effect::Push(menu));
+        } else if matches!(self.stack.last(), Some(Menu::Console(_))) {
+            self.handle_console(input, game, content);
         } else if self.keyboard.is_some() {
             self.handle_keyboard(input, game, content);
         } else if self.editing.is_some() {

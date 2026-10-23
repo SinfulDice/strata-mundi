@@ -3,6 +3,7 @@
 mod app;
 pub mod bench;
 pub mod camera;
+mod cinematic;
 mod debug_overlay;
 mod gameplay;
 mod hotbar;

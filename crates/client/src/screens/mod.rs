@@ -1,5 +1,6 @@
 //! Everything drawn over the world: the HUD in play, menus on demand, the title screen.
 
+mod console;
 mod editor;
 mod handling;
 mod hud;
@@ -22,6 +23,7 @@ use crate::ui::{
     Hit, ICON_SIZE, Node, Rect, ScreenDef, ScreenModel, UiAssets, UiAtlas, UiContext, auto_scale,
     draw_screen,
 };
+use console::ConsoleLog;
 use hud::{HudModel, aimed_block_name};
 use keyboard::{Keyboard, KeyboardModel};
 use menu::{Effect, Menu, Shared};
@@ -29,6 +31,7 @@ use std::path::PathBuf;
 use strata_core::content::Content;
 use strata_core::texture::RgbaImage;
 use strata_protocol::WorldSummary;
+use strata_protocol::commands::Feedback;
 use winit::keyboard::KeyCode;
 
 /// Where the interface is drawn: over the frame in `view`.
@@ -77,6 +80,7 @@ pub struct Screens {
     pub newer_version: Option<String>,
     /// The font drawn into the atlas and its density, redrawn when either changes.
     atlas_font: (FontChoice, u32),
+    console: ConsoleLog,
 }
 
 impl Screens {
@@ -117,6 +121,7 @@ impl Screens {
             device: InputDevice::KeyboardMouse,
             newer_version: None,
             atlas_font: (font, 1),
+            console: ConsoleLog::default(),
         }
     }
 
@@ -177,6 +182,14 @@ impl Screens {
         self.atlas_font = (choice, density);
         self.atlas = UiAtlas::build(content, source.font(density));
         self.pipeline.write_atlas(gpu, 0, 0, &self.atlas.image);
+    }
+
+    /// Server answers to console commands.
+    pub fn print_feedback(&mut self, feedback: &[Feedback], content: &Content) {
+        let language = &self.settings.interface.language;
+        for answer in feedback {
+            self.console.feedback(answer, content, language);
+        }
     }
 
     pub fn show_crash(&mut self) {
@@ -261,6 +274,7 @@ impl Screens {
             focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
             key_labels: &key_labels,
             newer_version: self.newer_version.as_deref(),
+            console: &self.console,
             effects: &mut self.effects,
         };
         let mut model = menu::model(menu, shared);
@@ -326,7 +340,19 @@ impl Screens {
             editing: false,
         };
         let mut hits = Vec::new();
-        if (self.in_world && self.stack.is_empty()) || editor {
+        let shot = game.as_deref().and_then(|g| g.cinematic.as_ref());
+        if let Some(playing) = shot {
+            let subtitle = playing
+                .subtitle()
+                .map(|key| content.translations.text(&language, key));
+            crate::cinematic::paint(
+                playing,
+                subtitle.as_deref(),
+                &mut painter,
+                screen,
+                ctx.theme,
+            );
+        } else if (self.in_world && self.stack.is_empty()) || editor {
             let sample = Hotbar::default();
             let hud = match game.as_deref() {
                 Some(game) => HudModel {
@@ -358,6 +384,7 @@ impl Screens {
                 focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
                 key_labels: &key_labels,
                 newer_version: self.newer_version.as_deref(),
+                console: &self.console,
                 effects: &mut Vec::new(),
             };
             let def = menu.def(&self.assets.screens);
@@ -480,6 +507,7 @@ mod tests {
         keys.extend(key_translation_keys());
         keys.extend(super::options::translation_keys());
         keys.extend(crate::debug_overlay::translation_keys());
+        keys.extend(super::console::translation_keys());
         let missing = content.translations.missing(&keys);
         assert!(missing.is_empty(), "missing translations: {missing:#?}");
     }

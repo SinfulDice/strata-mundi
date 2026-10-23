@@ -1,4 +1,5 @@
 use super::{Draw, HitKind, Node, Rect};
+use crate::ui::model::Tone;
 
 /// Rows of `row_height` pixels: icon on the left (16:9), title and detail beside it.
 pub(super) fn list(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
@@ -122,4 +123,42 @@ pub(super) fn options(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
 
 fn theme_bar(d: &Draw<'_, '_>) -> strata_core::texture::Rgba {
     d.theme().panel.0
+}
+
+/// As many of the newest lines as fit, over a shade, bottom-aligned.
+pub(super) fn log(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
+    let Node::Log {
+        id,
+        anchor,
+        at,
+        size,
+    } = node
+    else {
+        return;
+    };
+    let rect = parent.place(*anchor, d.ctx.offset(id, *at), *size);
+    let height = d.painter.line_height() as i32 + 1;
+    let fits = (rect.h as i32 / height).max(0) as usize;
+    let lines = d.model.log_lines(id);
+    let shown = &lines[lines.len().saturating_sub(fits)..];
+    if !shown.is_empty() {
+        let used = shown.len() as i32 * height + 2;
+        let top = rect.y + rect.h as i32 - used;
+        d.painter.fill(
+            Rect::new(rect.x, top, rect.w, used as u32),
+            d.theme().shade.0,
+        );
+    }
+    let theme = d.theme();
+    let (normal, dim, error) = (theme.text.0, theme.text_dim.0, theme.accent.0);
+    let shadow = theme.text_shadow.0;
+    for (row, line) in shown.iter().enumerate() {
+        let color = match line.tone {
+            Tone::Normal => normal,
+            Tone::Dim => dim,
+            Tone::Error => error,
+        };
+        let y = rect.y + rect.h as i32 - (shown.len() - row) as i32 * height;
+        d.painter.text(rect.x + 2, y, &line.text, color, shadow);
+    }
 }

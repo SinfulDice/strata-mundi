@@ -1,6 +1,7 @@
 //! Saving a running world: modified columns, the player and the world description.
 //! Errors are logged, never fatal: the game goes on and the next save tries again.
 
+use crate::clock::DAY_TICKS;
 use crate::game::Game;
 use crate::loader::ColumnLoader;
 use crate::save::{PlayerData, WorldFolder, WorldMeta, back_up};
@@ -83,6 +84,7 @@ impl Persistence {
     /// Counts a played tick; `true` when an autosave is due.
     pub fn count_tick(&mut self) -> bool {
         self.meta.play_ticks += 1;
+        self.meta.day_time = (self.meta.day_time + 1) % DAY_TICKS;
         self.since_save += 1;
         self.autosave_ticks > 0 && self.since_save >= self.autosave_ticks
     }

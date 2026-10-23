@@ -120,6 +120,13 @@ pub enum Node {
         anchor: Anchor,
         at: (i32, i32),
     },
+    /// Lines of text, newest at the bottom (the console).
+    Log {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        size: (u32, u32),
+    },
 }
 
 fn one() -> u32 {
@@ -141,7 +148,8 @@ impl Node {
             | Self::Tabs { at, .. }
             | Self::ItemGrid { at, .. }
             | Self::Slots { at, .. }
-            | Self::Crosshair { at, .. } => Some(*at),
+            | Self::Crosshair { at, .. }
+            | Self::Log { at, .. } => Some(*at),
         }
     }
 
@@ -160,7 +168,8 @@ impl Node {
             | Self::Tabs { id, .. }
             | Self::ItemGrid { id, .. }
             | Self::Slots { id, .. }
-            | Self::Crosshair { id, .. } => Some(id),
+            | Self::Crosshair { id, .. }
+            | Self::Log { id, .. } => Some(id),
         }
     }
 }

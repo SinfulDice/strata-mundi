@@ -198,6 +198,7 @@ pub fn create(
         created: now,
         last_played: now,
         play_ticks: 0,
+        day_time: 0,
     };
     folder.write_meta(&meta)?;
     Ok((folder, meta))

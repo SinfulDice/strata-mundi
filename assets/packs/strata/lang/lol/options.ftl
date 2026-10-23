@@ -114,3 +114,4 @@ action-render-distance-down = SEE LESS FAR
 action-render-distance-up = SEE MOAR FAR
 action-toggle-debug = NERD STUFFS
 action-reload-resources = RELOAD TEH STUFFS
+action-open-console = COMMANDZ

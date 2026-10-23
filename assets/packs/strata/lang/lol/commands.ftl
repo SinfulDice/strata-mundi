@@ -1,0 +1,28 @@
+command-empty = TYPE A COMMANDZ (/help 4 LIST).
+command-usage = HOW 2 USE: { $usage }
+command-unknown = WUT IZ { $name }? (/help 4 LIST)
+command-needs-world = NEEDZ A WORLD 4 DAT.
+command-cinematic-unknown = NO SUCH MOOVEE.
+command-tp-done = ZOOPED 2 { $x } { $y } { $z }.
+command-give-done = { $item } IN UR BOX. U WELCOME.
+command-give-unknown = WUT IZ { $item }?
+command-gamemode-done = CREATIV MODE.
+command-gamemode-later = SURVIVL COMEZ IN V0.3.
+command-time-now = TIEM: { $ticks } (OF 24000).
+command-seed-is = SEED: { $seed }
+command-help-usage = /help [command]
+command-help-help = LISTZ ALL TEH COMMANDZ.
+command-tp-usage = /tp <x> <y> <z>  (~ = WER U R)
+command-tp-help = ZOOPZ U (~5 = 5 BLOKZ MOAR).
+command-give-usage = /give <item>
+command-give-help = PUTZ A THING IN UR BOX.
+command-gamemode-usage = /gamemode <creative|survival>
+command-gamemode-help = CHANGEZ TEH GAEM MODE.
+command-time-usage = /time <set|add|query> [value]
+command-time-help = SETZ TEH TIEM (day, noon, night, midnight OR TICKZ).
+command-seed-usage = /seed
+command-seed-help = SHOWZ TEH WORLD SEED.
+command-cinematic-usage = /cinematic <id>
+command-cinematic-help = PLAYZ A MOOVEE.
+ui-console-placeholder = TYPE A COMMANDZ…
+ui-console-help = <key:Complete>: FINISH 4 ME

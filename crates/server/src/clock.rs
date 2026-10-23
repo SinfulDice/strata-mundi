@@ -2,6 +2,8 @@ use std::time::{Duration, Instant};
 
 pub const TICKS_PER_SECOND: u32 = 20;
 pub const TICK_DURATION: Duration = Duration::from_millis(1000 / TICKS_PER_SECOND as u64);
+/// A full day and night: 20 minutes (10 of day, 10 of night from v0.2).
+pub const DAY_TICKS: u64 = 20 * 60 * TICKS_PER_SECOND as u64;
 
 /// Fixed-step scheduler: says how many ticks are due, never drifts,
 /// and drops the backlog after a long stall instead of fast-forwarding.

@@ -54,6 +54,7 @@ impl GameLauncher {
             created: 0,
             last_played: 0,
             play_ticks: 0,
+            day_time: 0,
         };
         self.start(meta, None)
             .context("could not start the server thread")

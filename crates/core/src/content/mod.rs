@@ -1,4 +1,4 @@
-//! Game content loaded from packs: blocks, items, textures and translations.
+//! Game content loaded from packs: blocks, items, textures, translations and cinematics.
 
 mod block;
 mod item;
@@ -12,9 +12,11 @@ pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, ItemId, Registry, RegistryId, TextureId};
 pub use textures::{TextureLibrary, missing_id};
 
+use crate::cinematic::{self, Cinematic};
 use crate::id::Identifier;
 use crate::lang::Translations;
 use crate::pack::{PackError, PackSet, Sourced};
+use std::collections::BTreeMap;
 
 /// Everything the game knows about, built once from the active packs.
 #[derive(Debug)]
@@ -23,6 +25,7 @@ pub struct Content {
     pub items: Registry<ItemId, Item>,
     pub textures: TextureLibrary,
     pub translations: Translations,
+    pub cinematics: BTreeMap<Identifier, Cinematic>,
 }
 
 /// Identifier of the empty block, always `BlockId::AIR`.
@@ -41,11 +44,13 @@ impl Content {
         let blocks = load_blocks(packs, &textures, &mut errors);
         let items = load_items(packs, &blocks, &textures, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
+        let cinematics = cinematic::load(packs, &mut errors);
         let content = Self {
             blocks,
             items,
             textures,
             translations,
+            cinematics,
         };
         (content, errors)
     }
@@ -88,7 +93,16 @@ impl Content {
                     .filter_map(|(_, _, item)| item.category.as_ref()),
             )
             .map(|category| category.translation_key("category"));
-        let mut keys: Vec<String> = blocks.chain(items).chain(categories).collect();
+        let subtitles = self
+            .cinematics
+            .values()
+            .flat_map(|shot| &shot.keyframes)
+            .filter_map(|key| key.subtitle.clone());
+        let mut keys: Vec<String> = blocks
+            .chain(items)
+            .chain(categories)
+            .chain(subtitles)
+            .collect();
         keys.sort();
         keys.dedup();
         keys

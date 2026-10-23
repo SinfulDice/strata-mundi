@@ -1,3 +1,4 @@
+use crate::commands::Feedback;
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::Column;
 use strata_core::content::{BlockId, Face, ItemId};
@@ -47,6 +48,8 @@ pub enum ClientMessage {
     Disconnect {
         icon: Option<Vec<u8>>,
     },
+    /// A console line for the server (`tp 0 80 0`, without the `/`).
+    Command(String),
 }
 
 /// The nine quick slots and the selected one.
@@ -89,4 +92,8 @@ pub enum ServerMessage {
     },
     /// Answer to `ClientMessage::Save`: everything is on disk.
     Saved,
+    /// The server changed the hotbar (`/give`).
+    Hotbar(HotbarState),
+    /// Answer to a console command.
+    Feedback(Feedback),
 }

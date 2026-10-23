@@ -1,0 +1,9 @@
+// Command console: answers above, the line being typed at the bottom, a hint line.
+Screen(
+    root: [
+        Log(id: "log", anchor: BottomLeft, at: (2, -40), size: (316, 120)),
+        Label(id: "hint", anchor: BottomLeft, at: (4, -27), text: "@hint", dim: true),
+        TextField(id: "line", anchor: BottomLeft, at: (2, -2), size: (316, 12), placeholder: "ui-console-placeholder"),
+        Label(id: "help", anchor: BottomRight, at: (-4, -16), text: "ui-console-help", dim: true),
+    ],
+)
