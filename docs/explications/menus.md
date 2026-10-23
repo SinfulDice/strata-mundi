@@ -26,10 +26,10 @@ graph TD
 - **Liste des mondes** : capture du monde (prise en le quittant), nom, date, mode et temps de jeu. Un monde d'une version incompatible est grisé.
 - **Nouveau monde** : nom, graine (vide = au hasard), bordure du monde (10 millions de blocs par défaut), mode de jeu (créatif seulement jusqu'à la v0.3).
 - **Pause** : le monde s'arrête. Dans les autres menus (inventaire…), le monde continue comme dans Minecraft, sauf si l'option « Pause dans tous les menus » est activée.
-- **Options** (le grand écran de réglages arrive au jalon 8) : langue, taille de l'interface (auto, ×1 à ×6), pause dans tous les menus, éditeur de HUD.
+- **Options** : six onglets (graphismes, interface, commandes, touches, jeu, packs), détaillés dans [Réglages](reglages.md).
 - **Éditeur de HUD** : on choisit un élément (viseur, barre, nom du bloc), puis on le déplace aux flèches, à la croix ou en le faisant glisser à la souris (Sprint : 8 pixels d'un coup). Chaque élément garde son ancrage (centre, bas…), donc la disposition suit toutes les tailles d'écran. « Défaut » remet tout en place.
 
-Ces choix sont gardés dans `config/interface.toml`.
+Ces choix sont gardés dans `config/settings.toml`.
 
 ### Une pile de menus
 

@@ -19,7 +19,9 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 13. [Interface](interface.md) : écrans décrits en fichiers, police, navigation à la manette.
 14. [Menus et écran titre](menus.md) : liste des mondes, pause, options, éditeur de HUD, clavier à l'écran.
 15. [Sauvegarde](sauvegarde.md) : régions, écriture sûre, copies de sécurité.
-16. [Installation sur le DS](installation-ds.md) : fermeture du clapet (et, au jalon 8, les dépendances système).
+16. [Installation sur le DS](installation-ds.md) : dépendances système, fermeture du clapet.
+17. [Réglages](reglages.md) : fichier unique, préréglages, application à chaud, accessibilité, packs de ressources.
+18. [Console, débogage et cinématiques](console-et-debug.md) : commandes, F3, F5, rapports de plantage, mises à jour, caméra scriptée.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

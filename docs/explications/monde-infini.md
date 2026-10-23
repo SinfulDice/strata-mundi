@@ -25,7 +25,7 @@ sequenceDiagram
 - **Maillage** : une colonne est maillée quand ses 8 voisines sont arrivées ; ses bords et son occlusion ambiante sont alors justes du premier coup.
 - **Frustum culling** : seules les sections dans le champ de vision de la caméra sont dessinées (les 4 côtés et le plan proche du cône de vision ; pas de plan lointain).
 - **Sans gel** : génération et maillage tournent sur d'autres threads ; le thread principal ne fait qu'insérer les colonnes reçues et envoyer à la carte graphique pendant au plus 4 ms par image.
-- **Distance de rendu réglable à chaud** : touches **F7** (moins) et **F8** (plus), puis l'écran d'options (jalon 8). Le client envoie `ViewDistance` (2 à 32) ; le serveur charge ou décharge en conséquence au tick suivant.
+- **Distance de rendu réglable à chaud** : touches **F7** (moins) et **F8** (plus), ou l'écran d'options. Le client envoie `ViewDistance` (2 à 32) ; le serveur charge ou décharge en conséquence au tick suivant.
 - **Positions vérifiées** : c'est le serveur qui déplace le joueur (voir [Joueur et interaction](joueur-et-interaction.md)) ; le chargement suit cette position-là.
 - **Distance verticale** : seules les sections à quelques sections au-dessus ou au-dessous de la caméra sont maillées et dessinées (4 sur le DS, 12 en ultra). Quand la caméra est plus haute que le sommet d'une colonne, la fenêtre « glisse » jusqu'au sommet de cette colonne : vu du ciel, on voit toujours le sol.
 - **Réglages** : nombre de threads de maillage et de génération par préréglage (1 et 1 sur le DS).

@@ -15,7 +15,7 @@ graph LR
 ```
 
 - **Actions** (`Action`) : avancer, reculer, gauche, droite, sauter/monter, s'accroupir/descendre, sprinter, pause, casser, poser, prendre le bloc visé, inventaire, cases 1 à 9 de la barre, navigation dans les menus.
-- **Liaisons** (`Bindings`) : une liste « entrée physique → action ». Plusieurs entrées peuvent viser la même action (Espace **et** le bouton A). Elles seront modifiables dans les options (jalon 8).
+- **Liaisons** (`Bindings`) : une liste « entrée physique → action ». Plusieurs entrées peuvent viser la même action (Espace **et** le bouton A). Elles se changent dans Options → Touches et sont gardées dans `config/settings.toml`.
 - **Touches physiques** : on lit l'*emplacement* de la touche, pas la lettre écrite dessus. La liaison `KeyW` correspond à la touche **Z** d'un clavier AZERTY : ZQSD marche donc tout seul.
 - **Sticks analogiques** : le stick gauche s'ajoute aux touches de déplacement, le stick droit tourne la caméra. Une **zone morte** de 15 % ignore la petite dérive des sticks au repos.
 - **Dernier périphérique utilisé** : retenu en permanence ; les invites à l'écran (`<key:…>` dans les textes, voir [Menus](menus.md)) montrent la touche ou le bouton du périphérique utilisé en dernier. Le tactile est déjà prévu comme périphérique.

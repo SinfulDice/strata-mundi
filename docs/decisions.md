@@ -181,3 +181,19 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Vérification de mise à jour** : `ureq` 3 (client HTTP bloquant, petit, maintenu, rustls) sur un fil à part, une requête à l'API GitHub des releases, délai 8 s, certificats du système (`platform-verifier`). Désactivable ; rien n'est envoyé hormis la requête elle-même.
 - **Rapports de plantage** : crochet de panique qui écrit `crash-reports/crash-<date>.txt` (version, système, message, pile d'appels, 60 dernières lignes du journal gardées en mémoire). Au lancement suivant, l'écran titre propose « Signaler ce plantage » : `open` 5 ouvre le navigateur sur une issue GitHub pré-remplie (adresse limitée à ~6 000 caractères). Jamais d'envoi automatique.
 - **Alternatives écartées** : `reqwest` (tire `tokio`), `webbrowser` (équivalent, moins utilisé).
+
+## D031 — Police lisible : `fontdue` (v0.1, jalon 8)
+
+- **Choix** : `fontdue` 0.9 (rastériseur TrueType en Rust pur, sans dépendance C, très rapide) ; la police (DejaVu Sans, licence libre propre) est rastérisée au chargement dans le même atlas que la police pixel, à la **densité de l'écran** (échelle d'interface ×1 à ×3, moins si l'atlas de 512 px ne suffit pas). Le dessin du texte accepte des positions fractionnaires en pixels d'interface.
+- **Alternatives écartées** : `ab_glyph` (équivalent, un peu plus lent), `cosmic-text` (mise en page complète, beaucoup plus lourd, inutile pour du texte d'interface court).
+
+## D032 — Console : commandes exécutées par le serveur, réponses traduisibles (v0.1, jalon 8)
+
+- **Choix** : la ligne tapée part telle quelle (`ClientMessage::Command`) ; le serveur l'analyse et répond par `Feedback { key, args, error }` (clé Fluent + arguments), jamais par du texte. La table des commandes (`protocol::commands`) est partagée pour l'aide et la complétion côté client. `/help` et `/cinematic` restent côté client (rien à décider pour le monde).
+- **Heure du monde** : `day_time` dans `world.ron` (`#[serde(default)]`, compatible avec les mondes existants), journée de 24 000 ticks (20 min) ; le ciel la suivra en v0.2.
+- **Alternative écartée** : analyser côté client et envoyer des messages typés par commande — chaque nouvelle commande toucherait le protocole, et le serveur doit de toute façon tout revérifier.
+
+## D033 — Cinématiques en packs (v0.1, jalon 8)
+
+- **Choix** : `cinematics/<nom>.ron` (points clés temps/position relative/angles, sous-titre optionnel en clé de traduction, `skippable`, `letterbox`), trajectoire Catmull-Rom, angles par le plus court chemin, validés au chargement (au moins deux points, temps croissants, valeurs finies). Lecture côté client, joueur immobile pendant le plan.
+- **Plus tard** : déclenchement par le serveur (boss, découvertes) avec un message dédié ; le format ne changera pas.

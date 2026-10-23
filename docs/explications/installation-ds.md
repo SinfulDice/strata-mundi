@@ -1,6 +1,40 @@
 # Installation sur le DS (Linux maison)
 
-*Ce fichier est complété au jalon 8 (dépendances système complètes : Vulkan Mesa Intel, audio, entrées).*
+Ce qu'il faut sur un Linux fait maison (Intel N100) pour lancer Strata Mundi, puis comment le clapet du DS est géré.
+
+## Dépendances système
+
+### À quoi ça sert
+
+Le binaire `strata` est autonome (aucune bibliothèque Rust à installer), mais il s'appuie sur quelques bibliothèques du système : le pilote graphique, la fenêtre, les manettes.
+
+### Ce qu'il faut installer
+
+| Rôle | Bibliothèque (nom Debian/Ubuntu) | Chargée comment |
+|---|---|---|
+| Vulkan (chargeur) | `libvulkan1` | à l'exécution (`dlopen`) |
+| Pilote Vulkan Intel (N100 : « ANV ») | `mesa-vulkan-drivers` (Mesa ≥ 23) | par le chargeur Vulkan |
+| Fenêtre Wayland | `libwayland-client0`, `libxkbcommon0` | à l'exécution |
+| Fenêtre X11 (si pas de Wayland) | `libx11-6`, `libxcursor1`, `libxrandr2`, `libxi6`, `libxkbcommon-x11-0` | à l'exécution |
+| Manettes | `libudev1` | liée au binaire |
+| Clapet (veille) | D-Bus système + `systemd-logind` ou `elogind` | facultatif |
+| Son | rien encore : l'audio arrive avec la v0.2 (ALSA/PipeWire via `libasound2`) | — |
+
+Vérifications rapides :
+
+- `vulkaninfo --summary` (paquet `vulkan-tools`) doit lister **Intel(R) Graphics (ADL-N)** avec le pilote `Intel open-source Mesa driver`. Si seul `llvmpipe` apparaît, le pilote Intel manque : le jeu tournera, mais en rendu logiciel (très lent).
+- Manette : l'utilisateur doit pouvoir lire `/dev/input/event*`. Sur un système minimal, ajouter l'utilisateur au groupe `input` (`usermod -aG input <nom>`) ou installer la règle udev de la distribution pour les manettes. `evtest` permet de vérifier que les boutons arrivent.
+- Écran : n'importe quel compositeur Wayland (ou un serveur X) ; le jeu ouvre une fenêtre plein écran via `winit`. Sans compositeur, `cage` (kiosque Wayland) suffit : `cage -- strata`.
+
+### Réglages conseillés pour le DS
+
+- Choisir le préréglage **DS** dans Options → Graphismes → Préréglage (30 images/s, échelle de rendu 75 %, distance 6, un seul fil de maillage) : il est gardé dans `config/settings.toml`. `strata --preset ds` l'applique pour un lancement sans l'écrire.
+- La console du DS n'a pas de clavier : tout le jeu se joue à la manette, sauf la console de commandes.
+- Les mesures d'images par seconde se font sur la machine elle-même : `strata --bench-scene flyover --preset ds` écrit un rapport dans `perf-reports/`.
+
+### Où sont les fichiers
+
+`~/.local/share/strata-mundi/` (ou `--data-dir <dossier>`) : `saves/` (mondes), `backups/` (copies), `config/settings.toml` (réglages), `crash-reports/` (rapports de plantage).
 
 ## Fermeture du clapet
 
@@ -27,7 +61,7 @@ Sans logind (système sans D-Bus, conteneur), le jeu le note dans son journal et
 ## Où c'est dans le code
 
 - `crates/client/src/sleep.rs` (`SleepWatcher`) : écoute logind sur un fil d'exécution séparé, avec la crate `zbus`.
-- `crates/client/src/session.rs` (`watch_sleep`) : pause, sauvegarde, puis feu vert.
+- `crates/client/src/session/transitions.rs` (`watch_sleep`) : pause, sauvegarde, puis feu vert.
 
 <details><summary>Côté Rust</summary>
 
