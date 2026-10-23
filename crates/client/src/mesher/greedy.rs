@@ -3,7 +3,7 @@
 
 use super::neighborhood::{BlockTable, Neighborhood, SIZE};
 use super::vertex::{MeshData, PackedVertex};
-use strata_core::content::{Face, RenderKind};
+use strata_core::content::{Axis, Face, RenderKind};
 
 type Vec3i = [i32; 3];
 
@@ -79,9 +79,16 @@ fn frame(face: Face) -> FaceFrame {
     }
 }
 
+/// Textures run along `down`; a block lying along the face's `right` direction needs its
+/// texture turned so the grain follows the block.
+pub fn texture_turned(face: Face, axis: Axis) -> bool {
+    frame(face).right[axis as usize] != 0
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct FaceKey {
     layer: u16,
+    turned: bool,
     ao: [u8; 4],
     translucent: bool,
 }
@@ -158,6 +165,7 @@ fn face_key(
     });
     Some(FaceKey {
         layer: block.faces[face.index()],
+        turned: block.turned[face.index()],
         ao,
         translucent: block.render == RenderKind::Translucent,
     })
@@ -232,11 +240,10 @@ fn emit_quad(
         .map(|c| dot(c.0, frame.down))
         .min()
         .unwrap_or(0);
+    let width = if dot(frame.right, frame.a) != 0 { w } else { h };
     let vertices = corners.map(|(p, ao)| {
-        let uv = [
-            (dot(p, frame.right) - min_u) as u32,
-            (dot(p, frame.down) - min_v) as u32,
-        ];
+        let (u, v) = (dot(p, frame.right) - min_u, dot(p, frame.down) - min_v);
+        let uv = if key.turned { [v, width - u] } else { [u, v] }.map(|c| c as u32);
         PackedVertex::new(p.map(|c| c as u32), face.index(), ao, uv, key.layer)
     });
     target.push_quad(vertices);

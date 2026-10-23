@@ -1,0 +1,20 @@
+// Creative inventory: every item, by category tab, with a search field.
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (196, 196),
+            children: [
+                Label(id: "title", anchor: TopLeft, at: (8, 6), text: "ui-inventory-title"),
+                Tabs(id: "tabs", anchor: TopLeft, at: (8, 18), size: (180, 14)),
+                TextField(id: "search", anchor: TopLeft, at: (8, 36), size: (180, 12), placeholder: "ui-search"),
+                ItemGrid(id: "items", anchor: TopLeft, at: (8, 52), columns: 9, rows: 5),
+                Label(id: "help", anchor: TopLeft, at: (8, 155), text: "ui-inventory-help", dim: true),
+                Slots(id: "hotbar", anchor: TopLeft, at: (8, 168), count: 9),
+            ],
+        ),
+    ],
+)

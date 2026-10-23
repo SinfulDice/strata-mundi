@@ -36,6 +36,18 @@ impl BlockPos {
     pub const fn is_in_height_range(self) -> bool {
         self.y >= 0 && self.y < WORLD_HEIGHT
     }
+
+    /// Strictly inside the square of half-width `border` (no overflow at `i32` limits).
+    pub const fn is_inside_border(self, border: i32) -> bool {
+        let limit = border.unsigned_abs();
+        self.x.unsigned_abs() < limit && self.z.unsigned_abs() < limit
+    }
+
+    /// A position anyone may act on: inside the border and the world height. Checked
+    /// before any neighbour arithmetic, so hostile coordinates cannot overflow.
+    pub const fn is_valid(self, border: i32) -> bool {
+        self.is_in_height_range() && self.is_inside_border(border)
+    }
 }
 
 #[cfg(test)]

@@ -32,5 +32,7 @@
         (from: (5, 10, -1), to: (5, 10, -1), block: "strata:fir_leaves"),
         (from: (2, 7, -6), to: (2, 7, -5), block: "strata:sandstone"),
         (from: (4, 6, -5), to: (4, 6, -4), block: "strata:ice"),
+        (from: (-2, 7, 1), to: (1, 7, 1), block: "strata:oak_log__x"),
+        (from: (-1, 8, 1), to: (-1, 8, 2), block: "strata:fir_log__z"),
     ],
 )

@@ -33,6 +33,13 @@ impl Frustum {
     }
 }
 
+/// Whether a section is drawn given the vertical distance. Above a column's highest
+/// section the window slides down onto it, so the ground stays visible from the sky.
+pub fn in_vertical_range(section: usize, top: usize, camera_section: i64, distance: u32) -> bool {
+    let centre = camera_section.min(top as i64);
+    (section as i64 - centre).unsigned_abs() <= u64::from(distance)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -42,6 +49,20 @@ mod tests {
     fn frustum() -> Frustum {
         let camera = Camera::new(DVec3::ZERO, 0.0, 0.0, 70.0);
         Frustum::from_view_projection(camera.view_projection(16.0 / 9.0))
+    }
+
+    #[test]
+    fn high_above_the_ground_the_vertical_window_slides_onto_it() {
+        assert!(
+            in_vertical_range(4, 8, 14, 4),
+            "camera far above: top 4 sections kept"
+        );
+        assert!(!in_vertical_range(3, 8, 14, 4));
+        assert!(
+            in_vertical_range(5, 8, 5, 0),
+            "underground: around the camera"
+        );
+        assert!(!in_vertical_range(8, 8, 5, 2));
     }
 
     #[test]

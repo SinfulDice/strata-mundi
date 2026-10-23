@@ -1,4 +1,4 @@
-use super::registry::TextureId;
+use super::registry::{BlockId, TextureId};
 use crate::id::Identifier;
 use serde::Deserialize;
 
@@ -17,7 +17,7 @@ pub enum RenderKind {
 }
 
 /// Faces of a cube. North is -Z, east is +X.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Face {
     Up,
     Down,
@@ -45,6 +45,60 @@ impl Face {
 
     pub const fn index(self) -> usize {
         self as usize
+    }
+
+    pub const fn axis(self) -> Axis {
+        match self {
+            Self::Up | Self::Down => Axis::Y,
+            Self::North | Self::South => Axis::Z,
+            Self::East | Self::West => Axis::X,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Axis {
+    X,
+    Y,
+    Z,
+}
+
+impl Axis {
+    pub const ALL: [Axis; 3] = [Self::X, Self::Y, Self::Z];
+
+    /// Face of the upright block that ends up on `face` once the block lies along `self`.
+    pub const fn source_face(self, face: Face) -> Face {
+        match (self, face) {
+            (Self::X, Face::East) | (Self::Z, Face::South) => Face::Up,
+            (Self::X, Face::West) | (Self::Z, Face::North) => Face::Down,
+            (Self::X, Face::Up) => Face::West,
+            (Self::X, Face::Down) => Face::East,
+            (Self::Z, Face::Up) => Face::North,
+            (Self::Z, Face::Down) => Face::South,
+            _ => face,
+        }
+    }
+}
+
+/// How a block turns when placed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+pub enum Placement {
+    #[default]
+    Fixed,
+    /// Lies along the axis of the clicked face, like logs. The pack describes it upright.
+    Axis,
+}
+
+/// Member of a family of turned blocks; `variants` are indexed by `Axis`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Orientation {
+    pub axis: Axis,
+    pub variants: [BlockId; 3],
+}
+
+impl Orientation {
+    pub const fn along(&self, axis: Axis) -> BlockId {
+        self.variants[axis as usize]
     }
 }
 
@@ -136,6 +190,8 @@ pub struct BlockDef {
     /// Hide the face between two identical non-opaque blocks (water, glass); leaves keep it.
     #[serde(default = "yes")]
     pub cull_same: bool,
+    #[serde(default)]
+    pub placement: Placement,
 }
 
 fn default_stack() -> u16 {
@@ -168,6 +224,7 @@ pub struct Block {
     pub has_item: bool,
     pub max_stack: u16,
     pub cull_same: bool,
+    pub orientation: Option<Orientation>,
 }
 
 impl Block {
@@ -183,7 +240,13 @@ impl Block {
             has_item: false,
             max_stack: 64,
             cull_same: true,
+            orientation: None,
         }
+    }
+
+    /// The block standing for its whole family (item, name): the upright variant.
+    pub fn family(&self, id: BlockId) -> BlockId {
+        self.orientation.map_or(id, |o| o.along(Axis::Y))
     }
 
     pub fn texture(&self, face: Face) -> TextureId {

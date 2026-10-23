@@ -7,7 +7,8 @@ use crate::render::{Gpu, Renderer};
 use crate::world::ClientWorld;
 use glam::DVec3;
 use strata_core::chunk::Column;
-use strata_core::coords::ColumnPos;
+use strata_core::content::BlockId;
+use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, WORLD_HEIGHT};
 
 pub struct WorldView {
     pub world: ClientWorld,
@@ -30,6 +31,39 @@ impl WorldView {
                 for key in self.world.column_section_keys(neighbour) {
                     self.meshing.mark_dirty(key);
                 }
+            }
+        }
+    }
+
+    /// A block changed (server decision): every section whose mesh can see it is redone,
+    /// including neighbours across section borders (faces and corner shading).
+    pub fn set_block(&mut self, pos: BlockPos, block: BlockId) {
+        if !self.world.is_loaded(pos) {
+            return;
+        }
+        self.world.set_block(pos.x, pos.y, pos.z, block);
+        let mut keys = Vec::with_capacity(8);
+        for dy in -1..=1 {
+            for dz in -1..=1 {
+                for dx in -1..=1 {
+                    let (x, y, z) = (pos.x + dx, pos.y + dy, pos.z + dz);
+                    if !(0..WORLD_HEIGHT).contains(&y) {
+                        continue;
+                    }
+                    let key = (
+                        x.div_euclid(SECTION_SIZE),
+                        z.div_euclid(SECTION_SIZE),
+                        (y / SECTION_SIZE) as usize,
+                    );
+                    if !keys.contains(&key) {
+                        keys.push(key);
+                    }
+                }
+            }
+        }
+        for key in keys {
+            if self.world.is_complete(ColumnPos { x: key.0, z: key.1 }) {
+                self.meshing.mark_dirty(key);
             }
         }
     }

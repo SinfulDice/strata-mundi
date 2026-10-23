@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use std::path::{Path, PathBuf};
-use strata_core::content::{BlockId, Content, ItemKind, RenderKind, TextureId};
+use strata_core::content::{BlockId, Content, Face, ItemKind, RenderKind, TextureId};
 use strata_core::id::Identifier;
 use strata_core::lang::LANGUAGES;
 use strata_core::pack::{PackError, PackSet};
@@ -168,4 +168,22 @@ fn missing_translations_are_reported() {
         );
     }
     assert_eq!(missing.len(), 3);
+}
+
+#[test]
+fn logs_lie_along_the_clicked_axis() {
+    let (content, _) = load(&game_packs());
+    let upright = content.blocks.key(&id("strata:oak_log")).unwrap();
+    let lying = content.blocks.key(&id("strata:oak_log__x")).unwrap();
+    let block = content.blocks.get(upright).unwrap();
+    let orientation = block.orientation.unwrap();
+    assert_eq!(orientation.along(Face::East.axis()), lying);
+    assert_eq!(orientation.along(Face::Up.axis()), upright);
+    let lying_block = content.blocks.get(lying).unwrap();
+    assert_eq!(lying_block.texture(Face::East), block.texture(Face::Up));
+    assert_eq!(lying_block.texture(Face::Up), block.texture(Face::North));
+    assert!(!lying_block.has_item);
+    assert_eq!(content.block_name(lying), Some(&id("strata:oak_log")));
+    let keys = content.translation_keys();
+    assert!(!keys.iter().any(|key| key.contains("__")), "{keys:#?}");
 }

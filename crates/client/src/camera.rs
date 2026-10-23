@@ -13,9 +13,6 @@ pub struct Camera {
     pub fov_y_degrees: f32,
 }
 
-/// Height of the eyes above the feet, in blocks.
-pub const EYE_HEIGHT: f64 = 1.62;
-
 const MAX_PITCH: f32 = 89.9_f32 * std::f32::consts::PI / 180.0;
 const NEAR_PLANE: f32 = 0.05;
 

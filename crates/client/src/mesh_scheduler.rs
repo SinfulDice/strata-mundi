@@ -1,5 +1,5 @@
 use crate::mesher::{BlockTable, MeshJob, MeshWorkers, SectionKey, SectionMesh};
-use crate::render::{Gpu, Renderer};
+use crate::render::{Gpu, Renderer, in_vertical_range};
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::collections::{HashMap, HashSet};
@@ -72,7 +72,7 @@ impl MeshScheduler {
         self.waiting + self.in_flight.len()
     }
 
-    /// Submits the nearest dirty sections within `vertical_distance` sections of the camera,
+    /// Submits the nearest dirty sections within the vertical distance (see `in_vertical_range`),
     /// then uploads finished meshes within the frame budget.
     pub fn update(
         &mut self,
@@ -105,8 +105,11 @@ impl MeshScheduler {
     ) {
         let camera_section = (camera.y / f64::from(SECTION_SIZE)).floor() as i64;
         let eligible = |key: &SectionKey| {
+            let top = world.top_section(ColumnPos { x: key.0, z: key.1 });
             !self.in_flight.contains(key)
-                && (key.2 as i64 - camera_section).unsigned_abs() <= u64::from(vertical_distance)
+                && top.is_some_and(|top| {
+                    in_vertical_range(key.2, top, camera_section, vertical_distance)
+                })
         };
         let room = self.max_in_flight.saturating_sub(self.in_flight.len());
         if room == 0 {

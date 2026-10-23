@@ -3,4 +3,5 @@ Block(
     hardness: 2.0,
     sound: Some("strata:wood"),
     category: Some("strata:natural"),
+    placement: Axis,
 )

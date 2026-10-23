@@ -4,6 +4,7 @@
 mod color;
 mod generate;
 mod image;
+mod isometric;
 mod noise;
 mod patterns;
 mod recipe;
@@ -12,4 +13,5 @@ mod sprite;
 pub use color::{HexColor, Palette, PaletteFile, Ramp, parse_hex};
 pub use generate::{Source, generate, seed_of, upscale};
 pub use image::{Rgba, RgbaImage};
+pub use isometric::block_icon;
 pub use recipe::{BASE_SIZE, ColorRef, Pattern, TextureRecipe};

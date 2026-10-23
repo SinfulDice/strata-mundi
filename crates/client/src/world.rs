@@ -4,20 +4,25 @@ use crate::mesher::{BlockTable, Neighborhood, SectionKey};
 use std::collections::HashMap;
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
-use strata_core::coords::{ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
+use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 
 #[derive(Debug, Default)]
 pub struct ClientWorld {
     columns: HashMap<ColumnPos, Column>,
+    /// Highest non-empty section of each column, kept up to date (asked every frame).
+    tops: HashMap<ColumnPos, usize>,
 }
 
 impl ClientWorld {
     pub fn insert(&mut self, column: Column) {
-        self.columns.insert(column.pos, column);
+        let pos = column.pos;
+        self.columns.insert(pos, column);
+        self.refresh_top(pos);
     }
 
     pub fn remove(&mut self, pos: ColumnPos) {
         self.columns.remove(&pos);
+        self.tops.remove(&pos);
     }
 
     pub fn column_count(&self) -> usize {
@@ -44,6 +49,36 @@ impl ClientWorld {
             .unwrap_or_default()
     }
 
+    /// Highest non-empty section of a loaded column.
+    pub fn top_section(&self, pos: ColumnPos) -> Option<usize> {
+        self.tops.get(&pos).copied()
+    }
+
+    fn refresh_top(&mut self, pos: ColumnPos) {
+        let top = self
+            .columns
+            .get(&pos)
+            .and_then(|c| c.sections().iter().rposition(|s| !s.is_empty()));
+        match top {
+            Some(top) => self.tops.insert(pos, top),
+            None => self.tops.remove(&pos),
+        };
+    }
+
+    /// Air where nothing is loaded.
+    pub fn block_at(&self, pos: BlockPos) -> BlockId {
+        self.columns
+            .get(&column_of(pos.x, pos.z))
+            .map_or(BlockId::AIR, |column| {
+                column.get(local(pos.x), pos.y, local(pos.z))
+            })
+    }
+
+    /// Whether the column holding `pos` is loaded.
+    pub fn is_loaded(&self, pos: BlockPos) -> bool {
+        self.columns.contains_key(&column_of(pos.x, pos.z))
+    }
+
     /// Creates the column if needed (used to build scenes on the client).
     pub fn set_block(&mut self, x: i32, y: i32, z: i32, block: BlockId) {
         let pos = column_of(x, z);
@@ -51,6 +86,7 @@ impl ClientWorld {
             .entry(pos)
             .or_insert_with(|| Column::empty(pos))
             .set(local(x), y, local(z), block);
+        self.refresh_top(pos);
     }
 
     /// True when the section and its six neighbours are all one opaque block: nothing

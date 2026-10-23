@@ -14,6 +14,9 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 8. [Génération du monde](generation-du-monde.md) : climat, relief, biomes, grottes, arbres.
 9. [Monde infini](monde-infini.md) : chargement autour du joueur, frustum.
 10. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
+11. [ECS](ecs.md) : entités et composants du serveur.
+12. [Joueur et interaction](joueur-et-interaction.md) : physique partagée, prédiction, casser et poser.
+13. [Interface](interface.md) : écrans décrits en fichiers, police, navigation à la manette.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

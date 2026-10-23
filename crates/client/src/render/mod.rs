@@ -6,22 +6,28 @@ mod frustum;
 mod gpu;
 mod mesh;
 mod offscreen;
+mod outline;
 mod surface;
 mod texture_array;
+mod ui_pipeline;
 
 pub use gpu::{Gpu, GpuError};
 pub use offscreen::{OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError};
 pub use surface::{Acquired, WindowSurface};
+pub use ui_pipeline::UiPipeline;
 
 use crate::camera::Camera;
 use crate::mesher::{SectionKey, SectionMesh};
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use depth::DepthBuffer;
 use frustum::Frustum;
+pub use frustum::in_vertical_range;
 use glam::DVec3;
 use mesh::GpuMesh;
+use outline::OutlinePipeline;
 use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
+use strata_core::coords::BlockPos;
 use strata_core::coords::{SECTION_SIZE, SECTIONS_PER_COLUMN};
 use texture_array::TextureArray;
 
@@ -55,6 +61,9 @@ struct GpuSection {
 
 pub struct Renderer {
     blocks: BlockPipeline,
+    outline_pipeline: OutlinePipeline,
+    /// Block drawn with an outline (the one the player aims at).
+    pub outline: Option<BlockPos>,
     depth: DepthBuffer,
     /// Section meshes grouped by column, so unloading a column is a single removal.
     columns: HashMap<(i32, i32), Vec<Option<GpuSection>>>,
@@ -78,8 +87,15 @@ impl Renderer {
     ) -> Result<Self, GpuError> {
         let layers: Vec<_> = textures.images.iter().map(|(_, _, image)| image).collect();
         let textures = TextureArray::new(&gpu.device, &gpu.queue, &layers)?;
+        let blocks = BlockPipeline::new(&gpu.device, color_format, &textures);
         Ok(Self {
-            blocks: BlockPipeline::new(&gpu.device, color_format, &textures),
+            outline_pipeline: OutlinePipeline::new(
+                &gpu.device,
+                color_format,
+                &blocks.camera_layout,
+            ),
+            outline: None,
+            blocks,
             depth: DepthBuffer::new(&gpu.device, (1, 1)),
             columns: HashMap::new(),
             ambient_occlusion: 1.0,
@@ -162,6 +178,11 @@ impl Renderer {
                 mesh.draw(&mut pass);
             }
         }
+        if let Some(block) = self.outline {
+            let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
+            self.outline_pipeline
+                .draw(&gpu.queue, &mut pass, camera.relative(corner));
+        }
         self.draw_translucent(&mut pass, camera, &frustum);
     }
 
@@ -171,13 +192,17 @@ impl Renderer {
         camera: &'a Camera,
         frustum: &'a Frustum,
     ) -> impl Iterator<Item = &'a GpuSection> {
-        let size = f64::from(SECTION_SIZE);
-        let camera_section = (camera.position.y / size).floor();
-        let range = f64::from(self.vertical_distance);
-        self.columns.values().flatten().flatten().filter(move |s| {
-            let min = camera.relative(s.origin);
-            ((s.origin.y / size) - camera_section).abs() <= range
-                && frustum.intersects_box(min, min + glam::Vec3::splat(SECTION_SIZE as f32))
+        let camera_section = (camera.position.y / f64::from(SECTION_SIZE)).floor() as i64;
+        let distance = self.vertical_distance;
+        self.columns.values().flat_map(move |slots| {
+            let top = slots.iter().rposition(Option::is_some).unwrap_or(0);
+            slots.iter().enumerate().filter_map(move |(index, slot)| {
+                let section = slot.as_ref()?;
+                let min = camera.relative(section.origin);
+                let visible = in_vertical_range(index, top, camera_section, distance)
+                    && frustum.intersects_box(min, min + glam::Vec3::splat(SECTION_SIZE as f32));
+                visible.then_some(section)
+            })
         })
     }
 

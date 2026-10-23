@@ -117,3 +117,32 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Serveur** : disque de colonnes autour du joueur, priorité distance × orientation, file de génération bornée (4 travaux par thread), envoi limité à 48 colonnes/tick, déchargement avec 2 colonnes d'hystérésis. Les colonnes voyagent en `ServerMessage::Column(Box<Column>)` (structures `serde`).
 - **Client** : maillage d'une colonne quand ses 8 voisines sont présentes (jamais de remaillage pour une voisine arrivée plus tard) ; frustum culling (plans latéraux + proche) ; le bench commence quand ~80 % du disque est chargé et maillé.
 - **Distance verticale** : relevée (DS 4 sections, ultra 12) après essais, une valeur plus faible coupait les reliefs vus d'en haut.
+
+## D021 — ECS maison (v0.1, jalon 6)
+
+- **Choix** : entités à génération + un `Storage<T>` (sparse set) par composant + systèmes en fonctions libres, dans `server::ecs` (~200 lignes, tests compris).
+- **Alternatives écartées** : `bevy_ecs` (lourd, API changeante, ordonnanceur inutile à 20 TPS), `hecs` (bien, mais le besoin v0.1 est un seul joueur ; on garde la main sur la sérialisation des sauvegardes). À réévaluer avec les mobs (v0.4) si les requêtes multi-composants deviennent nombreuses.
+
+## D022 — Physique partagée, prédiction et réconciliation (v0.1, jalon 6)
+
+- **Choix** : la physique du joueur (`core::physics::step`) est déterministe, à pas fixe (50 ms), et ne lit le monde qu'à travers une fonction « solide ? ». Client et serveur exécutent le même code.
+- Le client applique chaque entrée tout de suite, l'envoie numérotée (`Input { sequence }`), puis repart de l'état officiel (`PlayerState`) en rejouant les entrées non confirmées. Rendu interpolé entre les deux derniers pas.
+- **Anti-triche minimal** : entrées appliquées au rythme de l'horloge (réserve de rattrapage de 3), file bornée à 40, entrées non finies ignorées, chute automatique après 0,5 s sans entrée ; casser/poser : position validée avant tout calcul, portée (6 blocs serveur, 5 client), 10 actions/s au plus ; téléportation réservée au créatif. Solidité du monde (dessous, bordure, colonnes absentes) partagée : `physics::solid_at`.
+- **Alternative écartée** : le client envoie sa position (jalons 1-5) — incompatible avec un serveur autoritaire.
+
+## D023 — Interface maison déclarative (v0.1, jalon 6)
+
+- **Choix** : écrans en RON (`assets/ui/`), nœuds ancrés + décalage en pixels d'interface, échelle entière automatique, comportement dans des `ScreenModel` Rust. Un seul atlas GPU (police, icônes, pixel blanc), un seul appel de dessin.
+- **Police** : bitmap décrite en RON dans le pack (glyphes en `#`/`.`, accents composés automatiquement), donc remplaçable par pack de ressources. **Icônes** isométriques calculées sur CPU depuis les textures.
+- **Alternatives écartées** : `egui`/`iced` (style difficile à rendre pixel art, navigation manette incomplète, dépendances lourdes) ; police TTF (`fontdue`) gardée pour la police d'accessibilité du jalon 8.
+- Format interne jusqu'à la v1.1 (mods).
+
+## D024 — Blocs orientés par variantes générées (v0.1, jalon 6)
+
+- **Choix** : `placement: Axis` dans le pack ; au chargement, trois blocs du registre (`x`, debout, `z`) se partagent nom et objet, faces permutées. Le serveur choisit la variante d'après la face cliquée ; le mailleur tourne d'un quart la texture des faces longues (aucun octet de plus par sommet).
+- **Alternative écartée** : états de bloc (propriétés par bloc stockées dans les chunks) — plus général mais coûteux en mémoire et en complexité ; les variantes « aplaties » sont ce que fait Minecraft depuis 1.13 et suffisent aux escaliers et dalles à venir.
+
+## D025 — Fenêtre verticale glissante (v0.1, jalon 6)
+
+- **Constat** : avec une distance verticale de 4 sections (DS), un joueur à 230 de haut ne voyait plus rien.
+- **Choix** : la fenêtre verticale est centrée sur `min(section de la caméra, plus haute section non vide de la colonne)`. Sous terre rien ne change ; vu du ciel, chaque colonne garde ses sections de surface.

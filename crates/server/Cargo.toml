@@ -10,6 +10,7 @@ license.workspace = true
 strata-core.workspace = true
 strata-worldgen.workspace = true
 strata-protocol.workspace = true
+glam.workspace = true
 crossbeam-channel.workspace = true
 tracing.workspace = true
 

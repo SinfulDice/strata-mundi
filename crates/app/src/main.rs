@@ -13,13 +13,15 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
-use strata_client::camera::EYE_HEIGHT;
 use strata_client::screenshot::{View, capture};
-use strata_client::settings::{GraphicsSettings, Preset};
+use strata_client::settings::{ControlSettings, GraphicsSettings, Preset};
 use strata_client::texture_sheet::write_texture_sheet;
 use strata_client::{ClientConfig, DEFAULT_FOV, run};
+use strata_core::coords::DEFAULT_WORLD_BORDER;
 use strata_core::dimension::DimensionId;
-use strata_server::{IntegratedServer, ServerConfig};
+use strata_core::physics::EYE_HEIGHT;
+use strata_protocol::GameMode;
+use strata_server::{BlockRules, IntegratedServer, ServerConfig};
 use strata_worldgen::{Generator, Seed};
 
 fn main() -> anyhow::Result<()> {
@@ -53,14 +55,18 @@ fn main() -> anyhow::Result<()> {
     let server = ServerConfig {
         dimension,
         generator,
+        rules: BlockRules::new(&loaded.content),
         generation_threads: graphics.generation_threads,
         view_distance: graphics.render_distance,
+        border: DEFAULT_WORLD_BORDER,
+        mode: GameMode::Creative,
     };
     play(
         ClientConfig {
             content: Arc::new(loaded.content),
             language: args.lang.clone(),
-            camera: args.pos.map(|pos| camera(pos, &args)),
+            controls: ControlSettings::default(),
+            ui: loaded.ui,
             vsync: bench.is_none(),
             graphics,
             bench,

@@ -4,6 +4,7 @@ use anyhow::Context;
 use std::path::PathBuf;
 use std::sync::Arc;
 use strata_client::preview::load_preview;
+use strata_client::ui::UiAssets;
 use strata_client::world::ClientWorld;
 use strata_core::content::Content;
 use strata_core::dimension::DimensionId;
@@ -12,6 +13,7 @@ use strata_worldgen::WorldgenContent;
 
 pub struct Loaded {
     pub content: Content,
+    pub ui: UiAssets,
     pub worldgen: Arc<WorldgenContent>,
     pub assets: PathBuf,
 }
@@ -26,7 +28,10 @@ pub fn load(args: &Args, dimension: &DimensionId) -> anyhow::Result<Loaded> {
     let (content, more) = Content::load(&packs, &resource_packs);
     errors.extend(more);
     let worldgen = WorldgenContent::load(&packs, &content.blocks, &dimension.0, &mut errors);
+    let presentation = PackSet::joined(&packs, &resource_packs);
+    let ui = UiAssets::load(&assets.join("ui"), &presentation, &mut errors);
     report(&errors);
+    let ui = ui.context("interface files are missing or broken")?;
     let worldgen = worldgen.with_context(|| format!("dimension `{dimension}` is not usable"))?;
     tracing::info!(
         blocks = content.blocks.len(),
@@ -38,6 +43,7 @@ pub fn load(args: &Args, dimension: &DimensionId) -> anyhow::Result<Loaded> {
     );
     Ok(Loaded {
         content,
+        ui,
         worldgen: Arc::new(worldgen),
         assets,
     })

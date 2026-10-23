@@ -6,7 +6,7 @@ mod png_file;
 mod registry;
 mod textures;
 
-pub use block::{Block, BlockDef, BlockTextures, Face, RenderKind};
+pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
 pub use item::{Item, ItemDef, ItemKind};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, ItemId, Registry, RegistryId, TextureId};
@@ -50,11 +50,26 @@ impl Content {
         (content, errors)
     }
 
+    /// Whether each block (by `BlockId`) stops movement, for fast collision lookups.
+    pub fn solidity(&self) -> Vec<bool> {
+        self.blocks
+            .iter()
+            .map(|(_, _, block)| block.solid)
+            .collect()
+    }
+
+    /// Identifier naming `block` in the interface: lying logs are called like upright ones.
+    pub fn block_name(&self, block: BlockId) -> Option<&Identifier> {
+        let family = self.blocks.get(block)?.family(block);
+        self.blocks.identifier(family)
+    }
+
     /// Fluent keys every language must define for this content.
     pub fn translation_keys(&self) -> Vec<String> {
         let blocks = self
             .blocks
             .iter()
+            .filter(|(key, _, block)| block.family(*key) == *key)
             .map(|(_, id, _)| id.translation_key("block"));
         let items = self
             .items
@@ -111,6 +126,7 @@ fn load_blocks(
                 TextureId::MISSING
             }),
         });
+        let placement = value.placement;
         let block = Block {
             solid: value.solid,
             render: value.render,
@@ -122,15 +138,51 @@ fn load_blocks(
             has_item: value.has_item,
             max_stack: value.max_stack.max(1),
             cull_same: value.cull_same,
+            orientation: None,
         };
-        if blocks.insert(id, block).is_none() {
+        let inserted = match placement {
+            Placement::Fixed => blocks.insert(id, block).is_some(),
+            Placement::Axis => insert_turned(&mut blocks, &id, block),
+        };
+        if !inserted {
             errors.push(PackError::invalid(
                 &source,
-                "too many blocks (65 536 at most)",
+                "too many blocks (65 536 at most), or a name ending in `__x`/`__z` is taken",
             ));
         }
     }
     blocks
+}
+
+/// Registers the upright block and its two lying variants `<name>__x` and `<name>__z`,
+/// which have no item and share the upright block's name.
+fn insert_turned(blocks: &mut Registry<BlockId, Block>, id: &Identifier, upright: Block) -> bool {
+    let variant_id = |axis: Axis| match axis {
+        Axis::Y => Some(id.clone()),
+        Axis::X => Identifier::new(id.namespace(), &format!("{}__x", id.name())).ok(),
+        Axis::Z => Identifier::new(id.namespace(), &format!("{}__z", id.name())).ok(),
+    };
+    let Some(ids) = Axis::ALL
+        .map(variant_id)
+        .into_iter()
+        .collect::<Option<Vec<_>>>()
+        .filter(|ids| ids.iter().all(|id| blocks.key(id).is_none()))
+        .filter(|_| blocks.len() + 3 <= usize::from(u16::MAX) + 1)
+    else {
+        return false;
+    };
+    let first = blocks.len() as u16;
+    let variants = [BlockId(first), BlockId(first + 1), BlockId(first + 2)];
+    for (axis, id) in Axis::ALL.into_iter().zip(ids) {
+        let block = Block {
+            faces: Face::ALL.map(|face| upright.texture(axis.source_face(face))),
+            has_item: upright.has_item && axis == Axis::Y,
+            orientation: Some(Orientation { axis, variants }),
+            ..upright.clone()
+        };
+        blocks.insert(id, block);
+    }
+    true
 }
 
 fn load_items(

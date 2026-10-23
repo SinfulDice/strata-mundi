@@ -3,9 +3,11 @@
 
 mod local;
 mod messages;
+mod worlds;
 
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{ClientMessage, ServerMessage};
+pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};
 
 /// Bounds of `ClientMessage::ViewDistance`, in columns.
 pub const MIN_VIEW_DISTANCE: u32 = 2;

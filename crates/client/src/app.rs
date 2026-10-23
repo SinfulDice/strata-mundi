@@ -1,8 +1,8 @@
 use crate::bench::BenchConfig;
-use crate::camera::Camera;
 use crate::render::GpuError;
 use crate::session::Session;
-use crate::settings::GraphicsSettings;
+use crate::settings::{ControlSettings, GraphicsSettings};
+use crate::ui::UiAssets;
 use std::sync::Arc;
 use strata_core::content::Content;
 use strata_protocol::{ClientConnection, ClientMessage};
@@ -35,8 +35,8 @@ pub struct ClientConfig {
     pub content: Arc<Content>,
     pub graphics: GraphicsSettings,
     pub language: String,
-    /// Starting camera; `None` = at the spawn point chosen by the server.
-    pub camera: Option<Camera>,
+    pub controls: ControlSettings,
+    pub ui: UiAssets,
     pub vsync: bool,
     pub bench: Option<BenchConfig>,
 }

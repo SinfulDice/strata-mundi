@@ -69,6 +69,17 @@ mod tests {
     }
 
     #[test]
+    fn lying_logs_turn_the_bark_of_their_long_sides_only() {
+        use super::greedy::texture_turned;
+        use strata_core::content::{Axis, Face};
+        let turned = |axis| Face::ALL.map(|face| texture_turned(face, axis));
+        assert_eq!(turned(Axis::Y), [false; 6]);
+        // Up, Down, North, South, East, West
+        assert_eq!(turned(Axis::X), [true, true, true, true, false, false]);
+        assert_eq!(turned(Axis::Z), [false, false, false, false, true, true]);
+    }
+
+    #[test]
     fn transparent_blocks_do_not_hide_neighbours() {
         let mesh = mesh(&[([5, 5, 5], 1), ([6, 5, 5], 2)]);
         assert_eq!(

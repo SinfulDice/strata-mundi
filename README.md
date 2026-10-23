@@ -32,7 +32,7 @@ strata --screenshot capture.png --pos=-12,15.5,14 --look 41,-28   # image fixe s
 strata --bench-scene preview-orbit --preset ds                     # mesure de performance (voir perf-reports/)
 ```
 
-Contrôles (vol libre pour l'instant) : clic pour capturer la souris, ZQSD/WASD, Espace/Maj pour monter/descendre, Ctrl pour accélérer, Échap pour libérer la souris ; à la manette, sticks, A pour monter, B pour descendre, Start.
+Contrôles : clic pour capturer la souris, ZQSD/WASD, Espace pour sauter (deux fois pour voler), Maj pour s'accroupir, Ctrl pour sprinter, clic gauche/droit pour casser/poser, clic molette pour prendre le bloc visé, E pour l'inventaire, 1-9 ou molette pour la barre, Échap pour libérer la souris. Détails et manette : `docs/explications/entrees.md`.
 
 ### Profilage avec Tracy
 

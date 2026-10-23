@@ -2296,6 +2296,7 @@ version = "0.1.0"
 dependencies = [
  "fluent-bundle",
  "fluent-syntax",
+ "glam",
  "png",
  "ron",
  "serde",
@@ -2317,6 +2318,7 @@ name = "strata-server"
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel",
+ "glam",
  "strata-core",
  "strata-protocol",
  "strata-worldgen",

@@ -18,6 +18,7 @@ pub struct BlockPipeline {
     cutout: wgpu::RenderPipeline,
     translucent: wgpu::RenderPipeline,
     camera_buffer: wgpu::Buffer,
+    pub camera_layout: wgpu::BindGroupLayout,
     camera_bind_group: wgpu::BindGroup,
     texture_bind_group: wgpu::BindGroup,
 }
@@ -80,6 +81,7 @@ impl BlockPipeline {
                 BlockPass::Translucent,
             ),
             camera_buffer,
+            camera_layout,
             camera_bind_group,
             texture_bind_group,
         }

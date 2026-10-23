@@ -1,0 +1,16 @@
+// Provisional neutral pixel-art theme (the final theme is chosen on mock-ups at the end
+// of v0.1). Colors: "#rrggbb" or "#rrggbbaa".
+Theme(
+    text: "#f2efe8",
+    text_shadow: "#2a2620",
+    text_dim: "#a8a29a",
+    accent: "#e8c35a",
+    panel: "#3b3833e8",
+    panel_light: "#6a655c",
+    panel_dark: "#1f1d1a",
+    slot: "#24221ecc",
+    slot_border: "#5a554c",
+    focus: "#f2efe8",
+    field: "#151412",
+    shade: "#00000080",
+)

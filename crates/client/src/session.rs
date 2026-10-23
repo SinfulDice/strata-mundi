@@ -1,28 +1,30 @@
 use crate::app::{ClientConfig, ClientError, DEFAULT_FOV};
 use crate::bench::BenchRun;
-use crate::camera::{Camera, EYE_HEIGHT};
-use crate::fly::FlyController;
+use crate::camera::Camera;
+use crate::gameplay::Gameplay;
 use crate::input::{Action, Binding, Bindings, Gamepads, InputState};
+use crate::interaction::BlockInfo;
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::BlockTable;
 use crate::render::{Acquired, Gpu, Renderer, Target, WindowSurface};
+use crate::screens::Screens;
 use crate::settings::GraphicsSettings;
 use crate::streaming::WorldView;
 use crate::world::ClientWorld;
 use glam::{DVec3, Vec2};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use strata_protocol::{
     ClientConnection, ClientMessage, Disconnected, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE,
     ServerMessage,
 };
-use winit::event::{DeviceEvent, ElementState, WindowEvent};
+use winit::event::{DeviceEvent, ElementState, MouseScrollDelta, WindowEvent};
 use winit::keyboard::PhysicalKey;
 use winit::window::{CursorGrabMode, Window};
 
 const MAX_FRAME_SECONDS: f32 = 0.1;
-/// How often the client tells the server where the player is.
-const VIEW_REPORT_PERIOD: Duration = Duration::from_millis(100);
+/// Pixels of trackpad scrolling counted as one wheel notch.
+const PIXELS_PER_NOTCH: f64 = 40.0;
 
 /// Everything that lives while the game window is open.
 pub struct Session {
@@ -31,14 +33,11 @@ pub struct Session {
     pub connection: ClientConnection,
     pub bench: Option<BenchRun>,
     renderer: Renderer,
-    view: WorldView,
+    screens: Screens,
+    game: Gameplay,
     graphics: GraphicsSettings,
-    camera: Camera,
-    /// The camera waits for the server's spawn point unless a position was given.
-    camera_placed: bool,
-    last_view_report: Instant,
-    fly: FlyController,
     input: InputState,
+    idle: InputState,
     gamepads: Gamepads,
     cursor_captured: bool,
     focused: bool,
@@ -59,7 +58,7 @@ impl Session {
         let gpu = Gpu::new(instance, Some(&surface))?;
         let surface = WindowSurface::new(&gpu, window, surface, config.vsync);
         let mut renderer = Renderer::new(&gpu, surface.format(), &config.content.textures)?;
-        let graphics = &config.graphics;
+        let graphics = config.graphics;
         renderer.ambient_occlusion = f32::from(u8::from(graphics.ambient_occlusion));
         renderer.vertical_distance = graphics.vertical_distance;
         let table = Arc::new(BlockTable::new(
@@ -73,21 +72,31 @@ impl Session {
             .render_distance
             .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
         connection.send(ClientMessage::ViewDistance(render_distance));
+        let camera = Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV);
+        let screens = Screens::new(
+            &gpu,
+            surface.format(),
+            config.ui,
+            &config.content,
+            config.language,
+        );
+        let game = Gameplay::new(
+            WorldView::new(ClientWorld::default(), meshing),
+            camera,
+            BlockInfo::new(config.content),
+            config.controls,
+        );
         Ok(Self {
             gpu,
             surface,
             connection,
             bench,
             renderer,
-            view: WorldView::new(ClientWorld::default(), meshing),
-            graphics: config.graphics,
-            camera_placed: config.camera.is_some(),
-            camera: config
-                .camera
-                .unwrap_or_else(|| Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV)),
-            last_view_report: Instant::now(),
-            fly: FlyController::default(),
+            screens,
+            game,
+            graphics,
             input: InputState::new(Bindings::default()),
+            idle: InputState::new(Bindings::default()),
             gamepads: Gamepads::connect(),
             cursor_captured: false,
             focused: true,
@@ -106,19 +115,34 @@ impl Session {
                     self.input.release_all();
                 }
             }
-            WindowEvent::KeyboardInput { event, .. } if !event.repeat => {
-                if let PhysicalKey::Code(code) = event.physical_key {
+            WindowEvent::KeyboardInput { event, .. } => {
+                if let Some(text) = &event.text
+                    && event.state.is_pressed()
+                {
+                    self.input.add_text(text);
+                }
+                if let (PhysicalKey::Code(code), false) = (event.physical_key, event.repeat) {
                     self.input
                         .set_binding(Binding::Key(code), event.state.is_pressed());
                 }
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                if !self.cursor_captured && state == ElementState::Pressed {
+                if !self.cursor_captured
+                    && !self.screens.is_menu_open()
+                    && state == ElementState::Pressed
+                {
                     self.set_cursor_captured(true);
                     return;
                 }
                 self.input
                     .set_binding(Binding::Mouse(button), state.is_pressed());
+            }
+            WindowEvent::MouseWheel { delta, .. } => self.input.add_scroll(match delta {
+                MouseScrollDelta::LineDelta(_, y) => y,
+                MouseScrollDelta::PixelDelta(p) => (p.y / PIXELS_PER_NOTCH) as f32,
+            }),
+            WindowEvent::CursorMoved { position, .. } => {
+                self.input.set_cursor((position.x, position.y))
             }
             WindowEvent::Touch(_) => self.input.note_touch(),
             _ => {}
@@ -167,6 +191,51 @@ impl Session {
             self.gamepads.poll(&mut self.input);
         }
         self.receive_messages()?;
+        let was_open = self.screens.is_menu_open();
+        let used_by_menu = self.screens.handle(&self.input, &mut self.game);
+        if self.screens.is_menu_open() {
+            self.set_cursor_captured(false);
+        } else if was_open {
+            self.set_cursor_captured(true);
+        }
+        if !used_by_menu {
+            self.handle_system_actions();
+        }
+        let settled = self
+            .game
+            .view
+            .is_settled(settled_columns(self.graphics.render_distance));
+        match &mut self.bench {
+            // The bench starts once the initial world is loaded, so loading is not measured.
+            Some(bench) if settled || bench.started() => {
+                bench.advance(frame_seconds, &mut self.game.camera);
+                self.game.follow_camera(&self.connection);
+            }
+            Some(_) => {}
+            // Without the cursor (paused, menus), the world goes on but the player is idle.
+            None => {
+                let playing = self.cursor_captured && !self.screens.is_menu_open();
+                let input = if playing { &self.input } else { &self.idle };
+                self.game.update(
+                    frame_seconds.min(MAX_FRAME_SECONDS),
+                    input,
+                    &self.connection,
+                );
+            }
+        }
+        self.input.end_frame();
+        self.renderer.outline = self.game.interaction.target.map(|hit| hit.block);
+        let camera = self.game.camera.position;
+        self.game.view.update(
+            &self.gpu,
+            &mut self.renderer,
+            camera,
+            self.graphics.vertical_distance,
+        );
+        Ok(())
+    }
+
+    fn handle_system_actions(&mut self) {
         if self.input.just_pressed(Action::Pause) {
             self.set_cursor_captured(false);
         }
@@ -176,30 +245,6 @@ impl Session {
         if self.input.just_pressed(Action::RenderDistanceUp) {
             self.set_render_distance(self.graphics.render_distance + 1);
         }
-        let settled = self
-            .view
-            .is_settled(settled_columns(self.graphics.render_distance));
-        match &mut self.bench {
-            // The bench starts once the initial world is loaded, so loading is not measured.
-            Some(bench) if settled || bench.started() => {
-                bench.advance(frame_seconds, &mut self.camera)
-            }
-            Some(_) => {}
-            None => self.fly.update(
-                &mut self.camera,
-                &self.input,
-                frame_seconds.min(MAX_FRAME_SECONDS),
-            ),
-        }
-        self.input.end_frame();
-        self.report_view();
-        self.view.update(
-            &self.gpu,
-            &mut self.renderer,
-            self.camera.position,
-            self.graphics.vertical_distance,
-        );
-        Ok(())
     }
 
     fn receive_messages(&mut self) -> Result<(), ClientError> {
@@ -214,18 +259,15 @@ impl Session {
 
     fn apply(&mut self, message: ServerMessage) {
         match message {
-            ServerMessage::Welcome { spawn, .. } => {
-                if !self.camera_placed {
-                    self.camera.position = DVec3::new(spawn[0], spawn[1] + EYE_HEIGHT, spawn[2]);
-                    self.camera_placed = true;
-                }
-                if let Some(bench) = &mut self.bench {
-                    bench.set_origin(DVec3::from(spawn));
-                }
-            }
             ServerMessage::Tick { tick } => self.server_tick = tick,
-            ServerMessage::Column(column) => self.view.insert(*column),
-            ServerMessage::UnloadColumn(pos) => self.view.remove(pos, &mut self.renderer),
+            ServerMessage::Welcome { body, .. } if self.bench.is_some() => {
+                if let Some(bench) = &mut self.bench {
+                    bench.set_origin(body.position);
+                }
+                self.game
+                    .apply(message, &mut self.renderer, &self.connection);
+            }
+            other => self.game.apply(other, &mut self.renderer, &self.connection),
         }
     }
 
@@ -235,18 +277,6 @@ impl Session {
         tracing::info!(distance, "render distance");
         self.graphics.render_distance = distance;
         self.connection.send(ClientMessage::ViewDistance(distance));
-    }
-
-    fn report_view(&mut self) {
-        if self.last_view_report.elapsed() < VIEW_REPORT_PERIOD || !self.camera_placed {
-            return;
-        }
-        self.last_view_report = Instant::now();
-        self.connection.send(ClientMessage::PlayerView {
-            position: self.camera.position.to_array(),
-            yaw: self.camera.yaw,
-            pitch: self.camera.pitch,
-        });
     }
 
     /// Returns the CPU time spent building and submitting the frame, in seconds,
@@ -266,8 +296,15 @@ impl Session {
                 view: &view,
                 size: self.surface.size(),
             },
-            &self.camera,
+            &self.game.camera,
             timestamps,
+        );
+        self.screens.draw(
+            &self.gpu,
+            &mut encoder,
+            &view,
+            self.surface.size(),
+            &mut self.game,
         );
         if let Some(bench) = &self.bench {
             bench.resolve(&mut encoder);

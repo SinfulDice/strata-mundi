@@ -14,30 +14,35 @@ graph LR
     A --> F[Contrôleur de vol : déplace la caméra]
 ```
 
-- **Actions** (`Action`) : avancer, reculer, gauche, droite, sauter/monter, s'accroupir/descendre, sprinter, pause.
+- **Actions** (`Action`) : avancer, reculer, gauche, droite, sauter/monter, s'accroupir/descendre, sprinter, pause, casser, poser, prendre le bloc visé, inventaire, cases 1 à 9 de la barre, navigation dans les menus.
 - **Liaisons** (`Bindings`) : une liste « entrée physique → action ». Plusieurs entrées peuvent viser la même action (Espace **et** le bouton A). Elles seront modifiables dans les options (jalon 8).
 - **Touches physiques** : on lit l'*emplacement* de la touche, pas la lettre écrite dessus. La liaison `KeyW` correspond à la touche **Z** d'un clavier AZERTY : ZQSD marche donc tout seul.
 - **Sticks analogiques** : le stick gauche s'ajoute aux touches de déplacement, le stick droit tourne la caméra. Une **zone morte** de 15 % ignore la petite dérive des sticks au repos.
 - **Dernier périphérique utilisé** : retenu en permanence ; les invites à l'écran (« appuyez sur A » ou « appuyez sur Espace ») s'en serviront dès qu'il y aura une interface (jalon 7). Le tactile est déjà prévu comme périphérique.
 - **Souris** : un clic dans la fenêtre capture le curseur ; Échap (ou Start) le libère. Quand la fenêtre perd le focus, tout est relâché (sinon une touche relâchée hors de la fenêtre resterait « enfoncée »).
 
-Contrôles par défaut (vol libre du jalon 1) :
+Contrôles par défaut :
 
 | Action | Clavier (QWERTY / AZERTY) | Manette |
 |---|---|---|
 | Avancer, reculer, gauche, droite | W A S D / Z Q S D | stick gauche ou croix |
-| Monter | Espace | A (bas) |
-| Descendre | Maj gauche | clic stick droit ou B (droite) |
+| Sauter (double saut : voler) / monter en vol | Espace | A (bas) |
+| S'accroupir / descendre en vol | Maj gauche | clic stick droit ou B (droite) |
 | Sprint | Ctrl gauche | clic stick gauche |
 | Regarder | souris | stick droit |
+| Casser / poser | clic gauche / clic droit | ZR / ZL |
+| Prendre le bloc visé | clic molette | Y (gauche) |
+| Inventaire | E | X (haut) |
+| Barre d'objets | 1 à 9, molette | L / R |
+| Menus : se déplacer, valider, retour | flèches, Entrée, Échap | croix, A, B |
 | Libérer le curseur | Échap | Start |
 | Distance de rendu − / + | F7 / F8 | — |
 
 ## Où c'est dans le code
 
 - `crates/client/src/input/action.rs`, `bindings.rs`, `state.rs` (`InputState`), `gamepad.rs` (`Gamepads`, via la crate `gilrs`).
-- `crates/client/src/fly.rs` (`FlyController`) : transforme les actions en mouvement de caméra.
-- `crates/client/src/frame.rs` : reçoit les événements de la fenêtre.
+- `crates/client/src/gameplay.rs` et `look.rs` : transforment les actions en déplacements du joueur et en regard.
+- `crates/client/src/session.rs` : reçoit les événements de la fenêtre.
 
 <details><summary>Côté Rust</summary>
 

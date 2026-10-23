@@ -1,3 +1,4 @@
+use super::greedy::texture_turned;
 use strata_core::content::{Block, BlockId, Face, RenderKind};
 
 pub const SIZE: usize = 16;
@@ -41,6 +42,8 @@ pub struct MeshBlock {
     pub render: RenderKind,
     pub cull_same: bool,
     pub faces: [u16; 6],
+    /// Faces whose texture is turned a quarter, for blocks lying on their side (logs).
+    pub turned: [bool; 6],
 }
 
 impl BlockTable {
@@ -50,6 +53,11 @@ impl BlockTable {
                 render: block.render,
                 cull_same: block.cull_same,
                 faces: Face::ALL.map(|face| block.texture(face).0),
+                turned: Face::ALL.map(|face| {
+                    block
+                        .orientation
+                        .is_some_and(|o| texture_turned(face, o.axis))
+                }),
             })
             .collect();
         Self { entries }
@@ -63,6 +71,7 @@ impl BlockTable {
                 render: RenderKind::Invisible,
                 cull_same: true,
                 faces: [0; 6],
+                turned: [false; 6],
             })
     }
 

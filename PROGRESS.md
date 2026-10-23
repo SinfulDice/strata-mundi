@@ -3,11 +3,12 @@
 ## État
 
 - **Version en cours** : v0.1 — Fondations
-- **Jalon en cours** : 6 — Joueur et interaction
+- **Jalon en cours** : 7 — Sauvegarde et menus
 - **Dernière session** : 23/10/2026
 
 ## Fait
 
+- **Jalon 6 — Joueur et interaction** : joueur = entité d'un **ECS maison** côté serveur (entités à génération, stockages par composant, systèmes) ; **physique partagée** client/serveur dans `core` (gravité, collisions AABB par sous-pas, saut, sprint, accroupi sans chute au bord, montée d'un demi-bloc et saut automatique réglables, vol créatif au double saut) ; **prédiction et réconciliation** (entrées numérotées, rejeu, rendu interpolé) ; raycast Amanatides-Woo, contour du bloc visé, casser/poser validés par le serveur (portée, place libre, pas dans le joueur), **bûches orientées** (variantes générées depuis `placement: Axis`, écorce tournée au maillage), prise de bloc au clic molette, nom du bloc visé façon Jade (désactivable) ; **interface maison déclarative** (écrans RON, thème, police pixel en pack avec accents, atlas unique, icônes isométriques, navigation souris/clavier/manette au focus) : HUD (viseur, barre 9 cases, nom du bloc), **inventaire créatif** (onglets par catégorie, recherche, grille). Fenêtre verticale glissante : le sol reste visible de haut en profil DS.
 - **Jalon 5 — Génération de terrain** : crate `worldgen` (bruit `fastnoise-lite` en f64), 4 cartes de climat, relief continu (mer 120, collines, montagnes en crêtes jusqu'à ~400), 6 biomes en pack (plaines, forêt, désert, océan, montagnes, toundra) avec frontières bruitées, couches (socle irrégulier, roche profonde, sous-sol, surface, plages), eau statique et glace, grottes spaghetti (grille 4³ interpolée, plafond sous le sol voisin), filons de minerais par profondeur avec variantes profondes, chênes, sapins, cactus placés depuis les 9 colonnes voisines, point de départ accueillant (plaines/forêt, arbres, eau proche, deux blocs d'air libres). Tests : déterminisme quel que soit l'ordre, graines différentes, 6 biomes atteignables et traduits, hauteurs, socle et mer, départ, arbres entiers à cheval sur les colonnes. ~2 ms par colonne.
 - **Jalon 4 — Monde infini** : serveur qui charge un disque de colonnes autour du joueur (proches et devant d'abord, ordre mis en cache), threads de génération à file bornée, envoi limité par tick, déchargement avec hystérésis, positions client validées et bornées ; client : colonnes maillées quand leurs 8 voisines sont là, frustum culling, déchargement en O(1), distance de rendu réglable à chaud (F7/F8), threads de maillage et de génération par préréglage, `--seed`, `--dimension`, captures sur monde généré. Vol de 2 min (scène `flyover`) sans plantage, 20 TPS tenus.
 - **Jalon 3 — Chunks et maillage** : sections 16³ à palette compressée (indices empaquetés 0-16 bits), colonnes de 32 sections, mailleur (culling, fusion gloutonne, AO par sommet à 4 niveaux réglable, opaque/découpé + translucide trié), sommets de 8 octets, maillage sur threads de travail (`crossbeam-channel`, file bornée, versions), envoi GPU limité à 4 ms/image, distance verticale réglable (maillage et rendu), sections enfouies ignorées, réglages graphiques par préréglage (distance verticale, AO, threads). Bench : ~0,27 ms par section de surface, ~1,3 ms au pire.
@@ -41,11 +42,11 @@ Benchmarks CPU (cloud, `cargo bench`) :
 - Workflows CI/release écrits mais pas encore exécutés sur GitHub : le premier tag les validera (`release.yml` surtout : AppImage, Flatpak, `.msi`).
 - L'installeur `.msi` n'embarque pas encore le dossier `assets/` (à faire avant la release v0.1.0).
 - Menu d'activation et d'ordre des packs de ressources : avec les menus (jalon 7) ; d'ici là `--resource-pack <nom>`.
-- Eau dessinée opaque et sans passe triée, et seuil `discard` appliqué à tous les blocs : passe translucide séparée au jalon 3.
 - Les préréglages (`--preset`) ne changent encore rien au rendu : réglages au jalon 8 (le rapport de bench le signale).
 - Invites à l'écran selon le dernier périphérique : le périphérique est suivi, l'affichage viendra avec l'interface (jalon 7).
-- Vitesse de vol, sensibilités souris/stick en dur dans `FlyController` : réglages au jalon 8.
-- Actions `Use`/`Attack`/prise de bloc : ajoutées avec l'interaction (jalon 6).
+- Sensibilités souris/stick et options de déplacement (saut auto, demi-bloc, nom du bloc) : valeurs par défaut, écran d'options au jalon 8.
+- Clavier virtuel pour la saisie à la manette : jalon 7.
+- Nom du bloc visé sans « outil requis » : les outils arrivent en v0.3.
 - Horodatage GPU indisponible sur lavapipe (« n/d » dans les rapports cloud).
 
 ## Blocages

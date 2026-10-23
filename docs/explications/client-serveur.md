@@ -6,7 +6,7 @@ Même en solo, Strata Mundi est découpé comme un jeu en ligne : un **serveur**
 
 ## Comment ça marche
 
-- Le client **n'écrit jamais dans le monde**. Quand le joueur voudra casser un bloc (jalon 6), le client enverra une *intention* (« je veux casser le bloc en x, y, z ») ; le serveur vérifiera que c'est possible, modifiera le monde et préviendra tous les clients.
+- Le client **n'écrit jamais dans le monde**. Quand le joueur casse un bloc, le client envoie une *intention* (« je veux casser le bloc en x, y, z ») ; le serveur vérifie que c'est possible (portée, place libre…), modifie le monde et prévient tous les clients avec `BlockChanged`.
 - Tout échange est un **message** défini dans la crate `protocol` : `ClientMessage` (client → serveur) et `ServerMessage` (serveur → client). Chaque message est **sérialisable** (transformable en octets), donc prêt à passer par le réseau.
 - En solo, les messages passent par des **canaux en mémoire** : `local_pair()` crée les deux bouts d'un tuyau, un pour le client (`ClientConnection`), un pour le serveur (`ServerConnection`).
 - Si un des deux côtés disparaît, l'autre le voit (`Disconnected`) et s'arrête proprement.
@@ -15,10 +15,15 @@ Messages actuels :
 
 | Message | Sens | Rôle |
 |---|---|---|
-| `ClientMessage::PlayerView` | client → serveur | Position et regard du joueur (vol libre jusqu'au jalon 6). |
+| `ClientMessage::Input` | client → serveur | Les touches de déplacement d'un tick, numérotées (voir [Joueur et interaction](joueur-et-interaction.md)). |
+| `ClientMessage::MovementPreferences` | client → serveur | Options de déplacement : saut automatique, montée des demi-blocs. |
+| `ClientMessage::Teleport` | client → serveur | Placement initial (`--pos`) ; plus tard `/tp`. |
+| `ClientMessage::BreakBlock` / `PlaceBlock` | client → serveur | Intention de casser ou de poser un bloc. |
 | `ClientMessage::ViewDistance` | client → serveur | Distance de rendu souhaitée. |
 | `ClientMessage::Disconnect` | client → serveur | Le joueur quitte : le serveur s'arrête. |
-| `ServerMessage::Welcome` | serveur → client | Dimension et point de départ. |
+| `ServerMessage::Welcome` | serveur → client | Dimension, corps du joueur et règles de déplacement. |
+| `ServerMessage::PlayerState` | serveur → client | Position officielle du joueur après l'entrée n° `sequence`. |
+| `ServerMessage::BlockChanged` | serveur → client | Un bloc a changé. |
 | `ServerMessage::Tick { tick }` | serveur → client | Numéro du tick qui vient d'être simulé. |
 | `ServerMessage::Column` / `UnloadColumn` | serveur → client | Une colonne de blocs arrive ou doit être oubliée (voir [Monde infini](monde-infini.md)). |
 
@@ -27,7 +32,7 @@ Messages actuels :
 - `crates/protocol/src/messages.rs` : les messages.
 - `crates/protocol/src/local.rs` : le transport en mémoire.
 - `crates/server/src/integrated.rs` : le serveur qui lit les messages du client à chaque tour.
-- `crates/client/src/frame.rs` (`receive_messages`) : le client qui lit les messages du serveur.
+- `crates/client/src/session.rs` (`receive_messages`) : le client qui lit les messages du serveur ; `gameplay.rs` les applique.
 
 <details><summary>Côté Rust</summary>
 

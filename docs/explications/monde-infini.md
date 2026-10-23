@@ -11,7 +11,7 @@ sequenceDiagram
     participant C as Client
     participant S as Serveur
     participant G as Threads de génération
-    C->>S: PlayerView (position, regard) toutes les 100 ms
+    C->>S: Input (déplacements du joueur), 20 fois par seconde
     S->>G: colonnes manquantes (les plus proches et devant d'abord)
     G-->>S: colonnes générées
     S-->>C: Column (au plus 48 par tick)
@@ -26,14 +26,15 @@ sequenceDiagram
 - **Frustum culling** : seules les sections dans le champ de vision de la caméra sont dessinées (les 4 côtés et le plan proche du cône de vision ; pas de plan lointain).
 - **Sans gel** : génération et maillage tournent sur d'autres threads ; le thread principal ne fait qu'insérer les colonnes reçues et envoyer à la carte graphique pendant au plus 4 ms par image.
 - **Distance de rendu réglable à chaud** : touches **F7** (moins) et **F8** (plus), puis l'écran d'options (jalon 8). Le client envoie `ViewDistance` (2 à 32) ; le serveur charge ou décharge en conséquence au tick suivant.
-- **Positions vérifiées** : le serveur ignore une position non finie et la borne à la bordure du monde.
+- **Positions vérifiées** : c'est le serveur qui déplace le joueur (voir [Joueur et interaction](joueur-et-interaction.md)) ; le chargement suit cette position-là.
+- **Distance verticale** : seules les sections à quelques sections au-dessus ou au-dessous de la caméra sont maillées et dessinées (4 sur le DS, 12 en ultra). Quand la caméra est plus haute que le sommet d'une colonne, la fenêtre « glisse » jusqu'au sommet de cette colonne : vu du ciel, on voit toujours le sol.
 - **Réglages** : nombre de threads de maillage et de génération par préréglage (1 et 1 sur le DS).
 
 ## Où c'est dans le code
 
 | Quoi | Où |
 |---|---|
-| Messages | `crates/protocol/src/messages.rs` (`PlayerView`, `ViewDistance`, `Column`, `UnloadColumn`, `Welcome`) |
+| Messages | `crates/protocol/src/messages.rs` (`Input`, `ViewDistance`, `Column`, `UnloadColumn`, `Welcome`) |
 | Choix des colonnes, envoi, déchargement | `crates/server/src/loader.rs` (`ColumnLoader`) |
 | Threads de génération | `crates/server/src/generation.rs` |
 | Réception côté client | `crates/client/src/streaming.rs` (`WorldView`) |

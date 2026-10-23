@@ -36,7 +36,7 @@ Mesure de contrôle : le rapport `--bench-scene` indique les « ticks serveur pa
 |---|---|
 | Horloge à pas fixe | `crates/server/src/clock.rs` (`TickClock`, `TICKS_PER_SECOND`) |
 | Boucle du serveur intégré | `crates/server/src/integrated.rs` (`IntegratedServer::run`) |
-| Boucle du client (fenêtre) | `crates/client/src/app.rs` (`ClientApp`), `crates/client/src/frame.rs` (`Frame::draw`) |
+| Boucle du client (fenêtre) | `crates/client/src/app.rs` (`ClientApp`), `crates/client/src/session.rs` (`Session::draw`) |
 | Lancement des deux | `crates/app/src/main.rs` (`play`) |
 
 <details><summary>Côté Rust</summary>

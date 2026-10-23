@@ -1,0 +1,9 @@
+// In-game overlay. Every element has an anchor and an offset in interface pixels, so it
+// can later be moved in the HUD editor (milestone 7).
+Screen(
+    root: [
+        Crosshair(id: "crosshair", anchor: Center, at: (0, 0)),
+        Label(id: "target", anchor: Top, at: (0, 4), text: "@target", boxed: true),
+        Slots(id: "hotbar", anchor: Bottom, at: (0, -3), count: 9),
+    ],
+)

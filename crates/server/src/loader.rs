@@ -4,7 +4,8 @@
 use crate::generation::GenerationWorkers;
 use std::collections::{HashMap, HashSet};
 use strata_core::chunk::Column;
-use strata_core::coords::{ColumnPos, SECTION_SIZE};
+use strata_core::content::BlockId;
+use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE};
 
 /// Columns sent per tick at most, so a burst never floods the client.
 const SENT_PER_TICK: usize = 48;
@@ -28,27 +29,40 @@ pub enum LoadEvent {
 
 pub struct ColumnLoader {
     workers: GenerationWorkers,
+    /// Columns changed by players, kept when unloaded so changes are never lost
+    /// (written to disk from milestone 7).
+    edited: HashMap<ColumnPos, Column>,
     /// Load order for the last centre, heading sector and distance (recomputed on change).
     order: Option<((ColumnPos, i32, u32), Vec<ColumnPos>)>,
     columns: HashMap<ColumnPos, Column>,
     requested: HashSet<ColumnPos>,
     sent: HashSet<ColumnPos>,
+    modified: HashSet<ColumnPos>,
 }
 
 impl ColumnLoader {
     pub fn new(workers: GenerationWorkers) -> Self {
         Self {
             workers,
+            edited: HashMap::new(),
             order: None,
             columns: HashMap::new(),
             requested: HashSet::new(),
             sent: HashSet::new(),
+            modified: HashSet::new(),
         }
     }
 
     pub fn update(&mut self, viewer: &Viewer) -> Vec<LoadEvent> {
         for column in self.workers.finished() {
             self.requested.remove(&column.pos);
+            let column = match self.edited.remove(&column.pos) {
+                Some(edited) => {
+                    self.modified.insert(edited.pos);
+                    edited
+                }
+                None => column,
+            };
             self.columns.insert(column.pos, column);
         }
         let center = column_of(viewer);
@@ -70,6 +84,36 @@ impl ColumnLoader {
         events
     }
 
+    /// Puts a ready-made column in place, as if just loaded.
+    #[cfg(test)]
+    pub fn insert(&mut self, column: Column) {
+        self.columns.insert(column.pos, column);
+    }
+
+    /// `None` when the column is not loaded.
+    pub fn block(&self, pos: BlockPos) -> Option<BlockId> {
+        let column = self.columns.get(&pos.column())?;
+        let (x, z) = (
+            pos.x.rem_euclid(SECTION_SIZE),
+            pos.z.rem_euclid(SECTION_SIZE),
+        );
+        Some(column.get(x as u32, pos.y, z as u32))
+    }
+
+    /// Changes a block in a loaded column; `false` if the column is not loaded.
+    pub fn set_block(&mut self, pos: BlockPos, block: BlockId) -> bool {
+        let Some(column) = self.columns.get_mut(&pos.column()) else {
+            return false;
+        };
+        let (x, z) = (
+            pos.x.rem_euclid(SECTION_SIZE),
+            pos.z.rem_euclid(SECTION_SIZE),
+        );
+        column.set(x as u32, pos.y, z as u32, block);
+        self.modified.insert(pos.column());
+        true
+    }
+
     fn load_order(&mut self, center: ColumnPos, viewer: &Viewer) -> Vec<ColumnPos> {
         let sector = (viewer.yaw / std::f32::consts::FRAC_PI_4).round() as i32;
         let key = (center, sector.rem_euclid(8), viewer.view_distance);
@@ -85,6 +129,14 @@ impl ColumnLoader {
 
     fn request_missing(&mut self, wanted: &[ColumnPos]) {
         let room = self.workers.capacity().saturating_sub(self.requested.len());
+        for pos in wanted {
+            if !self.columns.contains_key(pos)
+                && let Some(column) = self.edited.remove(pos)
+            {
+                self.modified.insert(*pos);
+                self.columns.insert(*pos, column);
+            }
+        }
         let missing: Vec<ColumnPos> = wanted
             .iter()
             .filter(|p| !self.columns.contains_key(p) && !self.requested.contains(p))
@@ -106,7 +158,11 @@ impl ColumnLoader {
         self.requested.retain(|p| !far(p));
         gone.into_iter()
             .filter_map(|pos| {
-                self.columns.remove(&pos);
+                if let Some(column) = self.columns.remove(&pos)
+                    && self.modified.remove(&pos)
+                {
+                    self.edited.insert(pos, column);
+                }
                 self.sent.remove(&pos).then_some(LoadEvent::Unloaded(pos))
             })
             .collect()
@@ -149,7 +205,7 @@ fn wanted(center: ColumnPos, viewer: &Viewer) -> Vec<ColumnPos> {
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
-mod tests {
+pub mod tests {
     use super::*;
     use std::path::Path;
     use std::sync::Arc;
@@ -157,7 +213,7 @@ mod tests {
     use strata_core::pack::PackSet;
     use strata_worldgen::{Generator, Seed, WorldgenContent};
 
-    fn loader() -> ColumnLoader {
+    pub fn loader() -> ColumnLoader {
         let mut errors = Vec::new();
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
         let packs = PackSet::discover(&dir, &mut errors);

@@ -47,8 +47,15 @@ Block(
     sound: Some("strata:grass"),
     category: Some("strata:natural"),
     has_item: true,
+    max_stack: 64,
+    cull_same: true,      // cacher la face entre deux blocs identiques non opaques (eau, verre)
+    placement: Fixed,     // Axis : se couche dans l'axe de la face cliquée (bûches)
 )
 ```
+
+Un bloc `placement: Axis` est décrit **debout** ; le jeu crée ses variantes couchées `<nom>__x` et `<nom>__z` (noms se terminant par `__x`/`__z` réservés).
+
+La police de l'interface est aussi dans les packs : `fonts/pixel.ron` (voir [Interface](interface.md)).
 
 ## Où c'est dans le code
 

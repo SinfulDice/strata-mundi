@@ -114,3 +114,23 @@ impl GraphicsSettings {
 pub fn default_worker_threads() -> usize {
     std::thread::available_parallelism().map_or(2, |n| n.get().saturating_sub(2).max(1))
 }
+
+/// Comfort options for controls (options screen at milestone 8).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ControlSettings {
+    pub auto_jump: bool,
+    /// Climb half-block steps (slabs, from a later version) without jumping.
+    pub step_up: bool,
+    /// Name of the aimed block at the top of the screen.
+    pub show_block_name: bool,
+}
+
+impl Default for ControlSettings {
+    fn default() -> Self {
+        Self {
+            auto_jump: true,
+            step_up: true,
+            show_block_name: true,
+        }
+    }
+}
