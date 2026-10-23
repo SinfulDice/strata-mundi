@@ -12,8 +12,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
-use strata_client::screenshot::{ScreenshotRequest, capture};
-use strata_client::settings::Preset;
+use strata_client::screenshot::{View, capture};
+use strata_client::settings::{GraphicsSettings, Preset};
 use strata_client::texture_sheet::write_texture_sheet;
 use strata_client::{ClientConfig, run};
 use strata_server::IntegratedServer;
@@ -27,15 +27,16 @@ fn main() -> anyhow::Result<()> {
     let loaded = content::load(&args)?;
     let camera = initial_camera(&args);
     if let Some(path) = &args.texture_sheet {
-        return Ok(write_texture_sheet(&loaded.content, &loaded.scene, path)?);
+        return Ok(write_texture_sheet(&loaded.content, &loaded.preview, path)?);
     }
-    if let Some(path) = args.screenshot.clone() {
-        let request = ScreenshotRequest {
-            path,
-            size: args.size,
+    let graphics = GraphicsSettings::for_preset(args.preset);
+    if let Some(path) = &args.screenshot {
+        let view = View {
             camera,
+            size: args.size,
+            graphics,
         };
-        return Ok(capture(&loaded.content, &loaded.scene, &request)?);
+        return Ok(capture(&loaded.content, &loaded.preview, &view, path)?);
     }
     let bench = args
         .bench_scene
@@ -44,7 +45,8 @@ fn main() -> anyhow::Result<()> {
         .transpose()?;
     play(ClientConfig {
         content: Arc::new(loaded.content),
-        scene: loaded.scene,
+        world: loaded.preview,
+        graphics,
         language: args.lang.clone(),
         camera,
         vsync: bench.is_none(),

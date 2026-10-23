@@ -3,7 +3,11 @@ use crate::bench::BenchRun;
 use crate::camera::Camera;
 use crate::fly::FlyController;
 use crate::input::{Action, Binding, Bindings, Gamepads, InputState};
+use crate::mesh_scheduler::MeshScheduler;
+use crate::mesher::BlockTable;
 use crate::render::{Acquired, Gpu, Renderer, Target, WindowSurface};
+use crate::settings::GraphicsSettings;
+use crate::world::ClientWorld;
 use glam::Vec2;
 use std::sync::Arc;
 use std::time::Instant;
@@ -21,6 +25,9 @@ pub struct Session {
     pub connection: ClientConnection,
     pub bench: Option<BenchRun>,
     renderer: Renderer,
+    world: ClientWorld,
+    meshing: MeshScheduler,
+    graphics: GraphicsSettings,
     camera: Camera,
     fly: FlyController,
     input: InputState,
@@ -34,7 +41,7 @@ pub struct Session {
 impl Session {
     pub fn new(
         window: Arc<Window>,
-        config: &ClientConfig,
+        config: ClientConfig,
         connection: ClientConnection,
     ) -> Result<Self, ClientError> {
         let instance = Gpu::create_instance();
@@ -44,14 +51,29 @@ impl Session {
         let gpu = Gpu::new(instance, Some(&surface))?;
         let surface = WindowSurface::new(&gpu, window, surface, config.vsync);
         let mut renderer = Renderer::new(&gpu, surface.format(), &config.content.textures)?;
-        renderer.add_object(&gpu, &config.scene, glam::DVec3::ZERO);
+        let graphics = &config.graphics;
+        renderer.ambient_occlusion = f32::from(u8::from(graphics.ambient_occlusion));
+        renderer.vertical_distance = graphics.vertical_distance;
+        let table = Arc::new(BlockTable::new(
+            config.content.blocks.iter().map(|(_, _, b)| b),
+        ));
+        let mut meshing =
+            MeshScheduler::new(table, graphics.worker_threads, graphics.ambient_occlusion)
+                .map_err(ClientError::Threads)?;
+        for key in config.world.section_keys() {
+            meshing.mark_dirty(key);
+        }
+        let bench = config.bench.map(|bench| BenchRun::new(bench, &gpu));
         Ok(Self {
             gpu,
             surface,
             connection,
-            bench: None,
+            bench,
             renderer,
-            camera: config.camera.clone(),
+            world: config.world,
+            meshing,
+            graphics: config.graphics,
+            camera: config.camera,
             fly: FlyController::default(),
             input: InputState::new(Bindings::default()),
             gamepads: Gamepads::connect(),
@@ -137,7 +159,11 @@ impl Session {
             self.set_cursor_captured(false);
         }
         match &mut self.bench {
-            Some(bench) => bench.advance(frame_seconds, &mut self.camera),
+            // The bench starts once the initial world is meshed, so loading is not measured.
+            Some(bench) if self.meshing.pending() == 0 => {
+                bench.advance(frame_seconds, &mut self.camera)
+            }
+            Some(_) => {}
             None => self.fly.update(
                 &mut self.camera,
                 &self.input,
@@ -145,6 +171,13 @@ impl Session {
             ),
         }
         self.input.end_frame();
+        self.meshing.update(
+            &self.world,
+            &self.gpu,
+            &mut self.renderer,
+            self.camera.position,
+            self.graphics.vertical_distance,
+        );
         Ok(())
     }
 

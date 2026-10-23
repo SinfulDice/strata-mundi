@@ -94,3 +94,12 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Contexte** : trois planches d'essai (classique, chaleureux, pastel) produites avec `--texture-sheet` sur le même échantillon (`docs/maquettes/`).
 - **Choix de l'utilisateur (23/10/2026)** : style **1, classique** — tons naturels proches de Minecraft, contrastes moyens. Sa palette est celle de `assets/packs/strata/palette.ron`.
 - Les deux autres palettes restent dans `docs/maquettes/styles/` comme exemples de packs de ressources.
+
+## D018 — Sections à palette et maillage (v0.1, jalon 3)
+
+- **Stockage** : palette par section + indices empaquetés dans des `u64` (0/1/2/4/8/16 bits, jamais à cheval sur deux mots, plus simple et aussi rapide). Section vide = aucun indice alloué. Colonnes de 32 sections.
+- **Maillage** : face culling + fusion gloutonne + AO par sommet (4 niveaux, fusion seulement entre faces de même AO), diagonale choisie selon l'AO. Opaque/découpé et translucide séparés ; translucide trié par section, sans écriture de profondeur.
+- **Sommet de 8 octets** (position 5+5+5 bits, face, AO, répétition UV, couche) décodé dans le shader ; origine de section en immediates. Alternatives écartées : sommets `f32` (28 octets), texture atlas (bavures aux bords, pas de répétition).
+- **Threads** : `crossbeam-channel` 0.5 (file bornée multi-consommateurs, très maintenue) ; versions par section pour jeter les résultats obsolètes ; budget d'envoi GPU de 4 ms par image.
+- **Benchmarks** : `criterion` sur une section de surface et sur le pire cas (damier).
+- **Limites connues** : le translucide est trié par section, pas à l'intérieur d'une section (artefacts possibles entre deux surfaces d'eau d'une même section, à revoir avec les fluides en v0.2). Les sections enfouies (une seule sorte de bloc opaque, entourées de sections identiques) ne sont pas maillées. AO désactivée = coins tous éclairés, ce qui permet aussi plus de fusions.

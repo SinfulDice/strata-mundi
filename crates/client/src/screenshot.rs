@@ -1,8 +1,10 @@
 use crate::camera::Camera;
+use crate::mesher::{BlockTable, mesh_section};
 use crate::render::{
-    Gpu, GpuError, MeshData, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, Renderer, Target,
+    Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, Renderer, Target,
 };
-use glam::DVec3;
+use crate::settings::GraphicsSettings;
+use crate::world::ClientWorld;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
@@ -28,33 +30,43 @@ pub enum ScreenshotError {
     },
 }
 
-pub struct ScreenshotRequest {
-    pub path: PathBuf,
-    pub size: (u32, u32),
+/// What to render and how.
+pub struct View {
     pub camera: Camera,
+    pub size: (u32, u32),
+    pub graphics: GraphicsSettings,
 }
 
 /// Renders one frame without any window (works headless with Mesa lavapipe) and saves it as PNG.
 pub fn capture(
     content: &Content,
-    scene: &MeshData,
-    request: &ScreenshotRequest,
+    world: &ClientWorld,
+    view: &View,
+    path: &Path,
 ) -> Result<(), ScreenshotError> {
-    let image = render_image(content, scene, &request.camera, request.size)?;
-    write_png(&request.path, &image)?;
-    tracing::info!(path = %request.path.display(), "screenshot saved");
+    let image = render_image(content, world, view)?;
+    write_png(path, &image)?;
+    tracing::info!(path = %path.display(), "screenshot saved");
     Ok(())
 }
 
 pub fn render_image(
     content: &Content,
-    scene: &MeshData,
-    camera: &Camera,
-    size: (u32, u32),
+    world: &ClientWorld,
+    view: &View,
 ) -> Result<RgbaImage, ScreenshotError> {
     let gpu = Gpu::new(Gpu::create_instance(), None)?;
     let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures)?;
-    renderer.add_object(&gpu, scene, DVec3::ZERO);
+    let ao = view.graphics.ambient_occlusion;
+    renderer.ambient_occlusion = f32::from(u8::from(ao));
+    renderer.vertical_distance = view.graphics.vertical_distance;
+    let table = BlockTable::new(content.blocks.iter().map(|(_, _, block)| block));
+    for key in world.section_keys() {
+        let mesh = mesh_section(&world.neighborhood(key), &table, ao);
+        renderer.upload_section(&gpu, key, &mesh);
+    }
+    let size = view.size;
+    let camera = &view.camera;
     let target = OffscreenTarget::new(&gpu, size);
     let mut encoder = gpu.device.create_command_encoder(&Default::default());
     renderer.render(

@@ -1,7 +1,9 @@
-use crate::bench::{BenchConfig, BenchRun};
+use crate::bench::BenchConfig;
 use crate::camera::Camera;
-use crate::render::{GpuError, MeshData};
+use crate::render::GpuError;
 use crate::session::Session;
+use crate::settings::GraphicsSettings;
+use crate::world::ClientWorld;
 use std::sync::Arc;
 use strata_core::content::Content;
 use strata_protocol::{ClientConnection, ClientMessage};
@@ -23,12 +25,15 @@ pub enum ClientError {
     Report(std::io::Error),
     #[error("the server stopped unexpectedly")]
     ServerGone,
+    #[error("could not start worker threads: {0}")]
+    Threads(std::io::Error),
 }
 
 pub struct ClientConfig {
     pub content: Arc<Content>,
-    /// Mesh drawn until the chunk world exists (milestones 3-4).
-    pub scene: MeshData,
+    /// Blocks shown until the generated world streams in (milestones 4-5).
+    pub world: ClientWorld,
+    pub graphics: GraphicsSettings,
     pub language: String,
     pub camera: Camera,
     pub vsync: bool,
@@ -76,11 +81,7 @@ impl ClientApp {
             .with_title(title)
             .with_inner_size(winit::dpi::LogicalSize::new(1280, 720));
         let window = Arc::new(event_loop.create_window(attributes)?);
-        let mut session = Session::new(window, &config, connection)?;
-        if let Some(bench) = config.bench {
-            session.bench = Some(BenchRun::new(bench, &session.gpu));
-        }
-        Ok(session)
+        Session::new(window, config, connection)
     }
 }
 

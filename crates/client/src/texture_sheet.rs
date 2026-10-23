@@ -2,8 +2,9 @@
 //! the preview diorama, to judge the visual style at a glance.
 
 use crate::camera::Camera;
-use crate::render::MeshData;
-use crate::screenshot::{ScreenshotError, render_image, write_png};
+use crate::screenshot::{ScreenshotError, View, render_image, write_png};
+use crate::settings::{GraphicsSettings, Preset};
+use crate::world::ClientWorld;
 use glam::DVec3;
 use std::path::Path;
 use strata_core::content::{Content, TextureId};
@@ -18,7 +19,7 @@ const SCENE_SIZE: (u32, u32) = (TILE * COLUMNS + GAP * (COLUMNS - 1), 540);
 
 pub fn write_texture_sheet(
     content: &Content,
-    preview: &MeshData,
+    preview: &ClientWorld,
     path: &Path,
 ) -> Result<(), ScreenshotError> {
     let tiles: Vec<RgbaImage> = sheet_order(content)
@@ -34,7 +35,12 @@ pub fn write_texture_sheet(
         let (column, row) = (index as u32 % COLUMNS, index as u32 / COLUMNS);
         sheet.draw(tile, GAP + column * (TILE + GAP), GAP + row * (TILE + GAP));
     }
-    let scene = render_image(content, preview, &diorama_camera(), SCENE_SIZE)?;
+    let view = View {
+        camera: diorama_camera(),
+        size: SCENE_SIZE,
+        graphics: GraphicsSettings::for_preset(Preset::Ultra),
+    };
+    let scene = render_image(content, preview, &view)?;
     sheet.draw(&scene, GAP, GAP + rows * (TILE + GAP));
     write_png(path, &sheet)?;
     tracing::info!(path = %path.display(), textures = tiles.len(), "texture sheet saved");

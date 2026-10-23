@@ -5,11 +5,14 @@ pub mod bench;
 pub mod camera;
 mod fly;
 pub mod input;
+mod mesh_scheduler;
+pub mod mesher;
 pub mod preview;
 pub mod render;
 pub mod screenshot;
 mod session;
 pub mod settings;
 pub mod texture_sheet;
+pub mod world;
 
 pub use app::{ClientConfig, ClientError, run};

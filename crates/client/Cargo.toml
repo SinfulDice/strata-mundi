@@ -11,6 +11,7 @@ strata-core.workspace = true
 strata-protocol.workspace = true
 bytemuck.workspace = true
 chrono.workspace = true
+crossbeam-channel.workspace = true
 gilrs.workspace = true
 glam.workspace = true
 png.workspace = true
@@ -25,3 +26,10 @@ winit.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "meshing"
+harness = false

@@ -1,4 +1,4 @@
-use super::block_pipeline::MESH_OFFSET_SIZE;
+use super::block_pipeline::SECTION_OFFSET_SIZE;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -48,7 +48,7 @@ impl Gpu {
                 required_features: wgpu::Features::IMMEDIATES
                     | (adapter.features() & optional_features),
                 required_limits: wgpu::Limits {
-                    max_immediate_size: MESH_OFFSET_SIZE,
+                    max_immediate_size: SECTION_OFFSET_SIZE,
                     ..Default::default()
                 }
                 .using_resolution(adapter.limits()),

@@ -2,14 +2,14 @@ use crate::cli::Args;
 use crate::paths;
 use anyhow::Context;
 use std::path::PathBuf;
-use strata_client::preview::PreviewScene;
-use strata_client::render::MeshData;
+use strata_client::preview::load_preview;
+use strata_client::world::ClientWorld;
 use strata_core::content::Content;
 use strata_core::pack::PackSet;
 
 pub struct Loaded {
     pub content: Content,
-    pub scene: MeshData,
+    pub preview: ClientWorld,
     pub assets: PathBuf,
 }
 
@@ -22,11 +22,10 @@ pub fn load(args: &Args) -> anyhow::Result<Loaded> {
     let resource_packs = PackSet::named(&args.resource_packs_dir, &args.resource_pack, &mut errors);
     let (content, more) = Content::load(&packs, &resource_packs);
     errors.extend(more);
-    let scene = PreviewScene::load(&assets.join("scenes/preview.ron"), &content)
-        .map(|scene| scene.mesh(&content))
-        .unwrap_or_else(|error| {
+    let preview =
+        load_preview(&assets.join("scenes/preview.ron"), &content).unwrap_or_else(|error| {
             tracing::warn!(%error, "preview scene unavailable");
-            MeshData::default()
+            ClientWorld::default()
         });
     for error in &errors {
         tracing::warn!("{error}");
@@ -41,7 +40,7 @@ pub fn load(args: &Args) -> anyhow::Result<Loaded> {
     );
     Ok(Loaded {
         content,
-        scene,
+        preview,
         assets,
     })
 }

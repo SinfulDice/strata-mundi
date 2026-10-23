@@ -10,7 +10,8 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 4. [Rendu avec wgpu](rendu-wgpu.md) : de la scène à l'image.
 5. [Entrées](entrees.md) : clavier, souris, manette, actions.
 6. [Mesures et captures](bench-et-captures.md) : `--screenshot`, `--bench-scene`.
-7. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
+7. [Chunks et maillage](chunks-et-maillage.md) : stockage des blocs, faces visibles, fusion, occlusion.
+8. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

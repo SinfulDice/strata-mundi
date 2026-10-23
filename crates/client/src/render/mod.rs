@@ -9,16 +9,18 @@ mod surface;
 mod texture_array;
 
 pub use gpu::{Gpu, GpuError};
-pub use mesh::MeshData;
 pub use offscreen::{OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError};
 pub use surface::{Acquired, WindowSurface};
 
 use crate::camera::Camera;
-use block_pipeline::{BlockPipeline, CameraUniform};
+use crate::mesher::{SectionKey, SectionMesh};
+use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use depth::DepthBuffer;
 use glam::DVec3;
 use mesh::GpuMesh;
+use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
+use strata_core::coords::SECTION_SIZE;
 use texture_array::TextureArray;
 
 /// Clear color (sRGB) until the sky arrives in v0.2.
@@ -42,16 +44,21 @@ fn linear_color([r, g, b]: [u8; 3]) -> wgpu::Color {
     }
 }
 
-/// A mesh placed in the world.
-pub struct Placed {
-    mesh: GpuMesh,
+/// GPU meshes of one section.
+struct GpuSection {
     origin: DVec3,
+    cutout: Option<GpuMesh>,
+    translucent: Option<GpuMesh>,
 }
 
 pub struct Renderer {
     blocks: BlockPipeline,
     depth: DepthBuffer,
-    objects: Vec<Placed>,
+    sections: HashMap<SectionKey, GpuSection>,
+    /// Ambient occlusion strength, 0 (off) to 1.
+    pub ambient_occlusion: f32,
+    /// Sections farther than this above or below the camera's section are not drawn.
+    pub vertical_distance: u32,
 }
 
 /// Where and how big the frame is.
@@ -71,15 +78,29 @@ impl Renderer {
         Ok(Self {
             blocks: BlockPipeline::new(&gpu.device, color_format, &textures),
             depth: DepthBuffer::new(&gpu.device, (1, 1)),
-            objects: Vec::new(),
+            sections: HashMap::new(),
+            ambient_occlusion: 1.0,
+            vertical_distance: u32::MAX,
         })
     }
 
-    pub fn add_object(&mut self, gpu: &Gpu, mesh: &MeshData, origin: DVec3) {
-        self.objects.push(Placed {
-            mesh: GpuMesh::upload(&gpu.device, mesh),
+    /// Replaces the meshes of a section (an empty mesh removes it).
+    pub fn upload_section(&mut self, gpu: &Gpu, key: SectionKey, mesh: &SectionMesh) {
+        if mesh.is_empty() {
+            self.sections.remove(&key);
+            return;
+        }
+        let origin = DVec3::new(
+            f64::from(key.0 * SECTION_SIZE),
+            (key.2 as i32 * SECTION_SIZE).into(),
+            f64::from(key.1 * SECTION_SIZE),
+        );
+        let section = GpuSection {
             origin,
-        });
+            cutout: GpuMesh::upload(&gpu.device, &mesh.opaque),
+            translucent: GpuMesh::upload(&gpu.device, &mesh.translucent),
+        };
+        self.sections.insert(key, section);
     }
 
     pub fn render(
@@ -96,6 +117,7 @@ impl Renderer {
             &gpu.queue,
             &CameraUniform {
                 view_proj: camera.view_projection(aspect).to_cols_array_2d(),
+                options: [self.ambient_occlusion, 0.0, 0.0, 0.0],
             },
         );
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -121,11 +143,49 @@ impl Renderer {
             occlusion_query_set: None,
             multiview_mask: None,
         });
-        self.blocks.bind(&mut pass);
-        for object in &self.objects {
-            self.blocks
-                .set_mesh_offset(&mut pass, camera.relative(object.origin));
-            object.mesh.draw(&mut pass);
+        self.blocks.bind(&mut pass, BlockPass::Cutout);
+        for section in self.visible_sections(camera) {
+            if let Some(mesh) = &section.cutout {
+                BlockPipeline::set_section_offset(&mut pass, camera.relative(section.origin));
+                mesh.draw(&mut pass);
+            }
+        }
+        self.draw_translucent(&mut pass, camera);
+    }
+
+    fn visible_sections(&self, camera: &Camera) -> impl Iterator<Item = &GpuSection> {
+        let size = f64::from(SECTION_SIZE);
+        let camera_section = (camera.position.y / size).floor();
+        let range = f64::from(self.vertical_distance);
+        self.sections
+            .values()
+            .filter(move |s| ((s.origin.y / size) - camera_section).abs() <= range)
+    }
+
+    /// Back to front, so that blending sees what is behind each surface.
+    fn draw_translucent(&self, pass: &mut wgpu::RenderPass<'_>, camera: &Camera) {
+        let mut translucent: Vec<(f64, &GpuSection)> = self
+            .visible_sections(camera)
+            .filter(|s| s.translucent.is_some())
+            .map(|s| {
+                (
+                    s.origin.distance_squared(camera.position - SECTION_CENTER),
+                    s,
+                )
+            })
+            .collect();
+        if translucent.is_empty() {
+            return;
+        }
+        translucent.sort_by(|a, b| b.0.total_cmp(&a.0));
+        self.blocks.bind(pass, BlockPass::Translucent);
+        for (_, section) in translucent {
+            if let Some(mesh) = &section.translucent {
+                BlockPipeline::set_section_offset(pass, camera.relative(section.origin));
+                mesh.draw(pass);
+            }
         }
     }
 }
+
+const SECTION_CENTER: DVec3 = DVec3::splat(SECTION_SIZE as f64 / 2.0);
