@@ -104,6 +104,11 @@ impl PostProcess {
         }
     }
 
+    /// Frees the scene texture while the final pass is not used (GPU memory on the DS).
+    pub fn release(&mut self) {
+        self.scene = None;
+    }
+
     pub fn scene_view(&self) -> Option<&wgpu::TextureView> {
         self.scene.as_ref().map(|scene| &scene.view)
     }

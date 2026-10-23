@@ -26,3 +26,4 @@ command-cinematic-usage = /cinematic <id>
 command-cinematic-help = PLAYZ A MOOVEE.
 ui-console-placeholder = TYPE A COMMANDZ…
 ui-console-help = <key:Complete>: FINISH 4 ME
+command-not-allowed = ONLY 4 CREATIV KITTEHS.

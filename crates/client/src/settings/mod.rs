@@ -6,9 +6,12 @@ mod game;
 mod graphics;
 mod interface;
 
-pub use controls::ControlSettings;
+pub use controls::{ControlSettings, DEAD_ZONE, SENSITIVITY};
 pub use game::GameSettings;
-pub use graphics::{AUTO_THREADS, GraphicsSettings, Preset, default_worker_threads};
+pub use graphics::{
+    ANISOTROPY, AUTO_THREADS, FOV, GraphicsSettings, Preset, RENDER_DISTANCE, RENDER_SCALE,
+    VERTICAL_DISTANCE, default_worker_threads,
+};
 pub use interface::{ColorFilter, FontChoice, InterfaceSettings, MAX_SCALE};
 
 use serde::{Deserialize, Serialize};
@@ -48,6 +51,8 @@ impl Settings {
             Self::default()
         });
         settings.interface.sanitize();
+        settings.graphics.sanitize();
+        settings.controls.sanitize();
         settings
     }
 

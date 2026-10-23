@@ -54,6 +54,7 @@ impl Session {
         let options = self.renderer.options;
         let size = self.surface.size();
         if !options.needs_post() {
+            self.post.release();
             let target = Target { view, size };
             self.renderer
                 .render(&self.gpu, encoder, target, &camera, timestamps);

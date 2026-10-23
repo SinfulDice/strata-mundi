@@ -77,12 +77,15 @@ impl Game {
 
     /// Creative only: the player flies at the destination, kept inside the border and the
     /// world height.
-    pub fn teleport(&mut self, feet: [f64; 3]) {
+    pub fn teleport(&mut self, feet: [f64; 3]) -> bool {
         let border = f64::from(self.border) - 1.0;
         if !feet.iter().all(|c| c.is_finite()) || !self.is_creative() {
-            return;
+            return false;
         }
-        if let Some(body) = self.ecs.bodies.get_mut(self.player) {
+        let Some(body) = self.ecs.bodies.get_mut(self.player) else {
+            return false;
+        };
+        {
             body.position = DVec3::new(
                 feet[0].clamp(-border, border),
                 feet[1].clamp(0.0, f64::from(WORLD_HEIGHT)),
@@ -91,10 +94,11 @@ impl Game {
             body.velocity = DVec3::ZERO;
             body.flying = true;
         }
+        true
     }
 
-    /// Creative: any existing item, nine slots at most.
-    pub fn set_hotbar(&mut self, hotbar: HotbarState) {
+    /// Creative: any existing item, nine slots at most. Returns whether it was accepted.
+    pub fn set_hotbar(&mut self, hotbar: HotbarState) -> bool {
         let valid = hotbar.slots.len() <= HOTBAR_SLOTS
             && usize::from(hotbar.selected) < HOTBAR_SLOTS
             && hotbar
@@ -106,6 +110,7 @@ impl Game {
         if valid {
             self.ecs.hotbars.insert(self.player, hotbar);
         }
+        valid
     }
 
     pub fn look(&self) -> [f32; 2] {
@@ -194,7 +199,14 @@ impl Game {
         (allowed && loader.set_block(target, block)).then_some((target, block))
     }
 
-    fn is_creative(&self) -> bool {
+    pub fn set_mode(&mut self, mode: GameMode) {
+        if let Some(control) = self.ecs.controls.get_mut(self.player) {
+            control.mode = mode;
+            control.movement.can_fly = mode == GameMode::Creative;
+        }
+    }
+
+    pub fn is_creative(&self) -> bool {
         self.ecs
             .controls
             .get(self.player)

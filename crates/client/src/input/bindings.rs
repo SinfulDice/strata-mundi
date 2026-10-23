@@ -50,9 +50,13 @@ impl PartialEq for Bindings {
     }
 }
 
+/// Actions missing from the file (added by a newer version, or a deleted line) keep
+/// their default inputs; an action written with `[]` stays unbound.
 impl From<ByAction> for Bindings {
     fn from(map: ByAction) -> Self {
-        let entries = map
+        let mut all = ByAction::from(Bindings::default());
+        all.extend(map);
+        let entries = all
             .into_iter()
             .flat_map(|(action, inputs)| inputs.into_iter().map(move |b| (b, action)))
             .collect();
@@ -62,7 +66,7 @@ impl From<ByAction> for Bindings {
 
 impl From<Bindings> for ByAction {
     fn from(bindings: Bindings) -> Self {
-        let mut map = ByAction::new();
+        let mut map: ByAction = Action::ALL.iter().map(|&a| (a, Vec::new())).collect();
         for (binding, action) in bindings.entries {
             map.entry(action).or_default().push(binding);
         }
@@ -198,5 +202,13 @@ mod tests {
             bindings.actions_for(w).collect::<Vec<_>>(),
             [Action::MoveBackward]
         );
+    }
+
+    #[test]
+    fn missing_actions_keep_their_defaults() {
+        let file: ByAction = [(Action::Jump, vec![Binding::Key(KeyCode::KeyJ)])].into();
+        let bindings = Bindings::from(file);
+        assert_eq!(bindings.bindings_for(Action::Jump).count(), 1);
+        assert!(bindings.bindings_for(Action::Pause).count() > 0);
     }
 }

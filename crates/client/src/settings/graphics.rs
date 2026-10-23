@@ -145,6 +145,31 @@ impl GraphicsSettings {
 pub const AUTO_THREADS: usize = 0;
 
 /// Every core but the render and server threads, at least one (two on a 4-core N100).
+/// Bounds of the range settings, shared by the options screen and file checks.
+pub const RENDER_DISTANCE: (u32, u32) = (2, 32);
+pub const VERTICAL_DISTANCE: (u32, u32) = (2, 16);
+pub const RENDER_SCALE: (u32, u32) = (50, 200);
+pub const FOV: (u32, u32) = (50, 110);
+pub const ANISOTROPY: [u32; 5] = [1, 2, 4, 8, 16];
+/// More threads than this is never useful, whatever the file says.
+const MAX_THREADS: usize = 64;
+
+impl GraphicsSettings {
+    /// Values from a hand-edited file brought back into their ranges.
+    pub fn sanitize(&mut self) {
+        let clamp = |value: &mut u32, (min, max): (u32, u32)| *value = (*value).clamp(min, max);
+        clamp(&mut self.render_distance, RENDER_DISTANCE);
+        clamp(&mut self.vertical_distance, VERTICAL_DISTANCE);
+        clamp(&mut self.render_scale, RENDER_SCALE);
+        clamp(&mut self.fov, FOV);
+        if !ANISOTROPY.contains(&self.anisotropy) {
+            self.anisotropy = 1;
+        }
+        self.worker_threads = self.worker_threads.min(MAX_THREADS);
+        self.generation_threads = self.generation_threads.min(MAX_THREADS);
+    }
+}
+
 pub fn default_worker_threads() -> usize {
     std::thread::available_parallelism().map_or(2, |n| n.get().saturating_sub(2).max(1))
 }

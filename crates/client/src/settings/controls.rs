@@ -41,7 +41,19 @@ const MOUSE_RADIANS: f32 = 0.0025;
 /// Radians per second at full stick deflection, at 100 %.
 const STICK_RADIANS: f32 = 3.0;
 
+/// Bounds of the range settings, shared by the options screen and file checks.
+pub const SENSITIVITY: (u32, u32) = (10, 300);
+pub const DEAD_ZONE: (u32, u32) = (0, 50);
+
 impl ControlSettings {
+    /// Values from a hand-edited file brought back into their ranges.
+    pub fn sanitize(&mut self) {
+        let clamp = |value: &mut u32, (min, max): (u32, u32)| *value = (*value).clamp(min, max);
+        clamp(&mut self.mouse_sensitivity, SENSITIVITY);
+        clamp(&mut self.stick_sensitivity, SENSITIVITY);
+        clamp(&mut self.dead_zone, DEAD_ZONE);
+    }
+
     pub fn mouse_radians(&self) -> f32 {
         MOUSE_RADIANS * self.mouse_sensitivity as f32 / 100.0
     }

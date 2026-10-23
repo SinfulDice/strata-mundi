@@ -40,6 +40,10 @@ impl Console<'_> {
             Some(spec) => Feedback::error("command-usage", &[("usage", spec.usage_key())]),
             None => Feedback::error("command-unknown", &[("name", name.to_owned())]),
         };
+        // Cheats: creative only (survival worlds will get a "commands allowed" option).
+        if name != "seed" && !self.game.is_creative() {
+            return Feedback::error("command-not-allowed", &[]).into();
+        }
         let ran = match name {
             "tp" => self.teleport(args),
             "give" => return self.give(args).unwrap_or_else(|| usage().into()),
@@ -61,7 +65,9 @@ impl Console<'_> {
             coordinate(y, feet.y)?,
             coordinate(z, feet.z)?,
         ];
-        self.game.teleport(target);
+        if !self.game.teleport(target) {
+            return Some(Feedback::error("command-not-allowed", &[]));
+        }
         let at = self.game.player_body()?.position;
         let args = [
             ("x", format!("{:.1}", at.x)),
@@ -86,7 +92,9 @@ impl Console<'_> {
             hotbar.slots.resize(slot + 1, None);
         }
         hotbar.slots[slot] = Some(item);
-        self.game.set_hotbar(hotbar);
+        if !self.game.set_hotbar(hotbar) {
+            return Some(Feedback::error("command-not-allowed", &[]).into());
+        }
         Some(Ran {
             feedback: Feedback::ok("command-give-done", &[("item", id.to_string())]),
             hotbar: Some(self.game.hotbar()),
@@ -98,6 +106,7 @@ impl Console<'_> {
         match args {
             ["creative"] => {
                 self.meta.mode = GameMode::Creative;
+                self.game.set_mode(GameMode::Creative);
                 Some(Feedback::ok("command-gamemode-done", &[]))
             }
             ["survival"] => Some(Feedback::error("command-gamemode-later", &[])),
@@ -112,7 +121,9 @@ impl Console<'_> {
             ["set", value] => {
                 *time = preset_time(value).or_else(|| value.parse().ok())? % DAY_TICKS
             }
-            ["add", value] => *time = (*time + value.parse::<u64>().ok()?) % DAY_TICKS,
+            ["add", value] => {
+                *time = (*time % DAY_TICKS + value.parse::<u64>().ok()? % DAY_TICKS) % DAY_TICKS
+            }
             _ => return None,
         }
         Some(Feedback::ok(

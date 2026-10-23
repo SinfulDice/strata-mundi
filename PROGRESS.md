@@ -38,6 +38,17 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 23/10/2026 | Maillage d'une section de surface | 0,27 ms | `meshing/mesh_section_terrain` |
 | 23/10/2026 | Maillage pire cas (damier) | 1,32 ms | `meshing/mesh_section_checkerboard` |
 | 23/10/2026 | Génération d'une colonne | 2,08 ms | `generation/generate_column` |
+| 23/10/2026 (jalon 8) | Maillage d'une section de surface | 0,18 ms | `meshing/mesh_section_terrain` |
+| 23/10/2026 (jalon 8) | Maillage pire cas (damier) | 1,06 ms | `meshing/mesh_section_checkerboard` |
+| 23/10/2026 (jalon 8) | Génération d'une colonne | 2,27 ms (+9 %, bruit de VM partagée, sous le seuil de 10 %) | `generation/generate_column` |
+
+Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
+
+| Date | Profil | Mesure | Valeur | Source |
+|---|---|---|---|---|
+| 23/10/2026 | DS | Pic de mémoire (RSS), vol de 2 min | 201 Mio (cible ≤ 2 Go) | `--bench-scene flyover --preset ds` |
+| 23/10/2026 | DS | Lancement → carte graphique prête | 0,2 s (cible < 5 s) | journal |
+| 23/10/2026 | DS | Chargement initial du monde (distance 6) | ≈ 4 s (cible < 10 s) | durée totale − préchauffage − mesure |
 
 ## Limitations connues
 

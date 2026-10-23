@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 const KEPT_LOG_LINES: usize = 60;
 const NEW_ISSUE: &str = "https://github.com/SinfulDice/strata-mundi/issues/new";
 /// Browsers and GitHub refuse very long addresses: the report is shortened to fit.
-const MAX_URL_BODY: usize = 6000;
+const MAX_URL: usize = 7500;
 const SEEN_FILE: &str = ".last-seen";
 
 /// The last log lines, kept in memory for the crash report.
@@ -118,16 +118,33 @@ pub fn mark_seen(report: &Path) {
 
 /// A new GitHub issue holding the report (shortened to fit in an address).
 pub fn issue_url(report: &str) -> String {
+    let report = without_home(report);
     let title = report.lines().next().unwrap_or("Crash");
-    let mut body: String = report.chars().take(MAX_URL_BODY).collect();
-    if body.len() < report.len() {
-        body.push_str("\n[…] (full report in the crash-reports folder)");
+    let mut kept = report.chars().count();
+    loop {
+        let mut body: String = report.chars().take(kept).collect();
+        if kept < report.chars().count() {
+            body.push_str("\n[…] (full report in the crash-reports folder)");
+        }
+        let url = format!(
+            "{NEW_ISSUE}?labels=crash&title={}&body={}",
+            percent_encode(title),
+            percent_encode(&format!("```\n{body}\n```"))
+        );
+        // The panic message and the top of the call stack come first and are kept.
+        if url.len() <= MAX_URL || kept == 0 {
+            return url;
+        }
+        kept = kept * 9 / 10;
     }
-    format!(
-        "{NEW_ISSUE}?labels=crash&title={}&body={}",
-        percent_encode(title),
-        percent_encode(&format!("```\n{body}\n```"))
-    )
+}
+
+/// The player's home folder (and so their user name) becomes `~`.
+fn without_home(report: &str) -> String {
+    match dirs::home_dir().and_then(|home| home.to_str().map(str::to_owned)) {
+        Some(home) if !home.is_empty() => report.replace(&home, "~"),
+        _ => report.to_owned(),
+    }
 }
 
 fn percent_encode(text: &str) -> String {
@@ -154,6 +171,8 @@ mod tests {
     fn urls_are_encoded_and_reports_marked_seen() {
         assert_eq!(percent_encode("a b/é"), "a%20b%2F%C3%A9");
         assert!(issue_url("Boom\nline").contains("title=Boom&body=%60%60%60"));
+        let long = format!("Boom\n{}", "frame / at src:1\n".repeat(2000));
+        assert!(issue_url(&long).len() <= MAX_URL);
         let dir = std::env::temp_dir().join(format!("strata-crash-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("crash-1.txt"), "x").unwrap();

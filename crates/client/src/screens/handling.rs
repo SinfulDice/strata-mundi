@@ -10,7 +10,6 @@ use crate::gameplay::Gameplay;
 use crate::input::{Action, Binding, InputDevice, InputState};
 use crate::ui::{Direction, Hit, HitKind, navigate};
 use strata_core::content::Content;
-use winit::keyboard::KeyCode;
 
 /// Result of one frame of menu input.
 pub struct Handled {
@@ -56,10 +55,10 @@ impl Screens {
             if let Some(game) = game.filter(|g| g.cinematic.is_some()) {
                 return skip_cinematic(input, game);
             }
-            let menu = if input.just_pressed(Action::Inventory) {
-                Menu::Inventory(Default::default())
-            } else if input.just_pressed(Action::Pause) {
+            let menu = if input.just_pressed(Action::Pause) {
                 Menu::Pause
+            } else if input.just_pressed(Action::Inventory) {
+                Menu::Inventory(Default::default())
             } else if input.just_pressed(Action::OpenConsole) {
                 Menu::Console(ConsoleState::new())
             } else {
@@ -159,8 +158,14 @@ impl Screens {
         if state.capturing.is_none() {
             return false;
         }
+        // Back (Escape, B) cancels; the pause input stays reserved so the menus can always
+        // be reached again, even with a gamepad only.
+        let reserved = |binding: Binding, action: Action| {
+            input.bindings().actions_for(binding).any(|a| a == action)
+        };
         match input.fresh_binding() {
-            Some(Binding::Key(KeyCode::Escape)) => state.capturing = None,
+            Some(binding) if reserved(binding, Action::MenuBack) => state.capturing = None,
+            Some(binding) if reserved(binding, Action::Pause) => {}
             Some(binding) => {
                 bind_captured(state, &mut self.settings, binding);
                 self.effects.push(Effect::SettingsChanged);

@@ -89,7 +89,8 @@ impl Cinematic {
         }
         let ordered = self.keyframes.windows(2).all(|w| w[0].time < w[1].time);
         let finite = self.keyframes.iter().all(|k| {
-            k.time.is_finite() && k.pos.0.is_finite() && k.pos.1.is_finite() && k.pos.2.is_finite()
+            [k.time, k.yaw, k.pitch].iter().all(|v| v.is_finite())
+                && [k.pos.0, k.pos.1, k.pos.2].iter().all(|v| v.is_finite())
         });
         if !ordered || !finite {
             return Err("keyframe times must increase and values be finite");

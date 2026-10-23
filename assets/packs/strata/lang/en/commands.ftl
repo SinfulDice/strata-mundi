@@ -26,3 +26,4 @@ command-cinematic-usage = /cinematic <id>
 command-cinematic-help = Plays a cinematic from the packs.
 ui-console-placeholder = Type a command…
 ui-console-help = <key:Complete>: complete
+command-not-allowed = This command needs creative mode.

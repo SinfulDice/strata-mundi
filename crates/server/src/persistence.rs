@@ -84,7 +84,7 @@ impl Persistence {
     /// Counts a played tick; `true` when an autosave is due.
     pub fn count_tick(&mut self) -> bool {
         self.meta.play_ticks += 1;
-        self.meta.day_time = (self.meta.day_time + 1) % DAY_TICKS;
+        self.meta.day_time = (self.meta.day_time % DAY_TICKS + 1) % DAY_TICKS;
         self.since_save += 1;
         self.autosave_ticks > 0 && self.since_save >= self.autosave_ticks
     }

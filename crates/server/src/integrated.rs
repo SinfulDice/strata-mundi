@@ -144,7 +144,9 @@ impl IntegratedServer {
             ClientMessage::MovementPreferences { auto_jump, step_up } => {
                 self.game.set_preferences(auto_jump, step_up);
             }
-            ClientMessage::Teleport { feet } => self.game.teleport(feet),
+            ClientMessage::Teleport { feet } => {
+                self.game.teleport(feet);
+            }
             ClientMessage::BreakBlock { pos } => {
                 let change = self.game.break_block(&mut self.loader, pos);
                 self.broadcast_change(change);
@@ -159,7 +161,9 @@ impl IntegratedServer {
                     .place_block(&mut self.loader, against, face, block);
                 self.broadcast_change(change);
             }
-            ClientMessage::Hotbar(hotbar) => self.game.set_hotbar(hotbar),
+            ClientMessage::Hotbar(hotbar) => {
+                self.game.set_hotbar(hotbar);
+            }
             ClientMessage::Pause(paused) => self.paused = paused,
             ClientMessage::Save { icon } => {
                 self.save(icon.as_deref());

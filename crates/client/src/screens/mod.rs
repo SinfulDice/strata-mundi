@@ -156,18 +156,12 @@ impl Screens {
         self.reset_focus();
     }
 
-    /// Interface files read again (resource reload); the font and atlas are redrawn.
-    pub fn replace_assets(
-        &mut self,
-        gpu: &Gpu,
-        color_format: wgpu::TextureFormat,
-        assets: UiAssets,
-        content: &Content,
-    ) {
+    /// Interface files read again (resource reload), with their atlas and pipeline.
+    pub fn replace_assets(&mut self, assets: UiAssets, atlas: UiAtlas, pipeline: UiPipeline) {
         self.assets = assets;
-        self.atlas = UiAtlas::build(content, self.assets.font.font(1));
+        self.atlas = atlas;
         self.atlas_font = (FontChoice::Pixel, 1);
-        self.pipeline = UiPipeline::new(gpu, color_format, &self.atlas.image);
+        self.pipeline = pipeline;
         self.labels_stale = true;
     }
 

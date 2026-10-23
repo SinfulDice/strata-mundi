@@ -17,10 +17,22 @@ impl Session {
         self.apply_graphics(&old);
         self.apply_controls(&old);
         self.launcher.configure(&self.applied);
-        if self.applied.game.resource_packs != old.game.resource_packs
-            && let Err(error) = self.reload_resources()
-        {
+        if self.applied.game.resource_packs != old.game.resource_packs {
+            self.apply_resource_packs(&old);
+        }
+    }
+
+    /// Refused or failed: the previous packs come back, in use and in the file.
+    fn apply_resource_packs(&mut self, old: &Settings) {
+        let applied = self.reload_resources().unwrap_or_else(|error| {
             tracing::error!(%error, "resource packs not applied");
+            false
+        });
+        if !applied {
+            let previous = old.game.resource_packs.clone();
+            self.applied.game.resource_packs.clone_from(&previous);
+            self.screens
+                .change_settings(|settings| settings.game.resource_packs = previous);
         }
     }
 

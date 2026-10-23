@@ -41,8 +41,10 @@ impl std::fmt::Debug for TrueTypeSource {
 impl TrueTypeSource {
     /// Fails on an unreadable file or a size the atlas cannot hold even at density 1.
     pub fn new(bytes: Vec<u8>, def: TrueTypeDef) -> Result<Self, String> {
-        if !(4.0..=64.0).contains(&def.size) || def.line_height == 0 {
-            return Err("size must be between 4 and 64 and line_height above 0".to_owned());
+        if !(4.0..=64.0).contains(&def.size) || !(8..=64).contains(&def.line_height) {
+            return Err(
+                "size must be between 4 and 64 and line_height between 8 and 64".to_owned(),
+            );
         }
         let font = fontdue::Font::from_bytes(bytes, fontdue::FontSettings::default())
             .map_err(|e| format!("unreadable TrueType file: {e}"))?;
@@ -68,6 +70,9 @@ fn build(font: &fontdue::Font, def: &TrueTypeDef, density: u32) -> Result<Font, 
         .horizontal_line_metrics(size)
         .map_or(size, |line| line.ascent)
         .round() as i32;
+    if cell_h > MAX_FONT_ATLAS {
+        return Err(format!("lines too tall for a {MAX_FONT_ATLAS} pixel atlas"));
+    }
     let mut atlas = RgbaImage::new(MAX_FONT_ATLAS, MAX_FONT_ATLAS, Rgba([0; 4]));
     let fallback = draw_fallback(&mut atlas, density, cell_h);
     let mut pen = (fallback.width + GAP, 0);
@@ -76,6 +81,11 @@ fn build(font: &fontdue::Font, def: &TrueTypeDef, density: u32) -> Result<Font, 
         let (metrics, coverage) = font.rasterize(ch, size);
         let advance = (metrics.advance_width.round() as u32).max(1);
         let cell_w = advance.max(metrics.xmin.max(0) as u32 + metrics.width as u32);
+        if cell_w > MAX_FONT_ATLAS {
+            return Err(format!(
+                "glyph `{ch}` wider than the {MAX_FONT_ATLAS} pixel atlas"
+            ));
+        }
         if pen.0 + cell_w > MAX_FONT_ATLAS {
             pen = (0, pen.1 + cell_h + GAP);
         }
@@ -116,7 +126,7 @@ fn build(font: &fontdue::Font, def: &TrueTypeDef, density: u32) -> Result<Font, 
 /// An outlined box at the atlas origin, for characters the font lacks.
 fn draw_fallback(atlas: &mut RgbaImage, density: u32, cell_h: u32) -> Glyph {
     let (w, h) = (3 * density, (7 * density).min(cell_h));
-    let top = cell_h - h - density;
+    let top = cell_h.saturating_sub(h + density);
     for y in 0..h {
         for x in 0..w {
             let edge = x < density || x >= w - density || y < density || y >= h - density;

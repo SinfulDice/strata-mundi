@@ -34,7 +34,12 @@ impl ConsoleLog {
         let args: Vec<(&str, String)> = feedback
             .args
             .iter()
-            .map(|(name, value)| (name.as_str(), translated_arg(value, content, language)))
+            .map(|(name, value)| {
+                (
+                    name.as_str(),
+                    translated_arg(name, value, content, language),
+                )
+            })
             .collect();
         let text = content
             .translations
@@ -57,9 +62,9 @@ impl ConsoleLog {
     }
 }
 
-/// `command-tp-usage` given as an argument stands for its translation.
-fn translated_arg(value: &str, content: &Content, language: &str) -> String {
-    if value.starts_with("command-") {
+/// The `usage` argument is a translation key (`command-tp-usage`), shown translated.
+fn translated_arg(name: &str, value: &str, content: &Content, language: &str) -> String {
+    if name == "usage" {
         content.translations.text(language, value)
     } else {
         value.to_owned()
@@ -210,10 +215,10 @@ impl Screens {
             self.effects.push(Effect::Pop);
             return;
         }
-        state.line.push_str(input.typed());
         if input.just_pressed(Action::Erase) {
             state.line.pop();
         }
+        state.line.push_str(input.typed());
         if input.just_pressed(Action::Complete) {
             state.line = complete(&state.line, content);
         }
@@ -304,6 +309,7 @@ pub fn translation_keys() -> Vec<String> {
         "command-usage",
         "command-unknown",
         "command-needs-world",
+        "command-not-allowed",
         "command-cinematic-unknown",
         "command-tp-done",
         "command-give-done",

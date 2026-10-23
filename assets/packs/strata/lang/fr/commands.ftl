@@ -26,3 +26,4 @@ command-cinematic-usage = /cinematic <id>
 command-cinematic-help = Joue une cinématique des packs.
 ui-console-placeholder = Tapez une commande…
 ui-console-help = <key:Complete> : compléter
+command-not-allowed = Commande réservée au mode créatif.
