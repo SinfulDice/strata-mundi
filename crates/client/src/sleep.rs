@@ -4,12 +4,12 @@
 //! Without logind (other systems, containers) nothing happens.
 
 use std::sync::mpsc::{Receiver, Sender, channel};
-use std::time::Duration;
-
-/// Longest wait for the save before letting the system sleep anyway.
-const SAVE_TIMEOUT: Duration = Duration::from_secs(4);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(
+    not(target_os = "linux"),
+    expect(dead_code, reason = "only logind (Linux) announces sleep")
+)]
 pub enum SleepEvent {
     /// About to sleep: pause and save, then call `SleepWatcher::ready`.
     Suspending,
@@ -48,8 +48,12 @@ impl SleepWatcher {
 
 #[cfg(target_os = "linux")]
 fn watch(events: &Sender<SleepEvent>, ready: &Receiver<()>) -> zbus::Result<()> {
+    use std::time::Duration;
     use zbus::blocking::{Connection, Proxy};
     use zbus::zvariant::OwnedFd;
+
+    /// Longest wait for the save before letting the system sleep anyway.
+    const SAVE_TIMEOUT: Duration = Duration::from_secs(4);
 
     let connection = Connection::system()?;
     let manager = Proxy::new(
