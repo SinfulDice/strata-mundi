@@ -80,7 +80,25 @@ mod tests {
     /// Makes a copy look an hour old.
     fn age(dir: &Path) {
         let hour_ago = std::time::SystemTime::now() - Duration::from_secs(3600);
-        fs::File::open(dir).unwrap().set_modified(hour_ago).unwrap();
+        open_dir(dir).set_modified(hour_ago).unwrap();
+    }
+
+    #[cfg(not(windows))]
+    fn open_dir(dir: &Path) -> fs::File {
+        fs::File::open(dir).unwrap()
+    }
+
+    /// Windows opens a folder only with "backup semantics", and needs write access to
+    /// change its date.
+    #[cfg(windows)]
+    fn open_dir(dir: &Path) -> fs::File {
+        use std::os::windows::fs::OpenOptionsExt;
+        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+        fs::OpenOptions::new()
+            .write(true)
+            .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+            .open(dir)
+            .unwrap()
     }
 
     #[test]
