@@ -1,7 +1,8 @@
 //! What the menus can do with worlds: list, create, open (after a backup), delete, and
 //! start the integrated server for one.
 
-use crate::offline;
+use crate::updates::UpdateCheck;
+use crate::{crash, offline};
 use anyhow::Context;
 use glam::DVec3;
 use std::path::PathBuf;
@@ -30,6 +31,9 @@ pub struct GameLauncher {
     pub autosave_ticks: u64,
     pub generation_threads: usize,
     pub view_distance: u32,
+    pub crash_reports: PathBuf,
+    /// Running or finished; `None` when disabled.
+    pub updates: Option<UpdateCheck>,
 }
 
 impl GameLauncher {
@@ -116,6 +120,29 @@ impl Launcher for GameLauncher {
         self.backups_kept = game.backups_kept as usize;
         self.generation_threads = settings.graphics.world_threads();
         self.view_distance = settings.graphics.render_distance;
+    }
+
+    fn newer_version(&self) -> Option<String> {
+        self.updates.as_ref()?.newer_version()
+    }
+
+    fn unreported_crash(&self) -> bool {
+        crash::unreported(&self.crash_reports).is_some()
+    }
+
+    fn settle_crash(&mut self, report: bool) {
+        let Some(path) = crash::unreported(&self.crash_reports) else {
+            return;
+        };
+        if report {
+            let opened = std::fs::read_to_string(&path)
+                .map(|text| crash::issue_url(&text))
+                .and_then(open::that);
+            if let Err(error) = opened {
+                tracing::warn!(%error, "could not open the crash report page");
+            }
+        }
+        crash::mark_seen(&path);
     }
 
     fn panorama(&self) -> Panorama {

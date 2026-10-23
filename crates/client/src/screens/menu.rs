@@ -4,7 +4,7 @@
 use super::editor::EditorModel;
 use super::inventory::{InventoryModel, InventoryState};
 use super::options::{OptionsModel, OptionsState};
-use super::pause::{NoticeModel, PauseModel};
+use super::pause::{CrashModel, NoticeModel, PauseModel};
 use super::title::TitleModel;
 use super::worlds::{ConfirmModel, CreateForm, CreateModel, WorldsModel};
 use crate::hotbar::Hotbar;
@@ -34,6 +34,8 @@ pub enum Menu {
     Notice {
         key: &'static str,
     },
+    /// The game crashed last time: report it or not.
+    Crash,
 }
 
 impl Menu {
@@ -48,6 +50,7 @@ impl Menu {
             Self::Inventory(_) => &defs.inventory,
             Self::HudEditor { .. } => &defs.hud_editor,
             Self::Notice { .. } => &defs.notice,
+            Self::Crash => &defs.crash,
         }
     }
 
@@ -77,6 +80,8 @@ pub enum UiAction {
     Delete(String),
     SaveAndQuit,
     Quit,
+    /// Open a pre-filled report of the last crash (true) or forget it (false).
+    SettleCrash(bool),
 }
 
 /// What every model may read or change besides its own state.
@@ -91,6 +96,8 @@ pub struct Shared<'a> {
     pub focus: Option<(String, usize)>,
     /// Keyboard and gamepad labels of an action's bindings.
     pub key_labels: &'a dyn Fn(Action) -> (String, String),
+    /// A newer version of the game, for the title screen.
+    pub newer_version: Option<&'a str>,
     pub effects: &'a mut Vec<Effect>,
 }
 
@@ -131,6 +138,7 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
         }),
         Menu::HudEditor { selected } => Box::new(EditorModel { selected, shared }),
         Menu::Notice { key } => Box::new(NoticeModel { key, shared }),
+        Menu::Crash => Box::new(CrashModel { shared }),
         Menu::Inventory(state) => match shared.hotbar {
             Some(hotbar) => Box::new(InventoryModel::new(
                 state,

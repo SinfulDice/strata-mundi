@@ -5,7 +5,7 @@ mod gpu_timer;
 mod report;
 mod scene;
 mod stats;
-mod system;
+pub(crate) mod system;
 
 pub use scene::{BenchScene, SceneError};
 

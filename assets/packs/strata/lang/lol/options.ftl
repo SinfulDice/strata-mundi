@@ -110,3 +110,6 @@ action-hotbar-6 = BOX 6
 action-hotbar-7 = BOX 7
 action-hotbar-8 = BOX 8
 action-hotbar-9 = BOX 9
+action-render-distance-down = SEE LESS FAR
+action-render-distance-up = SEE MOAR FAR
+action-toggle-debug = NERD STUFFS

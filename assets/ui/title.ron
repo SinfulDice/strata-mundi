@@ -2,6 +2,7 @@
 Screen(
     root: [
         Label(id: "logo", anchor: Top, at: (0, 28), text: "game-title", size: 3),
+        Label(id: "news", anchor: Top, at: (0, 64), text: "@news"),
         Button(id: "play", anchor: Center, at: (0, 4), size: (120, 18), text: "ui-title-play"),
         Button(id: "options", anchor: Center, at: (0, 26), size: (120, 18), text: "ui-title-options"),
         Button(id: "quit", anchor: Center, at: (0, 48), size: (120, 18), text: "ui-title-quit"),

@@ -168,3 +168,16 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 - **Choix** : `zbus` 5 (D-Bus en Rust pur, très maintenu, API bloquante), Linux uniquement (`cfg(target_os = "linux")`), sur un fil dédié : verrou de retardement logind + signal `PrepareForSleep`. Sans logind, simple message dans le journal.
 - **Alternatives écartées** : lancer `dbus-monitor`/`gdbus` (fragile, dépend d'outils absents d'un Linux minimal), `dbus` (lie `libdbus` en C).
+
+## D029 — Fichier de réglages unique (v0.1, jalon 8)
+
+- **Choix** : `config/settings.toml` remplace `interface.toml` ; quatre sections (`graphics`, `interface`, `controls`, `game`) et un `preset` (absent = « personnalisé »). Toute valeur manquante ou invalide reprend sa valeur par défaut, le reste du fichier est gardé. Les touches sont écrites par action (`MoveForward = [{ Key = "KeyW" }, …]`) pour rester modifiables à la main.
+- **Application à chaud** : l'écran d'options modifie une copie ; chaque image, la session la compare à la copie en vigueur et ne refait que ce qui a changé (re-maillage, échantillonneur, VSync…).
+- **Passe finale** (`render/post.rs`) uniquement si l'échelle de rendu ≠ 100 % ou si un filtre daltonien est actif : coût nul sinon. Filtres : simulation (Machado 2009) puis correction « daltonize ».
+- **Option `--preset`** : appliquée au lancement sans être écrite, sauf si le joueur modifie ensuite un réglage.
+
+## D030 — Mises à jour et plantages : `ureq` et `open` (v0.1, jalon 8)
+
+- **Vérification de mise à jour** : `ureq` 3 (client HTTP bloquant, petit, maintenu, rustls) sur un fil à part, une requête à l'API GitHub des releases, délai 8 s, certificats du système (`platform-verifier`). Désactivable ; rien n'est envoyé hormis la requête elle-même.
+- **Rapports de plantage** : crochet de panique qui écrit `crash-reports/crash-<date>.txt` (version, système, message, pile d'appels, 60 dernières lignes du journal gardées en mémoire). Au lancement suivant, l'écran titre propose « Signaler ce plantage » : `open` 5 ouvre le navigateur sur une issue GitHub pré-remplie (adresse limitée à ~6 000 caractères). Jamais d'envoi automatique.
+- **Alternatives écartées** : `reqwest` (tire `tokio`), `webbrowser` (équivalent, moins utilisé).

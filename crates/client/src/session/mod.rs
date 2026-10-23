@@ -1,9 +1,11 @@
 mod apply;
+mod overlay;
 mod transitions;
 
 use crate::app::{ClientConfig, ClientError};
 use crate::bench::BenchRun;
 use crate::camera::Camera;
+use crate::debug_overlay::DebugOverlay;
 use crate::input::{Action, Binding, Gamepads, InputState};
 use crate::launcher::Launcher;
 use crate::mesher::BlockTable;
@@ -53,6 +55,7 @@ pub struct Session {
     sleep: Option<SleepWatcher>,
     /// The system is going to sleep (lid closed): the world stays paused.
     suspended: bool,
+    debug: DebugOverlay,
 }
 
 impl Session {
@@ -108,10 +111,16 @@ impl Session {
             last_frame: Instant::now(),
             sleep: SleepWatcher::start(),
             suspended: false,
+            debug: DebugOverlay::default(),
         };
         match config.start {
             Some(running) => session.enter_world(running)?,
-            None => session.enter_title()?,
+            None => {
+                session.enter_title()?;
+                if session.launcher.unreported_crash() {
+                    session.screens.show_crash();
+                }
+            }
         }
         Ok(session)
     }
@@ -178,6 +187,7 @@ impl Session {
         let start = Instant::now();
         let frame_seconds = (start - self.last_frame).as_secs_f32();
         self.last_frame = start;
+        self.debug.record_frame(frame_seconds);
         self.update(frame_seconds)?;
         let cpu_seconds = self.render();
         if let (Some(bench), Stage::Playing(world)) = (&mut self.bench, &self.stage) {
@@ -228,6 +238,9 @@ impl Session {
             Stage::Empty => return,
             Stage::Title(title) => {
                 title.update(frame_seconds);
+                if self.screens.newer_version.is_none() {
+                    self.screens.newer_version = self.launcher.newer_version();
+                }
                 (&mut title.view, title.camera.position)
             }
             Stage::Playing(world) => {
@@ -260,6 +273,9 @@ impl Session {
     }
 
     fn handle_system_actions(&mut self) {
+        if self.input.just_pressed(Action::ToggleDebug) {
+            self.debug.toggle();
+        }
         if self.input.just_pressed(Action::RenderDistanceDown) {
             self.set_render_distance(self.applied.graphics.render_distance.saturating_sub(1));
         }
@@ -339,6 +355,7 @@ impl Session {
     }
 
     fn draw_interface(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
+        let debug = self.debug_lines();
         let game = match &mut self.stage {
             Stage::Playing(world) => Some(&mut world.game),
             _ => None,
@@ -347,6 +364,7 @@ impl Session {
             encoder,
             view,
             size: self.surface.size(),
+            debug: &debug,
         };
         self.screens.draw(&self.gpu, frame, &self.content, game);
     }

@@ -36,6 +36,8 @@ serde = { version = "1", features = ["derive"] }
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 thiserror = "2"
 toml = "1"
+ureq = { version = "3.5", features = ["json", "platform-verifier"] }
+open = "5"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-tracy = "0.12"

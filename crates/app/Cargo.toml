@@ -25,6 +25,9 @@ dirs.workspace = true
 clap.workspace = true
 glam.workspace = true
 tracing.workspace = true
+serde.workspace = true
+ureq.workspace = true
+open.workspace = true
 tracing-subscriber.workspace = true
 tracing-tracy = { workspace = true, optional = true }
 

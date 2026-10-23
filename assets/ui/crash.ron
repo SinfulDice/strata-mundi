@@ -1,0 +1,18 @@
+// Offered at launch after a crash: report it (pre-filled GitHub issue) or not.
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (280, 72),
+            children: [
+                Label(id: "message", anchor: Top, at: (0, 8), text: "ui-crash-message"),
+                Label(id: "detail", anchor: Top, at: (0, 22), text: "ui-crash-detail", dim: true),
+                Button(id: "report", anchor: BottomLeft, at: (8, -8), size: (128, 18), text: "ui-crash-report"),
+                Button(id: "ignore", anchor: BottomRight, at: (-8, -8), size: (128, 18), text: "ui-crash-ignore"),
+            ],
+        ),
+    ],
+)

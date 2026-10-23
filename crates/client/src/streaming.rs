@@ -96,6 +96,10 @@ impl WorldView {
             .update(&self.world, gpu, renderer, camera, vertical_distance);
     }
 
+    pub fn pending_meshes(&self) -> usize {
+        self.meshing.pending()
+    }
+
     /// Nothing left to mesh among at least `columns` loaded columns.
     pub fn is_settled(&self, columns: usize) -> bool {
         self.world.column_count() >= columns && self.meshing.pending() == 0

@@ -36,6 +36,8 @@ pub struct UiFrame<'a> {
     pub encoder: &'a mut wgpu::CommandEncoder,
     pub view: &'a wgpu::TextureView,
     pub size: (u32, u32),
+    /// F3 overlay lines, drawn over the HUD.
+    pub debug: &'a [String],
 }
 
 /// Largest interface scale the automatic setting may pick.
@@ -71,6 +73,8 @@ pub struct Screens {
     labels_stale: bool,
     /// Last device used: prompts show its keys or buttons.
     device: InputDevice,
+    /// Announced on the title screen.
+    pub newer_version: Option<String>,
 }
 
 impl Screens {
@@ -108,6 +112,7 @@ impl Screens {
             key_labels: Vec::new(),
             labels_stale: true,
             device: InputDevice::KeyboardMouse,
+            newer_version: None,
         }
     }
 
@@ -139,6 +144,11 @@ impl Screens {
             selected,
             scroll: 0,
         });
+        self.reset_focus();
+    }
+
+    pub fn show_crash(&mut self) {
+        self.stack.push(Menu::Crash);
         self.reset_focus();
     }
 
@@ -218,6 +228,7 @@ impl Screens {
             hotbar: game.map(|g| &mut g.hotbar),
             focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
             key_labels: &key_labels,
+            newer_version: self.newer_version.as_deref(),
             effects: &mut self.effects,
         };
         let mut model = menu::model(menu, shared);
@@ -253,6 +264,7 @@ impl Screens {
             encoder,
             view: target,
             size,
+            debug,
         } = frame;
         let fitting = auto_scale(size.0, size.1, MAX_AUTO_SCALE);
         self.scale = match self.settings.interface.scale {
@@ -302,6 +314,7 @@ impl Screens {
             let def = &self.assets.screens.hud;
             hits = draw_screen(def, &mut painter, &hud, &hud_ctx, screen, focus);
         }
+        crate::debug_overlay::paint(debug, &mut painter, &self.assets.theme);
         if let Some(menu) = self.stack.last_mut() {
             let shared = Shared {
                 content,
@@ -311,6 +324,7 @@ impl Screens {
                 hotbar: game.map(|g| &mut g.hotbar),
                 focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
                 key_labels: &key_labels,
+                newer_version: self.newer_version.as_deref(),
                 effects: &mut Vec::new(),
             };
             let def = menu.def(&self.assets.screens);
@@ -429,6 +443,7 @@ mod tests {
         keys.extend(super::CODE_KEYS.iter().map(|k| (*k).to_owned()));
         keys.extend(key_translation_keys());
         keys.extend(super::options::translation_keys());
+        keys.extend(crate::debug_overlay::translation_keys());
         let missing = content.translations.missing(&keys);
         assert!(missing.is_empty(), "missing translations: {missing:#?}");
     }

@@ -8,12 +8,21 @@ pub struct TitleModel<'a> {
 
 impl ScreenModel for TitleModel<'_> {
     fn text(&self, id: &str) -> Option<String> {
-        (id == "version").then(|| {
-            self.shared.tr_with(
+        match id {
+            "version" => Some(self.shared.tr_with(
                 "ui-version",
                 &[("version", env!("CARGO_PKG_VERSION").into())],
-            )
-        })
+            )),
+            "news" => Some(
+                self.shared
+                    .newer_version
+                    .map_or_else(String::new, |version| {
+                        self.shared
+                            .tr_with("ui-update-available", &[("version", version.to_owned())])
+                    }),
+            ),
+            _ => None,
+        }
     }
 
     fn activate(&mut self, id: &str, _: usize) {

@@ -131,6 +131,8 @@ impl Default for Bindings {
                 (Key(KeyCode::Digit9), Hotbar9),
                 (Key(KeyCode::F7), RenderDistanceDown),
                 (Key(KeyCode::F8), RenderDistanceUp),
+                (Key(KeyCode::F3), ToggleDebug),
+                (Pad(PadButton::Select), ToggleDebug),
                 (Pad(PadButton::DPadUp), MoveForward),
                 (Pad(PadButton::DPadDown), MoveBackward),
                 (Pad(PadButton::DPadLeft), MoveLeft),

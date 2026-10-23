@@ -110,3 +110,6 @@ action-hotbar-6 = Slot 6
 action-hotbar-7 = Slot 7
 action-hotbar-8 = Slot 8
 action-hotbar-9 = Slot 9
+action-render-distance-down = See less far
+action-render-distance-up = See farther
+action-toggle-debug = Debug info

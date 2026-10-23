@@ -98,7 +98,7 @@ const TABS: [&str; 5] = [
 const KEYS_TAB: usize = 3;
 
 /// Actions the player can rebind (menu navigation keeps fixed keys so menus always work).
-pub const REBINDABLE: [Action; 22] = [
+pub const REBINDABLE: [Action; 25] = [
     Action::MoveForward,
     Action::MoveBackward,
     Action::MoveLeft,
@@ -121,6 +121,9 @@ pub const REBINDABLE: [Action; 22] = [
     Action::Hotbar7,
     Action::Hotbar8,
     Action::Hotbar9,
+    Action::RenderDistanceDown,
+    Action::RenderDistanceUp,
+    Action::ToggleDebug,
 ];
 
 const FPS_LIMITS: [u32; 6] = [0, 30, 60, 120, 144, 240];

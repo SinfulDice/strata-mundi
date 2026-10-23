@@ -1,0 +1,13 @@
+debug-title = Strata Mundi { $version }
+debug-fps = { $fps } fps ({ $ms } ms)
+debug-position = XYZ: { $x } / { $y } / { $z }
+debug-section = Section: { $x } { $y } { $z }
+debug-facing = Facing: { $direction } ({ $yaw }° / { $pitch }°)
+debug-world = Columns: { $columns } | meshes waiting: { $pending } | distance: { $distance }
+debug-target = Targeted block: { $block } at { $x } { $y } { $z }
+debug-memory = Memory: { $megabytes } MB
+debug-gpu = Graphics card: { $name } ({ $driver })
+debug-north = north
+debug-east = east
+debug-south = south
+debug-west = west

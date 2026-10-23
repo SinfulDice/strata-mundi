@@ -2,10 +2,12 @@
 
 mod cli;
 mod content;
+mod crash;
 mod launcher;
 mod logging;
 mod offline;
 mod paths;
+mod updates;
 
 use clap::Parser;
 use glam::DVec3;
@@ -25,7 +27,9 @@ use strata_worldgen::{Generator, Seed};
 
 fn main() -> anyhow::Result<()> {
     let args = cli::Args::parse();
-    logging::init()?;
+    let data = paths::data_dir(args.data_dir.clone());
+    let crash_reports = data.join("crash-reports");
+    crash::install(crash_reports.clone(), logging::init()?);
     tracing::info!(version = env!("CARGO_PKG_VERSION"), "starting Strata Mundi");
     let dimension = DimensionId(args.dimension.clone());
     let loaded = content::load(&args, &dimension)?;
@@ -52,11 +56,11 @@ fn main() -> anyhow::Result<()> {
         .as_deref()
         .map(|name| load_bench(&loaded.assets, name, tool_preset, args.report_dir.clone()))
         .transpose()?;
-    let data = paths::data_dir(args.data_dir.clone());
     tracing::info!(path = %data.display(), "data folder");
     let settings_path = data.join("config/settings.toml");
     let settings = settings_for(&args, &settings_path, bench.is_some());
     let content = Arc::new(loaded.content);
+    let direct = bench.is_some() || args.seed.is_some();
     let mut launcher = GameLauncher {
         content: Arc::clone(&content),
         worldgen: Arc::clone(&loaded.worldgen),
@@ -67,9 +71,10 @@ fn main() -> anyhow::Result<()> {
         autosave_ticks: 0,
         generation_threads: 1,
         view_distance: 2,
+        crash_reports,
+        updates: (settings.game.check_updates && !direct).then(updates::UpdateCheck::start),
     };
     launcher.configure(&settings);
-    let direct = bench.is_some() || args.seed.is_some();
     let start = direct.then(|| launcher.temporary(seed)).transpose()?;
     Ok(run(ClientConfig {
         content,

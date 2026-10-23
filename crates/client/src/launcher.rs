@@ -46,4 +46,10 @@ pub trait Launcher {
     fn panorama(&self) -> Panorama;
     /// Settings changed: the next worlds start with them (threads, autosave, backups).
     fn configure(&mut self, settings: &Settings);
+    /// A newer version, once the background check (if enabled) has found one.
+    fn newer_version(&self) -> Option<String>;
+    /// The game crashed last time and the player has not decided about the report yet.
+    fn unreported_crash(&self) -> bool;
+    /// Opens a pre-filled report of that crash in the browser (`report`), or forgets it.
+    fn settle_crash(&mut self, report: bool);
 }

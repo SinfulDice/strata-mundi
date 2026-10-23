@@ -1,4 +1,4 @@
-//! Pause menu, interface options and simple notices.
+//! Pause menu and simple dialogs.
 
 use super::menu::{Effect, Menu, Shared, UiAction};
 use crate::ui::ScreenModel;
@@ -34,5 +34,22 @@ impl ScreenModel for NoticeModel<'_> {
         if id == "ok" {
             self.shared.effects.push(Effect::Pop);
         }
+    }
+}
+
+pub struct CrashModel<'a> {
+    pub shared: Shared<'a>,
+}
+
+impl ScreenModel for CrashModel<'_> {
+    fn activate(&mut self, id: &str, _: usize) {
+        let report = match id {
+            "report" => true,
+            "ignore" => false,
+            _ => return,
+        };
+        self.shared
+            .effects
+            .extend([Effect::Action(UiAction::SettleCrash(report)), Effect::Pop]);
     }
 }

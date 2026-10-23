@@ -108,6 +108,10 @@ impl Session {
                 self.quit = true;
                 return Ok(());
             }
+            UiAction::SettleCrash(report) => {
+                self.launcher.settle_crash(report);
+                return Ok(());
+            }
         };
         match started {
             Ok(running) => self.enter_world(running),

@@ -110,3 +110,6 @@ action-hotbar-6 = Case 6
 action-hotbar-7 = Case 7
 action-hotbar-8 = Case 8
 action-hotbar-9 = Case 9
+action-render-distance-down = Voir moins loin
+action-render-distance-up = Voir plus loin
+action-toggle-debug = Infos de débogage

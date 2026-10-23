@@ -36,6 +36,7 @@ impl MachineInfo {
 pub struct MemorySampler {
     system: System,
     pid: Option<Pid>,
+    pub current_bytes: u64,
     pub peak_bytes: u64,
 }
 
@@ -44,6 +45,7 @@ impl MemorySampler {
         Self {
             system: System::new(),
             pid: sysinfo::get_current_pid().ok(),
+            current_bytes: 0,
             peak_bytes: 0,
         }
     }
@@ -58,7 +60,8 @@ impl MemorySampler {
             ProcessRefreshKind::nothing().with_memory(),
         );
         if let Some(process) = self.system.process(pid) {
-            self.peak_bytes = self.peak_bytes.max(process.memory());
+            self.current_bytes = process.memory();
+            self.peak_bytes = self.peak_bytes.max(self.current_bytes);
         }
     }
 }

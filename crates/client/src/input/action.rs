@@ -28,6 +28,7 @@ pub enum Action {
     Pause,
     RenderDistanceDown,
     RenderDistanceUp,
+    ToggleDebug,
     MenuUp,
     MenuDown,
     MenuLeft,
@@ -38,7 +39,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub const COUNT: usize = 32;
+    pub const COUNT: usize = 33;
     pub const ALL: [Action; Self::COUNT] = [
         Self::MoveForward,
         Self::MoveBackward,
@@ -65,6 +66,7 @@ impl Action {
         Self::Pause,
         Self::RenderDistanceDown,
         Self::RenderDistanceUp,
+        Self::ToggleDebug,
         Self::MenuUp,
         Self::MenuDown,
         Self::MenuLeft,
@@ -101,6 +103,7 @@ impl Action {
         "Pause",
         "RenderDistanceDown",
         "RenderDistanceUp",
+        "ToggleDebug",
         "MenuUp",
         "MenuDown",
         "MenuLeft",
