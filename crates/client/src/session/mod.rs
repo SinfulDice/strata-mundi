@@ -1,5 +1,6 @@
 mod apply;
 mod overlay;
+mod reload;
 mod transitions;
 
 use crate::app::{ClientConfig, ClientError};
@@ -225,7 +226,7 @@ impl Session {
         let playing = matches!(self.stage, Stage::Playing(_));
         self.set_cursor_captured(playing && !menu_open && self.focused);
         if !handled.used {
-            self.handle_system_actions();
+            self.handle_system_actions()?;
         }
         self.advance_stage(frame_seconds, menu_open);
         self.input.end_frame();
@@ -272,7 +273,7 @@ impl Session {
         );
     }
 
-    fn handle_system_actions(&mut self) {
+    fn handle_system_actions(&mut self) -> Result<(), ClientError> {
         if self.input.just_pressed(Action::ToggleDebug) {
             self.debug.toggle();
         }
@@ -282,6 +283,10 @@ impl Session {
         if self.input.just_pressed(Action::RenderDistanceUp) {
             self.set_render_distance(self.applied.graphics.render_distance + 1);
         }
+        if self.input.just_pressed(Action::ReloadResources) {
+            self.reload_resources()?;
+        }
+        Ok(())
     }
 
     /// Changes how far the world is loaded, while playing.

@@ -17,7 +17,7 @@ impl OutlinePipeline {
         color_format: wgpu::TextureFormat,
         camera_layout: &wgpu::BindGroupLayout,
     ) -> Self {
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shaders/outline.wgsl"));
+        let shader = super::shaders::module(device, "outline.wgsl");
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("outline layout"),
             bind_group_layouts: &[Some(camera_layout)],

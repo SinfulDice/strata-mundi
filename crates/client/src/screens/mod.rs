@@ -151,6 +151,21 @@ impl Screens {
         self.reset_focus();
     }
 
+    /// Interface files read again (resource reload); the font and atlas are redrawn.
+    pub fn replace_assets(
+        &mut self,
+        gpu: &Gpu,
+        color_format: wgpu::TextureFormat,
+        assets: UiAssets,
+        content: &Content,
+    ) {
+        self.assets = assets;
+        self.atlas = UiAtlas::build(content, self.assets.font.font(1));
+        self.atlas_font = (FontChoice::Pixel, 1);
+        self.pipeline = UiPipeline::new(gpu, color_format, &self.atlas.image);
+        self.labels_stale = true;
+    }
+
     /// World captures in the atlas are lost: lists upload them again when opened.
     fn refresh_font(&mut self, gpu: &Gpu, content: &Content) {
         let choice = self.settings.interface.font;
@@ -419,6 +434,9 @@ const CODE_KEYS: &[&str] = &[
     "ui-error-incompatible",
     "ui-error-unavailable",
     "ui-error-broken",
+    "ui-reload-failed",
+    "ui-reload-blocks-changed",
+    "ui-update-available",
     "ui-version",
     "ui-scale-times",
     "ui-world-detail",

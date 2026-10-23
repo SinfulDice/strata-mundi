@@ -132,6 +132,7 @@ impl Default for Bindings {
                 (Key(KeyCode::F7), RenderDistanceDown),
                 (Key(KeyCode::F8), RenderDistanceUp),
                 (Key(KeyCode::F3), ToggleDebug),
+                (Key(KeyCode::F5), ReloadResources),
                 (Pad(PadButton::Select), ToggleDebug),
                 (Pad(PadButton::DPadUp), MoveForward),
                 (Pad(PadButton::DPadDown), MoveBackward),

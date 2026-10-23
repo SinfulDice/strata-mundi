@@ -60,7 +60,7 @@ impl BlockPipeline {
             bind_group_layouts: &[Some(&camera_layout), Some(&texture_layout)],
             immediate_size: SECTION_OFFSET_SIZE,
         });
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shaders/block.wgsl"));
+        let shader = super::shaders::module(device, "block.wgsl");
         Self {
             cutout: create_pipeline(device, &layout, &shader, color_format, BlockPass::Cutout),
             translucent: create_pipeline(

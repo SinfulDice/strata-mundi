@@ -2,9 +2,11 @@
 //! to start a server for one. The client never touches the files itself.
 
 use crate::settings::Settings;
+use crate::ui::UiAssets;
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::thread::JoinHandle;
+use strata_core::content::Content;
 use strata_protocol::{ClientConnection, NewWorld, WorldSummary};
 
 /// A world being played: the connection to its server and the server's thread.
@@ -52,4 +54,6 @@ pub trait Launcher {
     fn unreported_crash(&self) -> bool;
     /// Opens a pre-filled report of that crash in the browser (`report`), or forgets it.
     fn settle_crash(&mut self, report: bool);
+    /// Packs and interface files read again from disk; `None` if they are unusable.
+    fn reload_resources(&self) -> Option<(Content, UiAssets)>;
 }

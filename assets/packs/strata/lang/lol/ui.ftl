@@ -105,3 +105,5 @@ ui-crash-detail = TEH REPORT IZ IN CRASH-REPORTS.
 ui-crash-report = TELL TEH HOOMANS
 ui-crash-ignore = NVM
 ui-update-available = NEW GAEM { $version } ON GITHUB, KTHX
+ui-reload-failed = NO RELOAD, CHECK TEH LOG.
+ui-reload-blocks-changed = BLOKZ CHANGED, RESTART PLZ.

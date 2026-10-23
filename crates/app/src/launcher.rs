@@ -1,14 +1,16 @@
 //! What the menus can do with worlds: list, create, open (after a backup), delete, and
 //! start the integrated server for one.
 
+use crate::cli::Args;
 use crate::updates::UpdateCheck;
-use crate::{crash, offline};
+use crate::{content, crash, offline};
 use anyhow::Context;
 use glam::DVec3;
 use std::path::PathBuf;
 use std::sync::Arc;
 use strata_client::launcher::{LaunchError, Launcher, Panorama, RunningWorld};
 use strata_client::settings::Settings;
+use strata_client::ui::UiAssets;
 use strata_core::content::Content;
 use strata_core::coords::DEFAULT_WORLD_BORDER;
 use strata_core::dimension::DimensionId;
@@ -34,6 +36,8 @@ pub struct GameLauncher {
     pub crash_reports: PathBuf,
     /// Running or finished; `None` when disabled.
     pub updates: Option<UpdateCheck>,
+    /// Where the packs came from, to read them again.
+    pub args: Args,
 }
 
 impl GameLauncher {
@@ -143,6 +147,16 @@ impl Launcher for GameLauncher {
             }
         }
         crash::mark_seen(&path);
+    }
+
+    fn reload_resources(&self) -> Option<(Content, UiAssets)> {
+        match content::load(&self.args, &self.dimension) {
+            Ok(loaded) => Some((loaded.content, loaded.ui)),
+            Err(error) => {
+                tracing::warn!(%error, "resources not reloaded");
+                None
+            }
+        }
     }
 
     fn panorama(&self) -> Panorama {

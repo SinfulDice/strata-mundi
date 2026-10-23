@@ -113,3 +113,4 @@ action-hotbar-9 = BOX 9
 action-render-distance-down = SEE LESS FAR
 action-render-distance-up = SEE MOAR FAR
 action-toggle-debug = NERD STUFFS
+action-reload-resources = RELOAD TEH STUFFS

@@ -105,3 +105,5 @@ ui-crash-detail = Le rapport est dans le dossier crash-reports.
 ui-crash-report = Signaler ce plantage
 ui-crash-ignore = Ne pas signaler
 ui-update-available = Nouvelle version { $version } disponible sur GitHub
+ui-reload-failed = Ressources non rechargées : voir le journal.
+ui-reload-blocks-changed = Blocs ou objets modifiés : relancez le jeu.

@@ -47,7 +47,7 @@ impl PostProcess {
                 ),
             ],
         });
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shaders/post.wgsl"));
+        let shader = super::shaders::module(device, "post.wgsl");
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("post pipeline layout"),
             bind_group_layouts: &[Some(&layout)],

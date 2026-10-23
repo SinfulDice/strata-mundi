@@ -8,6 +8,7 @@ mod mesh;
 mod offscreen;
 mod outline;
 mod post;
+mod shaders;
 mod surface;
 mod texture_array;
 mod ui_pipeline;

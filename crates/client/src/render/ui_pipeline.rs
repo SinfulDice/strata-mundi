@@ -210,7 +210,7 @@ fn create_pipeline(
     layout: &wgpu::PipelineLayout,
     color_format: wgpu::TextureFormat,
 ) -> wgpu::RenderPipeline {
-    let shader = device.create_shader_module(wgpu::include_wgsl!("shaders/ui.wgsl"));
+    let shader = super::shaders::module(device, "ui.wgsl");
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("ui pipeline"),
         layout: Some(layout),

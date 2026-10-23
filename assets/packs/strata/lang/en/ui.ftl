@@ -105,3 +105,5 @@ ui-crash-detail = The report is in the crash-reports folder.
 ui-crash-report = Report this crash
 ui-crash-ignore = Don't report
 ui-update-available = New version { $version } available on GitHub
+ui-reload-failed = Resources not reloaded: see the log.
+ui-reload-blocks-changed = Blocks or items changed: restart the game.

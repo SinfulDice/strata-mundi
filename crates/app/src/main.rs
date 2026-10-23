@@ -73,6 +73,7 @@ fn main() -> anyhow::Result<()> {
         view_distance: 2,
         crash_reports,
         updates: (settings.game.check_updates && !direct).then(updates::UpdateCheck::start),
+        args: args.clone(),
     };
     launcher.configure(&settings);
     let start = direct.then(|| launcher.temporary(seed)).transpose()?;

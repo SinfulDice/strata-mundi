@@ -4,7 +4,7 @@ use strata_client::settings::Preset;
 use strata_core::id::Identifier;
 
 /// Strata Mundi — voxel sandbox.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 #[command(name = "strata", version, about)]
 pub struct Args {
     /// Render a single frame without a window and save it as PNG, then quit.
