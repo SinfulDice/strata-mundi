@@ -2,6 +2,7 @@
 //! the background, sent to the client, and forgotten once far behind.
 
 use crate::generation::GenerationWorkers;
+use crate::save::{RegionStore, SaveError};
 use std::collections::{HashMap, HashSet};
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
@@ -29,9 +30,8 @@ pub enum LoadEvent {
 
 pub struct ColumnLoader {
     workers: GenerationWorkers,
-    /// Columns changed by players, kept when unloaded so changes are never lost
-    /// (written to disk from milestone 7).
-    edited: HashMap<ColumnPos, Column>,
+    /// Columns changed by players: read before generating, written when unloaded.
+    store: RegionStore,
     /// Load order for the last centre, heading sector and distance (recomputed on change).
     order: Option<((ColumnPos, i32, u32), Vec<ColumnPos>)>,
     columns: HashMap<ColumnPos, Column>,
@@ -41,10 +41,10 @@ pub struct ColumnLoader {
 }
 
 impl ColumnLoader {
-    pub fn new(workers: GenerationWorkers) -> Self {
+    pub fn new(workers: GenerationWorkers, store: RegionStore) -> Self {
         Self {
             workers,
-            edited: HashMap::new(),
+            store,
             order: None,
             columns: HashMap::new(),
             requested: HashSet::new(),
@@ -56,13 +56,6 @@ impl ColumnLoader {
     pub fn update(&mut self, viewer: &Viewer) -> Vec<LoadEvent> {
         for column in self.workers.finished() {
             self.requested.remove(&column.pos);
-            let column = match self.edited.remove(&column.pos) {
-                Some(edited) => {
-                    self.modified.insert(edited.pos);
-                    edited
-                }
-                None => column,
-            };
             self.columns.insert(column.pos, column);
         }
         let center = column_of(viewer);
@@ -82,6 +75,16 @@ impl ColumnLoader {
             }
         }
         events
+    }
+
+    /// Writes every modified column (loaded or not) to disk.
+    pub fn save(&mut self) -> Result<(), SaveError> {
+        for pos in self.modified.drain() {
+            if let Some(column) = self.columns.get(&pos) {
+                self.store.store(column);
+            }
+        }
+        self.store.flush()
     }
 
     /// Puts a ready-made column in place, as if just loaded.
@@ -131,9 +134,9 @@ impl ColumnLoader {
         let room = self.workers.capacity().saturating_sub(self.requested.len());
         for pos in wanted {
             if !self.columns.contains_key(pos)
-                && let Some(column) = self.edited.remove(pos)
+                && !self.requested.contains(pos)
+                && let Some(column) = self.store.load(*pos)
             {
-                self.modified.insert(*pos);
                 self.columns.insert(*pos, column);
             }
         }
@@ -161,7 +164,7 @@ impl ColumnLoader {
                 if let Some(column) = self.columns.remove(&pos)
                     && self.modified.remove(&pos)
                 {
-                    self.edited.insert(pos, column);
+                    self.store.store(&column);
                 }
                 self.sent.remove(&pos).then_some(LoadEvent::Unloaded(pos))
             })
@@ -207,6 +210,7 @@ fn wanted(center: ColumnPos, viewer: &Viewer) -> Vec<ColumnPos> {
 #[allow(clippy::unwrap_used)]
 pub mod tests {
     use super::*;
+    use crate::save::BlockNames;
     use std::path::Path;
     use std::sync::Arc;
     use strata_core::content::Content;
@@ -221,7 +225,9 @@ pub mod tests {
         let terra = "strata:terra".parse().unwrap();
         let worldgen = WorldgenContent::load(&packs, &content.blocks, &terra, &mut errors).unwrap();
         let generator = Arc::new(Generator::new(Seed(1), Arc::new(worldgen)));
-        ColumnLoader::new(GenerationWorkers::spawn(2, generator).unwrap())
+        let names = Arc::new(BlockNames::new(&content.blocks));
+        let store = RegionStore::in_memory(names);
+        ColumnLoader::new(GenerationWorkers::spawn(2, generator).unwrap(), store)
     }
 
     /// Ticks until nothing new arrives for a while; returns the columns sent.
@@ -268,6 +274,26 @@ pub mod tests {
             !unloaded.contains(&ColumnPos { x: 4, z: 0 }),
             "kept by the margin"
         );
+    }
+
+    #[test]
+    fn changes_survive_unloading_and_reloading() {
+        let mut loader = loader();
+        let mut viewer = Viewer {
+            x: 0.0,
+            z: 0.0,
+            yaw: 0.0,
+            view_distance: 2,
+        };
+        settle(&mut loader, &viewer);
+        let pos = BlockPos::new(3, 300, 3);
+        assert!(loader.set_block(pos, BlockId(1)));
+        viewer.x = 2000.0;
+        settle(&mut loader, &viewer);
+        assert_eq!(loader.block(pos), None, "unloaded");
+        viewer.x = 0.0;
+        settle(&mut loader, &viewer);
+        assert_eq!(loader.block(pos), Some(BlockId(1)));
     }
 
     #[test]

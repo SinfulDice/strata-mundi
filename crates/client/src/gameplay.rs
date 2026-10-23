@@ -13,7 +13,7 @@ use crate::world::ClientWorld;
 use glam::DVec3;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
 use strata_core::physics::{EYE_HEIGHT, MoveInput, solid_at};
-use strata_protocol::{ClientConnection, ClientMessage, ServerMessage};
+use strata_protocol::{ClientConnection, ClientMessage, HotbarState, ServerMessage};
 
 pub struct Gameplay {
     pub view: WorldView,
@@ -25,6 +25,8 @@ pub struct Gameplay {
     player: Option<LocalPlayer>,
     look: LookSettings,
     border: i32,
+    /// Last hotbar sent to the server, to send only changes.
+    sent_hotbar: HotbarState,
 }
 
 impl Gameplay {
@@ -44,6 +46,7 @@ impl Gameplay {
             player: None,
             look: LookSettings::default(),
             border: DEFAULT_WORLD_BORDER,
+            sent_hotbar: HotbarState::default(),
         }
     }
 
@@ -58,9 +61,12 @@ impl Gameplay {
                 body,
                 mut movement,
                 border,
+                hotbar,
                 ..
             } => {
                 self.border = border;
+                self.hotbar.restore(&hotbar);
+                self.sent_hotbar = self.hotbar.state();
                 movement.auto_jump = self.controls.auto_jump;
                 movement.step_up = self.controls.step_up;
                 connection.send(ClientMessage::MovementPreferences {
@@ -111,6 +117,15 @@ impl Gameplay {
         );
         if let Some(message) = message {
             connection.send(message);
+        }
+    }
+
+    /// Tells the server about hotbar changes (from play or from the inventory).
+    pub fn sync_hotbar(&mut self, connection: &ClientConnection) {
+        let state = self.hotbar.state();
+        if state != self.sent_hotbar {
+            connection.send(ClientMessage::Hotbar(state.clone()));
+            self.sent_hotbar = state;
         }
     }
 

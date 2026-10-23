@@ -223,6 +223,7 @@ impl Session {
                 );
             }
         }
+        self.game.sync_hotbar(&self.connection);
         self.input.end_frame();
         self.renderer.outline = self.game.interaction.target.map(|hit| hit.block);
         let camera = self.game.camera.position;

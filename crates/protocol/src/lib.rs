@@ -6,7 +6,7 @@ mod messages;
 mod worlds;
 
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
-pub use messages::{ClientMessage, ServerMessage};
+pub use messages::{ClientMessage, HotbarState, ServerMessage};
 pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};
 
 /// Bounds of `ClientMessage::ViewDistance`, in columns.

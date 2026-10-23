@@ -1,4 +1,5 @@
 use strata_core::content::ItemId;
+use strata_protocol::HotbarState;
 
 pub const SLOTS: usize = 9;
 
@@ -36,6 +37,19 @@ impl Hotbar {
         if let Some(slot) = self.slots.get_mut(index) {
             *slot = item;
         }
+    }
+
+    /// As exchanged with the server (which keeps it with the world).
+    pub fn state(&self) -> HotbarState {
+        HotbarState {
+            slots: self.slots.to_vec(),
+            selected: self.selected as u8,
+        }
+    }
+
+    pub fn restore(&mut self, state: &HotbarState) {
+        self.slots = std::array::from_fn(|i| state.slots.get(i).copied().flatten());
+        self.selected = usize::from(state.selected).min(SLOTS - 1);
     }
 
     /// Middle click: select the item if already in the hotbar, otherwise put it in the

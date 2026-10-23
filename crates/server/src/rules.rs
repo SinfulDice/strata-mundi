@@ -1,4 +1,4 @@
-use strata_core::content::{BlockId, Content, Face, Orientation};
+use strata_core::content::{BlockId, Content, Face, ItemId, Orientation};
 
 /// What the server needs to know about blocks to judge collisions and player actions.
 #[derive(Debug, Clone)]
@@ -7,6 +7,7 @@ pub struct BlockRules {
     placeable: Vec<bool>,
     breakable: Vec<bool>,
     orientation: Vec<Option<Orientation>>,
+    item_count: usize,
 }
 
 impl BlockRules {
@@ -23,6 +24,7 @@ impl BlockRules {
                 .iter()
                 .map(|(_, _, block)| block.hardness >= 0.0)
                 .collect(),
+            item_count: content.items.len(),
             orientation: content
                 .blocks
                 .iter()
@@ -44,6 +46,10 @@ impl BlockRules {
             .get(usize::from(block.0))
             .copied()
             .unwrap_or(false)
+    }
+
+    pub fn is_item(&self, item: ItemId) -> bool {
+        usize::from(item.0) < self.item_count
     }
 
     /// Outside creative, blocks with a negative hardness (bedrock) cannot be broken.

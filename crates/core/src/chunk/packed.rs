@@ -9,15 +9,10 @@ pub struct PackedArray {
 
 impl PackedArray {
     pub fn new(len: usize, bits: u8) -> Self {
-        let words = if bits == 0 {
-            0
-        } else {
-            len.div_ceil(per_word(bits))
-        };
         Self {
             bits,
             len,
-            words: vec![0; words],
+            words: vec![0; word_count(len, bits)],
         }
     }
 
@@ -62,6 +57,12 @@ impl PackedArray {
         resized
     }
 
+    /// Whether the layout is one `new` could produce (data read from disk or the network).
+    pub fn is_well_formed(&self) -> bool {
+        let supported = matches!(self.bits, 0 | 1 | 2 | 4 | 8 | 16);
+        supported && self.words.len() == word_count(self.len, self.bits)
+    }
+
     pub fn heap_bytes(&self) -> usize {
         self.words.capacity() * std::mem::size_of::<u64>()
     }
@@ -73,6 +74,14 @@ impl PackedArray {
             index / per_word,
             ((index % per_word) * self.bits as usize) as u32,
         )
+    }
+}
+
+fn word_count(len: usize, bits: u8) -> usize {
+    if bits == 0 {
+        0
+    } else {
+        len.div_ceil(per_word(bits))
     }
 }
 

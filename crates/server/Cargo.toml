@@ -13,6 +13,12 @@ strata-protocol.workspace = true
 glam.workspace = true
 crossbeam-channel.workspace = true
 tracing.workspace = true
+serde.workspace = true
+ron.workspace = true
+postcard.workspace = true
+zstd.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
 
 [lints]
 workspace = true

@@ -146,3 +146,12 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 - **Constat** : avec une distance verticale de 4 sections (DS), un joueur à 230 de haut ne voyait plus rien.
 - **Choix** : la fenêtre verticale est centrée sur `min(section de la caméra, plus haute section non vide de la colonne)`. Sous terre rien ne change ; vu du ciel, chaque colonne garde ses sections de surface.
+
+## D026 — Format des sauvegardes : `postcard` + `zstd` (v0.1, jalon 7)
+
+- **Contexte** : `technique.md` prévoyait `bincode`, mais `bincode` 3.0 est publié comme crate abandonnée (plus maintenue) ; la règle « crate maintenue » l'emporte.
+- **Choix** : `postcard` 1.1 (serde, format binaire compact et stable, très maintenu) pour les colonnes ; `zstd` 0.14 (niveau 3) colonne par colonne ; RON lisible pour `world.ron` et `player.ron`.
+- **Régions** de 32×32 colonnes : un fichier `r.<x>.<z>.region` (en-tête `SMRG` + postcard) ne contient **que les colonnes modifiées**, compressées une à une ; les autres sont régénérées depuis la graine. Les blocs sont stockés par **identifiant texte** (palette par colonne), donc un monde survit à l'ajout ou au retrait de packs (bloc disparu → air).
+- **Écriture atomique** (fichier temporaire, `fsync`, renommage, `fsync` du dossier) ; région illisible mise de côté en `.damaged` au lieu d'être écrasée ; colonnes relues validées (`Column::remapped`), jamais de panique sur un fichier abîmé.
+- **Versions** : `FORMAT_VERSION` dans `world.ron` ; autre version → statut « trop ancien / trop récent » dans la liste, pas d'ouverture. Pas de migration en 0.x (règle du projet), donc pas encore de « copie avant migration » : elle viendra avec la première migration (v1.0). Les copies tournantes (3 par défaut) sont faites à chaque ouverture d'un monde.
+- **Dossiers** : `dirs` 7 (emplacements standard Linux/Windows), surchargeable par `--data-dir`.

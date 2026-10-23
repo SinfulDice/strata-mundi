@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::Column;
-use strata_core::content::{BlockId, Face};
+use strata_core::content::{BlockId, Face, ItemId};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
 use strata_core::physics::{Body, MoveInput, MovementSettings};
@@ -35,7 +35,23 @@ pub enum ClientMessage {
         face: Face,
         block: BlockId,
     },
+    /// The hotbar changed (creative: the client picks any item; kept with the world).
+    Hotbar(HotbarState),
+    /// Stop or resume the world (pause menu; any menu if the player asked for it).
+    Pause(bool),
+    /// Save now, with a capture of the screen for the world list.
+    Save {
+        icon: Option<Vec<u8>>,
+    },
+    /// The player leaves: the server saves and stops.
     Disconnect,
+}
+
+/// The nine quick slots and the selected one.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HotbarState {
+    pub slots: Vec<Option<ItemId>>,
+    pub selected: u8,
 }
 
 /// State broadcast by the server.
@@ -48,6 +64,7 @@ pub enum ServerMessage {
         movement: MovementSettings,
         /// Half-width of the world, in blocks.
         border: i32,
+        hotbar: HotbarState,
     },
     /// Sent once per tick so the client can interpolate between ticks.
     Tick {

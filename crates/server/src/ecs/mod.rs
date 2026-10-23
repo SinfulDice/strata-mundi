@@ -10,7 +10,7 @@ pub use storage::Storage;
 
 use std::collections::VecDeque;
 use strata_core::physics::{Body, MoveInput, MovementSettings};
-use strata_protocol::GameMode;
+use strata_protocol::{GameMode, HotbarState};
 
 /// Every component storage of the simulation.
 #[derive(Debug, Default)]
@@ -18,6 +18,7 @@ pub struct Ecs {
     pub entities: Entities,
     pub bodies: Storage<Body>,
     pub controls: Storage<PlayerControl>,
+    pub hotbars: Storage<HotbarState>,
 }
 
 /// Inputs received from a player's client, applied one per physics step.
@@ -54,6 +55,7 @@ impl Ecs {
     pub fn despawn(&mut self, entity: Entity) {
         self.bodies.remove(entity);
         self.controls.remove(entity);
+        self.hotbars.remove(entity);
         self.entities.despawn(entity);
     }
 }

@@ -40,6 +40,22 @@ impl Column {
         }
     }
 
+    /// See `Section::remapped`; `None` for corrupt data.
+    pub fn remapped(&self, map: impl Fn(BlockId) -> BlockId) -> Option<Self> {
+        if self.sections.len() != SECTIONS_PER_COLUMN as usize {
+            return None;
+        }
+        let sections = self
+            .sections
+            .iter()
+            .map(|section| section.remapped(&map))
+            .collect::<Option<Vec<_>>>()?;
+        Some(Self {
+            pos: self.pos,
+            sections,
+        })
+    }
+
     pub fn heap_bytes(&self) -> usize {
         self.sections.iter().map(Section::heap_bytes).sum()
     }

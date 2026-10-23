@@ -8,7 +8,7 @@ use glam::DVec3;
 use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings, solid_at};
-use strata_protocol::GameMode;
+use strata_protocol::{GameMode, HotbarState};
 
 /// Farthest a player may break or place, measured from the eyes to the block centre
 /// (a little more than the client's reach, for rounding).
@@ -16,6 +16,7 @@ const MAX_REACH: f64 = 6.0;
 const MAX_QUEUED_INPUTS: usize = 40;
 /// Ticks between two block actions of one player (10 per second at most).
 const ACTION_TICKS: u64 = 2;
+const HOTBAR_SLOTS: usize = 9;
 
 pub type BlockChange = (BlockPos, BlockId);
 
@@ -33,6 +34,7 @@ impl Game {
         let mut ecs = Ecs::default();
         let player = ecs.entities.spawn();
         ecs.bodies.insert(player, spawn);
+        ecs.hotbars.insert(player, HotbarState::default());
         let movement = MovementSettings {
             can_fly: mode == GameMode::Creative,
             step_up: true,
@@ -87,6 +89,29 @@ impl Game {
             body.velocity = DVec3::ZERO;
             body.flying = true;
         }
+    }
+
+    /// Creative: any existing item, nine slots at most.
+    pub fn set_hotbar(&mut self, hotbar: HotbarState) {
+        let valid = hotbar.slots.len() <= HOTBAR_SLOTS
+            && usize::from(hotbar.selected) < HOTBAR_SLOTS
+            && hotbar
+                .slots
+                .iter()
+                .flatten()
+                .all(|&item| self.rules.is_item(item))
+            && self.is_creative();
+        if valid {
+            self.ecs.hotbars.insert(self.player, hotbar);
+        }
+    }
+
+    pub fn hotbar(&self) -> HotbarState {
+        self.ecs
+            .hotbars
+            .get(self.player)
+            .cloned()
+            .unwrap_or_default()
     }
 
     pub fn set_preferences(&mut self, auto_jump: bool, step_up: bool) {
