@@ -1,0 +1,16 @@
+// A short message with an OK button.
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (260, 56),
+            children: [
+                Label(id: "message", anchor: Top, at: (0, 8), text: "@message"),
+                Button(id: "ok", anchor: Bottom, at: (0, -8), size: (80, 18), text: "ui-ok"),
+            ],
+        ),
+    ],
+)

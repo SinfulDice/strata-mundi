@@ -1,3 +1,4 @@
+use super::worlds::edit;
 use crate::hotbar::{Hotbar, SLOTS};
 use crate::ui::ScreenModel;
 use strata_core::content::{Content, ItemId};
@@ -5,6 +6,7 @@ use strata_core::id::Identifier;
 
 const COLUMNS: usize = 9;
 const ROWS: usize = 5;
+const MAX_SEARCH: usize = 32;
 /// The only interface text chosen in code rather than in a screen file.
 pub const TAB_ALL_KEY: &str = "ui-tab-all";
 
@@ -23,7 +25,6 @@ pub struct InventoryState {
     pub tab: usize,
     pub search: String,
     pub scroll_rows: usize,
-    pub search_focused: bool,
     categories: Vec<Identifier>,
     items: Vec<ItemId>,
     items_for: Option<(usize, String)>,
@@ -89,40 +90,12 @@ impl<'a> InventoryModel<'a> {
             .collect()
     }
 
-    /// "All" plus one tab per category.
-    pub fn tab_count(&self) -> usize {
-        1 + self.state.categories.len()
-    }
-
-    /// Scrolls the grid by whole rows, within the item list.
-    pub fn scroll(&mut self, rows: i32) {
-        let total_rows = self.state.items.len().div_ceil(COLUMNS);
-        let max = total_rows.saturating_sub(ROWS) as i32;
-        self.state.scroll_rows = (self.state.scroll_rows as i32 + rows).clamp(0, max) as usize;
-    }
-
     /// Item shown in grid cell `index`, if any.
-    pub fn grid_item(&self, index: usize) -> Option<ItemId> {
+    fn grid_item(&self, index: usize) -> Option<ItemId> {
         self.state
             .items
             .get(self.state.scroll_rows * COLUMNS + index)
             .copied()
-    }
-
-    pub fn type_text(&mut self, text: &str) {
-        for ch in text.chars() {
-            match ch {
-                '\u{8}' => {
-                    self.state.search.pop();
-                }
-                c if !c.is_control() && self.state.search.chars().count() < 32 => {
-                    self.state.search.push(c)
-                }
-                _ => {}
-            }
-        }
-        self.state.scroll_rows = 0;
-        self.refresh();
     }
 }
 
@@ -184,6 +157,27 @@ impl ScreenModel for InventoryModel<'_> {
         }
     }
 
+    fn quick_slot(&mut self, id: &str, index: usize, slot: usize) {
+        if id == "items" {
+            let item = self.grid_item(index);
+            self.hotbar.set(slot, item);
+        }
+    }
+
+    fn type_text(&mut self, id: &str, text: &str) {
+        if id == "search" {
+            edit(&mut self.state.search, text, MAX_SEARCH, |_| true);
+            self.state.scroll_rows = 0;
+            self.refresh();
+        }
+    }
+
+    fn scroll(&mut self, _: &str, rows: i32) {
+        let total_rows = self.state.items.len().div_ceil(COLUMNS);
+        let max = total_rows.saturating_sub(ROWS) as i32;
+        self.state.scroll_rows = (self.state.scroll_rows as i32 + rows).clamp(0, max) as usize;
+    }
+
     fn activate(&mut self, id: &str, index: usize) {
         match id {
             "items" => {
@@ -197,7 +191,6 @@ impl ScreenModel for InventoryModel<'_> {
                 self.state.scroll_rows = 0;
                 self.refresh();
             }
-            "search" => self.state.search_focused = true,
             _ => {}
         }
     }

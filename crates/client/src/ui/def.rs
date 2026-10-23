@@ -34,7 +34,8 @@ pub enum Node {
         size: (u32, u32),
         children: Vec<Node>,
     },
-    /// `text` is a translation key, or `@name` for text supplied by the screen model.
+    /// `text` is a translation key (it may hold markup, see `ui::rich`), or `@name` for
+    /// text supplied by the screen model.
     Label {
         id: String,
         anchor: Anchor,
@@ -44,13 +45,40 @@ pub enum Node {
         boxed: bool,
         #[serde(default)]
         dim: bool,
+        /// Whole-number magnification (titles, the logo).
+        #[serde(default = "one")]
+        size: u32,
     },
+    /// `text` as for labels; `@name` gives buttons whose caption changes (on/off, modes).
     Button {
         id: String,
         anchor: Anchor,
         at: (i32, i32),
         size: (u32, u32),
         text: String,
+    },
+    /// A value moved with left/right or by dragging; the model gives position and caption.
+    Slider {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        size: (u32, u32),
+    },
+    /// Scrolling list of rows (title, detail, optional icon), e.g. the saved worlds.
+    List {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        size: (u32, u32),
+        row_height: u32,
+    },
+    /// On-screen keyboard: one string per row, one key per character (gamepad typing).
+    KeyGrid {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        rows: Vec<String>,
+        key: u32,
     },
     TextField {
         id: String,
@@ -86,7 +114,56 @@ pub enum Node {
     },
 }
 
+fn one() -> u32 {
+    1
+}
+
+impl Node {
+    pub fn at(&self) -> Option<(i32, i32)> {
+        match self {
+            Self::Shade => None,
+            Self::Panel { at, .. }
+            | Self::Label { at, .. }
+            | Self::Button { at, .. }
+            | Self::Slider { at, .. }
+            | Self::List { at, .. }
+            | Self::KeyGrid { at, .. }
+            | Self::TextField { at, .. }
+            | Self::Tabs { at, .. }
+            | Self::ItemGrid { at, .. }
+            | Self::Slots { at, .. }
+            | Self::Crosshair { at, .. } => Some(*at),
+        }
+    }
+
+    /// The id used for focus, models and HUD layout, if the node has one.
+    pub fn id(&self) -> Option<&str> {
+        match self {
+            Self::Shade => None,
+            Self::Panel { id, .. }
+            | Self::Label { id, .. }
+            | Self::Button { id, .. }
+            | Self::Slider { id, .. }
+            | Self::List { id, .. }
+            | Self::KeyGrid { id, .. }
+            | Self::TextField { id, .. }
+            | Self::Tabs { id, .. }
+            | Self::ItemGrid { id, .. }
+            | Self::Slots { id, .. }
+            | Self::Crosshair { id, .. } => Some(id),
+        }
+    }
+}
+
 impl ScreenDef {
+    /// Offset (`at`) of the top-level element `id`, as written in the file.
+    pub fn offset_of(&self, id: &str) -> Option<(i32, i32)> {
+        self.root
+            .iter()
+            .find(|node| node.id() == Some(id))
+            .and_then(Node::at)
+    }
+
     /// Translation keys of every fixed text, for the missing-translation test.
     pub fn translation_keys(&self) -> Vec<String> {
         let mut keys = Vec::new();

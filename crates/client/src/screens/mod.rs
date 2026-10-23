@@ -1,19 +1,38 @@
-//! The screens drawn over the world: the HUD always, the creative inventory on demand.
+//! Everything drawn over the world: the HUD in play, menus on demand, the title screen.
 
+mod editor;
+mod handling;
 mod hud;
 mod inventory;
+mod keyboard;
+mod menu;
+mod pause;
+mod title;
+mod worlds;
+
+pub use menu::UiAction;
 
 use crate::gameplay::Gameplay;
-use crate::input::{Action, InputState};
+use crate::hotbar::Hotbar;
+use crate::interface_settings::InterfaceSettings;
 use crate::render::{Gpu, UiPipeline};
-use crate::ui::ScreenModel;
 use crate::ui::{
-    Direction, Hit, Painter, Rect, UiAssets, UiAtlas, UiContext, auto_scale, draw_screen, navigate,
+    Hit, Node, Rect, ScreenDef, ScreenModel, UiAssets, UiAtlas, UiContext, auto_scale, draw_screen,
 };
-use hud::HudModel;
-use inventory::{InventoryModel, InventoryState};
-use std::sync::Arc;
-use strata_core::content::{Content, ItemKind};
+use hud::{HudModel, aimed_block_name};
+use keyboard::{Keyboard, KeyboardModel};
+use menu::{Effect, Menu, Shared};
+use std::path::PathBuf;
+use strata_core::content::Content;
+use strata_core::texture::RgbaImage;
+use strata_protocol::WorldSummary;
+
+/// Where the interface is drawn: over the frame in `view`.
+pub struct UiFrame<'a> {
+    pub encoder: &'a mut wgpu::CommandEncoder,
+    pub view: &'a wgpu::TextureView,
+    pub size: (u32, u32),
+}
 
 /// Largest interface scale the automatic setting may pick.
 const MAX_AUTO_SCALE: u32 = 4;
@@ -22,11 +41,23 @@ pub struct Screens {
     assets: UiAssets,
     atlas: UiAtlas,
     pipeline: UiPipeline,
-    language: String,
-    inventory: Option<InventoryState>,
+    pub settings: InterfaceSettings,
+    settings_path: PathBuf,
+    stack: Vec<Menu>,
+    in_world: bool,
     focus: Option<Hit>,
     hits: Vec<Hit>,
     scale: u32,
+    /// Text field receiving the physical keyboard.
+    editing: Option<String>,
+    keyboard: Option<Keyboard>,
+    keyboard_hits: Vec<Hit>,
+    worlds: Vec<WorldSummary>,
+    icons: Vec<Option<Rect>>,
+    /// Slider or HUD element followed by the mouse while the button is held.
+    dragging: Option<Hit>,
+    last_cursor: Option<(i32, i32)>,
+    effects: Vec<Effect>,
 }
 
 impl Screens {
@@ -35,7 +66,8 @@ impl Screens {
         color_format: wgpu::TextureFormat,
         assets: UiAssets,
         content: &Content,
-        language: String,
+        settings: InterfaceSettings,
+        settings_path: PathBuf,
     ) -> Self {
         let atlas = UiAtlas::build(content, assets.font.clone());
         let pipeline = UiPipeline::new(gpu, color_format, &atlas.image);
@@ -43,159 +75,219 @@ impl Screens {
             assets,
             atlas,
             pipeline,
-            language,
-            inventory: None,
+            settings,
+            settings_path,
+            stack: vec![Menu::Title],
+            in_world: false,
             focus: None,
             hits: Vec::new(),
             scale: 1,
+            editing: None,
+            keyboard: None,
+            keyboard_hits: Vec::new(),
+            worlds: Vec::new(),
+            icons: Vec::new(),
+            dragging: None,
+            last_cursor: None,
+            effects: Vec::new(),
         }
     }
 
-    /// A menu is open: the cursor is free and the player stands still.
-    pub fn is_menu_open(&self) -> bool {
-        self.inventory.is_some()
+    pub fn language(&self) -> &str {
+        &self.settings.language
     }
 
-    /// Opens or closes menus; returns whether the input was used by a menu.
-    pub fn handle(&mut self, input: &InputState, game: &mut Gameplay) -> bool {
-        let Some(state) = self.inventory.as_ref() else {
-            if input.just_pressed(Action::Inventory) {
-                self.inventory = Some(InventoryState::default());
-                self.focus = None;
-            }
-            return self.inventory.is_some();
-        };
-        if state.search_focused {
-            self.edit_search(input, game);
-            return true;
-        }
-        if input.just_pressed(Action::Inventory) || input.just_pressed(Action::MenuBack) {
-            self.inventory = None;
-            self.focus = None;
-            self.hits.clear();
-            return true;
-        }
-        self.follow_mouse(input);
-        self.navigate(input);
-        let focus = self.focus.clone();
-        let content = Arc::clone(&game.info.content);
-        let Some(state) = self.inventory.as_mut() else {
-            return true;
-        };
-        let mut model = InventoryModel::new(state, &mut game.hotbar, &content, &self.language);
-        model.scroll(-input.scroll_steps());
-        let tabs = i32::from(input.just_pressed(Action::HotbarNext))
-            - i32::from(input.just_pressed(Action::HotbarPrevious));
-        if tabs != 0 {
-            let tab = (model.state.tab as i32 + tabs).rem_euclid(model.tab_count() as i32) as usize;
-            model.activate("tabs", tab);
-        }
-        if let Some(focus) = focus {
-            if input.just_pressed(Action::MenuConfirm) || input.just_pressed(Action::Attack) {
-                model.activate(&focus.id, focus.index);
-            }
-            for (slot, action) in Action::HOTBAR.into_iter().enumerate() {
-                if input.just_pressed(action) && focus.id == "items" {
-                    let item = model.grid_item(focus.index);
-                    model.hotbar.set(slot, item);
-                }
-            }
-        }
-        true
+    /// Back to the title screen (after leaving a world).
+    pub fn show_title(&mut self) {
+        self.in_world = false;
+        self.stack = vec![Menu::Title];
+        self.reset_focus();
     }
 
-    fn edit_search(&mut self, input: &InputState, game: &mut Gameplay) {
-        let content = Arc::clone(&game.info.content);
-        let Some(state) = self.inventory.as_mut() else {
-            return;
-        };
-        let mut model = InventoryModel::new(state, &mut game.hotbar, &content, &self.language);
-        model.type_text(input.typed());
-        if input.just_pressed(Action::Erase) {
-            model.type_text("\u{8}");
-        }
-        if input.just_pressed(Action::MenuBack) || input.just_pressed(Action::MenuConfirm) {
-            model.state.search_focused = false;
-        }
+    /// A world just started: no menu, the HUD only.
+    pub fn enter_world(&mut self) {
+        self.in_world = true;
+        self.stack.clear();
+        self.reset_focus();
     }
 
-    fn follow_mouse(&mut self, input: &InputState) {
-        let Some((x, y)) = input.cursor().filter(|_| input.cursor_moved()) else {
-            return;
-        };
-        let (ux, uy) = (
-            (x / f64::from(self.scale)) as i32,
-            (y / f64::from(self.scale)) as i32,
-        );
-        self.focus = self
-            .hits
+    /// Shows the world list (replacing any open one) with each world's capture.
+    pub fn open_worlds(&mut self, gpu: &Gpu, worlds: Vec<WorldSummary>) {
+        self.icons = worlds
             .iter()
-            .find(|hit| hit.rect.contains(ux, uy))
-            .cloned();
+            .enumerate()
+            .map(|(slot, world)| self.upload_icon(gpu, slot, world.icon.as_deref()))
+            .collect();
+        let selected = (!worlds.is_empty()).then_some(0);
+        self.worlds = worlds;
+        self.stack.truncate(1);
+        self.stack.push(Menu::Worlds {
+            selected,
+            scroll: 0,
+        });
+        self.reset_focus();
     }
 
-    fn navigate(&mut self, input: &InputState) {
-        let moves = [
-            (Action::MenuUp, Direction::Up),
-            (Action::MenuDown, Direction::Down),
-            (Action::MenuLeft, Direction::Left),
-            (Action::MenuRight, Direction::Right),
-        ];
-        for (action, direction) in moves {
-            if input.just_pressed(action) {
-                self.focus =
-                    navigate(&self.hits, self.focus.as_ref(), direction).or(self.focus.take());
-            }
+    pub fn show_notice(&mut self, key: &'static str) {
+        self.stack.push(Menu::Notice { key });
+        self.reset_focus();
+    }
+
+    /// A menu has the cursor (the title screen counts as one).
+    pub fn is_menu_open(&self) -> bool {
+        !self.in_world || !self.stack.is_empty()
+    }
+
+    /// Whether the open menus stop the world (see `Menu::pauses`).
+    pub fn wants_pause(&self) -> bool {
+        self.stack.iter().any(|menu| menu.pauses(&self.settings))
+    }
+
+    fn upload_icon(&self, gpu: &Gpu, slot: usize, png: Option<&[u8]>) -> Option<Rect> {
+        let place = UiAtlas::world_icon_slot(slot)?;
+        let image = decode_icon(png?)?;
+        if (image.width(), image.height()) != (place.w, place.h) {
+            return None;
         }
+        self.pipeline
+            .write_atlas(gpu, place.x as u32, place.y as u32, &image);
+        Some(place)
     }
 
-    /// Draws the HUD, and the open menu over it, on top of the frame in `target`.
+    fn reset_focus(&mut self) {
+        self.focus = None;
+        self.hits.clear();
+        self.editing = None;
+        self.keyboard = None;
+        self.keyboard_hits.clear();
+        self.dragging = None;
+    }
+
+    /// Runs `f` on the model of the menu on top, if any.
+    fn with_model<R>(
+        &mut self,
+        game: Option<&mut Gameplay>,
+        content: &Content,
+        f: impl FnOnce(&mut dyn ScreenModel) -> R,
+    ) -> Option<R> {
+        let menu = self.stack.last_mut()?;
+        let shared = Shared {
+            content,
+            settings: &mut self.settings,
+            worlds: &self.worlds,
+            icons: &self.icons,
+            hotbar: game.map(|g| &mut g.hotbar),
+            effects: &mut self.effects,
+        };
+        let mut model = menu::model(menu, shared);
+        Some(f(model.as_mut()))
+    }
+
+    /// Presses key `index` of the on-screen keyboard: (field, text to type, closed).
+    fn press_key(&mut self, content: &Content, index: usize) -> Option<(String, String, bool)> {
+        let keyboard = self.keyboard.as_mut()?;
+        let (mut typed, mut done) = (String::new(), false);
+        let mut model = KeyboardModel {
+            keyboard,
+            rows: key_rows(&self.assets.screens.keyboard),
+            translations: &content.translations,
+            language: &self.settings.language,
+            typed: &mut typed,
+            done: &mut done,
+        };
+        model.activate("keys", index);
+        let field = model.keyboard.field.clone();
+        Some((field, typed, done))
+    }
+
+    /// Draws the HUD, the menu on top and the on-screen keyboard over the frame.
     pub fn draw(
         &mut self,
         gpu: &Gpu,
-        encoder: &mut wgpu::CommandEncoder,
-        target: &wgpu::TextureView,
-        size: (u32, u32),
-        game: &mut Gameplay,
+        frame: UiFrame<'_>,
+        content: &Content,
+        game: Option<&mut Gameplay>,
+        key_label: &dyn Fn(&str) -> String,
     ) {
-        self.scale = auto_scale(size.0, size.1, MAX_AUTO_SCALE);
+        let UiFrame {
+            encoder,
+            view: target,
+            size,
+        } = frame;
+        let fitting = auto_scale(size.0, size.1, MAX_AUTO_SCALE);
+        self.scale = match self.settings.scale {
+            0 => fitting,
+            chosen => chosen.min(auto_scale(size.0, size.1, u32::MAX)),
+        };
         let screen = Rect::new(0, 0, size.0 / self.scale, size.1 / self.scale);
-        let content = Arc::clone(&game.info.content);
+        let editor = matches!(self.stack.last(), Some(Menu::HudEditor { .. }));
+        let language = self.settings.language.clone();
+        let mut painter = crate::ui::Painter::new(&self.atlas, self.scale);
         let ctx = UiContext {
             theme: &self.assets.theme,
             translations: &content.translations,
-            language: &self.language,
+            language: &language,
+            key_label,
+            offsets: None,
+            editing: false,
         };
-        let mut painter = Painter::new(&self.atlas, self.scale);
-        let target_name = game
-            .controls
-            .show_block_name
-            .then_some(game.interaction.target)
-            .flatten()
-            .and_then(|hit| {
-                block_name(
-                    &content,
-                    game.view.world.block_at(hit.block),
-                    &self.language,
-                )
-            });
-        let hud = HudModel {
-            hotbar: &game.hotbar,
-            target: target_name,
-        };
-        if self.inventory.is_none() {
-            draw_screen(&self.assets.hud, &mut painter, &hud, &ctx, screen, None);
+        let mut hits = Vec::new();
+        if (self.in_world && self.stack.is_empty()) || editor {
+            let sample = Hotbar::default();
+            let hud = match game.as_deref() {
+                Some(game) => HudModel {
+                    hotbar: &game.hotbar,
+                    target: aimed_block_name(game, content, &language),
+                },
+                None => HudModel {
+                    hotbar: &sample,
+                    target: Some(content.translations.text(&language, "ui-editor-sample")),
+                },
+            };
+            let hud_ctx = UiContext {
+                offsets: Some(&self.settings.hud),
+                editing: editor,
+                ..ctx
+            };
+            let focus = self.focus.as_ref().filter(|_| editor);
+            let def = &self.assets.screens.hud;
+            hits = draw_screen(def, &mut painter, &hud, &hud_ctx, screen, focus);
         }
-        if let Some(state) = self.inventory.as_mut() {
-            let model = InventoryModel::new(state, &mut game.hotbar, &content, &self.language);
-            self.hits = draw_screen(
-                &self.assets.inventory,
+        if let Some(menu) = self.stack.last_mut() {
+            let shared = Shared {
+                content,
+                settings: &mut self.settings,
+                worlds: &self.worlds,
+                icons: &self.icons,
+                hotbar: game.map(|g| &mut g.hotbar),
+                effects: &mut Vec::new(),
+            };
+            let def = menu.def(&self.assets.screens);
+            let model = menu::model(menu, shared);
+            let focus = self.focus.as_ref();
+            hits.extend(draw_screen(
+                def,
                 &mut painter,
-                &model,
+                model.as_ref(),
                 &ctx,
                 screen,
-                self.focus.as_ref(),
-            );
+                focus,
+            ));
+        }
+        self.hits = hits;
+        if let Some(keyboard) = self.keyboard.as_mut() {
+            let def = &self.assets.screens.keyboard;
+            let (mut typed, mut done) = (String::new(), false);
+            let model = KeyboardModel {
+                keyboard,
+                rows: key_rows(def),
+                translations: &content.translations,
+                language: &language,
+                typed: &mut typed,
+                done: &mut done,
+            };
+            let focus = self.focus.as_ref();
+            self.keyboard_hits = draw_screen(def, &mut painter, &model, &ctx, screen, focus);
         }
         self.pipeline.draw(
             gpu,
@@ -208,26 +300,63 @@ impl Screens {
     }
 }
 
-fn block_name(
-    content: &Content,
-    block: strata_core::content::BlockId,
-    language: &str,
-) -> Option<String> {
-    let id = content.block_name(block)?;
-    content
-        .items
-        .key(id)
-        .and_then(|item| content.items.get(item))
-        .filter(|i| matches!(i.kind, ItemKind::Block(_)))?;
-    Some(
-        content
-            .translations
-            .text(language, &id.translation_key("block")),
-    )
+/// Rows of the first key grid of the keyboard layout.
+fn key_rows(def: &ScreenDef) -> &[String] {
+    fn find(nodes: &[Node]) -> Option<&[String]> {
+        nodes.iter().find_map(|node| match node {
+            Node::KeyGrid { rows, .. } => Some(rows.as_slice()),
+            Node::Panel { children, .. } => find(children),
+            _ => None,
+        })
+    }
+    find(&def.root).unwrap_or(&[])
 }
+
+fn decode_icon(png_bytes: &[u8]) -> Option<RgbaImage> {
+    let decoder = png::Decoder::new(std::io::Cursor::new(png_bytes));
+    let mut reader = decoder.read_info().ok()?;
+    let mut buffer = vec![0; reader.output_buffer_size()?];
+    let info = reader.next_frame(&mut buffer).ok()?;
+    if info.color_type != png::ColorType::Rgba || info.bit_depth != png::BitDepth::Eight {
+        return None;
+    }
+    buffer.truncate(info.buffer_size());
+    RgbaImage::from_bytes(info.width, info.height, buffer)
+}
+
+/// Interface texts chosen in code rather than in screen files.
+#[cfg(test)]
+const CODE_KEYS: &[&str] = &[
+    inventory::TAB_ALL_KEY,
+    "ui-editor-sample",
+    "ui-error-incompatible",
+    "ui-error-unavailable",
+    "ui-world-detail",
+    "ui-world-too-old",
+    "ui-world-too-new",
+    "ui-world-broken",
+    "ui-worlds-empty",
+    "ui-mode-creative",
+    "ui-new-world-mode",
+    "ui-new-world-default-name",
+    "ui-delete-question",
+    "ui-play-time-hours",
+    "ui-play-time-minutes",
+    "ui-on",
+    "ui-off",
+    "ui-option-language",
+    "ui-option-pause-menus",
+    "ui-option-scale",
+    "ui-scale-auto",
+    "ui-key-erase",
+    "ui-key-shift",
+    "ui-key-space",
+    "ui-key-done",
+];
 
 #[cfg(test)]
 mod tests {
+    use crate::input::translation_keys as key_translation_keys;
     use crate::ui::UiAssets;
     use std::path::Path;
     use strata_core::content::Content;
@@ -242,7 +371,8 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         let (content, _) = Content::load(&packs, &PackSet::default());
         let mut keys = ui.translation_keys();
-        keys.push(super::inventory::TAB_ALL_KEY.to_owned());
+        keys.extend(super::CODE_KEYS.iter().map(|k| (*k).to_owned()));
+        keys.extend(key_translation_keys());
         let missing = content.translations.missing(&keys);
         assert!(missing.is_empty(), "missing translations: {missing:#?}");
     }

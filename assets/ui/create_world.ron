@@ -1,0 +1,23 @@
+// New world: name, seed (empty = random), world border, game mode.
+Screen(
+    root: [
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (240, 176),
+            children: [
+                Label(id: "title", anchor: TopLeft, at: (8, 5), text: "ui-new-world-title"),
+                Label(id: "name_label", anchor: TopLeft, at: (8, 22), text: "ui-new-world-name", dim: true),
+                TextField(id: "name", anchor: TopLeft, at: (8, 33), size: (224, 12), placeholder: "ui-new-world-name"),
+                Label(id: "seed_label", anchor: TopLeft, at: (8, 50), text: "ui-new-world-seed", dim: true),
+                TextField(id: "seed", anchor: TopLeft, at: (8, 61), size: (224, 12), placeholder: "ui-new-world-seed-random"),
+                Label(id: "border_label", anchor: TopLeft, at: (8, 78), text: "ui-new-world-border", dim: true),
+                TextField(id: "border", anchor: TopLeft, at: (8, 89), size: (224, 12), placeholder: "ui-new-world-border"),
+                Button(id: "mode", anchor: TopLeft, at: (8, 108), size: (224, 18), text: "@mode"),
+                Button(id: "create", anchor: BottomLeft, at: (8, -8), size: (108, 18), text: "ui-new-world-create"),
+                Button(id: "back", anchor: BottomRight, at: (-8, -8), size: (108, 18), text: "ui-back"),
+            ],
+        ),
+    ],
+)

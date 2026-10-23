@@ -19,6 +19,7 @@ pub struct UiPipeline {
     atlas_size: f32,
     vertices: StreamBuffer,
     indices: StreamBuffer,
+    atlas: wgpu::Texture,
 }
 
 impl UiPipeline {
@@ -37,7 +38,7 @@ impl UiPipeline {
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
                 format: wgpu::TextureFormat::Rgba8UnormSrgb,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
                 view_formats: &[],
             },
             wgpu::util::TextureDataOrder::LayerMajor,
@@ -109,7 +110,31 @@ impl UiPipeline {
             atlas_size: atlas.width() as f32,
             vertices: StreamBuffer::new("ui vertices", wgpu::BufferUsages::VERTEX),
             indices: StreamBuffer::new("ui indices", wgpu::BufferUsages::INDEX),
+            atlas: texture,
         }
+    }
+
+    /// Replaces part of the atlas (world captures).
+    pub fn write_atlas(&self, gpu: &Gpu, x: u32, y: u32, image: &RgbaImage) {
+        gpu.queue.write_texture(
+            wgpu::TexelCopyTextureInfo {
+                texture: &self.atlas,
+                mip_level: 0,
+                origin: wgpu::Origin3d { x, y, z: 0 },
+                aspect: wgpu::TextureAspect::All,
+            },
+            image.as_bytes(),
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                bytes_per_row: Some(image.width() * 4),
+                rows_per_image: None,
+            },
+            wgpu::Extent3d {
+                width: image.width(),
+                height: image.height(),
+                depth_or_array_layers: 1,
+            },
+        );
     }
 
     /// Draws the quads on top of what is already in `target`.

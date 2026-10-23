@@ -1,0 +1,11 @@
+// Title screen, over the slowly turning panorama.
+Screen(
+    root: [
+        Label(id: "logo", anchor: Top, at: (0, 28), text: "game-title", size: 3),
+        Button(id: "play", anchor: Center, at: (0, 4), size: (120, 18), text: "ui-title-play"),
+        Button(id: "options", anchor: Center, at: (0, 26), size: (120, 18), text: "ui-title-options"),
+        Button(id: "quit", anchor: Center, at: (0, 48), size: (120, 18), text: "ui-title-quit"),
+        Label(id: "version", anchor: BottomLeft, at: (4, -4), text: "@version", dim: true),
+        Label(id: "help", anchor: BottomRight, at: (-4, -4), text: "ui-menu-help", dim: true),
+    ],
+)

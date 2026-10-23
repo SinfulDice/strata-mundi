@@ -25,3 +25,11 @@ fn workspace_assets() -> Option<PathBuf> {
 fn workspace_assets() -> Option<PathBuf> {
     None
 }
+
+/// Saves, backups and settings: `--data-dir`, or the system's data folder
+/// (`~/.local/share/strata-mundi` on Linux, `%APPDATA%\\strata-mundi` on Windows).
+pub fn data_dir(chosen: Option<PathBuf>) -> PathBuf {
+    chosen
+        .or_else(|| dirs::data_dir().map(|dir| dir.join("strata-mundi")))
+        .unwrap_or_else(|| PathBuf::from("data"))
+}

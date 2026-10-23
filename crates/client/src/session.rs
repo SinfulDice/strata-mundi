@@ -2,23 +2,26 @@ use crate::app::{ClientConfig, ClientError, DEFAULT_FOV};
 use crate::bench::BenchRun;
 use crate::camera::Camera;
 use crate::gameplay::Gameplay;
-use crate::input::{Action, Binding, Bindings, Gamepads, InputState};
+use crate::input::{Action, Binding, Bindings, Gamepads, InputState, KeyNames};
 use crate::interaction::BlockInfo;
+use crate::launcher::{Launcher, RunningWorld};
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::BlockTable;
-use crate::render::{Acquired, Gpu, Renderer, Target, WindowSurface};
-use crate::screens::Screens;
-use crate::settings::GraphicsSettings;
+use crate::render::{Acquired, Gpu, OffscreenTarget, Renderer, Target, WindowSurface};
+use crate::screens::{Screens, UiAction, UiFrame};
+use crate::settings::{ControlSettings, GraphicsSettings};
+use crate::stage::{InWorld, Stage, TitleScene};
 use crate::streaming::WorldView;
+use crate::ui::ICON_SIZE;
 use crate::world::ClientWorld;
 use glam::{DVec3, Vec2};
 use std::sync::Arc;
 use std::time::Instant;
+use strata_core::content::Content;
 use strata_protocol::{
-    ClientConnection, ClientMessage, Disconnected, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE,
-    ServerMessage,
+    ClientMessage, Disconnected, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE, ServerMessage,
 };
-use winit::event::{DeviceEvent, ElementState, MouseScrollDelta, WindowEvent};
+use winit::event::{DeviceEvent, MouseScrollDelta, WindowEvent};
 use winit::keyboard::PhysicalKey;
 use winit::window::{CursorGrabMode, Window};
 
@@ -30,27 +33,27 @@ const PIXELS_PER_NOTCH: f64 = 40.0;
 pub struct Session {
     pub gpu: Gpu,
     pub surface: WindowSurface,
-    pub connection: ClientConnection,
-    pub bench: Option<BenchRun>,
     renderer: Renderer,
     screens: Screens,
-    game: Gameplay,
+    stage: Stage,
+    launcher: Box<dyn Launcher>,
+    content: Arc<Content>,
+    table: Arc<BlockTable>,
     graphics: GraphicsSettings,
+    controls: ControlSettings,
+    bench: Option<BenchRun>,
     input: InputState,
     idle: InputState,
     gamepads: Gamepads,
+    key_names: KeyNames,
     cursor_captured: bool,
     focused: bool,
+    quit: bool,
     last_frame: Instant,
-    server_tick: u64,
 }
 
 impl Session {
-    pub fn new(
-        window: Arc<Window>,
-        config: ClientConfig,
-        connection: ClientConnection,
-    ) -> Result<Self, ClientError> {
+    pub fn new(window: Arc<Window>, config: ClientConfig) -> Result<Self, ClientError> {
         let instance = Gpu::create_instance();
         let surface = instance
             .create_surface(Arc::clone(&window))
@@ -64,45 +67,91 @@ impl Session {
         let table = Arc::new(BlockTable::new(
             config.content.blocks.iter().map(|(_, _, b)| b),
         ));
-        let meshing =
-            MeshScheduler::new(table, graphics.worker_threads, graphics.ambient_occlusion)
-                .map_err(ClientError::Threads)?;
         let bench = config.bench.map(|bench| BenchRun::new(bench, &gpu));
-        let render_distance = graphics
-            .render_distance
-            .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
-        connection.send(ClientMessage::ViewDistance(render_distance));
-        let camera = Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV);
         let screens = Screens::new(
             &gpu,
             surface.format(),
             config.ui,
             &config.content,
-            config.language,
+            config.interface,
+            config.interface_path,
         );
-        let game = Gameplay::new(
-            WorldView::new(ClientWorld::default(), meshing),
-            camera,
-            BlockInfo::new(config.content),
-            config.controls,
-        );
-        Ok(Self {
+        let mut session = Self {
             gpu,
             surface,
-            connection,
-            bench,
             renderer,
             screens,
-            game,
+            stage: Stage::Empty,
+            launcher: config.launcher,
+            content: config.content,
+            table,
             graphics,
+            controls: config.controls,
+            bench,
             input: InputState::new(Bindings::default()),
             idle: InputState::new(Bindings::default()),
             gamepads: Gamepads::connect(),
+            key_names: KeyNames::default(),
             cursor_captured: false,
             focused: true,
+            quit: false,
             last_frame: Instant::now(),
-            server_tick: 0,
-        })
+        };
+        match config.start {
+            Some(running) => session.enter_world(running)?,
+            None => session.enter_title()?,
+        }
+        Ok(session)
+    }
+
+    fn new_view(&self, world: ClientWorld) -> Result<WorldView, ClientError> {
+        let meshing = MeshScheduler::new(
+            Arc::clone(&self.table),
+            self.graphics.worker_threads,
+            self.graphics.ambient_occlusion,
+        )
+        .map_err(ClientError::Threads)?;
+        Ok(WorldView::new(world, meshing))
+    }
+
+    fn enter_title(&mut self) -> Result<(), ClientError> {
+        self.renderer.clear();
+        let panorama = self.launcher.panorama();
+        let view = self.new_view(panorama.world)?;
+        self.stage = Stage::Title(Box::new(TitleScene::new(
+            view,
+            panorama.center,
+            DEFAULT_FOV,
+        )));
+        self.screens.show_title();
+        Ok(())
+    }
+
+    fn enter_world(&mut self, running: RunningWorld) -> Result<(), ClientError> {
+        self.renderer.clear();
+        let distance = self
+            .graphics
+            .render_distance
+            .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
+        running
+            .connection
+            .send(ClientMessage::ViewDistance(distance));
+        let camera = Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV);
+        let view = self.new_view(ClientWorld::default())?;
+        let info = BlockInfo::new(Arc::clone(&self.content));
+        let game = Gameplay::new(view, camera, info, self.controls.clone());
+        self.stage = Stage::Playing(Box::new(InWorld::new(running, game)));
+        self.screens.enter_world();
+        Ok(())
+    }
+
+    /// Saves and closes the world being played, if any (also when the window closes).
+    pub fn leave_world(&mut self) {
+        let icon = self.capture_icon();
+        if let Stage::Playing(world) = std::mem::replace(&mut self.stage, Stage::Empty) {
+            world.leave(icon);
+        }
+        self.renderer.clear();
     }
 
     pub fn handle_window_event(&mut self, event: WindowEvent) {
@@ -111,29 +160,22 @@ impl Session {
             WindowEvent::Focused(focused) => {
                 self.focused = focused;
                 if !focused {
-                    self.set_cursor_captured(false);
                     self.input.release_all();
                 }
             }
             WindowEvent::KeyboardInput { event, .. } => {
-                if let Some(text) = &event.text
-                    && event.state.is_pressed()
+                let pressed = event.state.is_pressed();
+                if let (PhysicalKey::Code(code), Some(text), true) =
+                    (event.physical_key, &event.text, pressed)
                 {
+                    self.key_names.learn(code, text);
                     self.input.add_text(text);
                 }
                 if let (PhysicalKey::Code(code), false) = (event.physical_key, event.repeat) {
-                    self.input
-                        .set_binding(Binding::Key(code), event.state.is_pressed());
+                    self.input.set_binding(Binding::Key(code), pressed);
                 }
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                if !self.cursor_captured
-                    && !self.screens.is_menu_open()
-                    && state == ElementState::Pressed
-                {
-                    self.set_cursor_captured(true);
-                    return;
-                }
                 self.input
                     .set_binding(Binding::Mouse(button), state.is_pressed());
             }
@@ -142,7 +184,7 @@ impl Session {
                 MouseScrollDelta::PixelDelta(p) => (p.y / PIXELS_PER_NOTCH) as f32,
             }),
             WindowEvent::CursorMoved { position, .. } => {
-                self.input.set_cursor((position.x, position.y))
+                self.input.set_cursor((position.x, position.y));
             }
             WindowEvent::Touch(_) => self.input.note_touch(),
             _ => {}
@@ -165,14 +207,10 @@ impl Session {
         self.last_frame = start;
         self.update(frame_seconds)?;
         let cpu_seconds = self.render();
-        if let Some(bench) = &mut self.bench {
+        if let (Some(bench), Stage::Playing(world)) = (&mut self.bench, &self.stage) {
             if let Some(cpu_seconds) = cpu_seconds {
-                bench.record_frame(
-                    &self.gpu,
-                    frame_seconds * 1000.0,
-                    cpu_seconds * 1000.0,
-                    self.server_tick,
-                );
+                let (frame_ms, cpu_ms) = (frame_seconds * 1000.0, cpu_seconds * 1000.0);
+                bench.record_frame(&self.gpu, frame_ms, cpu_ms, world.server_tick);
             }
             if bench.is_finished() {
                 let path = bench
@@ -182,64 +220,104 @@ impl Session {
                 return Ok(false);
             }
         }
-        Ok(true)
+        Ok(!self.quit)
     }
 
-    /// The bench follows real time; interactive play caps `dt` so a stall cannot teleport.
     fn update(&mut self, frame_seconds: f32) -> Result<(), ClientError> {
         if self.focused {
             self.gamepads.poll(&mut self.input);
         }
         self.receive_messages()?;
-        let was_open = self.screens.is_menu_open();
-        let used_by_menu = self.screens.handle(&self.input, &mut self.game);
-        if self.screens.is_menu_open() {
-            self.set_cursor_captured(false);
-        } else if was_open {
-            self.set_cursor_captured(true);
+        let game = match &mut self.stage {
+            Stage::Playing(world) => Some(&mut world.game),
+            _ => None,
+        };
+        let handled = self.screens.handle(&self.input, game, &self.content);
+        for action in handled.actions {
+            self.perform(action)?;
         }
-        if !used_by_menu {
+        let menu_open = self.screens.is_menu_open();
+        let playing = matches!(self.stage, Stage::Playing(_));
+        self.set_cursor_captured(playing && !menu_open && self.focused);
+        if !handled.used {
             self.handle_system_actions();
         }
-        let settled = self
-            .game
-            .view
-            .is_settled(settled_columns(self.graphics.render_distance));
-        match &mut self.bench {
-            // The bench starts once the initial world is loaded, so loading is not measured.
-            Some(bench) if settled || bench.started() => {
-                bench.advance(frame_seconds, &mut self.game.camera);
-                self.game.follow_camera(&self.connection);
-            }
-            Some(_) => {}
-            // Without the cursor (paused, menus), the world goes on but the player is idle.
-            None => {
-                let playing = self.cursor_captured && !self.screens.is_menu_open();
-                let input = if playing { &self.input } else { &self.idle };
-                self.game.update(
-                    frame_seconds.min(MAX_FRAME_SECONDS),
-                    input,
-                    &self.connection,
-                );
-            }
-        }
-        self.game.sync_hotbar(&self.connection);
+        self.advance_stage(frame_seconds, menu_open);
         self.input.end_frame();
-        self.renderer.outline = self.game.interaction.target.map(|hit| hit.block);
-        let camera = self.game.camera.position;
-        self.game.view.update(
+        Ok(())
+    }
+
+    fn advance_stage(&mut self, frame_seconds: f32, menu_open: bool) {
+        let pause = self.screens.wants_pause();
+        let (view, camera) = match &mut self.stage {
+            Stage::Empty => return,
+            Stage::Title(title) => {
+                title.update(frame_seconds);
+                (&mut title.view, title.camera.position)
+            }
+            Stage::Playing(world) => {
+                world.set_paused(pause);
+                let wanted = settled_columns(self.graphics.render_distance);
+                let settled = world.game.view.is_settled(wanted);
+                let dt = frame_seconds.min(MAX_FRAME_SECONDS);
+                match &mut self.bench {
+                    // The bench starts once the initial world is loaded, so loading is not measured.
+                    Some(bench) if settled || bench.started() => {
+                        bench.advance(frame_seconds, &mut world.game.camera);
+                        world.game.follow_camera(&world.connection);
+                    }
+                    Some(_) => {}
+                    // In menus the world goes on (unless paused) but the player stands still.
+                    None if menu_open => world.game.update(dt, &self.idle, &world.connection),
+                    None => world.game.update(dt, &self.input, &world.connection),
+                }
+                world.game.sync_hotbar(&world.connection);
+                self.renderer.outline = world.game.interaction.target.map(|hit| hit.block);
+                (&mut world.game.view, world.game.camera.position)
+            }
+        };
+        view.update(
             &self.gpu,
             &mut self.renderer,
             camera,
             self.graphics.vertical_distance,
         );
-        Ok(())
+    }
+
+    fn perform(&mut self, action: UiAction) -> Result<(), ClientError> {
+        let started = match action {
+            UiAction::ShowWorlds => {
+                self.screens.open_worlds(&self.gpu, self.launcher.worlds());
+                return Ok(());
+            }
+            UiAction::Play(id) => self.launcher.open(&id),
+            UiAction::Create(world) => self.launcher.create(world),
+            UiAction::Delete(id) => {
+                match self.launcher.delete(&id) {
+                    Ok(()) => self.screens.open_worlds(&self.gpu, self.launcher.worlds()),
+                    Err(error) => self.screens.show_notice(error.translation_key()),
+                }
+                return Ok(());
+            }
+            UiAction::SaveAndQuit => {
+                self.leave_world();
+                return self.enter_title();
+            }
+            UiAction::Quit => {
+                self.quit = true;
+                return Ok(());
+            }
+        };
+        match started {
+            Ok(running) => self.enter_world(running),
+            Err(error) => {
+                self.screens.show_notice(error.translation_key());
+                Ok(())
+            }
+        }
     }
 
     fn handle_system_actions(&mut self) {
-        if self.input.just_pressed(Action::Pause) {
-            self.set_cursor_captured(false);
-        }
         if self.input.just_pressed(Action::RenderDistanceDown) {
             self.set_render_distance(self.graphics.render_distance.saturating_sub(1));
         }
@@ -249,26 +327,25 @@ impl Session {
     }
 
     fn receive_messages(&mut self) -> Result<(), ClientError> {
+        let Stage::Playing(world) = &mut self.stage else {
+            return Ok(());
+        };
         loop {
-            match self.connection.try_recv() {
-                Ok(Some(message)) => self.apply(message),
+            match world.connection.try_recv() {
+                Ok(Some(ServerMessage::Tick { tick })) => world.server_tick = tick,
+                Ok(Some(message)) => {
+                    if let (ServerMessage::Welcome { body, .. }, Some(bench)) =
+                        (&message, &mut self.bench)
+                    {
+                        bench.set_origin(body.position);
+                    }
+                    world
+                        .game
+                        .apply(message, &mut self.renderer, &world.connection);
+                }
                 Ok(None) => return Ok(()),
                 Err(Disconnected) => return Err(ClientError::ServerGone),
             }
-        }
-    }
-
-    fn apply(&mut self, message: ServerMessage) {
-        match message {
-            ServerMessage::Tick { tick } => self.server_tick = tick,
-            ServerMessage::Welcome { body, .. } if self.bench.is_some() => {
-                if let Some(bench) = &mut self.bench {
-                    bench.set_origin(body.position);
-                }
-                self.game
-                    .apply(message, &mut self.renderer, &self.connection);
-            }
-            other => self.game.apply(other, &mut self.renderer, &self.connection),
         }
     }
 
@@ -277,7 +354,17 @@ impl Session {
         let distance = distance.clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
         tracing::info!(distance, "render distance");
         self.graphics.render_distance = distance;
-        self.connection.send(ClientMessage::ViewDistance(distance));
+        if let Stage::Playing(world) = &self.stage {
+            world.connection.send(ClientMessage::ViewDistance(distance));
+        }
+    }
+
+    fn camera(&self) -> Camera {
+        match &self.stage {
+            Stage::Title(title) => title.camera.clone(),
+            Stage::Playing(world) => world.game.camera.clone(),
+            Stage::Empty => Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV),
+        }
     }
 
     /// Returns the CPU time spent building and submitting the frame, in seconds,
@@ -289,24 +376,15 @@ impl Session {
         };
         let view = frame.texture.create_view(&Default::default());
         let mut encoder = self.gpu.device.create_command_encoder(&Default::default());
+        let camera = self.camera();
         let timestamps = self.bench.as_mut().and_then(BenchRun::timestamp_writes);
-        self.renderer.render(
-            &self.gpu,
-            &mut encoder,
-            Target {
-                view: &view,
-                size: self.surface.size(),
-            },
-            &self.game.camera,
-            timestamps,
-        );
-        self.screens.draw(
-            &self.gpu,
-            &mut encoder,
-            &view,
-            self.surface.size(),
-            &mut self.game,
-        );
+        let target = Target {
+            view: &view,
+            size: self.surface.size(),
+        };
+        self.renderer
+            .render(&self.gpu, &mut encoder, target, &camera, timestamps);
+        self.draw_interface(&mut encoder, &view);
         if let Some(bench) = &self.bench {
             bench.resolve(&mut encoder);
         }
@@ -318,6 +396,53 @@ impl Session {
         self.surface.window.pre_present_notify();
         self.gpu.queue.present(frame);
         Some(cpu)
+    }
+
+    fn draw_interface(&mut self, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
+        let language = self.screens.language().to_owned();
+        let (key_names, input, content) = (&self.key_names, &self.input, &self.content);
+        let key_label = |name: &str| match Action::from_name(name) {
+            Some(action) => key_names.label(
+                input.bindings(),
+                input.last_device(),
+                action,
+                &content.translations,
+                &language,
+            ),
+            None => name.to_owned(),
+        };
+        let game = match &mut self.stage {
+            Stage::Playing(world) => Some(&mut world.game),
+            _ => None,
+        };
+        let frame = UiFrame {
+            encoder,
+            view,
+            size: self.surface.size(),
+        };
+        self.screens
+            .draw(&self.gpu, frame, content, game, &key_label);
+    }
+
+    /// A small render of the current view for the world list, as PNG.
+    fn capture_icon(&mut self) -> Option<Vec<u8>> {
+        let Stage::Playing(world) = &self.stage else {
+            return None;
+        };
+        let camera = world.game.camera.clone();
+        let target = OffscreenTarget::with_format(&self.gpu, ICON_SIZE, self.surface.format());
+        let mut encoder = self.gpu.device.create_command_encoder(&Default::default());
+        let frame = Target {
+            view: &target.view,
+            size: target.size,
+        };
+        self.renderer
+            .render(&self.gpu, &mut encoder, frame, &camera, None);
+        let image = target
+            .read(&self.gpu, encoder)
+            .map_err(|error| tracing::warn!(%error, "world capture failed"))
+            .ok()?;
+        crate::screenshot::encode_png(&image)
     }
 
     fn set_cursor_captured(&mut self, captured: bool) {

@@ -1,0 +1,21 @@
+// Saved worlds: capture, name, last played, mode and play time. Five rows at once
+// (`VISIBLE_ROWS` in screens/worlds.rs).
+Screen(
+    root: [
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (300, 208),
+            children: [
+                Label(id: "title", anchor: TopLeft, at: (8, 5), text: "ui-worlds-title"),
+                List(id: "list", anchor: TopLeft, at: (8, 18), size: (284, 157), row_height: 31),
+                Label(id: "empty", anchor: Top, at: (0, 80), text: "@empty", dim: true),
+                Button(id: "play", anchor: BottomLeft, at: (8, -8), size: (68, 18), text: "ui-worlds-play"),
+                Button(id: "create", anchor: BottomLeft, at: (80, -8), size: (68, 18), text: "ui-worlds-create"),
+                Button(id: "delete", anchor: BottomLeft, at: (152, -8), size: (68, 18), text: "ui-worlds-delete"),
+                Button(id: "back", anchor: BottomLeft, at: (224, -8), size: (68, 18), text: "ui-back"),
+            ],
+        ),
+    ],
+)

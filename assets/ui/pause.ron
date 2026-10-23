@@ -1,0 +1,18 @@
+// Pause menu: the world stops while it is open.
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (160, 92),
+            children: [
+                Label(id: "title", anchor: Top, at: (0, 6), text: "ui-pause-title"),
+                Button(id: "resume", anchor: Top, at: (0, 22), size: (140, 18), text: "ui-pause-resume"),
+                Button(id: "options", anchor: Top, at: (0, 44), size: (140, 18), text: "ui-pause-options"),
+                Button(id: "save_quit", anchor: Top, at: (0, 66), size: (140, 18), text: "ui-pause-save-quit"),
+            ],
+        ),
+    ],
+)

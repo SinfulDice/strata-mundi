@@ -18,17 +18,23 @@ pub struct OffscreenTarget {
     texture: wgpu::Texture,
     pub view: wgpu::TextureView,
     pub size: (u32, u32),
+    format: wgpu::TextureFormat,
 }
 
 impl OffscreenTarget {
     pub fn new(gpu: &Gpu, size: (u32, u32)) -> Self {
+        Self::with_format(gpu, size, OFFSCREEN_FORMAT)
+    }
+
+    /// In the window's format, so pipelines made for the window can draw into it.
+    pub fn with_format(gpu: &Gpu, size: (u32, u32), format: wgpu::TextureFormat) -> Self {
         let texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
             label: Some("offscreen target"),
             size: extent(size),
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: OFFSCREEN_FORMAT,
+            format,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
             view_formats: &[],
         });
@@ -36,6 +42,7 @@ impl OffscreenTarget {
             view: texture.create_view(&Default::default()),
             texture,
             size,
+            format,
         }
     }
 
@@ -78,19 +85,27 @@ impl OffscreenTarget {
         let mapped = buffer
             .get_mapped_range(..)
             .map_err(|e| ReadbackError::Map(e.to_string()))?;
-        unpad(&mapped, width, height, padded_row)
+        let bgra = matches!(
+            self.format,
+            wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb
+        );
+        unpad(&mapped, width, height, padded_row, bgra)
             .ok_or_else(|| ReadbackError::Map("unexpected image size".into()))
     }
 }
 
-fn unpad(bytes: &[u8], width: u32, height: u32, padded_row: u32) -> Option<RgbaImage> {
+/// Drops the row padding; `bgra` swaps blue and red back into RGBA order.
+fn unpad(bytes: &[u8], width: u32, height: u32, padded_row: u32, bgra: bool) -> Option<RgbaImage> {
     let row = (width * 4) as usize;
-    let pixels = bytes
+    let mut pixels: Vec<u8> = bytes
         .chunks(padded_row as usize)
         .take(height as usize)
         .flat_map(|padded| &padded[..row])
         .copied()
         .collect();
+    if bgra {
+        pixels.chunks_exact_mut(4).for_each(|p| p.swap(0, 2));
+    }
     RgbaImage::from_bytes(width, height, pixels)
 }
 

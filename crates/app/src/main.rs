@@ -2,28 +2,31 @@
 
 mod cli;
 mod content;
+mod launcher;
 mod logging;
 mod offline;
 mod paths;
 
-use anyhow::Context;
 use clap::Parser;
 use glam::DVec3;
+use launcher::GameLauncher;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
+use strata_client::interface_settings::InterfaceSettings;
 use strata_client::screenshot::{View, capture};
 use strata_client::settings::{ControlSettings, GraphicsSettings, Preset};
 use strata_client::texture_sheet::write_texture_sheet;
 use strata_client::{ClientConfig, DEFAULT_FOV, run};
-use strata_core::coords::DEFAULT_WORLD_BORDER;
 use strata_core::dimension::DimensionId;
 use strata_core::physics::EYE_HEIGHT;
-use strata_protocol::GameMode;
-use strata_server::save::{FORMAT_VERSION, WorldMeta};
-use strata_server::{IntegratedServer, ServerConfig, WorldSettings};
+use strata_server::TICKS_PER_SECOND;
 use strata_worldgen::{Generator, Seed};
+
+/// Copies of a world kept, made each time it is opened.
+const BACKUPS_KEPT: usize = 3;
+const AUTOSAVE_MINUTES: u64 = 5;
 
 fn main() -> anyhow::Result<()> {
     let args = cli::Args::parse();
@@ -53,31 +56,39 @@ fn main() -> anyhow::Result<()> {
         .as_deref()
         .map(|name| load_bench(&loaded.assets, name, args.preset, args.report_dir.clone()))
         .transpose()?;
+    let data = paths::data_dir(args.data_dir.clone());
+    tracing::info!(path = %data.display(), "data folder");
+    let interface_path = data.join("config/interface.ron");
+    let mut interface = InterfaceSettings::load(&interface_path);
+    if let Some(language) = &args.lang {
+        interface.language.clone_from(language);
+    }
     let content = Arc::new(loaded.content);
-    let server = ServerConfig {
-        dimension,
-        generator,
+    let launcher = GameLauncher {
         content: Arc::clone(&content),
+        worldgen: Arc::clone(&loaded.worldgen),
+        dimension,
+        saves: data.join("saves"),
+        backups: data.join("backups"),
+        backups_kept: BACKUPS_KEPT,
+        autosave_ticks: AUTOSAVE_MINUTES * 60 * u64::from(TICKS_PER_SECOND),
         generation_threads: graphics.generation_threads,
         view_distance: graphics.render_distance,
-        world: WorldSettings {
-            meta: temporary_world(seed),
-            folder: None,
-            autosave_ticks: 0,
-        },
     };
-    play(
-        ClientConfig {
-            content,
-            language: args.lang.clone(),
-            controls: ControlSettings::default(),
-            ui: loaded.ui,
-            vsync: bench.is_none(),
-            graphics,
-            bench,
-        },
-        server,
-    )
+    let direct = bench.is_some() || args.seed.is_some();
+    let start = direct.then(|| launcher.temporary(seed)).transpose()?;
+    Ok(run(ClientConfig {
+        content,
+        controls: ControlSettings::default(),
+        ui: loaded.ui,
+        interface,
+        interface_path,
+        vsync: bench.is_none(),
+        graphics,
+        bench,
+        launcher: Box::new(launcher),
+        start,
+    })?)
 }
 
 /// With `--seed`, a freshly generated world around `--pos` (or the spawn point);
@@ -119,17 +130,6 @@ fn screenshot(
     Ok(capture(&loaded.content, &world, &view, path)?)
 }
 
-fn play(client: ClientConfig, server: ServerConfig) -> anyhow::Result<()> {
-    let (client_end, server_end) = strata_protocol::local_pair();
-    let server =
-        IntegratedServer::spawn(server_end, server).context("could not start the server thread")?;
-    let result = run(client, client_end);
-    if server.join().is_err() {
-        tracing::error!("server thread panicked");
-    }
-    Ok(result?)
-}
-
 fn load_bench(
     assets: &Path,
     name: &str,
@@ -151,25 +151,9 @@ fn camera([x, y, z]: [f64; 3], args: &cli::Args) -> Camera {
 }
 
 /// Like Minecraft, a world without a chosen seed gets a random one.
-fn random_seed() -> Seed {
+pub fn random_seed() -> Seed {
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_nanos());
     Seed((nanos as u64) ^ ((nanos >> 64) as u64)).mixed()
-}
-
-/// A world that is never saved (benchmarks, `--seed` without the menus).
-fn temporary_world(seed: Seed) -> WorldMeta {
-    WorldMeta {
-        format: FORMAT_VERSION,
-        game_version: env!("CARGO_PKG_VERSION").to_owned(),
-        name: String::new(),
-        seed: seed.0,
-        seed_text: String::new(),
-        mode: GameMode::Creative,
-        border: DEFAULT_WORLD_BORDER,
-        created: 0,
-        last_played: 0,
-        play_ticks: 0,
-    }
 }

@@ -39,9 +39,13 @@ pub struct Args {
     #[arg(long, value_name = "DIR", default_value = "resourcepacks")]
     pub resource_packs_dir: PathBuf,
 
-    /// Language: fr, en or lol.
-    #[arg(long, default_value = "fr", value_parser = strata_core::lang::LANGUAGES)]
-    pub lang: String,
+    /// Language: fr, en or lol (otherwise the one chosen in the options).
+    #[arg(long, value_parser = strata_core::lang::LANGUAGES)]
+    pub lang: Option<String>,
+
+    /// Folder for saves, backups and settings (default: the system's data folder).
+    #[arg(long, value_name = "DIR")]
+    pub data_dir: Option<PathBuf>,
 
     /// Run a scripted scene from `assets/bench-scenes/<SCENE>.ron` and write a report
     /// in `perf-reports/`.

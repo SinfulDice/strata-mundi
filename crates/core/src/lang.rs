@@ -18,6 +18,16 @@ pub struct Translations {
     keys: BTreeMap<&'static str, BTreeSet<String>>,
 }
 
+/// No text at all: every key shows as itself (tests, tools).
+impl Default for Translations {
+    fn default() -> Self {
+        Self {
+            bundles: BTreeMap::new(),
+            keys: BTreeMap::new(),
+        }
+    }
+}
+
 impl fmt::Debug for Translations {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Translations")
@@ -106,6 +116,17 @@ impl Translations {
     pub fn text(&self, language: &str, key: &str) -> String {
         self.format(language, key, None)
             .or_else(|| self.format(FALLBACK, key, None))
+            .unwrap_or_else(|| key.to_owned())
+    }
+
+    /// `text` with variables, e.g. `[("minutes", "12".into())]` for `{ $minutes }`.
+    pub fn text_with(&self, language: &str, key: &str, args: &[(&str, String)]) -> String {
+        let mut fluent = FluentArgs::new();
+        for (name, value) in args {
+            fluent.set(*name, value.clone());
+        }
+        self.format(language, key, Some(&fluent))
+            .or_else(|| self.format(FALLBACK, key, Some(&fluent)))
             .unwrap_or_else(|| key.to_owned())
     }
 

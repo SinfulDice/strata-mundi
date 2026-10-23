@@ -1,11 +1,13 @@
 use crate::bench::BenchConfig;
+use crate::interface_settings::InterfaceSettings;
+use crate::launcher::{Launcher, RunningWorld};
 use crate::render::GpuError;
 use crate::session::Session;
 use crate::settings::{ControlSettings, GraphicsSettings};
 use crate::ui::UiAssets;
+use std::path::PathBuf;
 use std::sync::Arc;
 use strata_core::content::Content;
-use strata_protocol::{ClientConnection, ClientMessage};
 use thiserror::Error;
 use winit::application::ApplicationHandler;
 use winit::event::{DeviceEvent, DeviceId, WindowEvent};
@@ -34,30 +36,35 @@ pub const DEFAULT_FOV: f32 = 70.0;
 pub struct ClientConfig {
     pub content: Arc<Content>,
     pub graphics: GraphicsSettings,
-    pub language: String,
     pub controls: ControlSettings,
     pub ui: UiAssets,
+    pub interface: InterfaceSettings,
+    /// Where interface changes (HUD layout, language…) are written.
+    pub interface_path: PathBuf,
     pub vsync: bool,
     pub bench: Option<BenchConfig>,
+    pub launcher: Box<dyn Launcher>,
+    /// Start in this world directly (benchmarks, `--seed`) instead of the title screen.
+    pub start: Option<RunningWorld>,
 }
 
-/// Opens the game window and runs until it is closed.
-pub fn run(config: ClientConfig, connection: ClientConnection) -> Result<(), ClientError> {
+/// Opens the game window and runs until it is closed; the world being played is saved.
+pub fn run(config: ClientConfig) -> Result<(), ClientError> {
     let event_loop = EventLoop::new()?;
     let mut app = ClientApp {
-        pending: Some((config, connection)),
+        pending: Some(config),
         session: None,
         error: None,
     };
     event_loop.run_app(&mut app)?;
-    if let Some(session) = app.session.take() {
-        session.connection.send(ClientMessage::Disconnect);
+    if let Some(mut session) = app.session.take() {
+        session.leave_world();
     }
     app.error.map_or(Ok(()), Err)
 }
 
 struct ClientApp {
-    pending: Option<(ClientConfig, ClientConnection)>,
+    pending: Option<ClientConfig>,
     session: Option<Session>,
     error: Option<ClientError>,
 }
@@ -69,29 +76,25 @@ impl ClientApp {
         event_loop.exit();
     }
 
-    fn start(
-        event_loop: &ActiveEventLoop,
-        config: ClientConfig,
-        connection: ClientConnection,
-    ) -> Result<Session, ClientError> {
+    fn start(event_loop: &ActiveEventLoop, config: ClientConfig) -> Result<Session, ClientError> {
         let title = config
             .content
             .translations
-            .text(&config.language, "game-title");
+            .text(&config.interface.language, "game-title");
         let attributes = Window::default_attributes()
             .with_title(title)
             .with_inner_size(winit::dpi::LogicalSize::new(1280, 720));
         let window = Arc::new(event_loop.create_window(attributes)?);
-        Session::new(window, config, connection)
+        Session::new(window, config)
     }
 }
 
 impl ApplicationHandler for ClientApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let Some((config, connection)) = self.pending.take() else {
+        let Some(config) = self.pending.take() else {
             return;
         };
-        match Self::start(event_loop, config, connection) {
+        match Self::start(event_loop, config) {
             Ok(session) => self.session = Some(session),
             Err(error) => self.fail(event_loop, error),
         }

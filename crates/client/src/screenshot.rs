@@ -82,6 +82,18 @@ pub fn render_image(
     Ok(target.read(&gpu, encoder)?)
 }
 
+/// PNG file contents (world captures sent to the server).
+pub fn encode_png(image: &RgbaImage) -> Option<Vec<u8>> {
+    let mut bytes = Vec::new();
+    let mut encoder = png::Encoder::new(&mut bytes, image.width(), image.height());
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Eight);
+    let mut writer = encoder.write_header().ok()?;
+    writer.write_image_data(image.as_bytes()).ok()?;
+    writer.finish().ok()?;
+    Some(bytes)
+}
+
 pub fn write_png(path: &Path, image: &RgbaImage) -> Result<(), ScreenshotError> {
     let io_error = |source| ScreenshotError::Io {
         path: path.to_owned(),

@@ -148,6 +148,10 @@ impl InputState {
         self.right_stick
     }
 
+    pub fn bindings(&self) -> &Bindings {
+        &self.bindings
+    }
+
     pub fn last_device(&self) -> InputDevice {
         self.last_device
     }

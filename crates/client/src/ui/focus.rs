@@ -8,6 +8,18 @@ pub enum Direction {
     Right,
 }
 
+impl Direction {
+    /// One step in this direction, in interface pixels (y grows downwards).
+    pub fn offset(self) -> (i32, i32) {
+        match self {
+            Self::Up => (0, -1),
+            Self::Down => (0, 1),
+            Self::Left => (-1, 0),
+            Self::Right => (1, 0),
+        }
+    }
+}
+
 /// Next element in `direction` from `current` (gamepad / arrow navigation): the closest
 /// one ahead, preferring those well aligned. Without a current element, the first one.
 pub fn navigate(hits: &[Hit], current: Option<&Hit>, direction: Direction) -> Option<Hit> {
@@ -43,6 +55,7 @@ mod tests {
                 id: "g".into(),
                 index: i,
                 rect: Rect::new((i % 3) as i32 * 20, (i / 3) as i32 * 20, 20, 20),
+                kind: crate::ui::HitKind::Button,
             })
             .collect()
     }

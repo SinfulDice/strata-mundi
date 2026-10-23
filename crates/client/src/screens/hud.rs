@@ -1,8 +1,9 @@
+use crate::gameplay::Gameplay;
 use crate::hotbar::{Hotbar, SLOTS};
 use crate::ui::ScreenModel;
-use strata_core::content::ItemId;
+use strata_core::content::{Content, ItemId, ItemKind};
 
-/// Data shown by the in-game overlay.
+/// Data shown by the in-game overlay (sample values in the HUD editor).
 pub struct HudModel<'a> {
     pub hotbar: &'a Hotbar,
     /// Translated name of the aimed block, if shown.
@@ -24,14 +25,22 @@ impl ScreenModel for HudModel<'_> {
     fn selected(&self, id: &str) -> Option<usize> {
         (id == "hotbar").then(|| self.hotbar.selected_index())
     }
+}
 
-    fn tabs(&self, _: &str) -> Vec<String> {
-        Vec::new()
+/// Translated name of the block the player aims at, unless hidden in the options.
+pub fn aimed_block_name(game: &Gameplay, content: &Content, language: &str) -> Option<String> {
+    if !game.controls.show_block_name {
+        return None;
     }
-
-    fn tooltip(&self, _: &str, _: usize) -> Option<String> {
-        None
-    }
-
-    fn activate(&mut self, _: &str, _: usize) {}
+    let block = game.view.world.block_at(game.interaction.target?.block);
+    let id = content.block_name(block)?;
+    let item = content
+        .items
+        .key(id)
+        .and_then(|item| content.items.get(item))?;
+    matches!(item.kind, ItemKind::Block(_)).then(|| {
+        content
+            .translations
+            .text(language, &id.translation_key("block"))
+    })
 }

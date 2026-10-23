@@ -211,6 +211,12 @@ impl Renderer {
         self.columns.remove(&(x, z));
     }
 
+    /// Forgets every mesh (leaving a world or the title screen).
+    pub fn clear(&mut self) {
+        self.columns.clear();
+        self.outline = None;
+    }
+
     /// Back to front, so that blending sees what is behind each surface.
     fn draw_translucent(
         &self,

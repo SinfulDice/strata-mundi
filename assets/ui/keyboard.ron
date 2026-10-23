@@ -1,0 +1,27 @@
+// On-screen keyboard for gamepads. One key per character; four characters are commands:
+// `^` capitals, `_` space, `<` erase, `>` done (screens/keyboard.rs).
+Screen(
+    root: [
+        Panel(
+            id: "keyboard",
+            anchor: Bottom,
+            at: (0, -4),
+            size: (196, 96),
+            children: [
+                KeyGrid(
+                    id: "keys",
+                    anchor: Center,
+                    at: (0, 0),
+                    key: 16,
+                    rows: [
+                        "1234567890-",
+                        "abcdefghijk",
+                        "lmnopqrstuv",
+                        "wxyzéèàçù'.",
+                        "^_<>",
+                    ],
+                ),
+            ],
+        ),
+    ],
+)

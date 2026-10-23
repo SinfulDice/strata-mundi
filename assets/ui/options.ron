@@ -1,0 +1,20 @@
+// Interface options (the full settings screen arrives at milestone 8).
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (200, 136),
+            children: [
+                Label(id: "title", anchor: Top, at: (0, 6), text: "ui-options-title"),
+                Button(id: "language", anchor: Top, at: (0, 22), size: (180, 18), text: "@language"),
+                Slider(id: "scale", anchor: Top, at: (0, 44), size: (180, 18)),
+                Button(id: "pause", anchor: Top, at: (0, 66), size: (180, 18), text: "@pause"),
+                Button(id: "hud", anchor: Top, at: (0, 88), size: (180, 18), text: "ui-option-hud"),
+                Button(id: "back", anchor: Top, at: (0, 110), size: (180, 18), text: "ui-back"),
+            ],
+        ),
+    ],
+)

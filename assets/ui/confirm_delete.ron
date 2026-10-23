@@ -1,0 +1,18 @@
+// Asked before deleting a world for good (backups are kept).
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (260, 72),
+            children: [
+                Label(id: "question", anchor: Top, at: (0, 8), text: "@question"),
+                Label(id: "warning", anchor: Top, at: (0, 22), text: "ui-delete-warning", dim: true),
+                Button(id: "delete", anchor: BottomLeft, at: (8, -8), size: (118, 18), text: "ui-delete-confirm"),
+                Button(id: "cancel", anchor: BottomRight, at: (-8, -8), size: (118, 18), text: "ui-cancel"),
+            ],
+        ),
+    ],
+)

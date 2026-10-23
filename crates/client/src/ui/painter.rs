@@ -51,8 +51,22 @@ impl<'a> Painter<'a> {
 
     /// Draws `text` with a drop shadow; returns its width.
     pub fn text(&mut self, x: i32, y: i32, text: &str, color: Rgba, shadow: Rgba) -> u32 {
-        self.text_plain(x + 1, y + 1, text, shadow);
-        self.text_plain(x, y, text, color)
+        self.text_sized(x, y, text, color, shadow, 1)
+    }
+
+    /// `text` magnified `size` times (titles), shadow included.
+    pub fn text_sized(
+        &mut self,
+        x: i32,
+        y: i32,
+        text: &str,
+        color: Rgba,
+        shadow: Rgba,
+        size: u32,
+    ) -> u32 {
+        let offset = size as i32;
+        self.text_plain(x + offset, y + offset, text, shadow, size);
+        self.text_plain(x, y, text, color, size)
     }
 
     pub fn text_width(&self, text: &str) -> u32 {
@@ -63,12 +77,13 @@ impl<'a> Painter<'a> {
         self.atlas.font.line_height
     }
 
-    fn text_plain(&mut self, x: i32, y: i32, text: &str, color: Rgba) -> u32 {
+    fn text_plain(&mut self, x: i32, y: i32, text: &str, color: Rgba, size: u32) -> u32 {
         let mut pen = x;
         for ch in text.chars() {
             let (source, advance) = self.atlas.glyph(ch);
-            self.quad(Rect::new(pen, y, source.w, source.h), source, color);
-            pen += advance as i32;
+            let dest = Rect::new(pen, y, source.w * size, source.h * size);
+            self.quad(dest, source, color);
+            pen += (advance * size) as i32;
         }
         (pen - x).max(0) as u32
     }

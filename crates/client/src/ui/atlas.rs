@@ -5,6 +5,13 @@ use strata_core::texture::{Rgba, RgbaImage, block_icon, upscale};
 
 /// Twice `MAX_FONT_ATLAS`: the font (top) always fits, icons fill the rest.
 const ATLAS_SIZE: u32 = 1024;
+/// World captures (16:9), drawn into slots at the bottom of the atlas when needed.
+pub const ICON_SIZE: (u32, u32) = (96, 54);
+const WORLD_ICON_SLOTS: u32 = 20;
+const WORLD_ICONS_PER_ROW: u32 = ATLAS_SIZE / ICON_SIZE.0;
+/// First row kept free for world captures.
+const WORLD_ICONS_TOP: u32 =
+    ATLAS_SIZE - WORLD_ICON_SLOTS.div_ceil(WORLD_ICONS_PER_ROW) * ICON_SIZE.1;
 /// Icons are drawn twice the texture resolution (crisp at the 16-pixel slot size scaled up).
 const MAX_ICON: u32 = 64;
 
@@ -34,7 +41,7 @@ impl UiAtlas {
                 if shelf.0 + icon_size > ATLAS_SIZE {
                     shelf = (0, shelf.1 + icon_size);
                 }
-                if shelf.1 + icon_size > ATLAS_SIZE {
+                if shelf.1 + icon_size > WORLD_ICONS_TOP {
                     tracing::warn!("interface atlas full: some item icons are missing");
                     return None;
                 }
@@ -54,6 +61,14 @@ impl UiAtlas {
 
     pub fn icon(&self, item: strata_core::content::ItemId) -> Option<Rect> {
         self.icons.get(usize::from(item.0)).copied().flatten()
+    }
+
+    /// Where world capture number `slot` goes (`None` beyond the reserved slots).
+    pub fn world_icon_slot(slot: usize) -> Option<Rect> {
+        let slot = u32::try_from(slot).ok().filter(|&s| s < WORLD_ICON_SLOTS)?;
+        let x = (slot % WORLD_ICONS_PER_ROW) * ICON_SIZE.0;
+        let y = WORLD_ICONS_TOP + (slot / WORLD_ICONS_PER_ROW) * ICON_SIZE.1;
+        Some(Rect::new(x as i32, y as i32, ICON_SIZE.0, ICON_SIZE.1))
     }
 
     /// Glyph rectangle in the atlas.
