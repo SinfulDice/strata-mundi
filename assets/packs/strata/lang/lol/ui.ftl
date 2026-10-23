@@ -101,3 +101,6 @@ pad-up = UP
 pad-down = DOWN
 pad-left = LEFT
 pad-right = RITE
+ui-error-broken = WURLD PAPERZ IZ BROKD.
+ui-version = v{ $version }
+ui-scale-times = ×{ $scale }

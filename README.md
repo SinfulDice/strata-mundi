@@ -29,10 +29,12 @@ Le binaire s'appelle `strata` (`target/release/strata`). `strata --help` liste l
 
 ```sh
 strata --screenshot capture.png --pos=-12,15.5,14 --look 41,-28   # image fixe sans fenêtre
-strata --bench-scene preview-orbit --preset ds                     # mesure de performance (voir perf-reports/)
+strata --bench-scene flyover --preset ds                           # mesure de performance (voir perf-reports/)
+strata --seed 42                                                   # monde temporaire, sans passer par les menus
+strata --data-dir ./donnees                                        # sauvegardes et réglages ailleurs
 ```
 
-Contrôles : clic pour capturer la souris, ZQSD/WASD, Espace pour sauter (deux fois pour voler), Maj pour s'accroupir, Ctrl pour sprinter, clic gauche/droit pour casser/poser, clic molette pour prendre le bloc visé, E pour l'inventaire, 1-9 ou molette pour la barre, Échap pour libérer la souris. Détails et manette : `docs/explications/entrees.md`.
+Le jeu s'ouvre sur l'écran titre : Jouer, puis Nouveau pour créer un monde. Contrôles : ZQSD/WASD, Espace pour sauter (deux fois pour voler), Maj pour s'accroupir, Ctrl pour sprinter, clic gauche/droit pour casser/poser, clic molette pour prendre le bloc visé, E pour l'inventaire, 1-9 ou molette pour la barre, Échap pour le menu pause (Sauvegarder et quitter). Détails et manette : `docs/explications/entrees.md`.
 
 ### Profilage avec Tracy
 

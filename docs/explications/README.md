@@ -17,6 +17,9 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 11. [ECS](ecs.md) : entités et composants du serveur.
 12. [Joueur et interaction](joueur-et-interaction.md) : physique partagée, prédiction, casser et poser.
 13. [Interface](interface.md) : écrans décrits en fichiers, police, navigation à la manette.
+14. [Menus et écran titre](menus.md) : liste des mondes, pause, options, éditeur de HUD, clavier à l'écran.
+15. [Sauvegarde](sauvegarde.md) : régions, écriture sûre, copies de sécurité.
+16. [Installation sur le DS](installation-ds.md) : fermeture du clapet (et, au jalon 8, les dépendances système).
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

@@ -62,6 +62,9 @@ impl GameLauncher {
             view_distance: self.view_distance,
             world: WorldSettings {
                 meta,
+                backups: folder
+                    .is_some()
+                    .then(|| (self.backups.clone(), self.backups_kept)),
                 folder,
                 autosave_ticks: self.autosave_ticks,
             },
@@ -99,10 +102,6 @@ impl Launcher for GameLauncher {
 
     fn open(&mut self, id: &str) -> Result<RunningWorld, LaunchError> {
         let (folder, meta) = save::open(&self.saves, id).map_err(reported)?;
-        let stamp = chrono::Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-        if let Err(error) = save::back_up(&folder, &self.backups, &stamp, self.backups_kept) {
-            tracing::warn!(%error, "backup failed; the world opens anyway");
-        }
         self.start_saved(folder, meta)
     }
 

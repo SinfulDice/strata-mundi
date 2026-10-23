@@ -17,7 +17,8 @@ use crate::hotbar::Hotbar;
 use crate::interface_settings::InterfaceSettings;
 use crate::render::{Gpu, UiPipeline};
 use crate::ui::{
-    Hit, Node, Rect, ScreenDef, ScreenModel, UiAssets, UiAtlas, UiContext, auto_scale, draw_screen,
+    Hit, ICON_SIZE, Node, Rect, ScreenDef, ScreenModel, UiAssets, UiAtlas, UiContext, auto_scale,
+    draw_screen,
 };
 use hud::{HudModel, aimed_block_name};
 use keyboard::{Keyboard, KeyboardModel};
@@ -58,6 +59,8 @@ pub struct Screens {
     dragging: Option<Hit>,
     last_cursor: Option<(i32, i32)>,
     effects: Vec<Effect>,
+    /// Settings changed but not written yet (see `handle`).
+    settings_dirty: bool,
 }
 
 impl Screens {
@@ -90,6 +93,7 @@ impl Screens {
             dragging: None,
             last_cursor: None,
             effects: Vec::new(),
+            settings_dirty: false,
         }
     }
 
@@ -161,6 +165,7 @@ impl Screens {
         self.keyboard = None;
         self.keyboard_hits.clear();
         self.dragging = None;
+        self.last_cursor = None;
     }
 
     /// Runs `f` on the model of the menu on top, if any.
@@ -315,6 +320,10 @@ fn key_rows(def: &ScreenDef) -> &[String] {
 fn decode_icon(png_bytes: &[u8]) -> Option<RgbaImage> {
     let decoder = png::Decoder::new(std::io::Cursor::new(png_bytes));
     let mut reader = decoder.read_info().ok()?;
+    let info = reader.info();
+    if (info.width, info.height) != ICON_SIZE {
+        return None;
+    }
     let mut buffer = vec![0; reader.output_buffer_size()?];
     let info = reader.next_frame(&mut buffer).ok()?;
     if info.color_type != png::ColorType::Rgba || info.bit_depth != png::BitDepth::Eight {
@@ -331,6 +340,9 @@ const CODE_KEYS: &[&str] = &[
     "ui-editor-sample",
     "ui-error-incompatible",
     "ui-error-unavailable",
+    "ui-error-broken",
+    "ui-version",
+    "ui-scale-times",
     "ui-world-detail",
     "ui-world-too-old",
     "ui-world-too-new",

@@ -72,9 +72,46 @@ impl Action {
         Self::Erase,
     ];
 
+    /// Names used in `<key:…>` markup, in the order of `ALL`.
+    const NAMES: [&'static str; Self::COUNT] = [
+        "MoveForward",
+        "MoveBackward",
+        "MoveLeft",
+        "MoveRight",
+        "Jump",
+        "Sneak",
+        "Sprint",
+        "Attack",
+        "Use",
+        "PickBlock",
+        "Inventory",
+        "HotbarNext",
+        "HotbarPrevious",
+        "Hotbar1",
+        "Hotbar2",
+        "Hotbar3",
+        "Hotbar4",
+        "Hotbar5",
+        "Hotbar6",
+        "Hotbar7",
+        "Hotbar8",
+        "Hotbar9",
+        "Pause",
+        "RenderDistanceDown",
+        "RenderDistanceUp",
+        "MenuUp",
+        "MenuDown",
+        "MenuLeft",
+        "MenuRight",
+        "MenuConfirm",
+        "MenuBack",
+        "Erase",
+    ];
+
     /// By its name in the code (`Inventory`), as written in `<key:…>` markup.
     pub fn from_name(name: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|a| format!("{a:?}") == name)
+        let index = Self::NAMES.iter().position(|n| *n == name)?;
+        Some(Self::ALL[index])
     }
     pub const HOTBAR: [Action; 9] = [
         Self::Hotbar1,

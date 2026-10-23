@@ -3,11 +3,12 @@
 ## État
 
 - **Version en cours** : v0.1 — Fondations
-- **Jalon en cours** : 7 — Sauvegarde et menus
+- **Jalon en cours** : 8 — Réglages, console, debug
 - **Dernière session** : 23/10/2026
 
 ## Fait
 
+- **Jalon 7 — Sauvegarde et menus** : dossier par monde (`world.ron` versionné, `player.ron`, capture `icon.png`), **régions** 32×32 ne contenant que les colonnes modifiées (`postcard` + `zstd` par colonne, blocs par identifiant texte), écriture atomique (`fsync` + renommage), région abîmée mise de côté, **copies tournantes** (3) à chaque ouverture, autosave 5 min, sauvegarde en quittant ou en fermant la fenêtre, monde d'une autre version grisé avec message ; **bordure** réglable à la création ; **écran titre** sur panorama généré qui tourne, logo ; **liste des mondes** (capture, date, mode, temps de jeu), création (nom, graine, bordure, mode), suppression confirmée ; **menu pause** (le monde s'arrête), option « pause dans tous les menus », **options d'interface** (langue, échelle, pause) dans `config/interface.toml`, **éditeur de HUD** (sélection, flèches/croix/glisser, défaut) ; widgets déclaratifs : listes, curseurs, clavier à l'écran pour la manette, **texte riche** avec invites de touches (dernier périphérique, lettre réelle du clavier AZERTY/QWERTY) ; **clapet du DS** : pause + sauvegarde sur `PrepareForSleep` de logind (`zbus`), reprise au réveil ; `--data-dir`. Regard du joueur sauvegardé ; le chargement priorise ce qui est devant.
 - **Jalon 6 — Joueur et interaction** : joueur = entité d'un **ECS maison** côté serveur (entités à génération, stockages par composant, systèmes) ; **physique partagée** client/serveur dans `core` (gravité, collisions AABB par sous-pas, saut, sprint, accroupi sans chute au bord, montée d'un demi-bloc et saut automatique réglables, vol créatif au double saut) ; **prédiction et réconciliation** (entrées numérotées, rejeu, rendu interpolé) ; raycast Amanatides-Woo, contour du bloc visé, casser/poser validés par le serveur (portée, place libre, pas dans le joueur), **bûches orientées** (variantes générées depuis `placement: Axis`, écorce tournée au maillage), prise de bloc au clic molette, nom du bloc visé façon Jade (désactivable) ; **interface maison déclarative** (écrans RON, thème, police pixel en pack avec accents, atlas unique, icônes isométriques, navigation souris/clavier/manette au focus) : HUD (viseur, barre 9 cases, nom du bloc), **inventaire créatif** (onglets par catégorie, recherche, grille). Fenêtre verticale glissante : le sol reste visible de haut en profil DS.
 - **Jalon 5 — Génération de terrain** : crate `worldgen` (bruit `fastnoise-lite` en f64), 4 cartes de climat, relief continu (mer 120, collines, montagnes en crêtes jusqu'à ~400), 6 biomes en pack (plaines, forêt, désert, océan, montagnes, toundra) avec frontières bruitées, couches (socle irrégulier, roche profonde, sous-sol, surface, plages), eau statique et glace, grottes spaghetti (grille 4³ interpolée, plafond sous le sol voisin), filons de minerais par profondeur avec variantes profondes, chênes, sapins, cactus placés depuis les 9 colonnes voisines, point de départ accueillant (plaines/forêt, arbres, eau proche, deux blocs d'air libres). Tests : déterminisme quel que soit l'ordre, graines différentes, 6 biomes atteignables et traduits, hauteurs, socle et mer, départ, arbres entiers à cheval sur les colonnes. ~2 ms par colonne.
 - **Jalon 4 — Monde infini** : serveur qui charge un disque de colonnes autour du joueur (proches et devant d'abord, ordre mis en cache), threads de génération à file bornée, envoi limité par tick, déchargement avec hystérésis, positions client validées et bornées ; client : colonnes maillées quand leurs 8 voisines sont là, frustum culling, déchargement en O(1), distance de rendu réglable à chaud (F7/F8), threads de maillage et de génération par préréglage, `--seed`, `--dimension`, captures sur monde généré. Vol de 2 min (scène `flyover`) sans plantage, 20 TPS tenus.
@@ -39,13 +40,15 @@ Benchmarks CPU (cloud, `cargo bench`) :
 
 ## Limitations connues
 
-- Workflows CI/release écrits mais pas encore exécutés sur GitHub : le premier tag les validera (`release.yml` surtout : AppImage, Flatpak, `.msi`).
+- CI et benchmarks verts sur GitHub ; `release.yml` (AppImage, Flatpak, `.msi`) ne tournera qu'au premier tag.
 - L'installeur `.msi` n'embarque pas encore le dossier `assets/` (à faire avant la release v0.1.0).
-- Menu d'activation et d'ordre des packs de ressources : avec les menus (jalon 7) ; d'ici là `--resource-pack <nom>`.
+- Menu d'activation et d'ordre des packs de ressources : avec l'écran de réglages (jalon 8) ; d'ici là `--resource-pack <nom>`.
 - Les préréglages (`--preset`) ne changent encore rien au rendu : réglages au jalon 8 (le rapport de bench le signale).
-- Invites à l'écran selon le dernier périphérique : le périphérique est suivi, l'affichage viendra avec l'interface (jalon 7).
 - Sensibilités souris/stick et options de déplacement (saut auto, demi-bloc, nom du bloc) : valeurs par défaut, écran d'options au jalon 8.
-- Clavier virtuel pour la saisie à la manette : jalon 7.
+- Clavier à l'écran et navigation manette testés par tests unitaires seulement (pas de manette en session cloud).
+- « Progression » dans la liste des mondes : il n'y a pas encore de progrès (v0.2+) ; la liste montre date, mode et temps de jeu.
+- Capture d'un monde prise seulement en le quittant (pas aux sauvegardes automatiques).
+- Pas de conversion des sauvegardes avant la v1.0 (règle du projet) : la « copie avant migration » arrivera avec la première migration.
 - Nom du bloc visé sans « outil requis » : les outils arrivent en v0.3.
 - Horodatage GPU indisponible sur lavapipe (« n/d » dans les rapports cloud).
 

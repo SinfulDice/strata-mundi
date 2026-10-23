@@ -18,24 +18,24 @@ graph LR
 - **Liaisons** (`Bindings`) : une liste « entrée physique → action ». Plusieurs entrées peuvent viser la même action (Espace **et** le bouton A). Elles seront modifiables dans les options (jalon 8).
 - **Touches physiques** : on lit l'*emplacement* de la touche, pas la lettre écrite dessus. La liaison `KeyW` correspond à la touche **Z** d'un clavier AZERTY : ZQSD marche donc tout seul.
 - **Sticks analogiques** : le stick gauche s'ajoute aux touches de déplacement, le stick droit tourne la caméra. Une **zone morte** de 15 % ignore la petite dérive des sticks au repos.
-- **Dernier périphérique utilisé** : retenu en permanence ; les invites à l'écran (« appuyez sur A » ou « appuyez sur Espace ») s'en serviront dès qu'il y aura une interface (jalon 7). Le tactile est déjà prévu comme périphérique.
-- **Souris** : un clic dans la fenêtre capture le curseur ; Échap (ou Start) le libère. Quand la fenêtre perd le focus, tout est relâché (sinon une touche relâchée hors de la fenêtre resterait « enfoncée »).
+- **Dernier périphérique utilisé** : retenu en permanence ; les invites à l'écran (`<key:…>` dans les textes, voir [Menus](menus.md)) montrent la touche ou le bouton du périphérique utilisé en dernier. Le tactile est déjà prévu comme périphérique.
+- **Souris** : en jeu, le curseur est capturé ; il est libéré dès qu'un menu s'ouvre (pause, inventaire) ou que la fenêtre perd le focus. Tout est alors relâché (sinon une touche relâchée hors de la fenêtre resterait « enfoncée »).
 
-Contrôles par défaut :
+Contrôles par défaut (boutons de manette nommés comme sur la New 3DS, que le DS reprend : A à droite, B en bas, X en haut, Y à gauche ; les invites à l'écran affichent ces noms) :
 
 | Action | Clavier (QWERTY / AZERTY) | Manette |
 |---|---|---|
 | Avancer, reculer, gauche, droite | W A S D / Z Q S D | stick gauche ou croix |
-| Sauter (double saut : voler) / monter en vol | Espace | A (bas) |
-| S'accroupir / descendre en vol | Maj gauche | clic stick droit ou B (droite) |
+| Sauter (double saut : voler) / monter en vol | Espace | B (bas) |
+| S'accroupir / descendre en vol | Maj gauche | clic stick droit ou A (droite) |
 | Sprint | Ctrl gauche | clic stick gauche |
 | Regarder | souris | stick droit |
 | Casser / poser | clic gauche / clic droit | ZR / ZL |
 | Prendre le bloc visé | clic molette | Y (gauche) |
 | Inventaire | E | X (haut) |
 | Barre d'objets | 1 à 9, molette | L / R |
-| Menus : se déplacer, valider, retour | flèches, Entrée, Échap | croix, A, B |
-| Libérer le curseur | Échap | Start |
+| Menus : se déplacer, valider, retour | flèches, Entrée, Échap | croix, B (bas), A (droite) |
+| Menu pause | Échap | Start |
 | Distance de rendu − / + | F7 / F8 | — |
 
 ## Où c'est dans le code

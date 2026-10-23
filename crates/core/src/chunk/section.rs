@@ -79,7 +79,8 @@ impl Section {
         let well_formed = self.indices.len() == SECTION_VOLUME
             && self.indices.is_well_formed()
             && !self.palette.is_empty()
-            && self.palette.len() <= SECTION_VOLUME;
+            && self.palette.len() <= SECTION_VOLUME
+            && self.indices.bits() >= bits_for(self.palette.len());
         if !well_formed {
             return None;
         }
@@ -87,20 +88,16 @@ impl Section {
             return Some(Self::filled(map(*block)));
         }
         let palette: Vec<BlockId> = self.palette.iter().map(|&b| map(b)).collect();
-        let max_index = (0..SECTION_VOLUME).map(|i| self.indices.get(i)).max()?;
-        if usize::from(max_index) >= palette.len() {
-            return None;
+        let mut non_air = 0u16;
+        for i in 0..SECTION_VOLUME {
+            let block = *palette.get(usize::from(self.indices.get(i)))?;
+            non_air += u16::from(block != BlockId::AIR);
         }
-        let keeps_air = self
-            .palette
-            .iter()
-            .zip(&palette)
-            .all(|(old, new)| (*old == BlockId::AIR) == (*new == BlockId::AIR));
-        if keeps_air && is_distinct(&palette) {
+        if is_distinct(&palette) {
             return Some(Self {
                 palette,
                 indices: self.indices.clone(),
-                non_air: self.non_air,
+                non_air,
             });
         }
         let mut section = Self::default();
@@ -178,6 +175,19 @@ mod tests {
         assert!(section.remapped(|b| b).is_none(), "index past the palette");
         section.indices = PackedArray::new(10, 1);
         assert!(section.remapped(|b| b).is_none(), "wrong length");
+        let mut lying = Section::default();
+        lying.set(0, 0, 0, BlockId(5));
+        lying.non_air = 900;
+        assert_eq!(
+            lying.remapped(|b| b).unwrap().non_air_count(),
+            1,
+            "count rebuilt"
+        );
+        lying.palette.extend([BlockId(6), BlockId(7)]);
+        assert!(
+            lying.remapped(|b| b).is_none(),
+            "too few bits for the palette"
+        );
     }
 
     #[test]

@@ -30,6 +30,8 @@ pub struct MoveInput {
     pub wish: [f32; 2],
     /// Radians, 0 = north (-Z).
     pub yaw: f32,
+    /// Radians, positive = up. Not used for moving; kept with the player (saves, aiming).
+    pub pitch: f32,
     pub jump: bool,
     pub sneak: bool,
     pub sprint: bool,

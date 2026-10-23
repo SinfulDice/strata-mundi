@@ -62,6 +62,15 @@ impl Draw<'_, '_> {
         });
     }
 
+    /// A HUD element in the editor: selectable, framed when selected.
+    fn element(&mut self, id: &str, rect: Rect) {
+        if self.is_focused(id, 0) {
+            let accent = self.theme().accent.0;
+            self.painter.bevel(rect, accent, accent);
+        }
+        self.hit(id, 0, rect, HitKind::Element);
+    }
+
     fn theme(&self) -> &Theme {
         self.ctx.theme
     }

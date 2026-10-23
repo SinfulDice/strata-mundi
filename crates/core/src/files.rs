@@ -1,3 +1,5 @@
+//! File helpers shared by saves and settings.
+
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::Path;

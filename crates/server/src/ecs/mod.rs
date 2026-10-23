@@ -33,6 +33,8 @@ pub struct PlayerControl {
     pub input_budget: u8,
     /// Ticks without any input; past a limit the body moves on its own (it falls).
     pub idle_ticks: u32,
+    /// Where the player looks (yaw, pitch), from the last input.
+    pub look: [f32; 2],
     /// Tick of the last block broken or placed (rate limit).
     pub last_action: Option<u64>,
 }
@@ -46,6 +48,7 @@ impl PlayerControl {
             mode,
             input_budget: 0,
             idle_ticks: 0,
+            look: [0.0; 2],
             last_action: None,
         }
     }

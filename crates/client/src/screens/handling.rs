@@ -17,6 +17,9 @@ pub struct Handled {
     pub actions: Vec<UiAction>,
 }
 
+/// Widgets showing a window over longer content (world list, item grid).
+const SCROLLERS: [&str; 2] = ["list", "items"];
+
 const MOVES: [(Action, Direction); 4] = [
     (Action::MenuUp, Direction::Up),
     (Action::MenuDown, Direction::Down),
@@ -48,13 +51,21 @@ impl Screens {
         } else if self.keyboard.is_some() {
             self.handle_keyboard(input, game, content);
         } else if self.editing.is_some() {
-            self.handle_typing(input, game.as_deref_mut(), content);
+            if self.handle_typing(input, game.as_deref_mut(), content) {
+                self.handle_menu(input, game, content);
+            }
         } else {
             self.handle_menu(input, game, content);
         }
+        let actions = self.apply_effects();
+        // Written once the change is over, not at every frame of a drag.
+        if self.settings_dirty && !input.is_held(Action::Attack) {
+            self.settings.save(&self.settings_path);
+            self.settings_dirty = false;
+        }
         Handled {
             used: true,
-            actions: self.apply_effects(),
+            actions,
         }
     }
 
@@ -87,7 +98,7 @@ impl Screens {
                     m.adjust(&slider.id, step, None)
                 });
             }
-            _ => self.navigate(&MOVES, input),
+            _ => self.navigate_or_scroll(input, game.as_deref_mut(), content),
         }
         self.scroll_and_tabs(input, game.as_deref_mut(), content);
         self.drag_slider(input, cursor, game.as_deref_mut(), content);
@@ -199,6 +210,7 @@ impl Screens {
         {
             *selected = Some(hit.id.clone());
             self.dragging = Some(hit.clone());
+            self.focus = Some(hit.clone());
         }
         let Some(id) = selected.clone() else {
             return false;
@@ -233,14 +245,15 @@ impl Screens {
         true
     }
 
+    /// Returns `true` when a click left the field: the click is then handled as usual.
     fn handle_typing(
         &mut self,
         input: &InputState,
         game: Option<&mut Gameplay>,
         content: &Content,
-    ) {
+    ) -> bool {
         let Some(field) = self.editing.clone() else {
-            return;
+            return false;
         };
         let mut text = input.typed().to_owned();
         if input.just_pressed(Action::Erase) {
@@ -249,14 +262,18 @@ impl Screens {
         if !text.is_empty() {
             self.with_model(game, content, |m| m.type_text(&field, &text));
         }
-        let clicked_elsewhere =
-            input.just_pressed(Action::Attack) && self.focus.as_ref().is_none_or(|f| f.id != field);
+        let cursor = self.cursor(input);
+        let clicked_elsewhere = input.just_pressed(Action::Attack)
+            && cursor
+                .and_then(|(x, y)| self.hit_at(x, y))
+                .is_none_or(|hit| hit.id != field);
         if input.just_pressed(Action::MenuConfirm)
             || input.just_pressed(Action::MenuBack)
             || clicked_elsewhere
         {
             self.editing = None;
         }
+        clicked_elsewhere
     }
 
     fn handle_keyboard(
@@ -299,11 +316,45 @@ impl Screens {
         }
     }
 
-    fn navigate(&mut self, moves: &[(Action, Direction)], input: &InputState) {
-        for &(action, direction) in moves {
-            if input.just_pressed(action) {
-                self.focus =
-                    navigate(&self.hits, self.focus.as_ref(), direction).or(self.focus.take());
+    /// Moves the focus; at the edge of a list or grid, scrolls it instead (gamepads and
+    /// keyboards reach every row, not only the visible ones).
+    fn navigate_or_scroll(
+        &mut self,
+        input: &InputState,
+        mut game: Option<&mut Gameplay>,
+        content: &Content,
+    ) {
+        for (action, direction) in MOVES {
+            if !input.just_pressed(action) {
+                continue;
+            }
+            let next = navigate(&self.hits, self.focus.as_ref(), direction);
+            let scroller = self
+                .focus
+                .clone()
+                .filter(|f| SCROLLERS.contains(&f.id.as_str()));
+            let rows = match direction {
+                Direction::Up => -1,
+                Direction::Down => 1,
+                _ => 0,
+            };
+            match (scroller, next) {
+                (Some(focus), next)
+                    if rows != 0 && next.as_ref().is_none_or(|n| n.id != focus.id) =>
+                {
+                    let before =
+                        self.with_model(game.as_deref_mut(), content, |m| m.rows(&focus.id));
+                    self.with_model(game.as_deref_mut(), content, |m| m.scroll(&focus.id, rows));
+                    let after =
+                        self.with_model(game.as_deref_mut(), content, |m| m.rows(&focus.id));
+                    // Nothing left to scroll: the focus may leave the list.
+                    if before == after
+                        && let Some(next) = next
+                    {
+                        self.focus = Some(next);
+                    }
+                }
+                (_, next) => self.focus = next.or(self.focus.take()),
             }
         }
     }
@@ -349,7 +400,7 @@ impl Screens {
                     self.stack.truncate(usize::from(!self.in_world));
                     self.reset_focus();
                 }
-                Effect::SettingsChanged => self.settings.save(&self.settings_path),
+                Effect::SettingsChanged => self.settings_dirty = true,
                 Effect::Action(action) => actions.push(action),
             }
         }

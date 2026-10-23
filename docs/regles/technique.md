@@ -7,7 +7,7 @@ Détail de la stack, de l'architecture et du socle de rendu. Résumé dans `CLAU
 - Rust stable, workspace Cargo.
 - Fenêtre/entrées : `winit`. Manettes : `gilrs`. Rendu : `wgpu` **forcé sur le backend Vulkan, sur toutes les plateformes** (un seul chemin à tester ; minimum = GPU compatible Vulkan). **Pas de moteur de jeu** (ni Bevy, ni autre).
 - Maths : `glam`. Bruit : `noise` ou `fastnoise-lite`. Parallélisme : `rayon` et/ou threads + `crossbeam-channel`.
-- Sauvegardes : `serde` + `bincode`, compression `zstd`.
+- Sauvegardes : `serde` + `postcard` (à la place de `bincode`, abandonné : voir `docs/decisions.md`, D026), compression `zstd`.
 - Formats texte : **TOML** pour ce que l'humain édite à la main (options, touches, `pack.toml`/`mod.toml` éventuels), **RON** pour le contenu des packs. Pas de JSON (sauf l'index de recherche du wiki).
 - Profilage : **Tracy** (`tracing-tracy` ou équivalent) derrière une feature Cargo `profiling`, connectable à distance pour profiler le DS depuis un PC.
 - Toolchain : **dernière Rust stable**, fixée dans `rust-toolchain.toml` et mise à jour volontairement.

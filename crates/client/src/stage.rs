@@ -76,8 +76,7 @@ impl InWorld {
     /// Saves (with the capture for the world list), leaves, and waits until the server
     /// has written everything.
     pub fn leave(mut self, icon: Option<Vec<u8>>) {
-        self.connection.send(ClientMessage::Save { icon });
-        self.connection.send(ClientMessage::Disconnect);
+        self.connection.send(ClientMessage::Disconnect { icon });
         if let Some(server) = self.server.take()
             && server.join().is_err()
         {

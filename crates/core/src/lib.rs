@@ -4,6 +4,7 @@ pub mod chunk;
 pub mod content;
 pub mod coords;
 pub mod dimension;
+pub mod files;
 pub mod font;
 pub mod id;
 pub mod lang;

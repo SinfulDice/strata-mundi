@@ -44,7 +44,7 @@ pub(super) fn label(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         draw_rich(d, x, y, &content, color);
     }
     if d.ctx.editing {
-        d.hit(id, 0, rect, HitKind::Element);
+        d.element(id, rect);
     }
 }
 

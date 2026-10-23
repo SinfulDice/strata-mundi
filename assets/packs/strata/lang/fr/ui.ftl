@@ -101,3 +101,6 @@ pad-up = Haut
 pad-down = Bas
 pad-left = Gauche
 pad-right = Droite
+ui-error-broken = La description de ce monde est illisible.
+ui-version = v{ $version }
+ui-scale-times = ×{ $scale }

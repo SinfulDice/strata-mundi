@@ -38,6 +38,9 @@ pub struct FormatOnly {
 pub struct PlayerData {
     pub dimension: Identifier,
     pub body: Body,
+    /// Yaw and pitch, in radians.
+    #[serde(default)]
+    pub look: [f32; 2],
     /// Item identifiers, so a world survives packs being added or reordered.
     pub hotbar: Vec<Option<Identifier>>,
     pub selected: usize,

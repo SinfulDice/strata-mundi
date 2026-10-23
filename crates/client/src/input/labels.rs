@@ -48,7 +48,7 @@ impl KeyNames {
                 .unwrap_or_else(|| tr(special_key(code))),
             Some(Binding::Mouse(button)) => tr(mouse_key(button)),
             Some(Binding::Pad(button)) => tr(pad_key(button)),
-            None => "?".to_owned(),
+            None => tr("key-other"),
         }
     }
 }

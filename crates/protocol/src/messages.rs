@@ -43,8 +43,10 @@ pub enum ClientMessage {
     Save {
         icon: Option<Vec<u8>>,
     },
-    /// The player leaves: the server saves and stops.
-    Disconnect,
+    /// The player leaves: the server saves (with this capture) and stops.
+    Disconnect {
+        icon: Option<Vec<u8>>,
+    },
 }
 
 /// The nine quick slots and the selected one.
@@ -65,6 +67,8 @@ pub enum ServerMessage {
         /// Half-width of the world, in blocks.
         border: i32,
         hotbar: HotbarState,
+        /// Yaw and pitch, in radians.
+        look: [f32; 2],
     },
     /// Sent once per tick so the client can interpolate between ticks.
     Tick {
@@ -83,4 +87,6 @@ pub enum ServerMessage {
         pos: BlockPos,
         block: BlockId,
     },
+    /// Answer to `ClientMessage::Save`: everything is on disk.
+    Saved,
 }

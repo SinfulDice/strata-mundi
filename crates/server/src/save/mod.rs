@@ -8,15 +8,14 @@
 //! <backups>/<id>/<date>/                          rotating copies
 //! ```
 
-mod atomic;
 mod backup;
 mod meta;
 mod region;
 
-pub use atomic::write_atomic;
 pub use backup::back_up;
 pub use meta::{FORMAT_VERSION, PlayerData, WorldMeta};
 pub use region::{BlockNames, REGION_SIZE, RegionStore};
+pub use strata_core::files::write_atomic;
 
 use meta::FormatOnly;
 use std::path::{Path, PathBuf};
@@ -28,6 +27,8 @@ const META_FILE: &str = "world.ron";
 const PLAYER_FILE: &str = "player.ron";
 const ICON_FILE: &str = "icon.png";
 const LONGEST_ID: usize = 48;
+/// Captures are a few kilobytes; a bigger `icon.png` is ignored.
+const MAX_ICON_BYTES: u64 = 256 * 1024;
 
 #[derive(Debug, Error)]
 pub enum SaveError {
@@ -140,7 +141,9 @@ fn summary(saves: &Path, id: &str) -> WorldSummary {
         id: id.to_owned(),
         dir: saves.join(id),
     };
-    let icon = std::fs::read(folder.dir.join(ICON_FILE)).ok();
+    let icon_path = folder.dir.join(ICON_FILE);
+    let small = std::fs::metadata(&icon_path).is_ok_and(|m| m.len() <= MAX_ICON_BYTES);
+    let icon = small.then(|| std::fs::read(&icon_path).ok()).flatten();
     let (meta, status) = match folder.read_meta() {
         Ok(meta) => (Some(meta), WorldStatus::Ready),
         Err(SaveError::Incompatible { found }) if found < FORMAT_VERSION => {
@@ -159,7 +162,9 @@ fn summary(saves: &Path, id: &str) -> WorldSummary {
             .map_or_else(|| id.to_owned(), |m| m.name.clone()),
         mode: meta.as_ref().map(|m| m.mode).unwrap_or_default(),
         last_played: meta.as_ref().map_or(0, |m| m.last_played),
-        play_seconds: meta.as_ref().map_or(0, |m| m.play_ticks / 20),
+        play_seconds: meta
+            .as_ref()
+            .map_or(0, |m| m.play_ticks / u64::from(crate::TICKS_PER_SECOND)),
         icon,
         status,
     }

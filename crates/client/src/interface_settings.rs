@@ -1,13 +1,14 @@
-//! Interface choices kept between sessions in `config/interface.ron` (the full settings
+//! Interface choices kept between sessions in `config/interface.toml` (the full settings
 //! file and its screen arrive at milestone 8).
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use strata_core::files::write_atomic;
 use strata_core::lang::LANGUAGES;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename = "Interface", default)]
+#[serde(default)]
 pub struct InterfaceSettings {
     pub language: String,
     /// 0 = automatic (largest whole scale that fits), otherwise ×1, ×2…
@@ -38,7 +39,7 @@ impl InterfaceSettings {
         let Ok(text) = std::fs::read_to_string(path) else {
             return Self::default();
         };
-        let mut settings: Self = ron::from_str(&text).unwrap_or_else(|error| {
+        let mut settings: Self = toml::from_str(&text).unwrap_or_else(|error| {
             tracing::warn!(path = %path.display(), %error, "interface settings ignored");
             Self::default()
         });
@@ -50,15 +51,10 @@ impl InterfaceSettings {
     }
 
     pub fn save(&self, path: &Path) {
-        let text = ron::ser::to_string_pretty(self, ron::ser::PrettyConfig::default());
-        let written = text.map_err(|e| e.to_string()).and_then(|text| {
-            let temporary = PathBuf::from(format!("{}.tmp", path.display()));
-            path.parent()
-                .map_or(Ok(()), std::fs::create_dir_all)
-                .and_then(|()| std::fs::write(&temporary, text))
-                .and_then(|()| std::fs::rename(&temporary, path))
-                .map_err(|e| e.to_string())
-        });
+        let text = toml::to_string_pretty(self);
+        let written = text
+            .map_err(|e| e.to_string())
+            .and_then(|text| write_atomic(path, text.as_bytes()).map_err(|e| e.to_string()));
         if let Err(error) = written {
             tracing::warn!(path = %path.display(), %error, "interface settings not saved");
         }
@@ -82,13 +78,13 @@ mod tests {
     #[test]
     fn settings_round_trip_and_bad_values_fall_back() {
         let dir = std::env::temp_dir().join(format!("strata-iface-{}", std::process::id()));
-        let path = dir.join("interface.ron");
+        let path = dir.join("interface.toml");
         let mut settings = InterfaceSettings::default();
         settings.hud.insert("hotbar".into(), (4, -10));
         settings.pause_in_menus = true;
         settings.save(&path);
         assert_eq!(InterfaceSettings::load(&path), settings);
-        std::fs::write(&path, "Interface(language: \"xx\", scale: 99)").unwrap();
+        std::fs::write(&path, "language = \"xx\"\nscale = 99\n").unwrap();
         let fixed = InterfaceSettings::load(&path);
         assert_eq!((fixed.language.as_str(), fixed.scale), ("fr", MAX_SCALE));
         std::fs::remove_dir_all(dir).unwrap();

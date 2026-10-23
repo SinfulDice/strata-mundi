@@ -101,3 +101,6 @@ pad-up = Up
 pad-down = Down
 pad-left = Left
 pad-right = Right
+ui-error-broken = This world's description cannot be read.
+ui-version = v{ $version }
+ui-scale-times = ×{ $scale }

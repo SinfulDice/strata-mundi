@@ -10,7 +10,7 @@ Deux outils en ligne de commande permettent de vérifier le jeu sans y jouer :
 
 ```sh
 strata --screenshot screenshots/test.png --pos=-12,15.5,14 --look 41,-28 --size 1280x720
-strata --bench-scene preview-orbit --preset ds
+strata --bench-scene flyover --preset ds
 ```
 
 - `--pos x,y,z` : position de la caméra ; `--look lacet,tangage` en degrés (0,0 regarde vers le nord, −Z ; 90 regarde vers l'est, +X ; un tangage positif regarde vers le haut).

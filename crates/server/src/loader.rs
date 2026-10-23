@@ -13,6 +13,8 @@ const SENT_PER_TICK: usize = 48;
 /// Columns are dropped only this far beyond the view distance, so moving back and forth
 /// along a border does not reload them.
 const UNLOAD_MARGIN: i32 = 2;
+/// Saved columns decompressed per tick at most, so the tick never stalls.
+const SAVED_PER_TICK: usize = 16;
 
 /// Where the player is, as last reported.
 #[derive(Debug, Clone, Copy)]
@@ -55,8 +57,11 @@ impl ColumnLoader {
 
     pub fn update(&mut self, viewer: &Viewer) -> Vec<LoadEvent> {
         for column in self.workers.finished() {
-            self.requested.remove(&column.pos);
-            self.columns.insert(column.pos, column);
+            // A result for a place left and asked again may arrive twice: the first one
+            // in may already have been changed by a player.
+            if self.requested.remove(&column.pos) && !self.columns.contains_key(&column.pos) {
+                self.columns.insert(column.pos, column);
+            }
         }
         let center = column_of(viewer);
         let mut events = self.unload_far(center, viewer.view_distance);
@@ -132,17 +137,22 @@ impl ColumnLoader {
 
     fn request_missing(&mut self, wanted: &[ColumnPos]) {
         let room = self.workers.capacity().saturating_sub(self.requested.len());
-        for pos in wanted {
-            if !self.columns.contains_key(pos)
-                && !self.requested.contains(pos)
-                && let Some(column) = self.store.load(*pos)
-            {
-                self.columns.insert(*pos, column);
+        let saved: Vec<ColumnPos> = wanted
+            .iter()
+            .filter(|p| !self.columns.contains_key(p) && self.store.has(**p))
+            .take(SAVED_PER_TICK)
+            .copied()
+            .collect();
+        for pos in saved {
+            if let Some(column) = self.store.load(pos) {
+                self.columns.insert(pos, column);
             }
         }
+        // Saved columns wait for their turn to be read; they are never generated.
         let missing: Vec<ColumnPos> = wanted
             .iter()
             .filter(|p| !self.columns.contains_key(p) && !self.requested.contains(p))
+            .filter(|p| !self.store.has(**p))
             .take(room)
             .copied()
             .collect();

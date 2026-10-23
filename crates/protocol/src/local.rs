@@ -68,8 +68,11 @@ mod tests {
     #[test]
     fn messages_cross_the_local_pair() {
         let (client, server) = local_pair();
-        assert!(client.send(ClientMessage::Disconnect));
-        assert_eq!(server.try_recv(), Ok(Some(ClientMessage::Disconnect)));
+        assert!(client.send(ClientMessage::Disconnect { icon: None }));
+        assert_eq!(
+            server.try_recv(),
+            Ok(Some(ClientMessage::Disconnect { icon: None }))
+        );
         assert!(server.send(ServerMessage::Tick { tick: 7 }));
         assert_eq!(client.try_recv(), Ok(Some(ServerMessage::Tick { tick: 7 })));
     }

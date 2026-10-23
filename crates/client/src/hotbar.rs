@@ -47,6 +47,13 @@ impl Hotbar {
         }
     }
 
+    /// Same content as `state`, without building one.
+    pub fn matches(&self, state: &HotbarState) -> bool {
+        state.slots.len() == SLOTS
+            && state.slots.iter().zip(&self.slots).all(|(a, b)| a == b)
+            && usize::from(state.selected) == self.selected
+    }
+
     pub fn restore(&mut self, state: &HotbarState) {
         self.slots = std::array::from_fn(|i| state.slots.get(i).copied().flatten());
         self.selected = usize::from(state.selected).min(SLOTS - 1);

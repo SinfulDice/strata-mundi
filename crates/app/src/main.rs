@@ -58,7 +58,7 @@ fn main() -> anyhow::Result<()> {
         .transpose()?;
     let data = paths::data_dir(args.data_dir.clone());
     tracing::info!(path = %data.display(), "data folder");
-    let interface_path = data.join("config/interface.ron");
+    let interface_path = data.join("config/interface.toml");
     let mut interface = InterfaceSettings::load(&interface_path);
     if let Some(language) = &args.lang {
         interface.language.clone_from(language);

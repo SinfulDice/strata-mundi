@@ -1,26 +1,21 @@
+mod transitions;
+
 use crate::app::{ClientConfig, ClientError, DEFAULT_FOV};
 use crate::bench::BenchRun;
 use crate::camera::Camera;
-use crate::gameplay::Gameplay;
 use crate::input::{Action, Binding, Bindings, Gamepads, InputState, KeyNames};
-use crate::interaction::BlockInfo;
-use crate::launcher::{Launcher, RunningWorld};
-use crate::mesh_scheduler::MeshScheduler;
+use crate::launcher::Launcher;
 use crate::mesher::BlockTable;
-use crate::render::{Acquired, Gpu, OffscreenTarget, Renderer, Target, WindowSurface};
-use crate::screens::{Screens, UiAction, UiFrame};
+use crate::render::{Acquired, Gpu, Renderer, Target, WindowSurface};
+use crate::screens::{Screens, UiFrame};
 use crate::settings::{ControlSettings, GraphicsSettings};
-use crate::stage::{InWorld, Stage, TitleScene};
-use crate::streaming::WorldView;
-use crate::ui::ICON_SIZE;
-use crate::world::ClientWorld;
+use crate::sleep::SleepWatcher;
+use crate::stage::Stage;
 use glam::{DVec3, Vec2};
 use std::sync::Arc;
 use std::time::Instant;
 use strata_core::content::Content;
-use strata_protocol::{
-    ClientMessage, Disconnected, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE, ServerMessage,
-};
+use strata_protocol::{ClientMessage, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE};
 use winit::event::{DeviceEvent, MouseScrollDelta, WindowEvent};
 use winit::keyboard::PhysicalKey;
 use winit::window::{CursorGrabMode, Window};
@@ -50,6 +45,9 @@ pub struct Session {
     focused: bool,
     quit: bool,
     last_frame: Instant,
+    sleep: Option<SleepWatcher>,
+    /// The system is going to sleep (lid closed): the world stays paused.
+    suspended: bool,
 }
 
 impl Session {
@@ -96,62 +94,14 @@ impl Session {
             focused: true,
             quit: false,
             last_frame: Instant::now(),
+            sleep: SleepWatcher::start(),
+            suspended: false,
         };
         match config.start {
             Some(running) => session.enter_world(running)?,
             None => session.enter_title()?,
         }
         Ok(session)
-    }
-
-    fn new_view(&self, world: ClientWorld) -> Result<WorldView, ClientError> {
-        let meshing = MeshScheduler::new(
-            Arc::clone(&self.table),
-            self.graphics.worker_threads,
-            self.graphics.ambient_occlusion,
-        )
-        .map_err(ClientError::Threads)?;
-        Ok(WorldView::new(world, meshing))
-    }
-
-    fn enter_title(&mut self) -> Result<(), ClientError> {
-        self.renderer.clear();
-        let panorama = self.launcher.panorama();
-        let view = self.new_view(panorama.world)?;
-        self.stage = Stage::Title(Box::new(TitleScene::new(
-            view,
-            panorama.center,
-            DEFAULT_FOV,
-        )));
-        self.screens.show_title();
-        Ok(())
-    }
-
-    fn enter_world(&mut self, running: RunningWorld) -> Result<(), ClientError> {
-        self.renderer.clear();
-        let distance = self
-            .graphics
-            .render_distance
-            .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
-        running
-            .connection
-            .send(ClientMessage::ViewDistance(distance));
-        let camera = Camera::new(DVec3::ZERO, 0.0, 0.0, DEFAULT_FOV);
-        let view = self.new_view(ClientWorld::default())?;
-        let info = BlockInfo::new(Arc::clone(&self.content));
-        let game = Gameplay::new(view, camera, info, self.controls.clone());
-        self.stage = Stage::Playing(Box::new(InWorld::new(running, game)));
-        self.screens.enter_world();
-        Ok(())
-    }
-
-    /// Saves and closes the world being played, if any (also when the window closes).
-    pub fn leave_world(&mut self) {
-        let icon = self.capture_icon();
-        if let Stage::Playing(world) = std::mem::replace(&mut self.stage, Stage::Empty) {
-            world.leave(icon);
-        }
-        self.renderer.clear();
     }
 
     pub fn handle_window_event(&mut self, event: WindowEvent) {
@@ -228,6 +178,7 @@ impl Session {
             self.gamepads.poll(&mut self.input);
         }
         self.receive_messages()?;
+        self.watch_sleep();
         let game = match &mut self.stage {
             Stage::Playing(world) => Some(&mut world.game),
             _ => None,
@@ -248,7 +199,7 @@ impl Session {
     }
 
     fn advance_stage(&mut self, frame_seconds: f32, menu_open: bool) {
-        let pause = self.screens.wants_pause();
+        let pause = self.screens.wants_pause() || self.suspended;
         let (view, camera) = match &mut self.stage {
             Stage::Empty => return,
             Stage::Title(title) => {
@@ -284,68 +235,12 @@ impl Session {
         );
     }
 
-    fn perform(&mut self, action: UiAction) -> Result<(), ClientError> {
-        let started = match action {
-            UiAction::ShowWorlds => {
-                self.screens.open_worlds(&self.gpu, self.launcher.worlds());
-                return Ok(());
-            }
-            UiAction::Play(id) => self.launcher.open(&id),
-            UiAction::Create(world) => self.launcher.create(world),
-            UiAction::Delete(id) => {
-                match self.launcher.delete(&id) {
-                    Ok(()) => self.screens.open_worlds(&self.gpu, self.launcher.worlds()),
-                    Err(error) => self.screens.show_notice(error.translation_key()),
-                }
-                return Ok(());
-            }
-            UiAction::SaveAndQuit => {
-                self.leave_world();
-                return self.enter_title();
-            }
-            UiAction::Quit => {
-                self.quit = true;
-                return Ok(());
-            }
-        };
-        match started {
-            Ok(running) => self.enter_world(running),
-            Err(error) => {
-                self.screens.show_notice(error.translation_key());
-                Ok(())
-            }
-        }
-    }
-
     fn handle_system_actions(&mut self) {
         if self.input.just_pressed(Action::RenderDistanceDown) {
             self.set_render_distance(self.graphics.render_distance.saturating_sub(1));
         }
         if self.input.just_pressed(Action::RenderDistanceUp) {
             self.set_render_distance(self.graphics.render_distance + 1);
-        }
-    }
-
-    fn receive_messages(&mut self) -> Result<(), ClientError> {
-        let Stage::Playing(world) = &mut self.stage else {
-            return Ok(());
-        };
-        loop {
-            match world.connection.try_recv() {
-                Ok(Some(ServerMessage::Tick { tick })) => world.server_tick = tick,
-                Ok(Some(message)) => {
-                    if let (ServerMessage::Welcome { body, .. }, Some(bench)) =
-                        (&message, &mut self.bench)
-                    {
-                        bench.set_origin(body.position);
-                    }
-                    world
-                        .game
-                        .apply(message, &mut self.renderer, &world.connection);
-                }
-                Ok(None) => return Ok(()),
-                Err(Disconnected) => return Err(ClientError::ServerGone),
-            }
         }
     }
 
@@ -422,27 +317,6 @@ impl Session {
         };
         self.screens
             .draw(&self.gpu, frame, content, game, &key_label);
-    }
-
-    /// A small render of the current view for the world list, as PNG.
-    fn capture_icon(&mut self) -> Option<Vec<u8>> {
-        let Stage::Playing(world) = &self.stage else {
-            return None;
-        };
-        let camera = world.game.camera.clone();
-        let target = OffscreenTarget::with_format(&self.gpu, ICON_SIZE, self.surface.format());
-        let mut encoder = self.gpu.device.create_command_encoder(&Default::default());
-        let frame = Target {
-            view: &target.view,
-            size: target.size,
-        };
-        self.renderer
-            .render(&self.gpu, &mut encoder, frame, &camera, None);
-        let image = target
-            .read(&self.gpu, encoder)
-            .map_err(|error| tracing::warn!(%error, "world capture failed"))
-            .ok()?;
-        crate::screenshot::encode_png(&image)
     }
 
     fn set_cursor_captured(&mut self, captured: bool) {

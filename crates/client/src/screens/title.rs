@@ -8,7 +8,12 @@ pub struct TitleModel<'a> {
 
 impl ScreenModel for TitleModel<'_> {
     fn text(&self, id: &str) -> Option<String> {
-        (id == "version").then(|| format!("v{}", env!("CARGO_PKG_VERSION")))
+        (id == "version").then(|| {
+            self.shared.tr_with(
+                "ui-version",
+                &[("version", env!("CARGO_PKG_VERSION").into())],
+            )
+        })
     }
 
     fn activate(&mut self, id: &str, _: usize) {

@@ -49,7 +49,8 @@ impl ScreenModel for OptionsModel<'_> {
             let value = if scale == 0 {
                 self.shared.tr("ui-scale-auto")
             } else {
-                format!("×{scale}")
+                self.shared
+                    .tr_with("ui-scale-times", &[("scale", scale.to_string())])
             };
             let caption = self.shared.tr_with("ui-option-scale", &[("value", value)]);
             (scale as f32 / MAX_SCALE as f32, caption)

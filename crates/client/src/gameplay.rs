@@ -62,9 +62,11 @@ impl Gameplay {
                 mut movement,
                 border,
                 hotbar,
+                look,
                 ..
             } => {
                 self.border = border;
+                (self.camera.yaw, self.camera.pitch) = (look[0], look[1]);
                 self.hotbar.restore(&hotbar);
                 self.sent_hotbar = self.hotbar.state();
                 movement.auto_jump = self.controls.auto_jump;
@@ -84,7 +86,7 @@ impl Gameplay {
             ServerMessage::Column(column) => self.view.insert(*column),
             ServerMessage::UnloadColumn(pos) => self.view.remove(pos, renderer),
             ServerMessage::BlockChanged { pos, block } => self.view.set_block(pos, block),
-            ServerMessage::Tick { .. } => {}
+            ServerMessage::Tick { .. } | ServerMessage::Saved => {}
         }
     }
 
@@ -95,6 +97,7 @@ impl Gameplay {
         let move_input = MoveInput {
             wish: input.movement().to_array(),
             yaw: self.camera.yaw,
+            pitch: self.camera.pitch,
             jump: input.is_held(Action::Jump),
             sneak: input.is_held(Action::Sneak),
             sprint: input.is_held(Action::Sprint),
@@ -122,10 +125,9 @@ impl Gameplay {
 
     /// Tells the server about hotbar changes (from play or from the inventory).
     pub fn sync_hotbar(&mut self, connection: &ClientConnection) {
-        let state = self.hotbar.state();
-        if state != self.sent_hotbar {
-            connection.send(ClientMessage::Hotbar(state.clone()));
-            self.sent_hotbar = state;
+        if !self.hotbar.matches(&self.sent_hotbar) {
+            self.sent_hotbar = self.hotbar.state();
+            connection.send(ClientMessage::Hotbar(self.sent_hotbar.clone()));
         }
     }
 

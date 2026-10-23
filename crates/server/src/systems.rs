@@ -24,6 +24,7 @@ pub fn player_movement(ecs: &mut Ecs, solid: &impl Fn(i32, i32, i32) -> bool) {
             };
             step(body, &input, &control.movement, solid);
             control.last_sequence = sequence;
+            control.look = [input.yaw, input.pitch];
             control.input_budget -= 1;
             applied = true;
         }

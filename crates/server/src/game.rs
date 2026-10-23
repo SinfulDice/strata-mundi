@@ -65,7 +65,9 @@ impl Game {
     }
 
     pub fn queue_input(&mut self, sequence: u32, input: MoveInput) {
-        let valid = input.yaw.is_finite() && input.wish.iter().all(|w| w.is_finite());
+        let valid = input.yaw.is_finite()
+            && input.pitch.is_finite()
+            && input.wish.iter().all(|w| w.is_finite());
         if let (true, Some(control)) = (valid, self.ecs.controls.get_mut(self.player))
             && control.pending.len() < MAX_QUEUED_INPUTS
         {
@@ -103,6 +105,19 @@ impl Game {
             && self.is_creative();
         if valid {
             self.ecs.hotbars.insert(self.player, hotbar);
+        }
+    }
+
+    pub fn look(&self) -> [f32; 2] {
+        self.ecs
+            .controls
+            .get(self.player)
+            .map_or([0.0; 2], |c| c.look)
+    }
+
+    pub fn set_look(&mut self, look: [f32; 2]) {
+        if let Some(control) = self.ecs.controls.get_mut(self.player) {
+            control.look = look;
         }
     }
 

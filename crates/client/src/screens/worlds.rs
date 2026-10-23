@@ -107,6 +107,9 @@ impl WorldsModel<'_> {
             Some(world) if world.status == WorldStatus::Ready => {
                 Effect::Action(UiAction::Play(world.id.clone()))
             }
+            Some(world) if world.status == WorldStatus::Broken => Effect::Push(Menu::Notice {
+                key: "ui-error-broken",
+            }),
             Some(_) => Effect::Push(Menu::Notice {
                 key: "ui-error-incompatible",
             }),

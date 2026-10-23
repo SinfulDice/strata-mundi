@@ -58,7 +58,7 @@ pub(super) fn slots(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         }
     }
     if d.ctx.editing {
-        d.hit(id, 0, rect, HitKind::Element);
+        d.element(id, rect);
     }
 }
 
@@ -77,12 +77,7 @@ pub(super) fn crosshair(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     d.painter
         .fill(Rect::new(center.x - 1, center.y - 4, 1, 9), color);
     if d.ctx.editing {
-        d.hit(
-            id,
-            0,
-            Rect::new(center.x - 5, center.y - 5, 11, 11),
-            HitKind::Element,
-        );
+        d.element(id, Rect::new(center.x - 5, center.y - 5, 11, 11));
     }
 }
 

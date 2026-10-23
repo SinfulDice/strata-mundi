@@ -19,7 +19,7 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 ## D004 — Formats de fichiers (v0.1, jalon 0)
 
-- **Choix** : **TOML** (`toml` 1.x) pour ce que l'humain édite (options, touches), **RON** (`ron` 0.12) pour le contenu des packs, **bincode + zstd** pour les sauvegardes, **Fluent** pour les traductions. Tout passe par `serde`.
+- **Choix** : **TOML** (`toml` 1.x) pour ce que l'humain édite (options, touches), **RON** (`ron` 0.12) pour le contenu des packs, **postcard + zstd** pour les sauvegardes (bincode prévu à l'origine, abandonné : D026), **Fluent** pour les traductions. Tout passe par `serde`.
 
 ## D005 — Ligne de commande : `clap` (v0.1, jalon 0)
 
@@ -155,3 +155,16 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Écriture atomique** (fichier temporaire, `fsync`, renommage, `fsync` du dossier) ; région illisible mise de côté en `.damaged` au lieu d'être écrasée ; colonnes relues validées (`Column::remapped`), jamais de panique sur un fichier abîmé.
 - **Versions** : `FORMAT_VERSION` dans `world.ron` ; autre version → statut « trop ancien / trop récent » dans la liste, pas d'ouverture. Pas de migration en 0.x (règle du projet), donc pas encore de « copie avant migration » : elle viendra avec la première migration (v1.0). Les copies tournantes (3 par défaut) sont faites à chaque ouverture d'un monde.
 - **Dossiers** : `dirs` 7 (emplacements standard Linux/Windows), surchargeable par `--data-dir`.
+
+## D027 — Menus : pile de menus, modèles et lanceur (v0.1, jalon 7)
+
+- **Pile** de menus (`Menu`), chaque menu = une disposition RON + un modèle Rust ; les modèles ne font qu'émettre des **effets** (ouvrir, fermer, action) que `Screens` et la session appliquent. Les actions qui touchent aux mondes passent par le trait **`Launcher`** fourni par `app` : le client ne lit ni n'écrit aucun fichier de sauvegarde.
+- **Étapes** de la session : écran titre (panorama généré hors serveur, graine fixe) ou monde en cours (connexion + fil du serveur, rejoint en quittant pour que tout soit écrit avant de revenir à la liste).
+- **Captures des mondes** : rendu hors écran 96×54 au format de la fenêtre, envoyé au serveur dans `Save { icon }` ; affichées depuis des emplacements réservés de l'atlas d'interface (mis à jour par `write_texture`).
+- **Options d'interface** dans `config/interface.toml` (langue, échelle, pause dans tous les menus, disposition du HUD) ; le fichier de réglages complet du jalon 8 les reprendra.
+- **Boutons de manette** nommés comme sur la New 3DS (A droite, B bas) ; les invites suivent le dernier périphérique et, au clavier, la lettre réellement imprimée (apprise à la frappe).
+
+## D028 — Veille du DS : `zbus` (v0.1, jalon 7)
+
+- **Choix** : `zbus` 5 (D-Bus en Rust pur, très maintenu, API bloquante), Linux uniquement (`cfg(target_os = "linux")`), sur un fil dédié : verrou de retardement logind + signal `PrepareForSleep`. Sans logind, simple message dans le journal.
+- **Alternatives écartées** : lancer `dbus-monitor`/`gdbus` (fragile, dépend d'outils absents d'un Linux minimal), `dbus` (lie `libdbus` en C).

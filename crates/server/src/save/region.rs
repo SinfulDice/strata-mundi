@@ -2,7 +2,6 @@
 //! Unmodified columns are never written: the generator rebuilds them from the seed.
 
 use super::SaveError;
-use super::atomic::write_atomic;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -10,11 +9,15 @@ use std::sync::Arc;
 use strata_core::chunk::Column;
 use strata_core::content::{Block, BlockId, Registry};
 use strata_core::coords::ColumnPos;
+use strata_core::files::write_atomic;
 use strata_core::id::Identifier;
 
 pub const REGION_SIZE: i32 = 32;
 const MAGIC: &[u8; 4] = b"SMRG";
 const ZSTD_LEVEL: i32 = 3;
+/// Largest decompressed column accepted (a full column with 16-bit indices is ~300 KB):
+/// a damaged or hostile file cannot make the game allocate more.
+const MAX_COLUMN_BYTES: usize = 4 << 20;
 
 /// Text identifiers of the blocks, both ways: files store identifiers, never numbers
 /// (numeric ids change when packs change).
@@ -55,6 +58,10 @@ pub struct RegionStore {
     names: Arc<BlockNames>,
     regions: HashMap<(i32, i32), RegionFile>,
     dirty: HashSet<(i32, i32)>,
+    /// Region files that exist but could not be read: never overwritten.
+    unreadable: HashSet<(i32, i32)>,
+    /// Damaged columns already reported, generated again instead.
+    damaged: HashSet<ColumnPos>,
 }
 
 impl RegionStore {
@@ -71,11 +78,22 @@ impl RegionStore {
             names,
             regions: HashMap::new(),
             dirty: HashSet::new(),
+            unreadable: HashSet::new(),
+            damaged: HashSet::new(),
         }
+    }
+
+    /// Whether a usable saved version of the column exists.
+    pub fn has(&mut self, pos: ColumnPos) -> bool {
+        let (region, key) = locate(pos);
+        !self.damaged.contains(&pos) && self.region(region).columns.contains_key(&key)
     }
 
     /// The saved version of a column, if any. Damaged data is reported and ignored.
     pub fn load(&mut self, pos: ColumnPos) -> Option<Column> {
+        if self.damaged.contains(&pos) {
+            return None;
+        }
         let (region, key) = locate(pos);
         let names = Arc::clone(&self.names);
         let bytes = self.region(region).columns.get(&key)?;
@@ -83,6 +101,7 @@ impl RegionStore {
             Some(column) => Some(column),
             None => {
                 tracing::error!(?pos, "saved column is damaged: generated again");
+                self.damaged.insert(pos);
                 None
             }
         }
@@ -99,27 +118,54 @@ impl RegionStore {
         self.dirty.insert(region);
     }
 
-    /// Writes every changed region, each atomically.
+    /// Writes every changed region, each atomically. A region that fails stays to be
+    /// written by the next flush; the others are written anyway. Returns the first error.
     pub fn flush(&mut self) -> Result<(), SaveError> {
-        let Some(dir) = &self.dir else {
+        let Some(dir) = self.dir.clone() else {
             return Ok(());
         };
-        for region in std::mem::take(&mut self.dirty) {
-            if let Some(file) = self.regions.get(&region) {
-                let path = region_path(dir, region);
-                let mut bytes = MAGIC.to_vec();
-                bytes.extend(postcard::to_stdvec(file).map_err(|e| SaveError::format(&path, e))?);
-                write_atomic(&path, &bytes).map_err(|e| SaveError::io(&path, e))?;
+        let mut first_error = None;
+        for region in self.dirty.clone() {
+            match self.write_region(&dir, region) {
+                Ok(()) => {
+                    self.dirty.remove(&region);
+                }
+                Err(error) => {
+                    first_error.get_or_insert(error);
+                }
             }
         }
-        Ok(())
+        first_error.map_or(Ok(()), Err)
+    }
+
+    fn write_region(&self, dir: &Path, region: (i32, i32)) -> Result<(), SaveError> {
+        let path = region_path(dir, region);
+        if self.unreadable.contains(&region) {
+            return Err(SaveError::format(
+                &path,
+                "unreadable region file kept untouched",
+            ));
+        }
+        let Some(file) = self.regions.get(&region) else {
+            return Ok(());
+        };
+        let mut bytes = MAGIC.to_vec();
+        bytes.extend(postcard::to_stdvec(file).map_err(|e| SaveError::format(&path, e))?);
+        write_atomic(&path, &bytes).map_err(|e| SaveError::io(&path, e))
     }
 
     fn region(&mut self, region: (i32, i32)) -> &mut RegionFile {
-        let dir = self.dir.as_deref();
-        self.regions
-            .entry(region)
-            .or_insert_with(|| dir.map(|d| read_region(d, region)).unwrap_or_default())
+        if !self.regions.contains_key(&region)
+            && let Some(dir) = &self.dir
+        {
+            let file = read_region(dir, region).unwrap_or_else(|error| {
+                tracing::error!(%error, "region file unreadable: it will not be overwritten");
+                self.unreadable.insert(region);
+                RegionFile::default()
+            });
+            self.regions.insert(region, file);
+        }
+        self.regions.entry(region).or_default()
     }
 }
 
@@ -134,20 +180,25 @@ fn region_path(dir: &Path, (x, z): (i32, i32)) -> PathBuf {
 }
 
 /// A missing file is an empty region; a damaged one is set aside (`.damaged`) so that
-/// saving does not overwrite what might still be recovered by hand.
-fn read_region(dir: &Path, region: (i32, i32)) -> RegionFile {
+/// saving does not overwrite what might still be recovered by hand. A file that cannot
+/// be read at all (permissions, disk error) is an error: it must not be replaced.
+fn read_region(dir: &Path, region: (i32, i32)) -> Result<RegionFile, SaveError> {
     let path = region_path(dir, region);
-    let Ok(bytes) = std::fs::read(&path) else {
-        return RegionFile::default();
+    let bytes = match std::fs::read(&path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(RegionFile::default());
+        }
+        Err(error) => return Err(SaveError::io(&path, error)),
     };
     let parsed = bytes
         .strip_prefix(MAGIC)
         .and_then(|body| postcard::from_bytes(body).ok());
-    parsed.unwrap_or_else(|| {
+    Ok(parsed.unwrap_or_else(|| {
         tracing::error!(path = %path.display(), "damaged region file set aside");
         let _ = std::fs::rename(&path, path.with_extension("damaged"));
         RegionFile::default()
-    })
+    }))
 }
 
 fn encode(column: &Column, names: &BlockNames) -> Option<Vec<u8>> {
@@ -172,7 +223,7 @@ fn encode(column: &Column, names: &BlockNames) -> Option<Vec<u8>> {
 
 /// Blocks that no longer exist (pack removed) become air.
 fn decode(bytes: &[u8], names: &BlockNames) -> Option<Column> {
-    let raw = zstd::decode_all(bytes).ok()?;
+    let raw = zstd::bulk::decompress(bytes, MAX_COLUMN_BYTES).ok()?;
     let stored: StoredColumn = postcard::from_bytes(&raw).ok()?;
     let current: Vec<BlockId> = stored
         .blocks
@@ -242,6 +293,25 @@ mod tests {
             BlockId::AIR,
             "removed block becomes air"
         );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_failed_flush_keeps_the_region_for_the_next_one() {
+        let dir = temp("failed");
+        let blocker = dir.join("r.0.0.region.tmp");
+        std::fs::create_dir_all(&blocker).unwrap();
+        let mut store = RegionStore::on_disk(dir.clone(), names(&["a:air", "a:stone"]));
+        let mut column = Column::empty(ColumnPos { x: 0, z: 0 });
+        column.set(0, 0, 0, BlockId(1));
+        store.store(&column);
+        assert!(
+            store.flush().is_err(),
+            "the temporary file cannot be created"
+        );
+        std::fs::remove_dir(&blocker).unwrap();
+        store.flush().unwrap();
+        assert!(dir.join("r.0.0.region").is_file());
         std::fs::remove_dir_all(dir).unwrap();
     }
 

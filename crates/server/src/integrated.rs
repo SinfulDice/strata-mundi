@@ -35,6 +35,8 @@ pub struct IntegratedServer {
     view_distance: u32,
     paused: bool,
     tick: u64,
+    /// Capture sent with `Disconnect`, written by the final save.
+    leaving_icon: Option<Vec<u8>>,
 }
 
 impl IntegratedServer {
@@ -53,7 +55,7 @@ impl IntegratedServer {
     fn start(connection: ServerConnection, config: ServerConfig) -> std::io::Result<Self> {
         let persistence = Persistence::new(config.world, Arc::clone(&config.content));
         let generator = Arc::clone(&config.generator);
-        let (body, hotbar) = persistence.player_start(&config.dimension, || {
+        let (body, look, hotbar) = persistence.player_start(&config.dimension, || {
             let spawn = generator.spawn_point();
             tracing::info!(?spawn, "spawn point chosen");
             DVec3::new(
@@ -70,6 +72,7 @@ impl IntegratedServer {
             meta.mode,
         );
         game.set_hotbar(hotbar);
+        game.set_look(look);
         if let (Some(body), Some(movement)) = (game.player_body(), game.movement()) {
             connection.send(ServerMessage::Welcome {
                 dimension: config.dimension.clone(),
@@ -77,6 +80,7 @@ impl IntegratedServer {
                 movement,
                 border: game.border,
                 hotbar: game.hotbar(),
+                look: game.look(),
             });
         }
         let names = Arc::new(BlockNames::new(&config.content.blocks));
@@ -94,6 +98,7 @@ impl IntegratedServer {
             view_distance: config.view_distance,
             paused: false,
             tick: 0,
+            leaving_icon: None,
         })
     }
 
@@ -108,7 +113,8 @@ impl IntegratedServer {
             }
             thread::sleep(clock.next_tick().saturating_duration_since(Instant::now()));
         }
-        self.save(None);
+        let icon = self.leaving_icon.take();
+        self.save(icon.as_deref());
         self.game.remove_player();
         tracing::info!(tick = self.tick, "integrated server stopped");
     }
@@ -152,8 +158,14 @@ impl IntegratedServer {
             }
             ClientMessage::Hotbar(hotbar) => self.game.set_hotbar(hotbar),
             ClientMessage::Pause(paused) => self.paused = paused,
-            ClientMessage::Save { icon } => self.save(icon.as_deref()),
-            ClientMessage::Disconnect => return false,
+            ClientMessage::Save { icon } => {
+                self.save(icon.as_deref());
+                self.connection.send(ServerMessage::Saved);
+            }
+            ClientMessage::Disconnect { icon } => {
+                self.leaving_icon = icon;
+                return false;
+            }
         }
         true
     }
@@ -185,7 +197,7 @@ impl IntegratedServer {
             let viewer = Viewer {
                 x: body.position.x,
                 z: body.position.z,
-                yaw: 0.0,
+                yaw: self.game.look()[0],
                 view_distance: self.view_distance,
             };
             self.stream_columns(&viewer);

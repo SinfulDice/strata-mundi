@@ -19,6 +19,7 @@ mod screens;
 pub mod screenshot;
 mod session;
 pub mod settings;
+mod sleep;
 mod stage;
 mod streaming;
 pub mod texture_sheet;
