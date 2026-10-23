@@ -1,7 +1,12 @@
 //! On-screen keyboard for typing with a gamepad (layout in `assets/ui/keyboard.ron`).
 //! Four characters of the layout are commands rather than letters.
 
-use crate::ui::ScreenModel;
+use super::Screens;
+use super::handling::MOVES;
+use crate::gameplay::Gameplay;
+use crate::input::{Action, InputState};
+use crate::ui::{ScreenModel, navigate};
+use strata_core::content::Content;
 use strata_core::lang::Translations;
 
 const ERASE: char = '<';
@@ -72,6 +77,48 @@ impl ScreenModel for KeyboardModel<'_> {
                 }
             }
             None => {}
+        }
+    }
+}
+
+impl Screens {
+    pub(super) fn handle_keyboard(
+        &mut self,
+        input: &InputState,
+        game: Option<&mut Gameplay>,
+        content: &Content,
+    ) {
+        if input.just_pressed(Action::MenuBack) {
+            self.keyboard = None;
+            return;
+        }
+        let cursor = self.cursor(input);
+        if let Some((x, y)) = cursor.filter(|_| input.cursor_moved()) {
+            self.focus = self
+                .keyboard_hits
+                .iter()
+                .find(|h| h.rect.contains(x, y))
+                .cloned();
+        }
+        for (action, direction) in MOVES {
+            if input.just_pressed(action) {
+                let next = navigate(&self.keyboard_hits, self.focus.as_ref(), direction);
+                self.focus = next.or(self.focus.take());
+            }
+        }
+        let pressed = input.just_pressed(Action::MenuConfirm) || input.just_pressed(Action::Attack);
+        let Some(key) = self.focus.clone().filter(|_| pressed) else {
+            return;
+        };
+        let Some((field, typed, done)) = self.press_key(content, key.index) else {
+            return;
+        };
+        if !typed.is_empty() {
+            self.with_model(game, content, |m| m.type_text(&field, &typed));
+        }
+        if done {
+            self.keyboard = None;
+            self.focus = None;
         }
     }
 }

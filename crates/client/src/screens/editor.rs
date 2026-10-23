@@ -2,9 +2,12 @@
 //! mouse drag). Positions are offsets from each element's anchor, so they follow any
 //! window size or ratio.
 
-use super::menu::{Effect, Shared};
+use super::Screens;
+use super::handling::MOVES;
+use super::menu::{Effect, Menu, Shared};
+use crate::input::{Action, InputState};
 use crate::settings::InterfaceSettings;
-use crate::ui::{ScreenDef, ScreenModel};
+use crate::ui::{HitKind, ScreenDef, ScreenModel};
 
 /// Pixels moved per arrow press.
 pub const STEP: i32 = 1;
@@ -44,6 +47,64 @@ pub fn move_element(
     let at = settings.hud.entry(id.to_owned()).or_insert(default);
     at.0 += delta.0;
     at.1 += delta.1;
+}
+
+impl Screens {
+    /// HUD editor: once an element is selected, arrows and mouse drags move it.
+    /// Returns whether the input was used.
+    pub(super) fn handle_editor(&mut self, input: &InputState, cursor: Option<(i32, i32)>) -> bool {
+        let Some(Menu::HudEditor { selected }) = self.stack.last_mut() else {
+            return false;
+        };
+        let clicked = input
+            .just_pressed(Action::Attack)
+            .then_some(cursor)
+            .flatten();
+        if let Some((x, y)) = clicked
+            && let Some(hit) = self.hits.iter().find(|h| h.rect.contains(x, y))
+            && hit.kind == HitKind::Element
+        {
+            *selected = Some(hit.id.clone());
+            self.dragging = Some(hit.clone());
+            self.focus = Some(hit.clone());
+        }
+        let Some(id) = selected.clone() else {
+            return false;
+        };
+        if input.just_pressed(Action::MenuBack) || input.just_pressed(Action::MenuConfirm) {
+            *selected = None;
+            return true;
+        }
+        let speed = if input.is_held(Action::Sprint) {
+            8 * STEP
+        } else {
+            STEP
+        };
+        let mut delta = (0, 0);
+        for (action, direction) in MOVES {
+            if input.just_pressed(action) {
+                let (dx, dy) = direction.offset();
+                delta = (delta.0 + dx * speed, delta.1 + dy * speed);
+            }
+        }
+        if input.is_held(Action::Attack)
+            && self.dragging.as_ref().is_some_and(|d| d.id == id)
+            && let (Some(now), Some(before)) = (cursor, self.last_cursor)
+        {
+            delta = (delta.0 + now.0 - before.0, delta.1 + now.1 - before.1);
+        }
+        if delta != (0, 0) {
+            move_element(
+                &mut self.settings.interface,
+                &self.assets.screens.hud,
+                &id,
+                delta,
+            );
+            self.effects.push(Effect::SettingsChanged);
+        }
+        self.last_cursor = cursor;
+        true
+    }
 }
 
 #[cfg(test)]

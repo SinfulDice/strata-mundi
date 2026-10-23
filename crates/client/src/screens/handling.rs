@@ -2,7 +2,6 @@
 //! keyboard and moving HUD elements in the editor.
 
 use super::console::ConsoleState;
-use super::editor::{STEP, move_element};
 use super::keyboard::Keyboard;
 use super::menu::{Effect, Menu};
 use super::options::bind_captured;
@@ -23,7 +22,7 @@ pub struct Handled {
 /// Widgets showing a window over longer content (world list, item grid).
 const SCROLLERS: [&str; 2] = ["list", "items"];
 
-const MOVES: [(Action, Direction); 4] = [
+pub(super) const MOVES: [(Action, Direction); 4] = [
     (Action::MenuUp, Direction::Up),
     (Action::MenuDown, Direction::Down),
     (Action::MenuLeft, Direction::Left),
@@ -245,62 +244,6 @@ impl Screens {
         }
     }
 
-    /// HUD editor: once an element is selected, arrows and mouse drags move it.
-    /// Returns whether the input was used.
-    fn handle_editor(&mut self, input: &InputState, cursor: Option<(i32, i32)>) -> bool {
-        let Some(Menu::HudEditor { selected }) = self.stack.last_mut() else {
-            return false;
-        };
-        let clicked = input
-            .just_pressed(Action::Attack)
-            .then_some(cursor)
-            .flatten();
-        if let Some((x, y)) = clicked
-            && let Some(hit) = self.hits.iter().find(|h| h.rect.contains(x, y))
-            && hit.kind == HitKind::Element
-        {
-            *selected = Some(hit.id.clone());
-            self.dragging = Some(hit.clone());
-            self.focus = Some(hit.clone());
-        }
-        let Some(id) = selected.clone() else {
-            return false;
-        };
-        if input.just_pressed(Action::MenuBack) || input.just_pressed(Action::MenuConfirm) {
-            *selected = None;
-            return true;
-        }
-        let speed = if input.is_held(Action::Sprint) {
-            8 * STEP
-        } else {
-            STEP
-        };
-        let mut delta = (0, 0);
-        for (action, direction) in MOVES {
-            if input.just_pressed(action) {
-                let (dx, dy) = direction.offset();
-                delta = (delta.0 + dx * speed, delta.1 + dy * speed);
-            }
-        }
-        if input.is_held(Action::Attack)
-            && self.dragging.as_ref().is_some_and(|d| d.id == id)
-            && let (Some(now), Some(before)) = (cursor, self.last_cursor)
-        {
-            delta = (delta.0 + now.0 - before.0, delta.1 + now.1 - before.1);
-        }
-        if delta != (0, 0) {
-            move_element(
-                &mut self.settings.interface,
-                &self.assets.screens.hud,
-                &id,
-                delta,
-            );
-            self.effects.push(Effect::SettingsChanged);
-        }
-        self.last_cursor = cursor;
-        true
-    }
-
     /// Returns `true` when a click left the field: the click is then handled as usual.
     fn handle_typing(
         &mut self,
@@ -330,46 +273,6 @@ impl Screens {
             self.editing = None;
         }
         clicked_elsewhere
-    }
-
-    fn handle_keyboard(
-        &mut self,
-        input: &InputState,
-        game: Option<&mut Gameplay>,
-        content: &Content,
-    ) {
-        if input.just_pressed(Action::MenuBack) {
-            self.keyboard = None;
-            return;
-        }
-        let cursor = self.cursor(input);
-        if let Some((x, y)) = cursor.filter(|_| input.cursor_moved()) {
-            self.focus = self
-                .keyboard_hits
-                .iter()
-                .find(|h| h.rect.contains(x, y))
-                .cloned();
-        }
-        for (action, direction) in MOVES {
-            if input.just_pressed(action) {
-                let next = navigate(&self.keyboard_hits, self.focus.as_ref(), direction);
-                self.focus = next.or(self.focus.take());
-            }
-        }
-        let pressed = input.just_pressed(Action::MenuConfirm) || input.just_pressed(Action::Attack);
-        let Some(key) = self.focus.clone().filter(|_| pressed) else {
-            return;
-        };
-        let Some((field, typed, done)) = self.press_key(content, key.index) else {
-            return;
-        };
-        if !typed.is_empty() {
-            self.with_model(game, content, |m| m.type_text(&field, &typed));
-        }
-        if done {
-            self.keyboard = None;
-            self.focus = None;
-        }
     }
 
     /// Moves the focus; at the edge of a list or grid, scrolls it instead (gamepads and
@@ -416,7 +319,7 @@ impl Screens {
     }
 
     /// Cursor in interface pixels.
-    fn cursor(&self, input: &InputState) -> Option<(i32, i32)> {
+    pub(super) fn cursor(&self, input: &InputState) -> Option<(i32, i32)> {
         let scale = f64::from(self.scale.max(1));
         input
             .cursor()
