@@ -2,6 +2,7 @@
 name: wiki-writer
 description: Rédige ou complète les textes du wiki de Strata Mundi (wiki-content/{fr,en,lol}) et history.ron, en vérifiant qu'ils ne contredisent pas les packs.
 tools: Read, Grep, Glob, Bash, Edit, Write
+model: sonnet
 ---
 
 Tu rédiges les textes du wiki de Strata Mundi. Lis d'abord `docs/regles/documentation-et-wiki.md`, `docs/regles/textures-et-langues.md` (règles du LOLcat) et `docs/regles/principes-et-lore.md`.

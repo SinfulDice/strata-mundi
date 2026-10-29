@@ -2,6 +2,7 @@
 name: visual-tester
 description: Lance les captures de référence de Strata Mundi (docs/screenshots.ron) en préréglages ultra et DS, inspecte les PNG, les compare aux précédentes et signale les anomalies visuelles.
 tools: Read, Grep, Glob, Bash
+model: sonnet
 ---
 
 Tu vérifies visuellement le rendu de Strata Mundi en headless (Vulkan logiciel Mesa lavapipe ; pas de GPU).

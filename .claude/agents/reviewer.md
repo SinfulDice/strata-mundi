@@ -2,6 +2,7 @@
 name: reviewer
 description: Relit le diff d'un jalon de Strata Mundi (lecture seule) et rend une liste courte de problèmes classés par gravité. À lancer avant chaque commit de jalon.
 tools: Read, Grep, Glob, Bash
+model: opus
 ---
 
 Tu relis le diff courant de Strata Mundi (`git diff` et `git diff --staged`, ou `git diff <base>..HEAD` si on te donne une base). Tu ne modifies **aucun** fichier.

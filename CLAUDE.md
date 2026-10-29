@@ -13,6 +13,7 @@ Lis à chaque session : ce fichier, `PROGRESS.md`, `docs/roadmap.md`, puis le fi
 | Fichier | Quand le lire |
 |---|---|
 | `docs/regles/principes-et-lore.md` | Toute conception de gameplay, de contenu ou de texte |
+| `docs/regles/vision.md` | Décisions de design globales (progression, monde, combat, magie, objets…) : toute conception de gameplay ou de contenu |
 | `docs/lore/fondations.md`, `docs/lore/emplacements.md` | Tout nom, texte narratif, dialogue, boss, dieu, lieu |
 | `docs/regles/technique.md` | Stack, crates, architecture, rendu, monde |
 | `docs/regles/plateformes.md` | Performances, profils (dont DS), réglages, contrôles, manette |
@@ -20,7 +21,8 @@ Lis à chaque session : ce fichier, `PROGRESS.md`, `docs/roadmap.md`, puis le fi
 | `docs/regles/projet-et-qualite.md` | Git, CI, licences, distribution, plantages, sauvegardes, tests, benchmarks |
 | `docs/regles/documentation-et-wiki.md` | `docs/explications/`, `decisions.md`, wiki |
 | `docs/regles/equilibrage.md` | Valeurs de jeu, coûts, boss, nombre de mobs et sorts, outils d'équilibrage |
-| `docs/regles/outils-claude.md` | Création ou usage des agents, skills et hooks |
+| `docs/regles/outils-claude.md` | Création ou usage des agents, skills et hooks ; économie de tokens |
+| `docs/idees-post-v1/` | Idées des versions v1.2 à v1.8, à ne pas implémenter avant validation |
 
 ## Mode de travail
 
@@ -76,7 +78,7 @@ Règles qui ne bougent jamais :
 - **Tout le contenu est en packs** (RON) surchargeables ; rien de défini en dur. Le contenu de base est le pack `strata`.
 - **Plusieurs dimensions** et **ECS** dès la v0.1. `core` et `worldgen` testables sans GPU.
 - Aucun texte affiché codé en dur : traductions **Fluent** en **fr, en, lol** (LOLcat).
-- Tout échange client ↔ serveur est un **message sérialisable** (prépare le multijoueur v2.0).
+- Tout échange client ↔ serveur est un **message sérialisable** (prépare le multijoueur v1.0).
 - Tout système coûteux a un réglage pour le désactiver ou le réduire.
 
 ## Style de code
@@ -88,18 +90,18 @@ Règles qui ne bougent jamais :
 
 ## Vérification (avant chaque commit de jalon)
 
-1. `cargo fmt --all`
-2. `cargo clippy --all-targets -- -D warnings`
-3. `cargo test --workspace` (+ benchmarks si le jalon touche une opération mesurée)
-4. **Contrôle visuel** : `app --screenshot <png> --seed <n> --pos <x,y,z> --look <yaw,pitch> [--time <tick>] [--dimension <id>] [--preset <nom>]`. Après tout changement visible, captures dans `screenshots/` (préréglages ultra et DS) **ouvertes et inspectées**.
-5. Tests obligatoires listés dans le fichier de version.
+1. Agent `verify` (`scripts/verify.sh` : fmt, clippy debug et release, tests ; n'affiche que les erreurs). Jamais de longs journaux `cargo` dans le contexte. Benchmarks si le jalon touche une opération mesurée.
+2. **Contrôle visuel** : `app --screenshot <png> --seed <n> --pos <x,y,z> --look <yaw,pitch> [--time <tick>] [--dimension <id>] [--preset <nom>]`. Après tout changement visible, captures dans `screenshots/` (préréglages ultra et DS) **ouvertes et inspectées**.
+3. Tests obligatoires listés dans le fichier de version.
 
-## Workflow d'un jalon
+## Workflow d'un jalon (orchestration)
 
-1. Relis `PROGRESS.md` et le fichier de version ; découpe en sous-tâches.
-2. Implémente par petits incréments qui compilent.
-3. Vérification complète.
-4. Agent `reviewer` sur le diff ; corrige ce qui est pertinent.
+La session principale **orchestre** et garde un contexte léger : elle ne code elle-même que les petites corrections (quelques fichiers).
+
+1. Relis `PROGRESS.md` et le fichier de version ; découpe le jalon en sous-tâches, écrites comme cases à cocher dans la section « État » de `PROGRESS.md` (commit et push).
+2. Pour chaque sous-tâche, **l'une après l'autre** : agent `implementer` (contexte vierge) avec la sous-tâche, les fichiers concernés et les décisions utiles. Il code, teste, vérifie, commit, pousse et rend un résumé court. Corrections sur cette sous-tâche : `SendMessage` au même agent.
+3. Vérification complète : agent `verify`.
+4. Agent `reviewer` sur le diff du jalon ; fais corriger ce qui est pertinent par `implementer`.
 5. Mets à jour `PROGRESS.md`, `docs/decisions.md`, `docs/explications/`, les traductions et `wiki-content/` (skill `close-milestone`).
 6. Commit Conventional Commits sur `main`, `git push`.
 
@@ -114,4 +116,4 @@ Règles qui ne bougent jamais :
 
 ## Outils Claude Code
 
-Créés au jalon 0 de la v0.1 selon `docs/regles/outils-claude.md` : agents `reviewer`, `visual-tester`, `doc-writer`, `wiki-writer` ; skills `add-*`, `close-milestone`, `close-version`, `update-wiki`, `perf-check` ; hook `cargo fmt`. Pas de sous-agents qui codent en parallèle.
+Détail dans `docs/regles/outils-claude.md` : agents `implementer`, `verify`, `reviewer`, `visual-tester`, `doc-writer`, `wiki-writer` ; skills `add-*`, `close-milestone`, `close-version`, `update-wiki`, `perf-check` ; script `scripts/verify.sh` ; hooks `cargo fmt` et reprise après compaction. Pas de sous-agents qui codent en parallèle.

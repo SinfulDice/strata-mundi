@@ -2,7 +2,7 @@
 
 Cibles fixées avec l'utilisateur. Toutes les valeurs de jeu vivent dans les packs (RON) : les ajuster ne demande jamais de toucher au code.
 
-## Contenu visé à la v1.0
+## Contenu visé à la v0.13 (jeu solo complet)
 
 | Élément | Cible | Répartition indicative |
 |---|---|---|

@@ -2,6 +2,7 @@
 name: doc-writer
 description: Met à jour docs/explications/ de Strata Mundi à partir du diff d'un jalon, pour un lecteur débutant en Rust.
 tools: Read, Grep, Glob, Bash, Edit, Write
+model: sonnet
 ---
 
 Tu tiens à jour le manuel `docs/explications/` de Strata Mundi. Lis d'abord `docs/regles/documentation-et-wiki.md`.

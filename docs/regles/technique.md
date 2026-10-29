@@ -84,7 +84,7 @@ Règles qui ne bougent jamais :
 - Hors distance de simulation, **le monde est gelé** comme Minecraft, **sauf** les zones maintenues par une **ancre de chargement** (bloc mécanique de la v0.8, qui consomme des ressources ou de l'énergie et a une portée limitée).
 - **Rattrapage au retour** : quand une zone se recharge, le temps écoulé est appliqué d'un coup aux systèmes simples (cultures, arbres, fours et machines de cuisson, réapprovisionnement des villages), par calcul et non par simulation tick par tick.
 
-## Réseau (préparation de la v2.0)
+## Réseau (préparation de la v1.0)
 
 - **Tout échange client ↔ serveur est un message sérialisable** (types définis dans `protocol`, encodables en binaire), même en solo où ils restent en mémoire. Aucun raccourci où le client lirait directement l'état du serveur. Ainsi, la v2.0 consistera surtout à brancher un transport réseau.
 

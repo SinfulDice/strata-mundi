@@ -44,5 +44,5 @@ Comme Minecraft, et plus : **tout s'active, se désactive ou se règle**, dans l
 ## Accessibilité
 
 - **Dès la v0.1, tout ce qui est simple** : police lisible en option, taille du texte, modes daltoniens (filtres de couleur et palettes d'interface adaptées), réduction des effets de caméra, sensibilités séparées ; **sous-titres** dès qu'il y a du son (v0.2).
-- Le reste (sous-titres directionnels, aide à la visée manette, tutoriel) arrive au fil des versions et est complété en v1.0.
+- Le reste (sous-titres directionnels, aide à la visée manette, tutoriel) arrive au fil des versions et est complété en v0.13.
 
