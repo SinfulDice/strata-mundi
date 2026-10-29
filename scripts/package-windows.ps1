@@ -13,6 +13,6 @@ New-Item -ItemType Directory -Force target/wix | Out-Null
 & (Join-Path $wixBin "heat.exe") dir assets -nologo -cg Assets -dr APPLICATIONFOLDER -gg -scom -sreg -sfrag `
     -var var.AssetsDir -out target/wix/assets.wxs
 if ($LASTEXITCODE -ne 0) { throw "heat failed" }
-cargo wix --package strata-app --no-build --include target/wix/assets.wxs -C "-dAssetsDir=assets" `
+cargo wix --nocapture --package strata-app --no-build --include target/wix/assets.wxs -C "-dAssetsDir=assets" `
     --output "dist/strata-$Version-windows-x86_64.msi"
 if ($LASTEXITCODE -ne 0) { throw "cargo wix failed" }
