@@ -70,4 +70,4 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## En attente de l'utilisateur
 
-- Maquettes de thème d'interface : en fin de v0.1.
+

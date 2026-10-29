@@ -1,5 +1,5 @@
-// Provisional neutral pixel-art theme (the final theme is chosen on mock-ups at the end
-// of v0.1). Colors: "#rrggbb" or "#rrggbbaa".
+// "Pierre" theme, chosen at the end of v0.1 (docs/maquettes, D035): neutral grey, golden
+// accent. Colors: "#rrggbb" or "#rrggbbaa".
 Theme(
     text: "#f2efe8",
     text_shadow: "#2a2620",

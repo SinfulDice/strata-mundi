@@ -26,7 +26,7 @@ cargo run --release -- --resource-packs-dir docs/maquettes/styles --resource-pac
 
 # Maquettes — thème de l'interface (fin de v0.1)
 
-> **En attente de ton choix.** Le thème actuel (1) est provisoire.
+> **Choix : thème 1, Pierre** (29/10/2026, voir `docs/decisions.md`, D035). Les deux autres restent ici comme exemples.
 
 Chaque planche montre l'écran titre, l'écran d'options et l'inventaire créatif, capturés dans le jeu. Seules les couleurs de l'interface changent (`assets/ui/theme.ron`) ; la police pixel et la disposition sont identiques.
 

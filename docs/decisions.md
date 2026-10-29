@@ -205,3 +205,7 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Images** : PNG plutôt que WebP (pas d'encodeur WebP sans dépendance C) ; icônes calculées sur le processeur, vues de biomes rendues par le jeu (lavapipe en CI).
 - **Alternatives écartées** : `tera`/`askama` (moteurs de gabarits, inutiles pour une dizaine de gabarits), générateurs de sites (mdBook, Zola : ne savent pas lire les packs).
 
+## D035 — Thème de l'interface : Pierre (v0.1, clôture)
+
+- **Choix de l'utilisateur** sur trois maquettes (Pierre, Bois chaleureux, Parchemin) : **Pierre**, gris neutre et accent doré, qui laisse la place au monde. Les deux autres restent dans `docs/maquettes/themes/` ; un pack de ressources peut remplacer `assets/ui/theme.ron`.
+
