@@ -21,6 +21,8 @@ const SEARCH_STEP: i32 = 48;
 const SEARCH_RINGS: i32 = 160;
 /// The camera stands this far back from the place it shows, on both axes.
 const BACK: i32 = 72;
+/// Columns generated around the camera: enough for the view, quick on the CPU.
+const VIEW_RADIUS: u32 = 10;
 /// The view needs this much of the same biome around it, in blocks.
 const BIOME_MARGIN: i32 = 40;
 
@@ -71,7 +73,7 @@ pub fn render_biomes(
         let eye = DVec3::new(f64::from(ex), eye_y, f64::from(ez));
         let distance = f64::from(BACK) * std::f64::consts::SQRT_2;
         let pitch = ((target - eye_y) / distance).atan().to_degrees() as f32;
-        let world = offline::generate_around(&generator, eye.x, eye.z, graphics.render_distance);
+        let world = offline::generate_around(&generator, eye.x, eye.z, VIEW_RADIUS);
         let view = View {
             camera: Camera::new(eye, 135.0, pitch, 70.0),
             size: (960, 540),

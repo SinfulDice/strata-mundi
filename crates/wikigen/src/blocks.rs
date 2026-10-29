@@ -84,10 +84,20 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, block: &Block, key: &str) -> Vec<(Strin
         RenderKind::Translucent => "wiki-render-translucent",
         RenderKind::Invisible => "wiki-render-invisible",
     });
-    vec![
-        (ctx.tr("wiki-fact-category"), escape(&category)),
-        (ctx.tr("wiki-fact-stack"), block.max_stack.to_string()),
-        (ctx.tr("wiki-fact-hardness"), format!("{}", block.hardness)),
+    // A negative hardness means the block cannot be broken (outside creative).
+    let hardness = if block.hardness < 0.0 {
+        escape(&ctx.tr("wiki-unbreakable"))
+    } else {
+        format!("{}", block.hardness)
+    };
+    let mut rows = vec![(ctx.tr("wiki-fact-category"), escape(&category))];
+    if block.has_item {
+        rows.push((ctx.tr("wiki-fact-stack"), block.max_stack.to_string()));
+    } else {
+        rows.push((ctx.tr("wiki-fact-item"), escape(&ctx.tr("wiki-no"))));
+    }
+    rows.extend([
+        (ctx.tr("wiki-fact-hardness"), hardness),
         (ctx.tr("wiki-fact-tool"), escape(&ctx.tr("wiki-tool-none"))),
         (ctx.tr("wiki-fact-solid"), escape(&yes_no(block.solid))),
         (ctx.tr("wiki-fact-render"), escape(&look)),
@@ -98,7 +108,8 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, block: &Block, key: &str) -> Vec<(Strin
         ),
         (ctx.tr("wiki-fact-id"), format!("<code>{id}</code>")),
         (ctx.tr("wiki-fact-added"), escape(&ctx.added_in(key))),
-    ]
+    ]);
+    rows
 }
 
 /// Where the world generation puts this block, read from the generation content.
@@ -139,11 +150,17 @@ fn generation(ctx: &Ctx<'_>, from: &str, id: &Identifier) -> String {
             max_y,
             ..
         } = feature
-            && (*ore == block || *deep_block == Some(block))
+            && let Some((min, max)) = ore_range(
+                *ore,
+                *deep_block,
+                (*min_y, *max_y),
+                block,
+                terrain.deep_level,
+            )
         {
             say(
                 "wiki-gen-ore",
-                &[("min", min_y.to_string()), ("max", max_y.to_string())],
+                &[("min", min.to_string()), ("max", max.to_string())],
             );
         }
     }
@@ -159,6 +176,24 @@ fn generation(ctx: &Ctx<'_>, from: &str, id: &Identifier) -> String {
         "<h2>{}</h2><ul>{items}</ul>",
         escape(&ctx.tr("wiki-generation"))
     )
+}
+
+/// Heights where `block` appears for this ore: an ore with a deep variant takes the
+/// variant's look in deep stone (below `deep_level`) and its own above.
+fn ore_range(
+    ore: BlockId,
+    deep: Option<BlockId>,
+    (min, max): (i32, i32),
+    block: BlockId,
+    deep_level: i32,
+) -> Option<(i32, i32)> {
+    let (min, max) = match deep {
+        Some(deep) if deep == block => (min, max.min(deep_level - 1)),
+        Some(_) if ore == block => (min.max(deep_level), max),
+        None if ore == block => (min, max),
+        _ => return None,
+    };
+    (min <= max).then_some((min, max))
 }
 
 /// Biomes using the block, by role (surface, under the surface, trees…), as links.

@@ -31,6 +31,8 @@ pub struct CommandSpec {
     pub name: &'static str,
     pub args: &'static [Arg],
     pub runs: Runs,
+    /// Changes the world in a way that would be cheating: creative only.
+    pub cheat: bool,
 }
 
 impl CommandSpec {
@@ -51,36 +53,43 @@ pub const COMMANDS: [CommandSpec; 7] = [
         name: "help",
         args: &[Arg::Command],
         runs: Runs::Client,
+        cheat: false,
     },
     CommandSpec {
         name: "tp",
         args: &[Arg::Coordinate, Arg::Coordinate, Arg::Coordinate],
         runs: Runs::Server,
+        cheat: true,
     },
     CommandSpec {
         name: "give",
         args: &[Arg::Item],
         runs: Runs::Server,
+        cheat: true,
     },
     CommandSpec {
         name: "gamemode",
         args: &[Arg::Choice(&["creative", "survival"])],
         runs: Runs::Server,
+        cheat: true,
     },
     CommandSpec {
         name: "time",
         args: &[Arg::Choice(&["set", "add", "query"]), Arg::Number],
         runs: Runs::Server,
+        cheat: true,
     },
     CommandSpec {
         name: "seed",
         args: &[],
         runs: Runs::Server,
+        cheat: false,
     },
     CommandSpec {
         name: "cinematic",
         args: &[Arg::Cinematic],
         runs: Runs::Client,
+        cheat: false,
     },
 ];
 

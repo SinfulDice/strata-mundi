@@ -93,12 +93,7 @@ impl OptionsModel<'_> {
             PACKS_TAB if self.shared.packs.is_empty() => vec![Row::NoPacks],
             PACKS_TAB => self.shared.packs.iter().cloned().map(Row::Pack).collect(),
             tab => {
-                let settings = match tab {
-                    0 => GRAPHICS,
-                    1 => INTERFACE,
-                    2 => CONTROLS,
-                    _ => GAME,
-                };
+                let settings = tab_settings(tab).unwrap_or(GAME);
                 settings.iter().map(|&s| Row::Setting(s)).collect()
             }
         }
@@ -258,15 +253,22 @@ pub fn action_key(action: Action) -> String {
 
 /// Settings by tab (tab title key, setting keys; each has a `-help` key), for the wiki.
 pub fn catalog() -> Vec<(&'static str, Vec<String>)> {
-    [
-        (TABS[0], GRAPHICS),
-        (TABS[1], INTERFACE),
-        (TABS[2], CONTROLS),
-        (TABS[4], GAME),
-    ]
-    .into_iter()
-    .map(|(tab, settings)| (tab, settings.iter().map(|&s| setting_key(s)).collect()))
-    .collect()
+    TABS.iter()
+        .enumerate()
+        .filter_map(|(index, &tab)| Some((tab, tab_settings(index)?)))
+        .map(|(tab, settings)| (tab, settings.iter().map(|&s| setting_key(s)).collect()))
+        .collect()
+}
+
+/// The settings listed in tab `index`; `None` for the keys and packs tabs.
+fn tab_settings(index: usize) -> Option<&'static [Setting]> {
+    match index {
+        0 => Some(GRAPHICS),
+        1 => Some(INTERFACE),
+        2 => Some(CONTROLS),
+        KEYS_TAB | PACKS_TAB => None,
+        _ => Some(GAME),
+    }
 }
 
 /// Every translation key the options screen may show, for the missing-translation test.

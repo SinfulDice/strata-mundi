@@ -40,8 +40,8 @@ impl Console<'_> {
             Some(spec) => Feedback::error("command-usage", &[("usage", spec.usage_key())]),
             None => Feedback::error("command-unknown", &[("name", name.to_owned())]),
         };
-        // Cheats: creative only (survival worlds will get a "commands allowed" option).
-        if name != "seed" && !self.game.is_creative() {
+        // Survival worlds will get a "commands allowed" option.
+        if find(name).is_some_and(|spec| spec.cheat) && !self.game.is_creative() {
             return Feedback::error("command-not-allowed", &[]).into();
         }
         let ran = match name {

@@ -25,9 +25,10 @@ pub fn pages(ctx: &Ctx<'_>) -> Vec<Page> {
 fn command(ctx: &Ctx<'_>, spec: &CommandSpec) -> Page {
     let path = format!("commands/{}.html", spec.name);
     let key = format!("commands/{}", spec.name);
-    let runs = ctx.tr(match spec.runs {
-        Runs::Server => "wiki-runs-server",
-        Runs::Client => "wiki-runs-client",
+    let runs = ctx.tr(match (spec.runs, spec.cheat) {
+        (Runs::Server, true) => "wiki-runs-cheat",
+        (Runs::Server, false) => "wiki-runs-server",
+        (Runs::Client, _) => "wiki-runs-client",
     });
     let body = format!(
         "<p><code>{}</code></p><p>{}</p><p class=\"dim\">{}</p>{}{}",

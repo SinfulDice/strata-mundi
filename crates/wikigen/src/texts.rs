@@ -47,7 +47,16 @@ pub fn plain(html: &str) -> String {
             _ => {}
         }
     }
-    text.split_whitespace().collect::<Vec<_>>().join(" ")
+    let words = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    [
+        ("&lt;", "<"),
+        ("&gt;", ">"),
+        ("&quot;", "\""),
+        ("&#39;", "'"),
+        ("&amp;", "&"),
+    ]
+    .iter()
+    .fold(words, |text, (entity, ch)| text.replace(entity, ch))
 }
 
 #[cfg(test)]

@@ -8,7 +8,7 @@
   if (theme) { document.documentElement.setAttribute("data-theme", theme); }
 
   function fold(text) {
-    return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
   function search(input, list, root) {
@@ -49,7 +49,7 @@
         store("strata-wiki-theme", next);
       });
     }
-    store("strata-wiki-lang", document.documentElement.lang);
+    store("strata-wiki-lang", document.body.getAttribute("data-lang"));
     var input = document.getElementById("search");
     var list = document.getElementById("results");
     var root = document.body.getAttribute("data-root") || "";

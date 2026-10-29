@@ -67,7 +67,12 @@ pub fn news(ctx: &Ctx<'_>) -> Page {
         .versions
         .last()
         .map_or_else(String::new, |version| {
-            version_section(ctx, &path, &version.id, &version.date)
+            format!(
+                "{}<p><a href=\"{}\">{}</a></p>",
+                version_section(ctx, &path, &version.id, &version.date),
+                link(&path, "changelog.html"),
+                escape(&ctx.tr("wiki-changelog"))
+            )
         });
     Page {
         path,
@@ -109,20 +114,18 @@ fn version_section(ctx: &Ctx<'_>, from: &str, version: &str, date: &str) -> Stri
         })
         .collect();
     format!(
-        "<h2>{}</h2><ul>{items}</ul><p><a href=\"{}\">{}</a></p>",
+        "<h2>{}</h2><ul>{items}</ul>",
         escape(&ctx.tr_with(
             "wiki-version",
             &[("version", version.to_owned()), ("date", date.to_owned())]
-        )),
-        link(from, "changelog.html"),
-        escape(&ctx.tr("wiki-changelog"))
+        ))
     )
 }
 
 /// `## History` of an entry page.
 pub fn history_section(ctx: &Ctx<'_>, key: &str) -> String {
     let Some(events) = ctx.data.history.entries.get(key) else {
-        ctx.added_in(key);
+        ctx.require_history(key);
         return String::new();
     };
     let rows: String = events

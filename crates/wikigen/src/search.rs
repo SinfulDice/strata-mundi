@@ -24,12 +24,25 @@ pub fn index(pages: &[Page]) -> String {
         .map(|page| Entry {
             t: &page.title,
             u: &page.path,
-            s: plain(&page.body).chars().take(SUMMARY).collect(),
+            s: plain(&without_infobox(&page.body))
+                .chars()
+                .take(SUMMARY)
+                .collect(),
         })
         .collect();
     let json = serde_json::to_string(&entries).unwrap_or_else(|_| "[]".to_owned());
     // `</` would close a script element if the index were ever inlined.
     format!("window.SEARCH_INDEX = {};\n", json.replace("</", "<\\/"))
+}
+
+/// The facts box comes first in the page but says little: the text matters more.
+fn without_infobox(body: &str) -> String {
+    match (body.find("<aside"), body.find("</aside>")) {
+        (Some(start), Some(end)) if start < end => {
+            format!("{}{}", &body[..start], &body[end + "</aside>".len()..])
+        }
+        _ => body.to_owned(),
+    }
 }
 
 #[cfg(test)]

@@ -106,7 +106,12 @@ pub fn layout(ctx: &Ctx<'_>, page: &Page) -> String {
         .collect();
     format!(
         include_str!("../assets/page.html"),
-        lang = ctx.lang,
+        // `lol` is the code of the Mongo language: LOLcat is a private English variant.
+        lang = if ctx.lang == "lol" {
+            "en-x-lolcat"
+        } else {
+            ctx.lang
+        },
         title = escape(&page.title),
         site = escape(&ctx.tr("wiki-title")),
         style = shared(from, "style.css"),
@@ -120,6 +125,7 @@ pub fn layout(ctx: &Ctx<'_>, page: &Page) -> String {
         body = page.body,
         footer = escape(&ctx.tr("wiki-footer")),
         root = link(from, ""),
+        folder = ctx.lang,
     )
 }
 

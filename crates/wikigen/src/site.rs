@@ -14,6 +14,8 @@ use strata_core::pack::PackSet;
 use strata_worldgen::WorldgenContent;
 
 const DIMENSION: &str = "strata:terra";
+/// Left in the output folder, so a later build knows it may replace it.
+const MARKER: &str = ".wikigen";
 
 pub struct Data {
     pub content: Content,
@@ -62,8 +64,15 @@ pub struct Ctx<'a> {
 }
 
 impl Ctx<'_> {
+    /// A missing translation falls back to its key: counted for strict mode.
     pub fn tr(&self, key: &str) -> String {
-        self.data.content.translations.text(self.lang, key)
+        let text = self.data.content.translations.text(self.lang, key);
+        if text == key {
+            self.missing
+                .borrow_mut()
+                .push(format!("{}.ftl: {key}", self.lang));
+        }
+        text
     }
 
     pub fn tr_with(&self, key: &str, args: &[(&str, String)]) -> String {
@@ -84,7 +93,12 @@ impl Ctx<'_> {
         })
     }
 
-    /// The history of `key` must exist too (version of addition).
+    /// Every page needs its entry in `history.ron`.
+    pub fn require_history(&self, key: &str) {
+        self.added_in(key);
+    }
+
+    /// The version that added `key` ("?" and counted as missing when unknown).
     pub fn added_in(&self, key: &str) -> String {
         match self.data.history.added_in(key) {
             Some(version) => version.to_owned(),
@@ -104,10 +118,9 @@ pub struct Report {
 }
 
 pub fn build(data: &Data, out: &Path) -> anyhow::Result<Report> {
-    if out.exists() {
-        std::fs::remove_dir_all(out).with_context(|| format!("cleaning {}", out.display()))?;
-    }
+    clean(out)?;
     write_shared(data, out)?;
+    write(&out.join(MARKER), "")?;
     let mut report = Report {
         pages: 0,
         missing: Vec::new(),
@@ -168,9 +181,25 @@ fn write(path: &Path, text: &str) -> anyhow::Result<()> {
     std::fs::write(path, text).with_context(|| path.display().to_string())
 }
 
+/// Empties the output folder, but only one wikigen wrote (or an empty one): a mistyped
+/// `--out` must never wipe something else.
+fn clean(out: &Path) -> anyhow::Result<()> {
+    let Ok(mut entries) = std::fs::read_dir(out) else {
+        return Ok(());
+    };
+    if entries.next().is_some() && !out.join(MARKER).is_file() {
+        anyhow::bail!(
+            "{} is not a wiki written by wikigen: not replaced",
+            out.display()
+        );
+    }
+    std::fs::remove_dir_all(out).with_context(|| format!("cleaning {}", out.display()))
+}
+
 fn copy_dir(from: &Path, to: &Path) -> anyhow::Result<()> {
     std::fs::create_dir_all(to)?;
-    for entry in std::fs::read_dir(from)?.flatten() {
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
         let target = to.join(entry.file_name());
         if entry.file_type()?.is_dir() {
             copy_dir(&entry.path(), &target)?;
