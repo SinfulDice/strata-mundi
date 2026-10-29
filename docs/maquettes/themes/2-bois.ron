@@ -1,0 +1,15 @@
+// Mock-up 2 "Bois chaleureux": warm wood panels, golden accent.
+Theme(
+    text: "#fff4e0",
+    text_shadow: "#3a2414",
+    text_dim: "#c9ad8a",
+    accent: "#ffcf5c",
+    panel: "#5a3a22ee",
+    panel_light: "#9a6a40",
+    panel_dark: "#2c1a0e",
+    slot: "#3a2414cc",
+    slot_border: "#8a5e38",
+    focus: "#ffe6a8",
+    field: "#1e120a",
+    shade: "#1a0c0490",
+)

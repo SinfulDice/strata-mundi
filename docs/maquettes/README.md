@@ -23,3 +23,17 @@ Les palettes sont dans `assets/packs/strata/palette.ron` (classique) et `docs/ma
 ```sh
 cargo run --release -- --resource-packs-dir docs/maquettes/styles --resource-pack pastel
 ```
+
+# Maquettes — thème de l'interface (fin de v0.1)
+
+> **En attente de ton choix.** Le thème actuel (1) est provisoire.
+
+Chaque planche montre l'écran titre, l'écran d'options et l'inventaire créatif, capturés dans le jeu. Seules les couleurs de l'interface changent (`assets/ui/theme.ron`) ; la police pixel et la disposition sont identiques.
+
+| Planche | Thème | Idée |
+|---|---|---|
+| [`theme-1-pierre.png`](theme-1-pierre.png) | **Pierre** (actuel) | Gris neutre, accent doré : discret, laisse la place au monde. |
+| [`theme-2-bois.png`](theme-2-bois.png) | **Bois chaleureux** | Panneaux de bois brun, accent doré : rappelle l'établi et la cabane. |
+| [`theme-3-parchemin.png`](theme-3-parchemin.png) | **Parchemin** | Panneaux clairs et encre sombre, accent rouille : le carnet d'un explorateur. |
+
+Réponds avec le numéro ou le nom, ou panache (« le bois, mais l'accent du parchemin »). Les couleurs de chaque maquette sont dans `docs/maquettes/themes/<n>-<nom>.ron` ; pour essayer en jeu, copie le fichier sur `assets/ui/theme.ron` (ou appuie sur F5 en jeu après la copie).

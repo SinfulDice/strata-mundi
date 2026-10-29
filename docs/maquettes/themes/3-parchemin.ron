@@ -1,0 +1,15 @@
+// Mock-up 3 "Parchemin": light parchment panels and dark ink, like an explorer's notebook.
+Theme(
+    text: "#2b2118",
+    text_shadow: "#e9dcc0",
+    text_dim: "#7a6a52",
+    accent: "#9c3d1c",
+    panel: "#efe2c6f0",
+    panel_light: "#fff7e6",
+    panel_dark: "#a8916a",
+    slot: "#d8c7a4dd",
+    slot_border: "#8a7550",
+    focus: "#9c3d1c",
+    field: "#fbf3e2",
+    shade: "#20160c70",
+)
