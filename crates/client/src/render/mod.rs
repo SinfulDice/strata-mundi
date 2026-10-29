@@ -21,7 +21,7 @@ pub use ui_pipeline::UiPipeline;
 
 use crate::camera::Camera;
 use crate::mesher::{SectionKey, SectionMesh};
-use crate::settings::{ColorFilter, Settings};
+use crate::settings::{ColorFilter, GraphicsSettings, Settings};
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use depth::DepthBuffer;
 use frustum::Frustum;
@@ -112,12 +112,20 @@ impl Default for RenderOptions {
 
 impl RenderOptions {
     pub fn from_settings(settings: &Settings) -> Self {
-        let graphics = &settings.graphics;
+        Self {
+            render_scale: settings.graphics.render_scale as f32 / 100.0,
+            color_filter: settings.interface.color_filter,
+            ..Self::for_capture(&settings.graphics)
+        }
+    }
+
+    /// Captures: the fog of the graphics settings, full resolution, no filter.
+    pub fn for_capture(graphics: &GraphicsSettings) -> Self {
         Self {
             fog: graphics.fog,
             fog_end: (graphics.render_distance as f32 - 0.5) * SECTION_SIZE as f32,
-            render_scale: graphics.render_scale as f32 / 100.0,
-            color_filter: settings.interface.color_filter,
+            render_scale: 1.0,
+            color_filter: ColorFilter::None,
         }
     }
 

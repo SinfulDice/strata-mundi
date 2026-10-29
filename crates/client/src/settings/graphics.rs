@@ -121,11 +121,8 @@ impl GraphicsSettings {
             ambient_occlusion,
             fog: true,
             mipmaps: !matches!(preset, Preset::VeryLow | Preset::Ds),
-            anisotropy: match preset {
-                Preset::High => 4,
-                Preset::Ultra => 16,
-                _ => 1,
-            },
+            // Off in every preset: it smooths the pixel art up close (left to taste).
+            anisotropy: 1,
             worker_threads: threads,
             generation_threads: threads,
         }

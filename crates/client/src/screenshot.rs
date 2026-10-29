@@ -1,8 +1,8 @@
 use crate::camera::Camera;
 use crate::mesher::{BlockTable, mesh_section};
 use crate::render::{
-    Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, Renderer, Target,
-    TextureFiltering,
+    Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, RenderOptions, Renderer,
+    Target, TextureFiltering,
 };
 use crate::settings::GraphicsSettings;
 use crate::world::ClientWorld;
@@ -65,6 +65,7 @@ pub fn render_image(
     let ao = view.graphics.ambient_occlusion;
     renderer.ambient_occlusion = f32::from(u8::from(ao));
     renderer.vertical_distance = view.graphics.vertical_distance;
+    renderer.options = RenderOptions::for_capture(&view.graphics);
     let table = BlockTable::new(content.blocks.iter().map(|(_, _, block)| block));
     for key in world.section_keys() {
         let mesh = mesh_section(&world.neighborhood(key), &table, ao);

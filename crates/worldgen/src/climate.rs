@@ -37,7 +37,7 @@ impl ClimateMaps {
             continentalness: Noise::new(seed, 3, 1.0 / (1100.0 * scale), 4),
             erosion: Noise::new(seed, 4, 1.0 / (700.0 * scale), 3),
             detail: Noise::new(seed, 5, 1.0 / 64.0, 4),
-            ridges: Noise::new(seed, 7, 1.0 / 220.0, 3),
+            ridges: Noise::new(seed, 7, 1.0 / 420.0, 3),
             jitter: Noise::new(seed, 6, 1.0 / 6.0, 1),
             sea_level: f64::from(content.terrain.sea_level),
         }
@@ -63,10 +63,11 @@ impl ClimateMaps {
         let ruggedness = smoothstep(0.0, 0.8, -climate.erosion);
         let inland = smoothstep(-0.1, 0.35, c);
         // Ridged noise (sharp crests, wide valleys) shapes the mountain ranges.
-        let ridge = (1.0 - self.ridges.at(x, z).abs()).powi(3);
-        let mountains = ruggedness * inland * (60.0 + 190.0 * ridge);
+        // Wide ranges with rounded shoulders: a crest climbs over ~100 blocks, not 20.
+        let ridge = (1.0 - self.ridges.at(x, z).abs()).powi(2);
+        let mountains = ruggedness * inland * (50.0 + 140.0 * ridge);
         let hills = (1.0 - ruggedness) * inland * 14.0;
-        let detail = self.detail.at(x, z) * (4.0 + mountains * 0.08 + hills * 0.6);
+        let detail = self.detail.at(x, z) * (4.0 + mountains * 0.05 + hills * 0.6);
         (base + mountains + detail + hills * (self.detail.at(z, x) * 0.5 + 0.5))
             .clamp(1.0, MAX_HEIGHT) as i32
     }
