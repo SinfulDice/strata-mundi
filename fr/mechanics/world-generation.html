@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Génération du monde — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/mechanics/world-generation.html" hreflang="fr">FR</a><a href="../../en/mechanics/world-generation.html" hreflang="en">EN</a><a href="../../lol/mechanics/world-generation.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Génération du monde</h1>
+<h2>Principe</h2>
+<p>Le monde n'est pas dessiné à la main : il est <strong>calculé</strong> à partir d'une graine, au fur et à mesure que vous avancez. Même graine, même monde, au bloc près, quel que soit l'ordre d'exploration. Il est pratiquement infini : seule la bordure choisie à la création l'arrête.</p>
+<h2>Relief et biomes</h2>
+<p>Quatre cartes invisibles couvrent le monde : <strong>température</strong>, <strong>humidité</strong>, <strong>continentalité</strong> (du large à l'intérieur des terres) et <strong>érosion</strong> (des terrains plats et usés aux reliefs jeunes). Les deux dernières donnent la hauteur du sol : océans profonds, collines douces, montagnes en crêtes. Le biome, choisi d'après le climat, ne décide que du sol et de la végétation : les transitions restent douces, sans falaise brutale. Six biomes existent pour l'instant.</p>
+<h2>Sous la surface</h2>
+<p>Sous le sol du biome viennent la pierre, la roche profonde, puis le socle. L'eau remplit les creux jusqu'au niveau de la mer. Des <strong>grottes</strong> sinueuses traversent la roche sans s'ouvrir sous la mer, les <strong>minerais</strong> forment de petits filons selon la profondeur, et arbres et cactus poussent selon le biome.</p>
+<h2>Point de départ</h2>
+<p>Plaines ou forêt, au sec, avec de l'eau à proximité.</p>
+<h2>Découverte en jeu</h2>
+<p>Explorez ! F3 affiche position et altitude, <code>/seed</code> la graine. Tout ceci est décrit dans le pack de base, modifiable par d'autres packs.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.1.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

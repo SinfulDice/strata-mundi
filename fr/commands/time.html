@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/time — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/commands/time.html" hreflang="fr">FR</a><a href="../../en/commands/time.html" hreflang="en">EN</a><a href="../../lol/commands/time.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>/time</h1>
+<p><code>/time &lt;set|add|query&gt; [valeur]</code></p><p>Règle l&#39;heure (day, noon, night, midnight ou ticks).</p><p class="dim">Exécutée par le serveur, en mode créatif seulement.</p><h2>Description</h2>
+<p><code>/time</code> lit ou règle l'horloge du monde. Chaque monde garde son heure, qui avance toute seule pendant la partie et est enregistrée avec la sauvegarde.</p>
+<h2>Syntaxe</h2>
+<p><code>/time &lt;set|add|query&gt; [valeur]</code></p>
+<ul>
+<li><code>query</code> : affiche l'heure actuelle.</li>
+<li><code>set &lt;valeur&gt;</code> : règle l'heure, avec un mot-clé (<code>day</code> pour le lever du jour, <code>noon</code> pour midi, <code>night</code> pour le coucher, <code>midnight</code> pour minuit) ou un nombre de ticks.</li>
+<li><code>add &lt;ticks&gt;</code> : avance l'horloge d'autant de ticks.</li>
+</ul>
+<h2>Exemples</h2>
+<ul>
+<li><code>/time set noon</code> : plein midi.</li>
+<li><code>/time query</code> : quelle heure est-il ?</li>
+</ul>
+<h2>Comportement</h2>
+<p>Exécutée par le serveur, en <strong>mode créatif</strong> uniquement. La réponse donne l'heure en ticks, rapportée à la durée d'une journée complète ; au-delà, l'horloge repart simplement de zéro. En v0.1, l'heure est comptée et sauvegardée, mais <strong>le ciel ne change pas encore</strong> : le cycle jour-nuit visible arrivera plus tard.</p>
+<h2>Conseils</h2>
+<p>Les mots-clés sont espacés d'un quart de journée : pratique pour se repérer sans calculer.</p>
+<h2>Découverte en jeu</h2>
+<p><code>/help time</code> rappelle la syntaxe et les mots-clés ; Tab complète <code>set</code>, <code>add</code>, <code>query</code> et les heures.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.1.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

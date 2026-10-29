@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/tp — Strata Mundi Wiki</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="en">
+<header>
+<a class="logo" href="../index.html">Strata Mundi Wiki</a>
+<nav><a href="../blocks/index.html">Blocks</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mechanics</a><a href="../commands/index.html">Commands</a><a href="../controls.html">Controls</a><a href="../settings.html">Settings</a><a href="../news.html">What&#39;s new</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Search…" autocomplete="off">
+<span class="languages"><a href="../../fr/commands/tp.html" hreflang="fr">FR</a><a class="current" href="../../en/commands/tp.html" hreflang="en">EN</a><a href="../../lol/commands/tp.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Light or dark theme" aria-label="Light or dark theme"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>/tp</h1>
+<p><code>/tp &lt;x&gt; &lt;y&gt; &lt;z&gt;  (~ = your position)</code></p><p>Teleports (~5 = 5 blocks further).</p><p class="dim">Run by the server, in creative mode only.</p><h2>Description</h2>
+<p><code>/tp</code> teleports you instantly to precise coordinates. Ideal for exploring, finding a build again, or taking a close look at a mountain peak spotted in the distance.</p>
+<h2>Syntax</h2>
+<p><code>/tp &lt;x&gt; &lt;y&gt; &lt;z&gt;</code>. Each coordinate can be:</p>
+<ul>
+<li>a number (decimals allowed);</li>
+<li><code>~</code>: your own current coordinate;</li>
+<li><code>~</code> followed by a number: an offset from your position (<code>~5</code>, <code>~-10</code>).</li>
+</ul>
+<h2>Examples</h2>
+<ul>
+<li><code>/tp 0 200 0</code>: off to the centre of the world, well above the ground.</li>
+<li><code>/tp ~ ~20 ~</code>: rise twenty blocks on the spot.</li>
+<li><code>/tp ~100 ~ ~</code>: a quick hop to the east.</li>
+</ul>
+<h2>Behaviour</h2>
+<p>Run by the server, in <strong>creative mode</strong> only. You arrive <strong>flying</strong> and still: no surprise fall. The destination is brought back inside the world border and its height. The console confirms the coordinates actually reached.</p>
+<h2>Tips</h2>
+<p>Write down the coordinates shown by F3 before setting off: you'll be able to come back with a single <code>/tp</code>.</p>
+<h2>Discovery in game</h2>
+<p><code>/help tp</code> recalls the syntax, and the Tab key completes the command name. F3 shows your position so you can work out destinations.</p>
+<h2>History</h2><table class="data"><tr><td>0.1.0</td><td>Added</td></tr></table>
+</main>
+<footer>Generated from the game&#39;s packs. Texts under CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

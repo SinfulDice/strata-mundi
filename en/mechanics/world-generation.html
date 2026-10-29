@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World generation — Strata Mundi Wiki</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="en">
+<header>
+<a class="logo" href="../index.html">Strata Mundi Wiki</a>
+<nav><a href="../blocks/index.html">Blocks</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mechanics</a><a href="../commands/index.html">Commands</a><a href="../controls.html">Controls</a><a href="../settings.html">Settings</a><a href="../news.html">What&#39;s new</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Search…" autocomplete="off">
+<span class="languages"><a href="../../fr/mechanics/world-generation.html" hreflang="fr">FR</a><a class="current" href="../../en/mechanics/world-generation.html" hreflang="en">EN</a><a href="../../lol/mechanics/world-generation.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Light or dark theme" aria-label="Light or dark theme"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>World generation</h1>
+<h2>Principle</h2>
+<p>The world isn't drawn by hand: it's <strong>calculated</strong> from a seed, bit by bit as you move forward. Same seed, same world, down to the block, whatever order you explore in. It's practically endless: only the border chosen at creation stops it.</p>
+<h2>Terrain and biomes</h2>
+<p>Four invisible maps cover the world: <strong>temperature</strong>, <strong>humidity</strong>, <strong>continentalness</strong> (from open sea to deep inland) and <strong>erosion</strong> (from flat, worn land to young terrain). The last two give the ground height: deep oceans, gentle hills, ridged mountains. The biome, picked from the climate, only decides the ground cover and vegetation: transitions stay gentle, with no abrupt cliffs. Six biomes exist for now.</p>
+<h2>Below the surface</h2>
+<p>Under the biome's soil come stone, deep stone, then bedrock. Water fills the dips up to sea level. Winding <strong>caves</strong> run through the rock without opening under the sea, <strong>ores</strong> form small veins by depth, and trees and cacti grow according to the biome.</p>
+<h2>Starting point</h2>
+<p>Plains or forest, on dry land, with water nearby.</p>
+<h2>Discovery in game</h2>
+<p>Explore! F3 shows position and altitude, <code>/seed</code> the seed. All of this is described in the base pack, and other packs can change it.</p>
+<h2>History</h2><table class="data"><tr><td>0.1.0</td><td>Added</td></tr></table>
+</main>
+<footer>Generated from the game&#39;s packs. Texts under CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>
