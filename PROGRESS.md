@@ -27,6 +27,8 @@
 - **Rendu headless** : `--screenshot` fonctionne avec lavapipe (~0,3 s par capture). Fenêtre et `--bench-scene` testés sous **Xvfb** (`xvfb-run -a`, `XDG_RUNTIME_DIR` à définir).
 - `vulkaninfo --summary` : **lavapipe OK** — `llvmpipe (LLVM 20.1.2, 256 bits)`, Vulkan 1.4.318, Mesa 25.2.8.
 - Machine de jeu de l'utilisateur : PC Linux (carte graphique à renseigner par l'utilisateur).
+- **Console DS pas encore construite** (29/10/2026). En attendant : mesures sur le PC de l'utilisateur avec `taskset -c 0-3 strata --bench-scene flyover --preset ds` (4 cœurs comme le N100). Valables pour la **mémoire** (≤ 2 Go) et la **tendance** d'une version à l'autre, **pas** pour les FPS du DS (GPU du N100 bien plus faible) : les rapports `perf-reports/` le précisent. Ne redemande pas de mesure ni d'essai manette sur le DS avant que l'utilisateur annonce la console prête ; la cible 30 FPS DS reste « à mesurer » (simulation documentée en v0.13 si besoin).
+- Manette : essais sur PC avec une manette quelconque (`gilrs`, même code que sur le DS) ; disposition des boutons du DS à vérifier plus tard.
 
 ## Mesures
 
@@ -72,5 +74,6 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## En attente de l'utilisateur
 
-- **Pousser le tag `v0.1.0`** (refusé depuis la session cloud, commande dans le rapport de `docs/versions/v0.1.md`) ; feu vert pour la v0.2 ; mesures FPS (`strata --bench-scene flyover --preset ds`) et essai à la manette sur le DS.
+- Feu vert pour la v0.2 (tag `v0.1.0` poussé, release publiée par la CI).
+- À chaque fin de version : mesure sur PC en attendant le DS (voir « Environnement »).
 
