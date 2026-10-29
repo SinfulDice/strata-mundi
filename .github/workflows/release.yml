@@ -3,6 +3,8 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Manual run: builds every package and the wiki without publishing anything.
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -72,6 +74,7 @@ jobs:
 
   publish:
     needs: [linux, flatpak, windows]
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
@@ -96,7 +99,12 @@ jobs:
         run: |
           if [ ! -d crates/wikigen ]; then echo "wikigen not available yet"; exit 0; fi
           ./scripts/build-wiki.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wiki
+          path: wiki
       - name: Publish on the wiki branch
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           [ -d wiki ] || exit 0
           cd wiki

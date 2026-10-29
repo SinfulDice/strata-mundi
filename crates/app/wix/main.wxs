@@ -40,6 +40,7 @@
                  AllowAdvertise="no" Display="expand" Absent="disallow">
             <ComponentRef Id="Binary"/>
             <ComponentRef Id="Licenses"/>
+            <ComponentGroupRef Id="Assets"/>
             <ComponentRef Id="StartMenuShortcut"/>
         </Feature>
         <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER"/>
