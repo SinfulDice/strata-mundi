@@ -20,9 +20,11 @@
                         <File Id="StrataExe" Name="strata.exe" DiskId="1" KeyPath="yes"
                               Source="$(var.CargoTargetBinDir)\strata.exe"/>
                     </Component>
-                    <Component Id="Licenses" Guid="*">
+                    <Component Id="License" Guid="*">
                         <File Id="LicenseFile" Name="LICENSE.txt" DiskId="1" KeyPath="yes" Source="LICENSE"/>
-                        <File Id="LicenseContentFile" Name="LICENSE-CONTENT.txt" DiskId="1"
+                    </Component>
+                    <Component Id="LicenseContent" Guid="*">
+                        <File Id="LicenseContentFile" Name="LICENSE-CONTENT.txt" DiskId="1" KeyPath="yes"
                               Source="LICENSE-CONTENT"/>
                     </Component>
                 </Directory>
@@ -39,7 +41,8 @@
         <Feature Id="Main" Title="Strata Mundi" Level="1" ConfigurableDirectory="APPLICATIONFOLDER"
                  AllowAdvertise="no" Display="expand" Absent="disallow">
             <ComponentRef Id="Binary"/>
-            <ComponentRef Id="Licenses"/>
+            <ComponentRef Id="License"/>
+            <ComponentRef Id="LicenseContent"/>
             <ComponentGroupRef Id="Assets"/>
             <ComponentRef Id="StartMenuShortcut"/>
         </Feature>
