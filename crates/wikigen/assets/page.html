@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="{lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title} — {site}</title>
+<link rel="stylesheet" href="{style}">
+<script src="{script}"></script>
+</head>
+<body data-root="{root}">
+<header>
+<a class="logo" href="{home}">{site}</a>
+<nav>{nav}</nav>
+<div class="tools">
+<input id="search" type="search" placeholder="{search}" autocomplete="off">
+<span class="languages">{languages}</span>
+<button id="theme" type="button" title="{theme}" aria-label="{theme}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>{title}</h1>
+{body}
+</main>
+<footer>{footer}</footer>
+<script src="{index}"></script>
+</body>
+</html>

@@ -11,7 +11,7 @@ pub mod rich;
 mod theme;
 mod widgets;
 
-pub use atlas::{ICON_SIZE, UiAtlas};
+pub use atlas::{ICON_SIZE, UiAtlas, item_icon};
 pub use def::{Node, ScreenDef};
 pub use focus::{Direction, navigate};
 pub use model::{Hit, HitKind, ListRow, LogLine, OptionRow, ScreenModel, Tone};

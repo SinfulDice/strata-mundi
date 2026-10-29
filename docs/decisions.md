@@ -197,3 +197,11 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 - **Choix** : `cinematics/<nom>.ron` (points clés temps/position relative/angles, sous-titre optionnel en clé de traduction, `skippable`, `letterbox`), trajectoire Catmull-Rom, angles par le plus court chemin, validés au chargement (au moins deux points, temps croissants, valeurs finies). Lecture côté client, joueur immobile pendant le plan.
 - **Plus tard** : déclenchement par le serveur (boss, découvertes) avec un message dédié ; le format ne changera pas.
+
+## D034 — Wiki : `wikigen`, `pulldown-cmark`, `serde_json` (v0.1, jalon 9)
+
+- **Choix** : binaire `wikigen` qui charge les packs comme le jeu et écrit un site statique par langue ; gabarits inclus dans le binaire (`include_str!`), aucun moteur de gabarits. `pulldown-cmark` 0.13 (Markdown → HTML, référence de l'écosystème, sans dépendance lourde) pour les textes ; `serde_json` pour l'index de recherche, servi en `.js` (`window.SEARCH_INDEX = …`) pour fonctionner depuis `file://`.
+- **Données jamais recopiées** : infobox, lieux de génération, commandes, touches et réglages viennent des packs ou des tables du jeu (`strata_client::catalog`, `protocol::commands`).
+- **Images** : PNG plutôt que WebP (pas d'encodeur WebP sans dépendance C) ; icônes calculées sur le processeur, vues de biomes rendues par le jeu (lavapipe en CI).
+- **Alternatives écartées** : `tera`/`askama` (moteurs de gabarits, inutiles pour une dizaine de gabarits), générateurs de sites (mdBook, Zola : ne savent pas lire les packs).
+

@@ -22,6 +22,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 16. [Installation sur le DS](installation-ds.md) : dépendances système, fermeture du clapet.
 17. [Réglages](reglages.md) : fichier unique, préréglages, application à chaud, accessibilité, packs de ressources.
 18. [Console, débogage et cinématiques](console-et-debug.md) : commandes, F3, F5, rapports de plantage, mises à jour, caméra scriptée.
+19. [Le wiki](wiki.md) : génération depuis les packs, textes, images, publication.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

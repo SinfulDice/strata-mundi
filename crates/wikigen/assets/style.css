@@ -1,0 +1,57 @@
+/* Strata Mundi wiki: light by default, dark with the system preference or the button. */
+:root {
+  --bg: #f6f1e7; --panel: #fffaf0; --text: #2b2620; --dim: #6f665a;
+  --accent: #b5651d; --line: #d9cdb8; --header: #3c2f24; --header-text: #f6e7cf;
+}
+:root[data-theme="dark"] {
+  --bg: #1d1a17; --panel: #26221e; --text: #ece3d4; --dim: #a79b8a;
+  --accent: #e7a25b; --line: #3d362f; --header: #120f0d; --header-text: #f6e7cf;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d1a17; --panel: #26221e; --text: #ece3d4; --dim: #a79b8a;
+    --accent: #e7a25b; --line: #3d362f; --header: #120f0d; --header-text: #f6e7cf;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, sans-serif; }
+a { color: var(--accent); }
+header { background: var(--header); color: var(--header-text); padding: .6rem 1rem; display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: center; position: relative; }
+header a { color: var(--header-text); text-decoration: none; }
+header a:hover { text-decoration: underline; }
+.logo { font-weight: 700; font-size: 1.15rem; }
+nav { display: flex; flex-wrap: wrap; gap: .3rem 1rem; flex: 1; }
+.tools { display: flex; gap: .6rem; align-items: center; }
+#search { padding: .3rem .5rem; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--text); width: 12rem; }
+.languages a { margin-left: .4rem; opacity: .7; }
+.languages a.current { opacity: 1; font-weight: 700; }
+#theme { background: none; border: 1px solid var(--header-text); color: var(--header-text); border-radius: 4px; cursor: pointer; }
+#results { position: absolute; right: 1rem; top: 100%; z-index: 2; background: var(--panel); color: var(--text); border: 1px solid var(--line); margin: 0; padding: .4rem 1.4rem; max-height: 60vh; overflow: auto; width: min(26rem, 90vw); }
+#results li { margin: .2rem 0; }
+main { max-width: 72rem; margin: 0 auto; padding: 1rem 1.2rem 3rem; }
+main::after { content: ""; display: block; clear: both; }
+h1 { margin-top: .4rem; }
+h2 { border-bottom: 1px solid var(--line); padding-bottom: .15rem; }
+.infobox { float: right; width: 19rem; margin: 0 0 1rem 1.5rem; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .6rem; }
+.infobox h2 { margin: 0 0 .4rem; text-align: center; font-size: 1.05rem; border: 0; }
+.infobox img { display: block; margin: 0 auto .5rem; max-width: 100%; image-rendering: pixelated; }
+.infobox table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.infobox th { text-align: left; color: var(--dim); font-weight: 600; padding: .2rem .4rem .2rem 0; vertical-align: top; }
+.infobox td { padding: .2rem 0; }
+.infobox img.icon { display: inline; margin: 0 .3rem 0 0; }
+.icon { width: 32px; height: 32px; image-rendering: pixelated; vertical-align: middle; margin-right: .3rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .5rem; padding: 0; list-style: none; }
+.grid li { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .4rem .6rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1rem; padding: 0; list-style: none; }
+.cards li { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.cards img { width: 100%; display: block; }
+.cards a { display: block; padding: .5rem .7rem; font-weight: 600; }
+table.data { border-collapse: collapse; margin: .5rem 0 1rem; }
+table.data th, table.data td { border: 1px solid var(--line); padding: .3rem .6rem; text-align: left; vertical-align: top; }
+table.data th { background: var(--panel); }
+kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 .35rem; font: .9em monospace; }
+code { background: var(--panel); padding: 0 .25rem; border-radius: 3px; }
+.missing { color: var(--dim); font-style: italic; }
+footer { text-align: center; color: var(--dim); font-size: .85rem; padding: 1rem; }
+.chooser { text-align: center; padding-top: 20vh; }
+@media (max-width: 700px) { .infobox { float: none; width: auto; margin: 0 0 1rem; } }

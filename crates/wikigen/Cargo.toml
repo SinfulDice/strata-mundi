@@ -1,0 +1,24 @@
+[package]
+name = "wikigen"
+description = "Builds the static wiki (fr, en, lol) from the packs and the texts of wiki-content/."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+strata-core.workspace = true
+strata-worldgen.workspace = true
+strata-protocol.workspace = true
+strata-client.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+pulldown-cmark.workspace = true
+ron.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

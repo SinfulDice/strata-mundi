@@ -14,6 +14,7 @@ mod title;
 mod worlds;
 
 pub use menu::UiAction;
+pub use options::{REBINDABLE, action_key, catalog as settings_catalog};
 
 use crate::gameplay::Gameplay;
 use crate::input::{Action, InputDevice, KeyNames};

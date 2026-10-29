@@ -24,6 +24,7 @@ Le lore de Strata s'écrit **avec l'utilisateur**, en séances dédiées. Claude
 | Choix de la rébellion | v0.12 | Après l'épreuve d'Arbiter | Court | Choix définitif, conséquences claires | À écrire |
 | Réactions aux déicides (dieux, peuples, PNJ) | v0.12 | Mort de chaque dieu | 1-3 phrases | Sanatrix déçue, Somnifer ravi | À écrire |
 | Révélation finale d'Arbiter | v0.12 | Victoire sur Arbiter | Court | Fin ouverte : les dieux aussi sont l'objet d'un pari | À écrire |
+| Wiki, page d'accueil : section « Le monde » (`wiki-content/{fr,en,lol}/pages/home.md`) | v0.1 | Lecture du wiki (hors jeu) | 2-4 phrases | Présentation de Terra pour un nouveau joueur, sans rien dévoiler (dieux = légendes, pas de dragon ni de révélation) ; ton chaleureux ; trois langues | À écrire |
 
 ## Décisions validées
 - [Fondations](fondations.md) — séance 1 : le joueur, les dieux, le pari, le dragon, la révélation, la fin ouverte.

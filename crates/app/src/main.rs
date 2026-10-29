@@ -7,6 +7,7 @@ mod launcher;
 mod logging;
 mod offline;
 mod paths;
+mod renders;
 mod updates;
 
 use clap::Parser;
@@ -35,7 +36,10 @@ fn main() -> anyhow::Result<()> {
     let settings_path = data.join("config/settings.toml");
     let mut settings = settings_for(&args, &settings_path);
     // Tools render the base packs only, whatever the player enabled.
-    let tool = args.texture_sheet.is_some() || args.screenshot.is_some();
+    let tool = args.texture_sheet.is_some()
+        || args.screenshot.is_some()
+        || args.render_icons.is_some()
+        || args.render_biomes.is_some();
     let saved_packs = if tool {
         Vec::new()
     } else {
@@ -44,6 +48,13 @@ fn main() -> anyhow::Result<()> {
     let loaded = content::load(&args, &dimension, &saved_packs)?;
     let tool_preset = args.preset.unwrap_or(Preset::High);
     let graphics = GraphicsSettings::for_preset(tool_preset);
+    if let Some(dir) = &args.render_icons {
+        return renders::render_icons(&loaded.content, dir);
+    }
+    if let Some(dir) = &args.render_biomes {
+        let ultra = GraphicsSettings::for_preset(Preset::Ultra);
+        return renders::render_biomes(&loaded.content, &loaded.worldgen, ultra, dir);
+    }
     if let Some(path) = &args.texture_sheet {
         return Ok(write_texture_sheet(
             &loaded.content,

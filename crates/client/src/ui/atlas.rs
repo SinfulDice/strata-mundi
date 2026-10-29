@@ -84,7 +84,8 @@ impl UiAtlas {
     }
 }
 
-fn item_icon(content: &Content, kind: ItemKind, size: u32) -> Option<RgbaImage> {
+/// Icon of an item: blocks drawn in three-quarter view, other items flat.
+pub fn item_icon(content: &Content, kind: ItemKind, size: u32) -> Option<RgbaImage> {
     let image = |layer| content.textures.images.get(layer);
     match kind {
         ItemKind::Block(block) => {

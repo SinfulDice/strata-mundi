@@ -5,3 +5,4 @@
 /screenshots/*.tmp.png
 *.swp
 .DS_Store
+/wiki-images/

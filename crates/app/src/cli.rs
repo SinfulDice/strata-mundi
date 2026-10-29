@@ -31,6 +31,14 @@ pub struct Args {
     #[arg(long, value_name = "PNG")]
     pub texture_sheet: Option<PathBuf>,
 
+    /// Write the icon of every item (`<DIR>/<namespace>/<name>.png`) for the wiki, then quit.
+    #[arg(long, value_name = "DIR")]
+    pub render_icons: Option<PathBuf>,
+
+    /// Write a view of every biome (`<DIR>/<namespace>/<name>.png`) for the wiki, then quit.
+    #[arg(long, value_name = "DIR")]
+    pub render_biomes: Option<PathBuf>,
+
     /// Activate a resource pack from the resource packs folder (repeatable; last wins).
     #[arg(long, value_name = "NAME")]
     pub resource_pack: Vec<String>,

@@ -256,6 +256,19 @@ pub fn action_key(action: Action) -> String {
     kebab_key("action", &format!("{action:?}"))
 }
 
+/// Settings by tab (tab title key, setting keys; each has a `-help` key), for the wiki.
+pub fn catalog() -> Vec<(&'static str, Vec<String>)> {
+    [
+        (TABS[0], GRAPHICS),
+        (TABS[1], INTERFACE),
+        (TABS[2], CONTROLS),
+        (TABS[4], GAME),
+    ]
+    .into_iter()
+    .map(|(tab, settings)| (tab, settings.iter().map(|&s| setting_key(s)).collect()))
+    .collect()
+}
+
 /// Every translation key the options screen may show, for the missing-translation test.
 #[cfg(test)]
 pub fn translation_keys() -> Vec<String> {
