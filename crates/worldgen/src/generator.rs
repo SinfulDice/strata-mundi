@@ -200,7 +200,7 @@ impl Generator {
     /// Giant ore veins with blocks possibly between `min` and `max` (horizontal block
     /// coordinates, inclusive).
     pub fn deposits_near(&self, min: (i32, i32), max: (i32, i32)) -> Vec<Vein> {
-        Deposits::veins(self.seed, &self.content, min, max)
+        Deposits::veins(self.seed, &self.content, min, max).collect()
     }
 
     /// Whether caves may open a block of `ys` at `(x, z)`.

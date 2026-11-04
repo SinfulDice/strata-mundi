@@ -105,9 +105,9 @@ pub enum Feature {
 
 /// Looks up identifiers, recording an error (with the file) for each unknown one.
 pub(crate) struct Resolver<'a> {
-    blocks: &'a Registry<BlockId, Block>,
-    errors: &'a mut Vec<PackError>,
-    source: &'a Path,
+    pub(crate) blocks: &'a Registry<BlockId, Block>,
+    pub(crate) errors: &'a mut Vec<PackError>,
+    pub(crate) source: &'a Path,
 }
 
 impl Resolver<'_> {
@@ -258,7 +258,8 @@ fn load_features(
                     max_y,
                 },
                 def @ FeatureDef::Deposit { .. } => {
-                    return Deposit::resolve(&def, &mut r).map(|d| (id, Feature::Deposit(d)));
+                    let deposit = Deposit::resolve(&id, &def, &mut r);
+                    return deposit.map(|d| (id, Feature::Deposit(d)));
                 }
             };
             Some((id, feature))

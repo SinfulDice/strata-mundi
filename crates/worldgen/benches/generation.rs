@@ -54,5 +54,20 @@ fn special_columns(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, generation, special_columns);
+/// The column at the middle of the first giant ore vein near the origin.
+fn deposit_columns(c: &mut Criterion) {
+    let generator = generator();
+    let center = generator
+        .deposits_near((-512, -512), (511, 511))
+        .first()
+        .map_or(ColumnPos { x: 0, z: 0 }, |vein| ColumnPos {
+            x: vein.center.x.div_euclid(16),
+            z: vein.center.z.div_euclid(16),
+        });
+    c.bench_function("generate_deposit_column", |b| {
+        b.iter(|| generator.generate(black_box(center)))
+    });
+}
+
+criterion_group!(benches, generation, special_columns, deposit_columns);
 criterion_main!(benches);

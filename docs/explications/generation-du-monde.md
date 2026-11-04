@@ -66,7 +66,7 @@ Mesures : ~2 ms par colonne (`cargo bench -p strata-worldgen`).
 | Colonne complète | `crates/worldgen/src/generator.rs` (`Generator::generate`) |
 | Grottes | `crates/worldgen/src/caves/` (voir [Grottes](grottes.md)) |
 | Minerais, arbres | `crates/worldgen/src/features.rs` |
-| Grands gisements | `crates/worldgen/src/deposits.rs` |
+| Grands gisements | `crates/worldgen/src/deposits/` |
 | Point de départ | `crates/worldgen/src/spawn.rs` |
 | Tests (déterminisme, biomes, départ) | `crates/worldgen/tests/generation.rs` |
 

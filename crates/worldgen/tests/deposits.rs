@@ -179,3 +179,28 @@ fn surface_signs(column: &Column, signs: &[BlockId]) -> usize {
     }
     found
 }
+
+/// A vein crossing a column border goes on, block for block, on the other side.
+#[test]
+fn veins_continue_across_column_borders() {
+    let generator = common::generator(42);
+    let mut pairs = 0;
+    for vein in veins(&generator).iter().take(4) {
+        let d = deposit(&generator, vein);
+        let parts = [d.ore, d.deep_ore, d.filler, d.deep_filler];
+        let center = center_column(vein);
+        let here = generator.generate(center);
+        let east = generator.generate(ColumnPos {
+            x: center.x + 1,
+            z: center.z,
+        });
+        for z in 0..16 {
+            for y in 1..320 {
+                if parts.contains(&here.get(15, y, z)) && parts.contains(&east.get(0, y, z)) {
+                    pairs += 1;
+                }
+            }
+        }
+    }
+    assert!(pairs > 10, "only {pairs} vein blocks touch across borders");
+}
