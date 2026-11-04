@@ -4,7 +4,7 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 3 — Minerais et gisements
-  - [ ] Cuivre (minerai normal et profond, petits filons) et **grands gisements** riches et rares (fer, cuivre ; roche de remplissage colorée), signes discrets en surface (roches colorées) ; textures, traductions, wiki ; tests (déterminisme, gisements trouvés sur les graines de référence, signes au-dessus)
+  - [x] Cuivre (minerai normal et profond, petits filons) et **grands gisements** riches et rares (fer, cuivre ; roche de remplissage colorée), signes discrets en surface (roches colorées) ; textures, traductions, wiki ; tests (déterminisme, gisements trouvés sur les graines de référence, signes au-dessus)
 - **Dernière session** : 04/11/2026
 
 ## Fait

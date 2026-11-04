@@ -1,0 +1,1 @@
+Material(ramp: "ferrous_rock", pattern: Noise(cells: (4, 4), octaves: 3))

@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:verdigris_rock"),
+    hardness: 1.8,
+    sound: Some("strata:stone"),
+    category: Some("strata:natural"),
+)

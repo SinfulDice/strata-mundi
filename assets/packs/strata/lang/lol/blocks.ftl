@@ -28,3 +28,7 @@ block-strata-deep_iron_ore = IRON IN TEH DEEP ROCK
 block-strata-deep_gold_ore = GOLD IN TEH DEEP ROCK
 block-strata-deep_diamond_ore = SHINY IN TEH DEEP ROCK
 block-strata-lava = HOT JUICE
+block-strata-copper_ore = COPPR IN TEH ROCK
+block-strata-deep_copper_ore = COPPR IN TEH DEEP ROCK
+block-strata-ferrous_rock = RUSTY ROCK
+block-strata-verdigris_rock = GREEN RUSTY ROCK

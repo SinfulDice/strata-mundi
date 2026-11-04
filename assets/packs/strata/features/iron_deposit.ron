@@ -1,0 +1,17 @@
+// Rare giant vein of ferrous rock rich in iron, hinted at by rusty stones on the surface.
+Deposit(
+    ore: "strata:iron_ore",
+    deep_ore: Some("strata:deep_iron_ore"),
+    filler: "strata:ferrous_rock",
+    ore_share: 0.35,
+    length: (40, 80),
+    thickness: (6, 10),
+    min_y: 20,
+    max_y: 100,
+    // One chance per cell of 256×256 blocks.
+    cell: 256,
+    chance: 0.4,
+    sign: Some("strata:ferrous_rock"),
+    sign_share: 0.05,
+    sign_on: ["strata:grass_block", "strata:snowy_grass_block", "strata:stone", "strata:sand", "strata:sandstone", "strata:gravel", "strata:dirt"],
+)

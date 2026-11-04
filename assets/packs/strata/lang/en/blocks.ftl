@@ -28,3 +28,7 @@ block-strata-deep_iron_ore = Deep Iron Ore
 block-strata-deep_gold_ore = Deep Gold Ore
 block-strata-deep_diamond_ore = Deep Diamond Ore
 block-strata-lava = Lava
+block-strata-copper_ore = Copper Ore
+block-strata-deep_copper_ore = Deep Copper Ore
+block-strata-ferrous_rock = Ferrous Rock
+block-strata-verdigris_rock = Verdigris Rock

@@ -8,7 +8,7 @@ Four invisible maps cover the world: **temperature**, **humidity**, **continenta
 
 ## Below the surface
 
-Under the biome's soil come stone, deep stone, then bedrock. Water fills the dips up to sea level. Winding **caves** run through the rock without opening under the sea, **ores** form small veins by depth, and trees and cacti grow according to the biome.
+Under the biome's soil come stone, deep stone, then bedrock. Water fills the dips up to sea level. Winding **caves** run through the rock without opening under the sea, **ores** form small veins by depth, rare **giant deposits** of iron or copper stretch for dozens of blocks (a few coloured stones give them away on the surface), and trees and cacti grow according to the biome.
 
 ## Starting point
 

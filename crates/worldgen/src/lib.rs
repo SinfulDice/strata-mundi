@@ -5,6 +5,7 @@ mod caves;
 mod climate;
 mod content;
 pub mod defs;
+mod deposits;
 mod features;
 mod generator;
 pub mod map;
@@ -17,6 +18,7 @@ mod terrain;
 
 pub use climate::Sample;
 pub use content::{Biome, Feature, Terrain, WorldgenContent};
+pub use deposits::{Deposit, Vein};
 pub use generator::Generator;
 pub use spline::Spline;
 

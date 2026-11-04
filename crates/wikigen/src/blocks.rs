@@ -164,6 +164,26 @@ fn generation(ctx: &Ctx<'_>, from: &str, id: &Identifier) -> String {
             );
         }
     }
+    for feature in &worldgen.features {
+        if let Feature::Deposit(deposit) = feature {
+            let parts = [
+                deposit.ore,
+                deposit.deep_ore,
+                deposit.filler,
+                deposit.deep_filler,
+            ];
+            if parts.contains(&block) {
+                let (min, max) = (deposit.min_y, deposit.max_y);
+                say(
+                    "wiki-gen-deposit",
+                    &[("min", min.to_string()), ("max", max.to_string())],
+                );
+            }
+            if deposit.sign == Some(block) {
+                say("wiki-gen-sign", &[]);
+            }
+        }
+    }
     let biomes = biome_roles(ctx, from, block);
     for (role, list) in &biomes {
         places.push(format!("{} {}", escape(&ctx.tr(role)), list.join(", ")));
@@ -235,7 +255,7 @@ fn feature_uses(feature: &Feature, block: BlockId) -> bool {
     match feature {
         Feature::Tree { log, leaves, .. } => *log == block || *leaves == block,
         Feature::Pillar { block: pillar, .. } => *pillar == block,
-        Feature::Ore { .. } => false,
+        Feature::Ore { .. } | Feature::Deposit(_) => false,
     }
 }
 

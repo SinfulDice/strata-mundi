@@ -1,0 +1,16 @@
+// Rare giant vein of verdigris rock rich in copper, hinted at by green stones on the surface.
+Deposit(
+    ore: "strata:copper_ore",
+    deep_ore: Some("strata:deep_copper_ore"),
+    filler: "strata:verdigris_rock",
+    ore_share: 0.35,
+    length: (40, 80),
+    thickness: (6, 10),
+    min_y: 40,
+    max_y: 120,
+    cell: 256,
+    chance: 0.4,
+    sign: Some("strata:verdigris_rock"),
+    sign_share: 0.05,
+    sign_on: ["strata:grass_block", "strata:snowy_grass_block", "strata:stone", "strata:sand", "strata:sandstone", "strata:gravel", "strata:dirt"],
+)

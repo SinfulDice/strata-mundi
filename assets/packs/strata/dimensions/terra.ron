@@ -27,7 +27,9 @@ Dimension(
             lava_level: 10,
             lava: "strata:lava",
         ),
-        ores: ["strata:coal_ore", "strata:iron_ore", "strata:gold_ore", "strata:diamond_ore"],
+        ores: ["strata:coal_ore", "strata:iron_ore", "strata:gold_ore", "strata:diamond_ore", "strata:copper_ore"],
+        // Giant ore veins, rare and rich; an empty list turns them off.
+        deposits: ["strata:iron_deposit", "strata:copper_deposit"],
         // Curves of the climate maps, in blocks above the sea (see docs/explications/relief.md).
         relief: (
             continent: [(-1.0, -55.0), (-0.65, -38.0), (-0.4, -16.0), (-0.28, -4.0), (-0.2, 1.5), (0.0, 5.0), (0.4, 12.0), (1.0, 26.0)],

@@ -32,6 +32,9 @@ pub struct TerrainDef {
     /// Ore features spread through the whole dimension.
     #[serde(default)]
     pub ores: Vec<Identifier>,
+    /// Giant ore veins, rare and rich (`Deposit` features).
+    #[serde(default)]
+    pub deposits: Vec<Identifier>,
     pub relief: Relief,
 }
 
@@ -221,6 +224,39 @@ pub enum FeatureDef {
         per_column: f64,
         min_y: i32,
         max_y: i32,
+    },
+    /// A giant vein of `filler` rock rich in ore, at most one per `cell`×`cell` blocks.
+    Deposit {
+        ore: Identifier,
+        /// Replaces `ore` in deep stone.
+        #[serde(default)]
+        deep_ore: Option<Identifier>,
+        filler: Identifier,
+        /// Replaces `filler` in deep stone.
+        #[serde(default)]
+        deep_filler: Option<Identifier>,
+        /// Share of the vein's blocks that are ore, the rest being filler.
+        ore_share: f64,
+        /// Smallest and largest length, in blocks.
+        length: (u32, u32),
+        /// Smallest and largest thickness at the middle, in blocks.
+        thickness: (u32, u32),
+        /// Height range of the vein's middle.
+        min_y: i32,
+        max_y: i32,
+        /// Side of the square cells of the world, in blocks; each may hold one vein.
+        cell: u32,
+        /// Share of the cells holding a vein.
+        chance: f64,
+        /// Block hinting at the vein on the ground above it; `None` = no hint.
+        #[serde(default)]
+        sign: Option<Identifier>,
+        /// Share of the ground blocks above the vein replaced by `sign`.
+        #[serde(default)]
+        sign_share: f64,
+        /// Ground blocks `sign` may replace.
+        #[serde(default)]
+        sign_on: Vec<Identifier>,
     },
 }
 

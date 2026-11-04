@@ -1,6 +1,7 @@
 use crate::defs::{
     BiomeDef, CavesDef, Climate, Crown, DimensionDef, FeatureDef, Relief, TerrainDef,
 };
+use crate::deposits::Deposit;
 use std::collections::BTreeMap;
 use std::path::Path;
 use strata_core::content::{Block, BlockId, Registry};
@@ -31,6 +32,8 @@ pub struct Terrain {
     pub caves: Option<Caves>,
     /// Indices into `WorldgenContent::features`.
     pub ores: Vec<usize>,
+    /// Indices of `Feature::Deposit`s.
+    pub deposits: Vec<usize>,
     pub relief: Relief,
 }
 
@@ -97,17 +100,18 @@ pub enum Feature {
         min_y: i32,
         max_y: i32,
     },
+    Deposit(Deposit),
 }
 
 /// Looks up identifiers, recording an error (with the file) for each unknown one.
-struct Resolver<'a> {
+pub(crate) struct Resolver<'a> {
     blocks: &'a Registry<BlockId, Block>,
     errors: &'a mut Vec<PackError>,
     source: &'a Path,
 }
 
 impl Resolver<'_> {
-    fn block(&mut self, id: &Identifier) -> BlockId {
+    pub(crate) fn block(&mut self, id: &Identifier) -> BlockId {
         self.blocks.key(id).unwrap_or_else(|| {
             self.errors.push(PackError::invalid(
                 self.source,
@@ -117,7 +121,7 @@ impl Resolver<'_> {
         })
     }
 
-    fn blocks(&mut self, ids: &[Identifier]) -> Vec<BlockId> {
+    pub(crate) fn blocks(&mut self, ids: &[Identifier]) -> Vec<BlockId> {
         ids.iter().map(|id| self.block(id)).collect()
     }
 }
@@ -163,19 +167,19 @@ fn resolve_terrain(
     source: &Path,
     index_of: &dyn Fn(&Identifier) -> Option<usize>,
 ) -> Terrain {
-    let ores = def
-        .ores
-        .iter()
-        .filter_map(|id| {
-            index_of(id).or_else(|| {
-                errors.push(PackError::invalid(
-                    source,
-                    format!("unknown feature `{id}`"),
-                ));
-                None
+    let mut indices = |ids: &[Identifier]| -> Vec<usize> {
+        ids.iter()
+            .filter_map(|id| {
+                index_of(id).or_else(|| {
+                    let message = format!("unknown feature `{id}`");
+                    errors.push(PackError::invalid(source, message));
+                    None
+                })
             })
-        })
-        .collect();
+            .collect()
+    };
+    let ores = indices(&def.ores);
+    let deposits = indices(&def.deposits);
     let mut r = Resolver {
         blocks,
         errors,
@@ -194,6 +198,7 @@ fn resolve_terrain(
         biome_scale: def.biome_scale.clamp(0.25, 16.0),
         caves,
         ores,
+        deposits,
         relief: bounded_relief(&def.relief),
     }
 }
@@ -205,7 +210,7 @@ fn load_features(
 ) -> BTreeMap<Identifier, Feature> {
     let defs = packs.layered::<FeatureDef>("features", errors);
     defs.into_iter()
-        .map(|(id, Sourced { value, source })| {
+        .filter_map(|(id, Sourced { value, source })| {
             let mut r = Resolver {
                 blocks,
                 errors,
@@ -252,8 +257,11 @@ fn load_features(
                     min_y,
                     max_y,
                 },
+                def @ FeatureDef::Deposit { .. } => {
+                    return Deposit::resolve(&def, &mut r).map(|d| (id, Feature::Deposit(d)));
+                }
             };
-            (id, feature)
+            Some((id, feature))
         })
         .collect()
 }

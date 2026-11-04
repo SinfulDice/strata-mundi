@@ -42,7 +42,9 @@ pub fn feature_blocks(worldgen: &WorldgenContent) -> Vec<strata_core::content::B
         .flat_map(|feature| match feature {
             strata_worldgen::Feature::Tree { log, leaves, .. } => vec![*log, *leaves],
             strata_worldgen::Feature::Pillar { block, .. } => vec![*block],
-            strata_worldgen::Feature::Ore { .. } => Vec::new(),
+            strata_worldgen::Feature::Ore { .. } | strata_worldgen::Feature::Deposit(_) => {
+                Vec::new()
+            }
         })
         .chain([terrain.water, terrain.ice])
         .collect()

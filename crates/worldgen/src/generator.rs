@@ -2,6 +2,7 @@ use crate::Seed;
 use crate::caves::{Caves, Roofs};
 use crate::climate::{ClimateMaps, Sample};
 use crate::content::{Biome, WorldgenContent};
+use crate::deposits::{Deposits, Vein};
 use crate::features::{place_ores, place_surface_features};
 use crate::surface::{Ground, Heights, SurfaceRules};
 use crate::terrain::{Grid, Overhangs};
@@ -19,6 +20,7 @@ pub struct Generator {
     maps: ClimateMaps,
     overhangs: Overhangs,
     caves: Option<Caves>,
+    deposits: Deposits,
 }
 
 /// Ground at least this far above the sea, all around, counts as dry land.
@@ -36,6 +38,7 @@ impl Generator {
             maps: ClimateMaps::new(seed, &content),
             overhangs: Overhangs::new(seed, content.terrain.relief.overhang_scale),
             caves: content.terrain.caves.as_ref().map(|c| Caves::new(seed, c)),
+            deposits: Deposits::new(seed),
             seed,
             content,
         }
@@ -115,6 +118,8 @@ impl Generator {
             caves.carve(&mut column, &roofs, &keep);
         }
         place_ores(self, &mut column);
+        self.deposits
+            .place(self.seed, &self.content, &mut column, &tops);
         place_surface_features(self, &mut column);
         column
     }
@@ -190,6 +195,12 @@ impl Generator {
             std::array::from_fn(|lx| (lowest[lz][lx] - CAVERN_ROOF).min(tunnels[lz][lx]))
         });
         Roofs { tunnels, caverns }
+    }
+
+    /// Giant ore veins with blocks possibly between `min` and `max` (horizontal block
+    /// coordinates, inclusive).
+    pub fn deposits_near(&self, min: (i32, i32), max: (i32, i32)) -> Vec<Vein> {
+        Deposits::veins(self.seed, &self.content, min, max)
     }
 
     /// Whether caves may open a block of `ys` at `(x, z)`.

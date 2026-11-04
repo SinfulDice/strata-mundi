@@ -8,7 +8,7 @@ Quatre cartes invisibles couvrent le monde : **température**, **humidité**, **
 
 ## Sous la surface
 
-Sous le sol du biome viennent la pierre, la roche profonde, puis le socle. L'eau remplit les creux jusqu'au niveau de la mer. Des **grottes** sinueuses traversent la roche sans s'ouvrir sous la mer, les **minerais** forment de petits filons selon la profondeur, et arbres et cactus poussent selon le biome.
+Sous le sol du biome viennent la pierre, la roche profonde, puis le socle. L'eau remplit les creux jusqu'au niveau de la mer. Des **grottes** sinueuses traversent la roche sans s'ouvrir sous la mer, les **minerais** forment de petits filons selon la profondeur, de rares **grands gisements** de fer ou de cuivre s'étirent sur des dizaines de blocs (quelques pierres colorées les trahissent en surface), et arbres et cactus poussent selon le biome.
 
 ## Point de départ
 
