@@ -55,14 +55,26 @@ pub struct CavesDef {
     /// Cheese noise above which caverns open, deep down; higher = fewer caverns.
     #[serde(default = "default_cheese")]
     pub cheese: f64,
+    /// Caverns thin out towards this height and stop a third higher.
+    #[serde(default = "default_cavern_top")]
+    pub cavern_top: i32,
     #[serde(default = "default_ravines")]
     pub ravines: f64,
-    /// Share of the 64-block regions whose caves are flooded below their own level.
+    /// Smallest and largest depth of ravines, in blocks.
+    #[serde(default = "default_ravine_depth")]
+    pub ravine_depth: (i32, i32),
+    /// Share of the regions whose caves are flooded below their own level.
     #[serde(default = "default_aquifers")]
     pub aquifers: f64,
+    /// Side of an aquifer region, in blocks.
+    #[serde(default = "default_aquifer_cell")]
+    pub aquifer_cell: i32,
     /// Highest water level of aquifers.
     #[serde(default = "default_aquifer_top")]
     pub aquifer_top: i32,
+    /// Aquifer levels range from `aquifer_top - aquifer_depth` to `aquifer_top`.
+    #[serde(default = "default_aquifer_depth")]
+    pub aquifer_depth: i32,
     /// Caves at or below this height fill with lava.
     #[serde(default = "default_lava_level")]
     pub lava_level: i32,
@@ -270,6 +282,22 @@ fn default_noodle_top() -> i32 {
 
 fn default_cheese() -> f64 {
     0.3
+}
+
+fn default_cavern_top() -> i32 {
+    140
+}
+
+fn default_ravine_depth() -> (i32, i32) {
+    (30, 80)
+}
+
+fn default_aquifer_cell() -> i32 {
+    64
+}
+
+fn default_aquifer_depth() -> i32 {
+    48
 }
 
 fn default_ravines() -> f64 {

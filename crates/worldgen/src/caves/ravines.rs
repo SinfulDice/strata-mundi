@@ -9,12 +9,15 @@ use crate::spline::smoothstep;
 
 /// Width at the bottom, as a share of the width at the top.
 const BOTTOM_WIDTH: f64 = 0.2;
+/// Below this value of the depth noise, a ravine stays hidden underground.
+const HIDDEN: f64 = -0.15;
 
 pub struct Ravines {
     line: Noise,
     mask: Noise,
     depth: Noise,
     width: f64,
+    depths: (i32, i32),
 }
 
 /// Ravine crossing one block column, if any.
@@ -34,6 +37,7 @@ impl Ravines {
             mask: Noise::new(seed, 27, 1.0 / 420.0, 1),
             depth: Noise::new(seed, 28, 1.0 / 300.0, 1),
             width: settings.ravines,
+            depths: settings.ravine_depth,
         }
     }
 
@@ -49,10 +53,13 @@ impl Ravines {
             return Span::NONE;
         }
         let shape = self.depth.at(fx, fz);
+        let (shallow, deep) = self.depths;
+        let depth = shallow + (shape.abs().min(1.0) * f64::from(deep - shallow)) as i32;
         Span {
             distance,
-            top: (shape < -0.15).then(|| 30 + (shape.abs() * 50.0) as i32),
-            depth: 30 + (shape.abs() * 50.0) as i32,
+            // Hidden ravines reach down to the bottom of the world.
+            top: (shape < HIDDEN).then_some(depth),
+            depth,
         }
     }
 }

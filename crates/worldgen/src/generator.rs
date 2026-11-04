@@ -5,6 +5,7 @@ use crate::content::{Biome, WorldgenContent};
 use crate::features::{place_ores, place_surface_features};
 use crate::surface::{Ground, Heights, SurfaceRules};
 use crate::terrain::{Grid, Overhangs};
+use std::ops::RangeInclusive;
 use std::sync::Arc;
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
@@ -17,7 +18,7 @@ pub struct Generator {
     content: Arc<WorldgenContent>,
     maps: ClimateMaps,
     overhangs: Overhangs,
-    caves: Caves,
+    caves: Option<Caves>,
 }
 
 /// Ground at least this far above the sea, all around, counts as dry land.
@@ -34,7 +35,7 @@ impl Generator {
         Self {
             maps: ClimateMaps::new(seed, &content),
             overhangs: Overhangs::new(seed, content.terrain.relief.overhang_scale),
-            caves: Caves::new(seed, &content.terrain.caves),
+            caves: content.terrain.caves.as_ref().map(|c| Caves::new(seed, c)),
             seed,
             content,
         }
@@ -108,15 +109,10 @@ impl Generator {
             }
         }
         let terrain = &self.content.terrain;
-        if terrain.caves.enabled {
+        if let (Some(caves), Some(settings)) = (&self.caves, &terrain.caves) {
             let roofs = self.cave_roofs(&tops, &ring.lowest);
-            let keep = [
-                terrain.bedrock,
-                terrain.water,
-                terrain.ice,
-                terrain.caves.lava,
-            ];
-            self.caves.carve(&mut column, &roofs, &keep);
+            let keep = [terrain.bedrock, terrain.water, terrain.ice, settings.lava];
+            caves.carve(&mut column, &roofs, &keep);
         }
         place_ores(self, &mut column);
         place_surface_features(self, &mut column);
@@ -196,9 +192,11 @@ impl Generator {
         Roofs { tunnels, caverns }
     }
 
-    /// Whether caves may open the ground block at `(x, height, z)`.
-    pub fn cave_may_open(&self, x: i32, height: i32, z: i32) -> bool {
-        self.content.terrain.caves.enabled && self.caves.may_open(x, height, z)
+    /// Whether caves may open a block of `ys` at `(x, z)`.
+    pub fn cave_may_open(&self, x: i32, z: i32, ys: RangeInclusive<i32>) -> bool {
+        self.caves
+            .as_ref()
+            .is_some_and(|caves| caves.may_open(x, z, ys))
     }
 
     /// A welcoming place to start: a spawn biome (plains, forest) on dry land, with water

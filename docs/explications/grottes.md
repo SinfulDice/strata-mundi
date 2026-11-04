@@ -44,9 +44,9 @@ Résultat : on trouve des entrées de grottes sur les collines, mais jamais une 
 
 ### Aquifères : l'eau sous terre
 
-Le monde est découpé en **régions carrées de 64 × 64 blocs**. Une part d'entre elles (réglage `aquifers`, 35 %) a une nappe : un **niveau d'eau plat**, tiré au hasard entre `aquifer_top - 47` et `aquifer_top`. Tout l'espace creusé sous ce niveau se remplit d'eau, ce qui donne des lacs souterrains.
+Le monde est découpé en **régions d'environ 64 × 64 blocs** (`aquifer_cell`). Pour que leurs frontières ne soient pas des lignes droites, la position est d'abord déformée par un bruit (jusqu'à un tiers de région) avant de chercher sa région. Une part des régions (réglage `aquifers`, 35 %) a une nappe : un **niveau d'eau plat**, tiré au hasard entre `aquifer_top - aquifer_depth` et `aquifer_top`. Tout l'espace creusé sous ce niveau se remplit d'eau, ce qui donne des lacs souterrains.
 
-Problème : deux régions voisines ont des niveaux différents, et l'eau pendrait en l'air à la frontière. On laisse donc **2 blocs de roche** de chaque côté d'une frontière, jusqu'au plus haut des deux niveaux : un petit mur invisible qui retient l'eau.
+Problème : deux régions voisines ont des niveaux différents, et l'eau pendrait en l'air à la frontière. On laisse donc **2 blocs de roche** de chaque côté d'une frontière, seulement entre le plus bas et le plus haut des deux niveaux (depuis le fond si une des régions est sèche) : un petit mur qui retient l'eau.
 
 ### Lave
 
@@ -59,14 +59,18 @@ Dans `assets/packs/strata/dimensions/terra.ron`, le bloc `caves: (...)`. Sans ce
 | Réglage | Valeur | Effet |
 |---|---|---|
 | `enabled` | `true` | `false` coupe toutes les grottes |
-| `density` | `1.0` | multiplie toutes les largeurs (0 = rien) |
+| `density` | `1.0` | multiplie toutes les largeurs et rapproche le seuil des cavernes (0 = aucune grotte) |
 | `spaghetti` | `0.075` | largeur des tunnels |
 | `noodles` | `0.05` | largeur des nouilles |
 | `noodle_top` | `100` | hauteur max des nouilles |
 | `cheese` | `0.3` | seuil des cavernes : plus haut = moins de cavernes |
+| `cavern_top` | `140` | les cavernes se raréfient vers cette hauteur et cessent un tiers plus haut |
 | `ravines` | `0.03` | largeur des ravins |
+| `ravine_depth` | `(30, 80)` | profondeur minimale et maximale des ravins |
 | `aquifers` | `0.35` | part des régions avec une nappe |
+| `aquifer_cell` | `64` | côté d'une région de nappe |
 | `aquifer_top` | `100` | niveau d'eau maximal |
+| `aquifer_depth` | `48` | écart entre le niveau le plus bas et `aquifer_top` |
 | `lava_level` | `10` | en dessous, la lave |
 | `lava` | `"strata:lava"` | bloc de lave |
 

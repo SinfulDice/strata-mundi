@@ -7,6 +7,8 @@ const STEP: i32 = 32;
 const MAX_RADIUS: i32 = 4096;
 /// Water must be within this distance of a good spawn.
 const WATER_RANGE: i32 = 96;
+/// Caves may not open this many blocks under a spawn or its neighbours.
+const CAVE_MARGIN: i32 = 4;
 
 pub fn find(generator: &Generator) -> BlockPos {
     let sea_level = generator.content().terrain.sea_level;
@@ -20,19 +22,38 @@ pub fn find(generator: &Generator) -> BlockPos {
         if !biome.spawn || !has_trees || sample.height <= sea_level + 1 {
             continue;
         }
-        if has_water_nearby(generator, x, z, sea_level) {
-            return free_standing(generator, x, z, generator.surface_height_at(&sample, x, z));
+        let height = generator.surface_height_at(&sample, x, z);
+        if near_cave_entrance(generator, x, z, height) {
+            continue;
         }
-        fallback.get_or_insert((x, z, generator.surface_height_at(&sample, x, z)));
+        let Some(spot) = free_standing(generator, x, z, height) else {
+            continue;
+        };
+        if has_water_nearby(generator, x, z, sea_level) {
+            return spot;
+        }
+        fallback.get_or_insert(spot);
     }
-    fallback.map_or(BlockPos::new(0, sea_level + 2, 0), |(x, z, height)| {
-        free_standing(generator, x, z, height)
-    })
+    fallback.unwrap_or(BlockPos::new(0, sea_level + 2, 0))
 }
 
-/// First spot above the ground with two blocks of air, so the player never starts
-/// inside a tree trunk or under leaves.
-fn free_standing(generator: &Generator, x: i32, z: i32, height: i32) -> BlockPos {
+/// Whether a cave may open under the spot or around it, even a few blocks down.
+fn near_cave_entrance(generator: &Generator, x: i32, z: i32, height: i32) -> bool {
+    (-1..=1)
+        .flat_map(|dz| (-1..=1).map(move |dx| (x + dx, z + dz)))
+        .any(|(nx, nz)| {
+            let top = if (nx, nz) == (x, z) {
+                height
+            } else {
+                generator.surface_height(nx, nz)
+            };
+            generator.cave_may_open(nx, nz, top - CAVE_MARGIN..=top)
+        })
+}
+
+/// First spot above the ground with two blocks of air over a solid block, so the player
+/// never starts inside a tree trunk, under leaves or over a hole.
+fn free_standing(generator: &Generator, x: i32, z: i32, height: i32) -> Option<BlockPos> {
     let column = generator.generate(ColumnPos {
         x: x.div_euclid(SECTION_SIZE),
         z: z.div_euclid(SECTION_SIZE),
@@ -41,12 +62,17 @@ fn free_standing(generator: &Generator, x: i32, z: i32, height: i32) -> BlockPos
         x.rem_euclid(SECTION_SIZE) as u32,
         z.rem_euclid(SECTION_SIZE) as u32,
     );
-    let free =
-        |y: i32| column.get(lx, y, lz) == BlockId::AIR && column.get(lx, y + 1, lz) == BlockId::AIR;
-    let y = (height + 1..height + 40)
-        .find(|&y| free(y))
-        .unwrap_or(height + 1);
-    BlockPos::new(x, y, z)
+    let terrain = &generator.content().terrain;
+    let lava = terrain.caves.as_ref().map(|caves| caves.lava);
+    let air = |y: i32| column.get(lx, y, lz) == BlockId::AIR;
+    let solid = |y: i32| {
+        let block = column.get(lx, y, lz);
+        block != BlockId::AIR && block != terrain.water && Some(block) != lava
+    };
+    (height + 1..height + 40)
+        .find(|&y| air(y) && air(y + 1))
+        .filter(|&y| solid(y - 1))
+        .map(|y| BlockPos::new(x, y, z))
 }
 
 fn has_water_nearby(generator: &Generator, x: i32, z: i32, sea_level: i32) -> bool {

@@ -1,7 +1,7 @@
 Block(
     textures: All("strata:lava"),
     solid: false,
-    light_opacity: 0,
+    light_opacity: 15,
     hardness: -1.0,
     has_item: false,
 )

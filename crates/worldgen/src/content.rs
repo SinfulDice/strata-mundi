@@ -27,7 +27,8 @@ pub struct Terrain {
     pub water: BlockId,
     pub ice: BlockId,
     pub biome_scale: f64,
-    pub caves: Caves,
+    /// `None` = no caves.
+    pub caves: Option<Caves>,
     /// Indices into `WorldgenContent::features`.
     pub ores: Vec<usize>,
     pub relief: Relief,
@@ -36,15 +37,17 @@ pub struct Terrain {
 /// Cave settings with blocks resolved, bounded, and `density` already applied.
 #[derive(Debug, Clone)]
 pub struct Caves {
-    pub enabled: bool,
-    pub density: f64,
     pub spaghetti: f64,
     pub noodles: f64,
     pub noodle_top: i32,
     pub cheese: f64,
+    pub cavern_top: i32,
     pub ravines: f64,
+    pub ravine_depth: (i32, i32),
     pub aquifers: f64,
+    pub aquifer_cell: i32,
     pub aquifer_top: i32,
+    pub aquifer_depth: i32,
     pub lava_level: i32,
     pub water: BlockId,
     pub lava: BlockId,
@@ -330,40 +333,34 @@ fn resolve_caves(
     sea_level: i32,
     water: BlockId,
     r: &mut Resolver<'_>,
-) -> Caves {
-    let Some(def) = def else {
-        return Caves {
-            enabled: false,
-            density: 0.0,
-            spaghetti: 0.0,
-            noodles: 0.0,
-            noodle_top: 0,
-            cheese: 1.0,
-            ravines: 0.0,
-            aquifers: 0.0,
-            aquifer_top: 0,
-            lava_level: -1,
-            water,
-            lava: water,
-        };
-    };
+) -> Option<Caves> {
+    let def = def.filter(|def| def.enabled)?;
     let density = def.density.clamp(0.0, 4.0);
     let width = |value: f64| (value * density).clamp(0.0, 0.5);
-    Caves {
-        enabled: def.enabled,
-        density,
+    // Density 0 lifts the threshold out of the noise's range: no cavern at all.
+    let cheese = 1.0 - (1.0 - def.cheese.clamp(-1.0, 1.0)) * density;
+    let (shallow, deep) = def.ravine_depth;
+    let shallow = shallow.clamp(1, 256);
+    Some(Caves {
         spaghetti: width(def.spaghetti),
         noodles: width(def.noodles),
         noodle_top: def.noodle_top.clamp(0, WORLD_HEIGHT),
-        cheese: def.cheese.clamp(-1.0, 2.0) + (1.0 - density) * 0.3,
+        cheese: cheese.clamp(MIN_CHEESE, 1.0),
+        cavern_top: def.cavern_top.clamp(1, WORLD_HEIGHT),
         ravines: (def.ravines * density).clamp(0.0, 0.2),
+        ravine_depth: (shallow, deep.clamp(shallow, 256)),
         aquifers: def.aquifers.clamp(0.0, 1.0),
+        aquifer_cell: def.aquifer_cell.clamp(16, 1024),
         aquifer_top: def.aquifer_top.min(sea_level - 4).max(0),
+        aquifer_depth: def.aquifer_depth.clamp(0, 256),
         lava_level: def.lava_level.clamp(-1, 64),
         water,
         lava: r.block(&def.lava),
-    }
+    })
 }
+
+/// Lower thresholds would hollow out most of the underground.
+const MIN_CHEESE: f64 = 0.15;
 
 fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, BlockId)> {
     let mut resolved: Vec<_> = peaks.iter().map(|(y, id)| (*y, r.block(id))).collect();

@@ -18,6 +18,7 @@ use crate::noise::Noise;
 use aquifers::{Aquifers, Table};
 use grid::CaveGrid;
 use ravines::Ravines;
+use std::ops::RangeInclusive;
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
 use strata_core::coords::SECTION_SIZE;
@@ -26,8 +27,6 @@ const LOWEST: i32 = 5;
 /// Tunnels are flattened: their noise varies faster along y.
 const TUNNEL_STRETCH: f64 = 1.6;
 const CAVERN_STRETCH: f64 = 1.8;
-/// Above this height caverns become rarer, and stop entirely higher up.
-const CAVERN_FADE: f64 = 140.0;
 const PILLAR_THRESHOLD: f64 = 0.55;
 
 pub struct Caves {
@@ -80,8 +79,10 @@ impl Caves {
                 let ravine = self.ravines.span(x, z);
                 let table = self.aquifers.table(x, z);
                 let (tunnel_roof, cavern_roof) = (roofs.tunnels[lz][lx], roofs.caverns[lz][lx]);
-                let lowest = table.wall.map_or(LOWEST, |wall| wall.max(LOWEST - 1) + 1);
-                for y in lowest..=tunnel_roof {
+                for y in LOWEST..=tunnel_roof {
+                    if table.walls(y) {
+                        continue;
+                    }
                     let open = grid.at(lx, y, lz);
                     let cave = open > 1.0 || (open > 0.0 && y <= cavern_roof);
                     if !cave && !ravine.carves(y, tunnel_roof) {
@@ -96,11 +97,13 @@ impl Caves {
         }
     }
 
-    /// Whether a tunnel or a surface ravine may open the block at `(x, y, z)`, for things
-    /// placed from other columns (trees) that must not float over a cave entrance.
-    pub fn may_open(&self, x: i32, y: i32, z: i32) -> bool {
+    /// Whether a tunnel or a surface ravine may open a block of `ys` at `(x, z)`, for
+    /// things that must not stand over a cave entrance (trees from other columns, spawn).
+    pub fn may_open(&self, x: i32, z: i32, ys: RangeInclusive<i32>) -> bool {
         self.ravines.span(x, z).opens_at_surface()
-            || grid::at_point(x, y, z, |x, y, z| self.openness(x, y, z)) > 1.0
+            || ys
+                .into_iter()
+                .any(|y| grid::at_point(x, y, z, |x, y, z| self.openness(x, y, z)) > 1.0)
     }
 
     fn fill(&self, y: i32, table: Table) -> BlockId {
@@ -137,7 +140,9 @@ impl Caves {
         let pair =
             |(a, b): &(Noise, Noise), width: f64| near_zero(a, width).min(near_zero(b, width));
         let spaghetti = pair(&self.spaghetti, s.spaghetti);
-        let noodle_here = y <= f64::from(s.noodle_top) && self.noodle_toggle.at_3d(x, y, z) > 0.0;
+        let noodle_here = s.noodles > 0.0
+            && y <= f64::from(s.noodle_top)
+            && self.noodle_toggle.at_3d(x, y, z) > 0.0;
         let noodle = if noodle_here {
             pair(&self.noodles, s.noodles)
         } else {
@@ -148,10 +153,11 @@ impl Caves {
 
     /// Caverns grow with depth: rare under the surface, common deep down.
     fn cavern(&self, x: f64, y: f64, z: f64) -> f64 {
-        if y > CAVERN_FADE * 1.3 {
+        let fade = f64::from(self.settings.cavern_top);
+        if y > fade * 1.3 {
             return -1.0;
         }
-        let height = (y / CAVERN_FADE).clamp(0.0, 1.0);
+        let height = (y / fade).clamp(0.0, 1.0);
         let threshold = self.settings.cheese + height * height * 0.3;
         let open = self.cheese.at_3d(x, y * CAVERN_STRETCH, z) - threshold;
         if open <= 0.0 {

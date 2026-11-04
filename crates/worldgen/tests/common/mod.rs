@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![allow(clippy::expect_used)]
 
+pub mod caves;
+
 use std::path::Path;
 use std::sync::Arc;
 use strata_core::content::Content;
@@ -26,7 +28,7 @@ pub fn generator(seed: u64) -> Generator {
 /// Same world, without caves: whatever is left open comes from the relief.
 pub fn generator_without_caves(seed: u64) -> Generator {
     let mut worldgen = (*load().1).clone();
-    worldgen.terrain.caves.enabled = false;
+    worldgen.terrain.caves = None;
     Generator::new(Seed(seed), Arc::new(worldgen))
 }
 

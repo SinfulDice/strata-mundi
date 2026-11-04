@@ -30,5 +30,29 @@ fn generation(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, generation);
+/// First mountain with overhangs found from the climate, the costliest kind of terrain.
+fn mountain(generator: &Generator) -> ColumnPos {
+    (0..4000)
+        .map(|i| ((i % 60) * 48 - 1440, (i / 60) * 48 - 1600))
+        .find(|&(x, z)| generator.sample(x, z).0.overhang > 12.0)
+        .map_or(ColumnPos { x: 0, z: 0 }, |(x, z)| ColumnPos {
+            x: x.div_euclid(16),
+            z: z.div_euclid(16),
+        })
+}
+
+fn special_columns(c: &mut Criterion) {
+    let generator = generator();
+    let mountain = mountain(&generator);
+    c.bench_function("generate_mountain_column", |b| {
+        b.iter(|| generator.generate(black_box(mountain)))
+    });
+    // A large cavern with an aquifer lake (screenshots/caves-42.png).
+    let cavern = ColumnPos { x: -24, z: -24 };
+    c.bench_function("generate_cavern_column", |b| {
+        b.iter(|| generator.generate(black_box(cavern)))
+    });
+}
+
+criterion_group!(benches, generation, special_columns);
 criterion_main!(benches);
