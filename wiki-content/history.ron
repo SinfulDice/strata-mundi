@@ -27,6 +27,7 @@
         "blocks/strata/oak_leaves": [(version: "0.1.0", change: Added)],
         "blocks/strata/oak_log": [(version: "0.1.0", change: Added)],
         "blocks/strata/oak_planks": [(version: "0.1.0", change: Added)],
+        "blocks/strata/lava": [(version: "0.2.0", change: Added)],
         "blocks/strata/sand": [(version: "0.1.0", change: Added)],
         "blocks/strata/sandstone": [(version: "0.1.0", change: Added)],
         "blocks/strata/snow_block": [(version: "0.1.0", change: Added)],

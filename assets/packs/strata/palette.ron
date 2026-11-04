@@ -22,6 +22,7 @@
     "iron_ore": ["#7a5440", "#b5876a", "#d9ae90", "#f0d2b8"],
     "gold": ["#8a5f0a", "#d19b1f", "#f2cf45", "#fff2a6"],
     "diamond": ["#136e6a", "#2fb3ab", "#6ae3dc", "#c9fbf7"],
+    "lava": ["#a8280a", "#d4520e", "#f08a1c", "#ffc84a"],
     "water": ["#2b4ea8b8", "#3460c0b8", "#3d70d0b8", "#4a80dcb8"],
     "glass": ["#8fb8c8", "#b4d6e2", "#d8eef5", "#ffffff"],
     "snow": ["#dfe8ee", "#eaf1f5", "#f3f8fa", "#ffffff"],

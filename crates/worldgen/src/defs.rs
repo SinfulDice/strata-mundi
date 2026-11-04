@@ -26,12 +26,47 @@ pub struct TerrainDef {
     /// Multiplies the size of biomes (1 = default, 2 = twice as large).
     #[serde(default = "one")]
     pub biome_scale: f64,
-    #[serde(default = "yes")]
-    pub caves: bool,
+    /// `None` = no caves at all.
+    #[serde(default)]
+    pub caves: Option<CavesDef>,
     /// Ore features spread through the whole dimension.
     #[serde(default)]
     pub ores: Vec<Identifier>,
     pub relief: Relief,
+}
+
+/// Caves carved after the terrain. Widths are shares of the noise range around zero:
+/// a wider share gives wider tunnels.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CavesDef {
+    #[serde(default = "yes")]
+    pub enabled: bool,
+    /// Multiplies every kind of cave at once (0 = none, 1 = default).
+    #[serde(default = "one")]
+    pub density: f64,
+    #[serde(default = "default_spaghetti")]
+    pub spaghetti: f64,
+    #[serde(default = "default_noodles")]
+    pub noodles: f64,
+    /// Noodles stay below this height.
+    #[serde(default = "default_noodle_top")]
+    pub noodle_top: i32,
+    /// Cheese noise above which caverns open, deep down; higher = fewer caverns.
+    #[serde(default = "default_cheese")]
+    pub cheese: f64,
+    #[serde(default = "default_ravines")]
+    pub ravines: f64,
+    /// Share of the 64-block regions whose caves are flooded below their own level.
+    #[serde(default = "default_aquifers")]
+    pub aquifers: f64,
+    /// Highest water level of aquifers.
+    #[serde(default = "default_aquifer_top")]
+    pub aquifer_top: i32,
+    /// Caves at or below this height fill with lava.
+    #[serde(default = "default_lava_level")]
+    pub lava_level: i32,
+    pub lava: Identifier,
 }
 
 /// Shape of the land, as curves of the climate maps (like Minecraft's Caves & Cliffs).
@@ -219,6 +254,38 @@ fn default_terrace() -> f64 {
 
 fn one() -> f64 {
     1.0
+}
+
+fn default_spaghetti() -> f64 {
+    0.075
+}
+
+fn default_noodles() -> f64 {
+    0.05
+}
+
+fn default_noodle_top() -> i32 {
+    100
+}
+
+fn default_cheese() -> f64 {
+    0.3
+}
+
+fn default_ravines() -> f64 {
+    0.03
+}
+
+fn default_aquifers() -> f64 {
+    0.35
+}
+
+fn default_aquifer_top() -> i32 {
+    100
+}
+
+fn default_lava_level() -> i32 {
+    10
 }
 
 fn yes() -> bool {

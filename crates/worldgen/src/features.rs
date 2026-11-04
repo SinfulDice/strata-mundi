@@ -87,7 +87,7 @@ fn place_rooted_in(generator: &Generator, source: ColumnPos, column: &mut Column
             continue;
         };
         let height = generator.surface_height_at(&sample, x, z);
-        if height <= content.terrain.sea_level {
+        if height <= content.terrain.sea_level || generator.cave_may_open(x, height, z) {
             continue;
         }
         let ground = generator.ground_block(x, z, &sample, biome, height);

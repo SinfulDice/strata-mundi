@@ -1,5 +1,5 @@
 use crate::Seed;
-use crate::caves::Caves;
+use crate::caves::{Caves, Roofs};
 use crate::climate::{ClimateMaps, Sample};
 use crate::content::{Biome, WorldgenContent};
 use crate::features::{place_ores, place_surface_features};
@@ -20,6 +20,12 @@ pub struct Generator {
     caves: Caves,
 }
 
+/// Ground at least this far above the sea, all around, counts as dry land.
+const DRY_LAND: i32 = 3;
+/// Rock kept between caves and the lowest ground around, near water.
+const WATER_ROOF: i32 = 9;
+const CAVERN_ROOF: i32 = 12;
+
 /// Plain samples and biomes of the 16×16 blocks of a column, indexed `[z][x]`.
 type ColumnSamples<'a> = [[(Sample, &'a Biome); 16]; 16];
 
@@ -28,7 +34,7 @@ impl Generator {
         Self {
             maps: ClimateMaps::new(seed, &content),
             overhangs: Overhangs::new(seed, content.terrain.relief.overhang_scale),
-            caves: Caves::new(seed),
+            caves: Caves::new(seed, &content.terrain.caves),
             seed,
             content,
         }
@@ -102,9 +108,15 @@ impl Generator {
             }
         }
         let terrain = &self.content.terrain;
-        if terrain.caves {
+        if terrain.caves.enabled {
             let roofs = self.cave_roofs(&tops, &ring.lowest);
-            self.caves.carve(&mut column, &roofs, terrain.bedrock);
+            let keep = [
+                terrain.bedrock,
+                terrain.water,
+                terrain.ice,
+                terrain.caves.lava,
+            ];
+            self.caves.carve(&mut column, &roofs, &keep);
         }
         place_ores(self, &mut column);
         place_surface_features(self, &mut column);
@@ -147,9 +159,10 @@ impl Generator {
         (low <= high).then(|| self.overhangs.grid(origin, low, high))
     }
 
-    /// Highest y tunnels may reach under each block: a few blocks below the lowest ground
-    /// around it (more below seas and rivers), so caves never open into water from the side.
-    fn cave_roofs(&self, tops: &[[i32; 16]; 16], ring: &Heights) -> [[i32; 16]; 16] {
+    /// Highest y caves may reach under each block. On dry land, tunnels and ravines may
+    /// open at the surface; near seas and rivers they stay well below the lowest ground
+    /// around, so they never open into water. Caverns always keep a thick roof.
+    fn cave_roofs(&self, tops: &[[i32; 16]; 16], ring: &Heights) -> Roofs {
         let sea_level = self.content.terrain.sea_level;
         let height_at = |lx: i32, lz: i32| {
             if (0..16).contains(&lx) && (0..16).contains(&lz) {
@@ -158,16 +171,34 @@ impl Generator {
                 ring.at(lx, lz)
             }
         };
-        std::array::from_fn(|lz| {
+        let lowest: [[i32; 16]; 16] = std::array::from_fn(|lz| {
             std::array::from_fn(|lx| {
-                let lowest = (-1..=1)
+                (-1..=1)
                     .flat_map(|dz| (-1..=1).map(move |dx| (dx, dz)))
                     .map(|(dx, dz)| height_at(lx as i32 + dx, lz as i32 + dz))
                     .min()
-                    .unwrap_or(0);
-                lowest - if lowest < sea_level + 2 { 9 } else { 4 }
+                    .unwrap_or(0)
             })
-        })
+        });
+        let tunnels = std::array::from_fn(|lz| {
+            std::array::from_fn(|lx| {
+                let low = lowest[lz][lx];
+                if low >= sea_level + DRY_LAND {
+                    tops[lz][lx]
+                } else {
+                    low - WATER_ROOF
+                }
+            })
+        });
+        let caverns = std::array::from_fn(|lz| {
+            std::array::from_fn(|lx| (lowest[lz][lx] - CAVERN_ROOF).min(tunnels[lz][lx]))
+        });
+        Roofs { tunnels, caverns }
+    }
+
+    /// Whether caves may open the ground block at `(x, height, z)`.
+    pub fn cave_may_open(&self, x: i32, height: i32, z: i32) -> bool {
+        self.content.terrain.caves.enabled && self.caves.may_open(x, height, z)
     }
 
     /// A welcoming place to start: a spawn biome (plains, forest) on dry land, with water

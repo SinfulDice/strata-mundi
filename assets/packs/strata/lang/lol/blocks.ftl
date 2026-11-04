@@ -27,3 +27,4 @@ block-strata-deep_coal_ore = COAL IN TEH DEEP ROCK
 block-strata-deep_iron_ore = IRON IN TEH DEEP ROCK
 block-strata-deep_gold_ore = GOLD IN TEH DEEP ROCK
 block-strata-deep_diamond_ore = SHINY IN TEH DEEP ROCK
+block-strata-lava = HOT JUICE

@@ -27,3 +27,4 @@ block-strata-deep_coal_ore = Minerai de charbon profond
 block-strata-deep_iron_ore = Minerai de fer profond
 block-strata-deep_gold_ore = Minerai d'or profond
 block-strata-deep_diamond_ore = Minerai de diamant profond
+block-strata-lava = Lave

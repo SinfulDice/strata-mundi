@@ -1,7 +1,10 @@
-use crate::defs::{BiomeDef, Climate, Crown, DimensionDef, FeatureDef, Relief, TerrainDef};
+use crate::defs::{
+    BiomeDef, CavesDef, Climate, Crown, DimensionDef, FeatureDef, Relief, TerrainDef,
+};
 use std::collections::BTreeMap;
 use std::path::Path;
 use strata_core::content::{Block, BlockId, Registry};
+use strata_core::coords::WORLD_HEIGHT;
 use strata_core::id::Identifier;
 use strata_core::pack::{PackError, PackSet, Sourced};
 
@@ -24,10 +27,27 @@ pub struct Terrain {
     pub water: BlockId,
     pub ice: BlockId,
     pub biome_scale: f64,
-    pub caves: bool,
+    pub caves: Caves,
     /// Indices into `WorldgenContent::features`.
     pub ores: Vec<usize>,
     pub relief: Relief,
+}
+
+/// Cave settings with blocks resolved, bounded, and `density` already applied.
+#[derive(Debug, Clone)]
+pub struct Caves {
+    pub enabled: bool,
+    pub density: f64,
+    pub spaghetti: f64,
+    pub noodles: f64,
+    pub noodle_top: i32,
+    pub cheese: f64,
+    pub ravines: f64,
+    pub aquifers: f64,
+    pub aquifer_top: i32,
+    pub lava_level: i32,
+    pub water: BlockId,
+    pub lava: BlockId,
 }
 
 #[derive(Debug, Clone)]
@@ -158,16 +178,18 @@ fn resolve_terrain(
         errors,
         source,
     };
+    let water = r.block(&def.water);
+    let caves = resolve_caves(def.caves.as_ref(), def.sea_level, water, &mut r);
     Terrain {
         sea_level: def.sea_level,
         deep_level: def.deep_level,
         stone: r.block(&def.stone),
         deep_stone: r.block(&def.deep_stone),
         bedrock: r.block(&def.bedrock),
-        water: r.block(&def.water),
+        water,
         ice: r.block(&def.ice),
         biome_scale: def.biome_scale.clamp(0.25, 16.0),
-        caves: def.caves,
+        caves,
         ores,
         relief: bounded_relief(&def.relief),
     }
@@ -300,6 +322,47 @@ fn bounded_relief(relief: &Relief) -> Relief {
         rivers.highest = rivers.highest.clamp(0.0, 400.0);
     }
     relief
+}
+
+/// Bounded so that pack data can't flood the world or make generation absurdly slow.
+fn resolve_caves(
+    def: Option<&CavesDef>,
+    sea_level: i32,
+    water: BlockId,
+    r: &mut Resolver<'_>,
+) -> Caves {
+    let Some(def) = def else {
+        return Caves {
+            enabled: false,
+            density: 0.0,
+            spaghetti: 0.0,
+            noodles: 0.0,
+            noodle_top: 0,
+            cheese: 1.0,
+            ravines: 0.0,
+            aquifers: 0.0,
+            aquifer_top: 0,
+            lava_level: -1,
+            water,
+            lava: water,
+        };
+    };
+    let density = def.density.clamp(0.0, 4.0);
+    let width = |value: f64| (value * density).clamp(0.0, 0.5);
+    Caves {
+        enabled: def.enabled,
+        density,
+        spaghetti: width(def.spaghetti),
+        noodles: width(def.noodles),
+        noodle_top: def.noodle_top.clamp(0, WORLD_HEIGHT),
+        cheese: def.cheese.clamp(-1.0, 2.0) + (1.0 - density) * 0.3,
+        ravines: (def.ravines * density).clamp(0.0, 0.2),
+        aquifers: def.aquifers.clamp(0.0, 1.0),
+        aquifer_top: def.aquifer_top.min(sea_level - 4).max(0),
+        lava_level: def.lava_level.clamp(-1, 64),
+        water,
+        lava: r.block(&def.lava),
+    }
 }
 
 fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, BlockId)> {

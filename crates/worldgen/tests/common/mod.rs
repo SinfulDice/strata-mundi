@@ -26,7 +26,7 @@ pub fn generator(seed: u64) -> Generator {
 /// Same world, without caves: whatever is left open comes from the relief.
 pub fn generator_without_caves(seed: u64) -> Generator {
     let mut worldgen = (*load().1).clone();
-    worldgen.terrain.caves = false;
+    worldgen.terrain.caves.enabled = false;
     Generator::new(Seed(seed), Arc::new(worldgen))
 }
 

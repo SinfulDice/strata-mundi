@@ -9,7 +9,20 @@ Dimension(
         water: "strata:water",
         ice: "strata:ice",
         biome_scale: 1.0,
-        caves: true,
+        // Caves; `enabled: false` turns them off.
+        caves: (
+            enabled: true,
+            density: 1.0,
+            spaghetti: 0.075,
+            noodles: 0.05,
+            noodle_top: 100,
+            cheese: 0.3,
+            ravines: 0.03,
+            aquifers: 0.35,
+            aquifer_top: 100,
+            lava_level: 10,
+            lava: "strata:lava",
+        ),
         ores: ["strata:coal_ore", "strata:iron_ore", "strata:gold_ore", "strata:diamond_ore"],
         // Curves of the climate maps, in blocks above the sea (see docs/explications/relief.md).
         relief: (

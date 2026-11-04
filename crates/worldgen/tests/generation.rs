@@ -12,12 +12,16 @@ fn positions() -> Vec<ColumnPos> {
         .to_vec()
 }
 
-/// Mountains (overhangs, terraces) and rivers too, not only the plains near the origin.
+/// Mountains (overhangs, terraces), rivers and caves too, not only the plains near the origin.
 #[test]
 fn same_seed_gives_same_world_in_any_order() {
     let forward = common::generator(42);
     let backward = common::generator(42);
     let mut positions = positions();
+    let cavern = ColumnPos { x: -24, z: -24 };
+    let without_caves = common::generator_without_caves(42);
+    assert_ne!(forward.generate(cavern), without_caves.generate(cavern));
+    positions.push(cavern);
     positions.extend(common::rugged_columns(&forward, 3));
     positions.extend(
         common::river_points(&forward)

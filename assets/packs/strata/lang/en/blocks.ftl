@@ -27,3 +27,4 @@ block-strata-deep_coal_ore = Deep Coal Ore
 block-strata-deep_iron_ore = Deep Iron Ore
 block-strata-deep_gold_ore = Deep Gold Ore
 block-strata-deep_diamond_ore = Deep Diamond Ore
+block-strata-lava = Lava
