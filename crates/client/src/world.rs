@@ -1,6 +1,7 @@
 //! The client's copy of the blocks around the player, as sent by the server.
 
 use crate::mesher::{BlockTable, Neighborhood, SectionKey};
+use glam::DVec3;
 use std::collections::HashMap;
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
@@ -72,6 +73,17 @@ impl ClientWorld {
             .map_or(BlockId::AIR, |column| {
                 column.get(local(pos.x), pos.y, local(pos.z))
             })
+    }
+
+    /// Whether `position` is inside an opaque block: back faces are culled, so a camera
+    /// there sees through the surrounding rock to the void below the world.
+    pub fn is_inside_opaque(&self, position: DVec3, table: &BlockTable) -> bool {
+        let block = BlockPos {
+            x: position.x.floor() as i32,
+            y: position.y.floor() as i32,
+            z: position.z.floor() as i32,
+        };
+        table.is_opaque(self.block_at(block))
     }
 
     /// Whether the column holding `pos` is loaded.
@@ -179,5 +191,52 @@ mod tests {
         assert_eq!(blocks.get(-1, 4, 0), BlockId(3));
         assert_eq!(blocks.get(16, 0, 15), BlockId(4));
         assert_eq!(blocks.get(0, 0, 0), BlockId::AIR);
+    }
+
+    /// Ids: 0 air, 1 bedrock, 2 deep stone.
+    fn table() -> BlockTable {
+        use strata_core::content::{Block, RenderKind};
+        let solid = Block {
+            render: RenderKind::Opaque,
+            ..Block::air()
+        };
+        BlockTable::new([Block::air(), solid.clone(), solid].iter())
+    }
+
+    /// Bedrock at y 0, deep stone at y 1-4 and air above, over a 3×3 block of columns.
+    fn cavern_floor() -> ClientWorld {
+        let mut world = ClientWorld::default();
+        for x in -16..32 {
+            for z in -16..32 {
+                world.set_block(x, 0, z, BlockId(1));
+                (1..5).for_each(|y| world.set_block(x, y, z, BlockId(2)));
+            }
+        }
+        world
+    }
+
+    #[test]
+    fn the_cavern_floor_of_the_lowest_section_is_meshed() {
+        let world = cavern_floor();
+        let mesh = crate::mesher::mesh_section(&world.neighborhood((0, 0, 0)), &table(), false);
+        let tops = mesh
+            .opaque
+            .vertices
+            .chunks(4)
+            .filter(|quad| quad.iter().all(|v| v.position()[1] == 5))
+            .count();
+        assert_eq!(tops, 1, "one merged 16×16 floor");
+        assert_eq!(
+            mesh.opaque.quad_count(),
+            2,
+            "floor and underside of the world"
+        );
+    }
+
+    #[test]
+    fn a_camera_inside_rock_is_detected() {
+        let world = cavern_floor();
+        assert!(world.is_inside_opaque(DVec3::new(3.5, 2.5, 3.5), &table()));
+        assert!(!world.is_inside_opaque(DVec3::new(3.5, 5.5, 3.5), &table()));
     }
 }

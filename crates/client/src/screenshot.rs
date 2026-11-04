@@ -67,6 +67,12 @@ pub fn render_image(
     renderer.vertical_distance = view.graphics.vertical_distance;
     renderer.options = RenderOptions::for_capture(&view.graphics);
     let table = BlockTable::new(content.blocks.iter().map(|(_, _, block)| block));
+    if world.is_inside_opaque(view.camera.position, &table) {
+        tracing::warn!(
+            position = ?view.camera.position,
+            "camera inside a solid block: the surrounding rock is invisible from inside"
+        );
+    }
     for key in world.section_keys() {
         let mesh = mesh_section(&world.neighborhood(key), &table, ao);
         renderer.upload_section(&gpu, key, &mesh);

@@ -6,6 +6,7 @@
 - **Jalon en cours** : 2 — Grottes
   - [x] Grottes complètes (worldgen) : réglages `caves` du pack, tunnels « spaghetti », galeries « nouilles », cavernes « fromage » à piliers, ravins (surface et profondeur), aquifères, lacs de lave sous y ≈ 10 (bloc `lava`), entrées en surface sans fuite d'eau ; tests (déterminisme des grottes, pas de grotte qui ouvre une mer ou une rivière, eau d'aquifère à niveau plat)
   - [x] Captures de grottes et ravins inspectées
+  - [x] « Trous » dans les captures de grotte profonde : faux bug, caméra placée dans la roche (faces arrière invisibles) ; avertissement dans le journal des captures, tests sans GPU (sol de la section 0, caméra dans un bloc opaque)
 - **Dernière session** : 04/11/2026
 
 ## Fait
@@ -79,7 +80,6 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## Blocages
 
-- Captures en grotte profonde : par endroits, la section la plus basse (y < 16) de certaines colonnes n'apparaît pas (ciel visible à travers le sol, ex. `--seed 42 --pos -365,60,-390 --look 230,2`) alors que les données du monde sont pleines (vérifié). Bug probable du rendu/maillage client, à investiguer.
 - Envoi du tag `v0.1.0` refusé (HTTP 403) par la passerelle Git de la session cloud ; les branches passent. Contournement : l'utilisateur pousse le tag.
 
 ## En attente de l'utilisateur
