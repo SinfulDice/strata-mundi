@@ -3,16 +3,15 @@
 ## État
 
 - **Version en cours** : v0.2 — Monde vivant
-- **Jalon en cours** : 2 — Grottes
-  - [x] Grottes complètes (worldgen) : réglages `caves` du pack, tunnels « spaghetti », galeries « nouilles », cavernes « fromage » à piliers, ravins (surface et profondeur), aquifères, lacs de lave sous y ≈ 10 (bloc `lava`), entrées en surface sans fuite d'eau ; tests (déterminisme des grottes, pas de grotte qui ouvre une mer ou une rivière, eau d'aquifère à niveau plat)
-  - [x] Captures de grottes et ravins inspectées
-  - [x] « Trous » dans les captures de grotte profonde : faux bug, caméra placée dans la roche (faces arrière invisibles) ; avertissement dans le journal des captures, tests sans GPU (sol de la section 0, caméra dans un bloc opaque)
+- **Jalon en cours** : 3 — Minerais et gisements
+  - [ ] Cuivre (minerai normal et profond, petits filons) et **grands gisements** riches et rares (fer, cuivre ; roche de remplissage colorée), signes discrets en surface (roches colorées) ; textures, traductions, wiki ; tests (déterminisme, gisements trouvés sur les graines de référence, signes au-dessus)
 - **Dernière session** : 04/11/2026
 
 ## Fait
 
 ### v0.2
 
+- **Jalon 2 — Grottes** : module `worldgen/caves` : tunnels spaghetti, nouilles, cavernes fromage à piliers (plus nombreuses en profondeur), ravins en V (surface ou profonds), aquifères par cellules à frontières sinueuses et niveau plat, lacs de lave sous y = 10 (bloc `lava`), entrées de grottes sur terre ferme, toits qui protègent mers et rivières, départ jamais au-dessus d'un trou ; réglages `caves` du pack (densité, largeurs, hauteurs). Tests : pas d'air creusé contre l'eau de mer/rivière, eau d'aquifère jamais suspendue, cavernes/ravins/aquifères/lave sur 3 graines, déterminisme. Génération : 1,83 ms (plaine), 2,86 ms (montagne), 1,37 ms (caverne).
 - **Jalon 1 — Relief avancé** : relief par **densité 3D** (`hauteur − y + surplomb × bruit3D`) sur grille alignée sur le monde (hauteur de surface exacte partout : `surface_height`), **courbes de climat** dans le pack (`relief` de `terra.ron` : continentalité, intérieur, érosion, pics et vallées, collines, plateaux, surplombs), plateaux en **terrasses**, **falaises** et pentes raides en roche nue, **arches et surplombs** en montagne, **rivières** (lit sous la mer, berges douces, vallées sèches en altitude) et biome `river`, conditions de hauteur des biomes (`min_height`/`max_height`), eau seulement à ciel ouvert, carte de prévisualisation `strata --map` (couleur `map_color` par biome), extension RON `implicit_some` pour les packs. Tests : déterminisme (montagnes et rivières comprises), surplombs et falaises sur 3 graines de référence, eau des rivières, hauteur de surface exacte. Génération : 1,8 ms par colonne.
 
 ### v0.1
@@ -80,7 +79,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## Blocages
 
-- Envoi du tag `v0.1.0` refusé (HTTP 403) par la passerelle Git de la session cloud ; les branches passent. Contournement : l'utilisateur pousse le tag.
+- Envoi des tags refusé (HTTP 403) par la passerelle Git de la session cloud ; les branches passent. Contournement : l'utilisateur pousse le tag de fin de version.
 
 ## En attente de l'utilisateur
 
