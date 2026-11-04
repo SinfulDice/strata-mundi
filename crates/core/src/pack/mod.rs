@@ -100,7 +100,11 @@ pub fn category_files(
 
 pub fn read_ron<T: DeserializeOwned>(path: &Path) -> Result<T, PackError> {
     let text = std::fs::read_to_string(path).map_err(|e| PackError::io(path, e))?;
-    ron::from_str(&text).map_err(|e| PackError::syntax(path, &e))
+    // Optional fields are written plainly (`steep: "strata:stone"`), `Some(…)` still works.
+    ron::Options::default()
+        .with_default_extension(ron::extensions::Extensions::IMPLICIT_SOME)
+        .from_str(&text)
+        .map_err(|e| PackError::syntax(path, &e))
 }
 
 fn files_with_extension(

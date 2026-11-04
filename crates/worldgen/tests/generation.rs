@@ -12,15 +12,28 @@ fn positions() -> Vec<ColumnPos> {
         .to_vec()
 }
 
+/// Mountains (overhangs, terraces) and rivers too, not only the plains near the origin.
 #[test]
 fn same_seed_gives_same_world_in_any_order() {
     let forward = common::generator(42);
     let backward = common::generator(42);
-    let first: Vec<_> = positions()
+    let mut positions = positions();
+    positions.extend(common::rugged_columns(&forward, 3));
+    positions.extend(
+        common::river_points(&forward)
+            .iter()
+            .take(3)
+            .map(|&(x, z)| ColumnPos {
+                x: x.div_euclid(16),
+                z: z.div_euclid(16),
+            }),
+    );
+    let first: Vec<_> = positions
+        .clone()
         .into_iter()
         .map(|p| forward.generate(p))
         .collect();
-    let mut second: Vec<_> = positions()
+    let mut second: Vec<_> = positions
         .into_iter()
         .rev()
         .map(|p| backward.generate(p))
@@ -99,7 +112,7 @@ fn spawn_is_welcoming() {
     let (sample, biome) = generator.sample(spawn.x, spawn.z);
     assert!(biome.spawn, "spawned in {}", biome.id);
     assert!(sample.height > generator.content().terrain.sea_level);
-    assert_eq!(spawn.y, sample.height + 1);
+    assert_eq!(spawn.y, generator.surface_height(spawn.x, spawn.z) + 1);
 }
 
 /// Trees rooted near a column border must be whole on both sides, whatever the order and

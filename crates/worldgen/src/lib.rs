@@ -7,12 +7,18 @@ mod content;
 pub mod defs;
 mod features;
 mod generator;
+pub mod map;
 mod noise;
 mod rng;
 mod spawn;
+mod spline;
+mod surface;
+mod terrain;
 
+pub use climate::Sample;
 pub use content::{Biome, Feature, Terrain, WorldgenContent};
 pub use generator::Generator;
+pub use spline::Spline;
 
 /// World seed as typed by the player, hashed into 64 bits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

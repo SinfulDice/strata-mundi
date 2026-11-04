@@ -1,7 +1,7 @@
 //! Ore veins, trees and pillars. A column also places the parts of features rooted in
 //! its eight neighbours, so trees cross borders seamlessly whatever the loading order.
 
-use crate::content::Feature;
+use crate::content::{Feature, MAX_CROWN};
 use crate::defs::Crown;
 use crate::generator::Generator;
 use crate::rng::Rng;
@@ -73,25 +73,42 @@ fn place_rooted_in(generator: &Generator, source: ColumnPos, column: &mut Column
         let z = source.z * SECTION_SIZE + rng.range(0, 15);
         let mut roll = rng.unit() * f64::from(ATTEMPTS);
         let variant = rng.next_u64();
+        if !reaches(column.pos, x, z) {
+            continue;
+        }
         let (sample, biome) = generator.sample(x, z);
         if sample.height < content.terrain.sea_level {
             continue;
         }
-        let ground = generator.surface_block(&sample, biome);
-        for &(feature, per_column) in &biome.features {
+        let Some(&(feature, _)) = biome.features.iter().find(|&&(_, per_column)| {
             roll -= per_column;
-            if roll < 0.0 {
-                let mut writer = Writer {
-                    column,
-                    x,
-                    z,
-                    base: sample.height + 1,
-                };
-                place(&content.features[feature], ground, variant, &mut writer);
-                break;
-            }
+            roll < 0.0
+        }) else {
+            continue;
+        };
+        let height = generator.surface_height_at(&sample, x, z);
+        if height <= content.terrain.sea_level {
+            continue;
         }
+        let ground = generator.ground_block(x, z, &sample, biome, height);
+        let mut writer = Writer {
+            column: &mut *column,
+            x,
+            z,
+            base: height + 1,
+        };
+        place(&content.features[feature], ground, variant, &mut writer);
     }
+}
+
+/// Whether a feature rooted at `(x, z)` may write into the column at `pos`.
+fn reaches(pos: ColumnPos, x: i32, z: i32) -> bool {
+    let reach = MAX_CROWN as i32 + 1;
+    let near = |c: i32, origin: i32| {
+        let start = origin * SECTION_SIZE;
+        (start - reach..start + SECTION_SIZE + reach).contains(&c)
+    };
+    near(x, pos.x) && near(z, pos.z)
 }
 
 /// Writes the blocks of one feature that fall inside the column being generated.

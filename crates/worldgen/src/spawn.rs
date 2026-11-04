@@ -21,9 +21,9 @@ pub fn find(generator: &Generator) -> BlockPos {
             continue;
         }
         if has_water_nearby(generator, x, z, sea_level) {
-            return free_standing(generator, x, z, sample.height);
+            return free_standing(generator, x, z, generator.surface_height_at(&sample, x, z));
         }
-        fallback.get_or_insert((x, z, sample.height));
+        fallback.get_or_insert((x, z, generator.surface_height_at(&sample, x, z)));
     }
     fallback.map_or(BlockPos::new(0, sea_level + 2, 0), |(x, z, height)| {
         free_standing(generator, x, z, height)

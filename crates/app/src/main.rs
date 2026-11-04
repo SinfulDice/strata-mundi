@@ -39,7 +39,8 @@ fn main() -> anyhow::Result<()> {
     let tool = args.texture_sheet.is_some()
         || args.screenshot.is_some()
         || args.render_icons.is_some()
-        || args.render_biomes.is_some();
+        || args.render_biomes.is_some()
+        || args.map.is_some();
     let saved_packs = if tool {
         Vec::new()
     } else {
@@ -68,6 +69,9 @@ fn main() -> anyhow::Result<()> {
         .map_or_else(random_seed, Seed::from_text);
     tracing::info!(seed = seed.0 as i64, "world seed");
     let generator = Arc::new(Generator::new(seed, Arc::clone(&loaded.worldgen)));
+    if let Some(path) = &args.map {
+        return renders::render_map(&generator, &args, path);
+    }
     if let Some(path) = &args.screenshot {
         return screenshot(&args, &loaded, &generator, graphics, path);
     }

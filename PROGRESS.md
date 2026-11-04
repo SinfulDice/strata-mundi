@@ -2,11 +2,17 @@
 
 ## État
 
-- **Version en cours** : v0.1 — Fondations
-- **Jalon en cours** : aucun — **v0.1 terminée**, en attente de l'utilisateur avant la v0.2
-- **Dernière session** : 29/10/2026
+- **Version en cours** : v0.2 — Monde vivant
+- **Jalon en cours** : 2 — Grottes
+- **Dernière session** : 04/11/2026
 
 ## Fait
+
+### v0.2
+
+- **Jalon 1 — Relief avancé** : relief par **densité 3D** (`hauteur − y + surplomb × bruit3D`) sur grille alignée sur le monde (hauteur de surface exacte partout : `surface_height`), **courbes de climat** dans le pack (`relief` de `terra.ron` : continentalité, intérieur, érosion, pics et vallées, collines, plateaux, surplombs), plateaux en **terrasses**, **falaises** et pentes raides en roche nue, **arches et surplombs** en montagne, **rivières** (lit sous la mer, berges douces, vallées sèches en altitude) et biome `river`, conditions de hauteur des biomes (`min_height`/`max_height`), eau seulement à ciel ouvert, carte de prévisualisation `strata --map` (couleur `map_color` par biome), extension RON `implicit_some` pour les packs. Tests : déterminisme (montagnes et rivières comprises), surplombs et falaises sur 3 graines de référence, eau des rivières, hauteur de surface exacte. Génération : 1,8 ms par colonne.
+
+### v0.1
 
 - **Jalon 10 — Clôture** : critères de fin vérifiés (rapport dans `docs/versions/v0.1.md`), montagnes refaites, brouillard dans les captures, anisotropie retirée des préréglages, `assets/` dans le `.msi`, release répétée avec succès (tag `v0.1.0` à pousser par l'utilisateur), thème d'interface **Pierre** choisi (D035).
 - **Jalon 9 — Wiki** : binaire `wikigen` (site statique HTML/CSS/JS sans dépendance, fr/en/lol, ouvrable sans serveur) : accueil, pages par bloc (infobox calculée depuis les packs, lieux de génération, historique), par biome (vue rendue par le jeu, blocs, végétation, climat), commandes, mécaniques (génération, sauvegarde, modes), contrôles (touches par défaut clavier et manette), réglages (effet sur les performances, préréglages comparés), nouveautés et historique des versions ; recherche sur index par langue, mode sombre (système + bouton), bascule de langue vers la même page ; `--strict` (et un test) échouent si un texte manque ; `strata --render-icons` et `--render-biomes` ; `scripts/build-wiki.sh` (utilisé par la release) ; 47 textes rédigés par langue dans `wiki-content/` et `history.ron`.
@@ -45,6 +51,7 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 23/10/2026 (jalon 8) | Maillage d'une section de surface | 0,18 ms | `meshing/mesh_section_terrain` |
 | 23/10/2026 (jalon 8) | Maillage pire cas (damier) | 1,06 ms | `meshing/mesh_section_checkerboard` |
 | 23/10/2026 (jalon 8) | Génération d'une colonne | 2,27 ms (+9 %, bruit de VM partagée, sous le seuil de 10 %) | `generation/generate_column` |
+| 04/11/2026 (v0.2 j1) | Génération d'une colonne (relief 3D) | 1,80 ms | `generation/generate_column` |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
@@ -74,6 +81,5 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## En attente de l'utilisateur
 
-- Feu vert pour la v0.2 (tag `v0.1.0` poussé, release publiée par la CI).
 - À chaque fin de version : mesure sur PC en attendant le DS (voir « Environnement »).
 

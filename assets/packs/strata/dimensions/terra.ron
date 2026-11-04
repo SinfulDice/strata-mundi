@@ -11,5 +11,19 @@ Dimension(
         biome_scale: 1.0,
         caves: true,
         ores: ["strata:coal_ore", "strata:iron_ore", "strata:gold_ore", "strata:diamond_ore"],
+        // Curves of the climate maps, in blocks above the sea (see docs/explications/relief.md).
+        relief: (
+            continent: [(-1.0, -55.0), (-0.65, -38.0), (-0.4, -16.0), (-0.28, -4.0), (-0.2, 1.5), (0.0, 5.0), (0.4, 12.0), (1.0, 26.0)],
+            inland: [(-0.2, 0.0), (0.25, 1.0)],
+            rugged: [(-0.75, 1.0), (-0.3, 0.0)],
+            peaks: [(-1.0, 20.0), (-0.4, 40.0), (0.2, 95.0), (0.7, 170.0), (1.0, 230.0)],
+            hills: [(-1.0, -3.0), (-0.2, 4.0), (0.4, 12.0), (1.0, 22.0)],
+            plateau: [(0.25, 0.0), (0.35, 1.0), (0.55, 1.0), (0.65, 0.0)],
+            plateau_lift: 26.0,
+            terrace_step: 9.0,
+            overhang: [(-0.8, 1.0), (-0.3, 0.55), (0.1, 0.12), (0.25, 0.0)],
+            overhang_blocks: 22.0,
+            rivers: Some((width: 0.022, banks: 0.06, depth: 5.0, highest: 45.0)),
+        ),
     ),
 )

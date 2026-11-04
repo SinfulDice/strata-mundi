@@ -1,0 +1,9 @@
+// Only chosen on river beds (`river: true`), whatever the climate around.
+Biome(
+    climate: (temperature: 0.1, humidity: 0.2, continentalness: 0.1, erosion: 0.2),
+    river: true,
+    map_color: "#3d70d0",
+    surface: "strata:grass_block",
+    subsurface: "strata:dirt",
+    underwater: "strata:sand",
+)

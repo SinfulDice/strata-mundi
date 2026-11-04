@@ -4,3 +4,4 @@ biome-strata-desert = Desert
 biome-strata-ocean = Ocean
 biome-strata-mountains = Mountains
 biome-strata-snowy_tundra = Snowy Tundra
+biome-strata-river = River

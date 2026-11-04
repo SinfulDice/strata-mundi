@@ -1,4 +1,4 @@
-use crate::defs::{BiomeDef, Climate, Crown, DimensionDef, FeatureDef, TerrainDef};
+use crate::defs::{BiomeDef, Climate, Crown, DimensionDef, FeatureDef, Relief, TerrainDef};
 use std::collections::BTreeMap;
 use std::path::Path;
 use strata_core::content::{Block, BlockId, Registry};
@@ -27,6 +27,7 @@ pub struct Terrain {
     pub caves: bool,
     /// Indices into `WorldgenContent::features`.
     pub ores: Vec<usize>,
+    pub relief: Relief,
 }
 
 #[derive(Debug, Clone)]
@@ -39,7 +40,13 @@ pub struct Biome {
     pub underwater: BlockId,
     /// Sorted by height.
     pub peaks: Vec<(i32, BlockId)>,
+    /// Surface of steep slopes; `None` = the dimension's stone.
+    pub steep: Option<BlockId>,
     pub frozen: bool,
+    pub min_height: Option<i32>,
+    pub max_height: Option<i32>,
+    pub river: bool,
+    pub map_color: [u8; 3],
     pub spawn: bool,
     /// `(feature index, attempts per column)`.
     pub features: Vec<(usize, f64)>,
@@ -162,6 +169,7 @@ fn resolve_terrain(
         biome_scale: def.biome_scale.clamp(0.25, 16.0),
         caves: def.caves,
         ores,
+        relief: bounded_relief(&def.relief),
     }
 }
 
@@ -259,12 +267,39 @@ fn load_biomes(
                 subsurface_depth: value.subsurface_depth.min(16),
                 underwater: r.block(&value.underwater),
                 peaks: sorted_peaks(&value.peaks, &mut r),
+                steep: value.steep.as_ref().map(|id| r.block(id)),
                 frozen: value.frozen,
+                min_height: value.min_height,
+                max_height: value.max_height,
+                river: value.river,
+                map_color: {
+                    let [r, g, b, _] = value.map_color.0.0;
+                    [r, g, b]
+                },
                 spawn: value.spawn,
                 features,
             }
         })
         .collect()
+}
+
+/// Pack data must never make generation absurdly slow (huge overhangs scan many blocks).
+fn bounded_relief(relief: &Relief) -> Relief {
+    let mut relief = relief.clone();
+    relief.overhang_blocks = relief.overhang_blocks.clamp(0.0, 64.0);
+    relief.terrace_step = relief.terrace_step.clamp(1.0, 64.0);
+    relief.plateau_lift = relief.plateau_lift.clamp(-64.0, 128.0);
+    relief.overhang_scale = relief.overhang_scale.clamp(4.0, 4096.0);
+    relief.weirdness_scale = relief.weirdness_scale.clamp(16.0, 65536.0);
+    relief.river_scale = relief.river_scale.clamp(16.0, 65536.0);
+    relief.steep_slope = relief.steep_slope.clamp(1, 64);
+    if let Some(rivers) = &mut relief.rivers {
+        rivers.width = rivers.width.clamp(0.0, 0.5);
+        rivers.banks = rivers.banks.clamp(0.0, 0.5);
+        rivers.depth = rivers.depth.clamp(0.0, 64.0);
+        rivers.highest = rivers.highest.clamp(0.0, 400.0);
+    }
+    relief
 }
 
 fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, BlockId)> {
@@ -275,7 +310,7 @@ fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, 
 
 /// Features are written from the 3×3 neighbouring columns: anything wider than 16 blocks
 /// from its root would be cut, so sizes are bounded.
-const MAX_CROWN: u32 = 8;
+pub const MAX_CROWN: u32 = 8;
 const MAX_TREE_HEIGHT: u32 = 32;
 
 fn bounded((a, b): (u32, u32), max: u32) -> (u32, u32) {

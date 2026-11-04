@@ -39,6 +39,14 @@ pub struct Args {
     #[arg(long, value_name = "DIR")]
     pub render_biomes: Option<PathBuf>,
 
+    /// Save a top-down map of the generation (`--size` pixels around `--pos`), then quit.
+    #[arg(long, value_name = "PNG")]
+    pub map: Option<PathBuf>,
+
+    /// Blocks per pixel of `--map`.
+    #[arg(long, default_value_t = 4, value_parser = clap::value_parser!(u32).range(1..=1024))]
+    pub map_scale: u32,
+
     /// Activate a resource pack from the resource packs folder (repeatable; last wins).
     #[arg(long, value_name = "NAME")]
     pub resource_pack: Vec<String>,

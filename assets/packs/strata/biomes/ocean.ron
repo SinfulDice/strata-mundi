@@ -1,5 +1,7 @@
 Biome(
     climate: (temperature: 0.0, humidity: 0.0, continentalness: -0.6, erosion: 0.0),
+    map_color: "#2b4ea8",
+    max_height: 117,
     surface: "strata:sand",
     subsurface: "strata:sand",
     underwater: "strata:gravel",

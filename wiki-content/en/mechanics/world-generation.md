@@ -4,7 +4,7 @@ The world isn't drawn by hand: it's **calculated** from a seed, bit by bit as yo
 
 ## Terrain and biomes
 
-Four invisible maps cover the world: **temperature**, **humidity**, **continentalness** (from open sea to deep inland) and **erosion** (from flat, worn land to young terrain). The last two give the ground height: deep oceans, gentle hills, ridged mountains. The biome, picked from the climate, only decides the ground cover and vegetation: transitions stay gentle, with no abrupt cliffs. Six biomes exist for now.
+Four invisible maps cover the world: **temperature**, **humidity**, **continentalness** (from open sea to deep inland) and **erosion** (from flat, worn land to young terrain). The last two give the ground height: deep oceans, gentle hills, ridged mountains. The terrain is fully 3D: **cliffs**, **overhangs** and **arches** where the land is young, **terraced plateaus** inland, and winding **rivers** that fade out up high, carving dry valleys. The biome, picked from the climate, only decides the ground cover and vegetation, with gentle transitions between neighbours. Seven biomes exist for now.
 
 ## Below the surface
 

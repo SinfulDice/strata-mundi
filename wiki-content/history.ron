@@ -38,6 +38,7 @@
         "biomes/strata/mountains": [(version: "0.1.0", change: Added)],
         "biomes/strata/ocean": [(version: "0.1.0", change: Added)],
         "biomes/strata/plains": [(version: "0.1.0", change: Added)],
+        "biomes/strata/river": [(version: "0.2.0", change: Added)],
         "biomes/strata/snowy_tundra": [(version: "0.1.0", change: Added)],
         "commands/cinematic": [(version: "0.1.0", change: Added)],
         "commands/gamemode": [(version: "0.1.0", change: Added)],
@@ -48,6 +49,13 @@
         "commands/tp": [(version: "0.1.0", change: Added)],
         "mechanics/game-modes": [(version: "0.1.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
-        "mechanics/world-generation": [(version: "0.1.0", change: Added)],
+        "mechanics/world-generation": [
+            (version: "0.1.0", change: Added),
+            (version: "0.2.0", change: Changed(
+                fr: "Relief en 3D : falaises, surplombs, arches, plateaux en terrasses et rivières.",
+                en: "3D terrain: cliffs, overhangs, arches, terraced plateaus and rivers.",
+                lol: "3D GROUND: CLIFFZ, ROCK ROOFZ, ROCK BRIDJEZ, STAIRZ HILLZ AN WIGGLY WATUR.",
+            )),
+        ],
     },
 )

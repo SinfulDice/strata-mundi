@@ -209,3 +209,12 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 - **Choix de l'utilisateur** sur trois maquettes (Pierre, Bois chaleureux, Parchemin) : **Pierre**, gris neutre et accent doré, qui laisse la place au monde. Les deux autres restent dans `docs/maquettes/themes/` ; un pack de ressources peut remplacer `assets/ui/theme.ron`.
 
+
+## D036 — Relief par densité 3D et courbes de climat (v0.2, jalon 1)
+
+- **Choix** : comme Caves & Cliffs, la hauteur « plate » vient de **courbes** (`Spline`, points lissés) de la continentalité, de l'érosion et des « pics et vallées » (bruit de bizarrerie replié) ; les courbes sont dans le pack (`dimensions/terra.ron`, bloc `relief`), seule la façon de les combiner est dans le code. Un bloc est plein si `hauteur − y + surplomb × bruit3D > 0` : l'amplitude du surplomb dépend de l'érosion (falaises, arches et surplombs en montagne, rien en plaine ni dans les rivières).
+- **Grille alignée sur le monde** : le bruit 3D est échantillonné tous les 4 blocs (8 en hauteur) sur une grille globale puis interpolé ; la hauteur de surface d'un point quelconque se recalcule donc **exactement** (`Generator::surface_height`), ce qui garde les arbres des colonnes voisines posés sur le vrai sol.
+- **Plateaux** : bande d'érosion relevée et découpée en terrasses (falaises de plateau, mesas). **Pentes raides** (≥ 3 blocs entre voisins) en roche nue (`steep` réglable par biome).
+- **Rivières** : ligne zéro d'un bruit dédié, lit sous la mer (eau au niveau de la mer), berges lissées, estompées en altitude (vallées sèches). Biome `river` choisi seulement sur le lit (`river: true`) ; les biomes peuvent exiger une plage de hauteur (`min_height`, `max_height`).
+- **Packs** : l'extension RON `implicit_some` est activée pour tous les fichiers de pack (`steep: "strata:stone"` au lieu de `Some(...)`).
+- **Alternative écartée** : densité 3D complète sur toute la hauteur (comme Minecraft) — 10 à 20 fois plus de bruit 3D à calculer, alors que seule une bande autour de la surface en a besoin.

@@ -4,3 +4,4 @@ biome-strata-desert = HOT SANDZ
 biome-strata-ocean = BIG WATUR
 biome-strata-mountains = BIG ROCKZ
 biome-strata-snowy_tundra = COLD FLAT LAND
+biome-strata-river = WIGGLY WATUR

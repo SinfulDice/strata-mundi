@@ -11,6 +11,8 @@ use strata_client::screenshot::{View, capture, write_png};
 use strata_client::settings::GraphicsSettings;
 use strata_core::content::Content;
 use strata_core::id::Identifier;
+use strata_core::texture::{Rgba, RgbaImage};
+use strata_worldgen::map::{self, MapArea};
 use strata_worldgen::{Generator, Seed, WorldgenContent};
 
 const ICON_SIZE: u32 = 64;
@@ -57,9 +59,7 @@ pub fn render_biomes(
         };
         let ground = |x, z| {
             generator
-                .sample(x, z)
-                .0
-                .height
+                .surface_height(x, z)
                 .max(worldgen.terrain.sea_level)
         };
         let (ex, ez) = (x - BACK, z - BACK);
@@ -88,6 +88,31 @@ pub fn render_biomes(
     }
     tracing::info!(dir = %dir.display(), "biome views written");
     Ok(())
+}
+
+/// Top-down map of the generation centered on `--pos`.
+pub fn render_map(
+    generator: &Generator,
+    args: &crate::cli::Args,
+    path: &Path,
+) -> anyhow::Result<()> {
+    let [x, _, z] = args.pos.unwrap_or([0.0; 3]);
+    let area = MapArea {
+        center: (x as i32, z as i32),
+        size: args.size,
+        scale: args.map_scale,
+    };
+    let pixels = map::render(generator, area);
+    let mut image = RgbaImage::new(area.size.0, area.size.1, Rgba([0, 0, 0, 255]));
+    for (index, [r, g, b]) in pixels.into_iter().enumerate() {
+        let index = index as u32;
+        image.set(
+            index % area.size.0,
+            index / area.size.0,
+            Rgba([r, g, b, 255]),
+        );
+    }
+    Ok(write_png(path, &image)?)
 }
 
 /// Spiral outward from the origin until the biome covers a whole neighbourhood.

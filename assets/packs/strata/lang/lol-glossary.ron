@@ -84,4 +84,10 @@
     "World": "WURLD",
     "World border": "WURLD EDGE",
     "World generation": "WURLD MAKIN",
+    "River": "WIGGLY WATUR",
+    "Cliff": "CLIFF",
+    "Overhang": "ROCK ROOF",
+    "Arch": "ROCK BRIDJ",
+    "Terraced plateau": "STAIRZ HILL",
+    "Valley": "VALLY",
 }

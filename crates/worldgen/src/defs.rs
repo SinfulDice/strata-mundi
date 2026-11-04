@@ -1,7 +1,9 @@
 //! Generation content read from packs: `dimensions/`, `biomes/` and `features/`.
 
+use crate::spline::Spline;
 use serde::Deserialize;
 use strata_core::id::Identifier;
+use strata_core::texture::{HexColor, Rgba};
 
 /// `dimensions/<name>.ron`.
 #[derive(Debug, Clone, Deserialize)]
@@ -29,6 +31,66 @@ pub struct TerrainDef {
     /// Ore features spread through the whole dimension.
     #[serde(default)]
     pub ores: Vec<Identifier>,
+    pub relief: Relief,
+}
+
+/// Shape of the land, as curves of the climate maps (like Minecraft's Caves & Cliffs).
+/// Heights are in blocks above the sea; erosion and peaks-and-valleys are in `[-1, 1]`.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Relief {
+    /// Continentalness → base height: deep oceans, coasts, inland.
+    pub continent: Spline,
+    /// Continentalness → 0 at sea to 1 inland: how much hills and mountains rise.
+    pub inland: Spline,
+    /// Erosion → 0 (worn-down hills) to 1 (mountain ranges).
+    pub rugged: Spline,
+    /// Peaks-and-valleys → height of mountains.
+    pub peaks: Spline,
+    /// Peaks-and-valleys → height of hills where the land is worn down.
+    pub hills: Spline,
+    /// Erosion → 0 to 1: raised, terraced plateaus.
+    #[serde(default = "zero")]
+    pub plateau: Spline,
+    #[serde(default)]
+    pub plateau_lift: f64,
+    /// Height of plateau steps, in blocks.
+    #[serde(default = "default_terrace")]
+    pub terrace_step: f64,
+    /// Erosion → 0 to 1: how much 3D noise carves cliffs, overhangs and arches.
+    pub overhang: Spline,
+    /// Largest overhang, in blocks.
+    pub overhang_blocks: f64,
+    /// Size of the overhang noise's shapes, in blocks.
+    #[serde(default = "default_overhang_scale")]
+    pub overhang_scale: f64,
+    /// Size of mountain ranges (peaks-and-valleys), in blocks.
+    #[serde(default = "default_weirdness_scale")]
+    pub weirdness_scale: f64,
+    /// Height difference to a neighbour from which the ground is bare rock.
+    #[serde(default = "default_steep_slope")]
+    pub steep_slope: i32,
+    #[serde(default)]
+    pub rivers: Option<Rivers>,
+    /// Distance between rivers, roughly, in blocks.
+    #[serde(default = "default_river_scale")]
+    pub river_scale: f64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Rivers {
+    /// Share of the river noise that is water (around 0.02).
+    pub width: f64,
+    /// Share of the river noise that slopes down to the banks.
+    pub banks: f64,
+    /// Depth of the bed below the sea level.
+    pub depth: f64,
+    /// Rivers fade out above this height (blocks above the sea), carving dry valleys.
+    pub highest: f64,
+    /// River factor (0 to 1) from which the river biome is chosen.
+    #[serde(default = "default_river_biome")]
+    pub biome: f64,
 }
 
 /// Where a biome sits in climate space; the nearest biome wins.
@@ -56,9 +118,23 @@ pub struct BiomeDef {
     /// (rocky slopes, snowy peaks). Sorted by height.
     #[serde(default)]
     pub peaks: Vec<(i32, Identifier)>,
+    /// Surface of steep slopes (stone by default).
+    #[serde(default)]
+    pub steep: Option<Identifier>,
     /// Water surface freezes.
     #[serde(default)]
     pub frozen: bool,
+    /// Only chosen where the plain terrain height is in this range.
+    #[serde(default)]
+    pub min_height: Option<i32>,
+    #[serde(default)]
+    pub max_height: Option<i32>,
+    /// Only chosen on river beds (and never elsewhere).
+    #[serde(default)]
+    pub river: bool,
+    /// Color on the generation preview map.
+    #[serde(default = "grey")]
+    pub map_color: HexColor,
     /// The player may start the game here (welcoming biomes only).
     #[serde(default)]
     pub spawn: bool,
@@ -107,6 +183,38 @@ pub enum Crown {
     Round { radius: u32 },
     /// Layered cone (fir).
     Cone { radius: u32 },
+}
+
+fn zero() -> Spline {
+    Spline::constant(0.0)
+}
+
+fn grey() -> HexColor {
+    HexColor(Rgba([128, 128, 128, 255]))
+}
+
+fn default_overhang_scale() -> f64 {
+    44.0
+}
+
+fn default_weirdness_scale() -> f64 {
+    650.0
+}
+
+fn default_steep_slope() -> i32 {
+    3
+}
+
+fn default_river_scale() -> f64 {
+    380.0
+}
+
+fn default_river_biome() -> f64 {
+    0.6
+}
+
+fn default_terrace() -> f64 {
+    8.0
 }
 
 fn one() -> f64 {
