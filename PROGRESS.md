@@ -3,14 +3,17 @@
 ## État
 
 - **Version en cours** : v0.2 — Monde vivant
-- **Jalon en cours** : 3 — Minerais et gisements
-  - [x] Cuivre (minerai normal et profond, petits filons) et **grands gisements** riches et rares (fer, cuivre ; roche de remplissage colorée), signes discrets en surface (roches colorées) ; textures, traductions, wiki ; tests (déterminisme, gisements trouvés sur les graines de référence, signes au-dessus)
+- **Jalon en cours** : 4 — Biomes supplémentaires
+  - [ ] Végétation en croix : `RenderKind::Cross` (mailleur, shader, icône, raycast, pas de collision), feature de végétation éparse du pack ; herbes hautes, fougère, buisson mort, buisson, fleurs (≥ 5), petits champignons ; ajoutée aux biomes existants
+  - [ ] Nouveaux arbres et bois : bouleau, jungle (grand), acacia (tronc penché, couronne plate), chêne des marais, champignons géants (chapeaux et pied) ; nouvelles formes de couronne dans le pack
+  - [ ] 12 nouveaux biomes (marais, jungle, savane, forêt de bouleaux, taïga, plage, pics enneigés, prairie fleurie, badlands à strates, océan profond, champignons géants ; rivière déjà faite) avec leurs blocs de surface, placement climatique, carte, traductions, wiki ; tests (tous atteignables, déterminisme), captures
 - **Dernière session** : 04/11/2026
 
 ## Fait
 
 ### v0.2
 
+- **Jalon 3 — Minerais et gisements** : cuivre (minerai normal et profond, petits filons), **grands gisements** de fer et de cuivre (veines de 40-80 blocs dans une roche colorée : `ferrous_rock`, `verdigris_rock`, une cellule de 256 blocs sur 0,4), **signes en surface** (5 % des blocs au-dessus), sels stables par hachage d'identifiant. Tests : gisements sur 3 graines, continuité entre colonnes, seule la pierre remplacée, signes au-dessus, bornes du pack. Génération : 1,9 ms (plaine), 2,8 ms (gisement), 3,0-3,3 ms (montagne, à remesurer).
 - **Jalon 2 — Grottes** : module `worldgen/caves` : tunnels spaghetti, nouilles, cavernes fromage à piliers (plus nombreuses en profondeur), ravins en V (surface ou profonds), aquifères par cellules à frontières sinueuses et niveau plat, lacs de lave sous y = 10 (bloc `lava`), entrées de grottes sur terre ferme, toits qui protègent mers et rivières, départ jamais au-dessus d'un trou ; réglages `caves` du pack (densité, largeurs, hauteurs). Tests : pas d'air creusé contre l'eau de mer/rivière, eau d'aquifère jamais suspendue, cavernes/ravins/aquifères/lave sur 3 graines, déterminisme. Génération : 1,83 ms (plaine), 2,86 ms (montagne), 1,37 ms (caverne).
 - **Jalon 1 — Relief avancé** : relief par **densité 3D** (`hauteur − y + surplomb × bruit3D`) sur grille alignée sur le monde (hauteur de surface exacte partout : `surface_height`), **courbes de climat** dans le pack (`relief` de `terra.ron` : continentalité, intérieur, érosion, pics et vallées, collines, plateaux, surplombs), plateaux en **terrasses**, **falaises** et pentes raides en roche nue, **arches et surplombs** en montagne, **rivières** (lit sous la mer, berges douces, vallées sèches en altitude) et biome `river`, conditions de hauteur des biomes (`min_height`/`max_height`), eau seulement à ciel ouvert, carte de prévisualisation `strata --map` (couleur `map_color` par biome), extension RON `implicit_some` pour les packs. Tests : déterminisme (montagnes et rivières comprises), surplombs et falaises sur 3 graines de référence, eau des rivières, hauteur de surface exacte. Génération : 1,8 ms par colonne.
 
