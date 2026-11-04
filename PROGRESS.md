@@ -4,6 +4,8 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 2 — Grottes
+  - [ ] Grottes complètes (worldgen) : réglages `caves` du pack, tunnels « spaghetti », galeries « nouilles », cavernes « fromage » à piliers, ravins (surface et profondeur), aquifères, lacs de lave sous y ≈ 10 (bloc `lava`), entrées en surface sans fuite d'eau ; tests (déterminisme des grottes, pas de grotte qui ouvre une mer ou une rivière, eau d'aquifère à niveau plat)
+  - [ ] Captures de grottes et ravins inspectées
 - **Dernière session** : 04/11/2026
 
 ## Fait
