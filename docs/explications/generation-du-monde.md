@@ -42,7 +42,7 @@ Tout est décrit dans le pack : `biomes/*.ron` (climat, blocs, éléments, coule
 ### Une colonne, étape par étape
 
 1. **Couches**, parcourues de haut en bas pour suivre les surplombs ([Relief](relief.md)) : socle irrégulier en bas (y 0 à 3), roche profonde sous ~64, pierre, quelques blocs de sous-sol (terre, grès…), le bloc de surface (sous chaque ouverture vers l'air) ; près de la mer, sable ou gravier (plages). Eau statique jusqu'au niveau de la mer.
-2. **Grottes** : des tunnels creusés là où deux bruits 3D valent presque zéro en même temps (« grottes spaghetti »). Le bruit est calculé sur une grille grossière (tous les 4 blocs) puis interpolé, 60 fois moins cher. Les grottes avancées arrivent en v0.2.
+2. **Grottes** : tunnels « spaghetti », nouilles, grandes cavernes, ravins, nappes d'eau souterraines et lave en profondeur, sans jamais ouvrir une mer ou une rivière. Détails dans [Grottes](grottes.md).
 3. **Minerais** en petits filons, chacun dans sa plage de hauteur (charbon partout, diamant tout en bas) ; dans la roche profonde, c'est la variante « profonde ».
 4. **Arbres et cactus** : chaque colonne place les éléments enracinés chez elle **et chez ses 8 voisines**, en n'écrivant que la partie qui tombe chez elle. Ainsi un arbre à cheval sur deux colonnes est toujours entier, dans n'importe quel ordre de génération. La hauteur du sol d'une voisine est recalculée exactement (`surface_height`, voir [Relief](relief.md)), surplombs compris.
 
@@ -63,7 +63,7 @@ Mesures : ~2 ms par colonne (`cargo bench -p strata-worldgen`).
 | Climat, hauteur plate, biome | `crates/worldgen/src/climate.rs` |
 | Relief (courbes, densité 3D, carte) | voir [Relief](relief.md) |
 | Colonne complète | `crates/worldgen/src/generator.rs` (`Generator::generate`) |
-| Grottes | `crates/worldgen/src/caves.rs` |
+| Grottes | `crates/worldgen/src/caves/` (voir [Grottes](grottes.md)) |
 | Minerais, arbres | `crates/worldgen/src/features.rs` |
 | Point de départ | `crates/worldgen/src/spawn.rs` |
 | Tests (déterminisme, biomes, départ) | `crates/worldgen/tests/generation.rs` |

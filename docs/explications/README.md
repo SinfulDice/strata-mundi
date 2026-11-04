@@ -13,6 +13,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 7. [Chunks et maillage](chunks-et-maillage.md) : stockage des blocs, faces visibles, fusion, occlusion.
 8. [Génération du monde](generation-du-monde.md) : climat, relief, biomes, grottes, arbres.
    - [Relief](relief.md) : courbes du climat, densité 3D, falaises, plateaux, rivières, carte `--map`.
+   - [Grottes](grottes.md) : spaghetti, nouilles, cavernes, ravins, aquifères, lave, toits sous les mers.
 9. [Monde infini](monde-infini.md) : chargement autour du joueur, frustum.
 10. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
 11. [ECS](ecs.md) : entités et composants du serveur.
