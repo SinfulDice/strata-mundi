@@ -1,0 +1,13 @@
+// Rare: only where the land is both very humid and very worn down.
+Biome(
+    climate: (temperature: 0.0, humidity: 1.1, continentalness: 0.2, erosion: 1.0),
+    map_color: "#9a6e9a",
+    surface: "strata:mycelium",
+    subsurface: "strata:dirt",
+    underwater: "strata:dirt",
+    features: [
+        (feature: "strata:red_giant_mushroom", per_column: 0.5),
+        (feature: "strata:brown_giant_mushroom", per_column: 0.5),
+        (feature: "strata:mushrooms", per_column: 2.0),
+    ],
+)

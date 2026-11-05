@@ -79,9 +79,14 @@ impl ClimateMaps {
         }
     }
 
+    fn land_height(&self, climate: &Climate, peaks: f64, x: f64, z: f64) -> f64 {
+        let land = self.raised_height(climate, peaks, x, z);
+        self.sink_wetlands(climate, land, x, z)
+    }
+
     /// Mountains where erosion is low, rolling hills where it is high, terraced plateaus
     /// in between; all of it rising with the distance from the sea.
-    fn land_height(&self, climate: &Climate, peaks: f64, x: f64, z: f64) -> f64 {
+    fn raised_height(&self, climate: &Climate, peaks: f64, x: f64, z: f64) -> f64 {
         let r = &self.relief;
         let c = climate.continentalness;
         let e = climate.erosion;
@@ -99,6 +104,20 @@ impl ClimateMaps {
         let terraced =
             (raised / step).floor() * step + step * smoothstep(0.8, 1.0, (raised / step).fract());
         raised + (terraced - raised) * smoothstep(0.3, 0.7, plateau)
+    }
+
+    /// Humid flat lands sink to a bumpy level near the sea: pools between islets.
+    fn sink_wetlands(&self, climate: &Climate, land: f64, x: f64, z: f64) -> f64 {
+        let Some(wetlands) = &self.relief.wetlands else {
+            return land;
+        };
+        let wet = wetlands.humidity.at(climate.humidity).clamp(0.0, 1.0)
+            * wetlands.erosion.at(climate.erosion).clamp(0.0, 1.0);
+        let level = self.sea_level + wetlands.level + self.detail.at(x, z) * wetlands.bumps;
+        if wet <= 0.0 || land <= level {
+            return land;
+        }
+        land + (level - land) * wet
     }
 
     /// Rivers follow the zero line of their own noise and fade out in high terrain.

@@ -4,6 +4,7 @@ use crate::climate::{ClimateMaps, Sample};
 use crate::content::{Biome, WorldgenContent};
 use crate::deposits::{Deposits, Vein};
 use crate::features::{place_ores, place_surface_features};
+use crate::noise::Noise;
 use crate::plants::place_plants;
 use crate::surface::{Ground, Heights, SurfaceRules};
 use crate::terrain::{Grid, Overhangs};
@@ -22,6 +23,7 @@ pub struct Generator {
     overhangs: Overhangs,
     caves: Option<Caves>,
     deposits: Deposits,
+    bands: Noise,
 }
 
 /// Ground at least this far above the sea, all around, counts as dry land.
@@ -40,6 +42,7 @@ impl Generator {
             overhangs: Overhangs::new(seed, content.terrain.relief.overhang_scale),
             caves: content.terrain.caves.as_ref().map(|c| Caves::new(seed, c)),
             deposits: Deposits::new(seed),
+            bands: Noise::new(seed, 40, 1.0 / 48.0, 2),
             seed,
             content,
         }
@@ -72,13 +75,17 @@ impl Generator {
     /// The block generated on top of the ground at `(x, height, z)`, before caves.
     pub fn ground_block(&self, x: i32, z: i32, sample: &Sample, biome: &Biome, y: i32) -> BlockId {
         let slope = self.content.terrain.relief.steep_slope;
-        let steep = [(-1, 0), (1, 0), (0, -1), (0, 1)].iter().any(|(dx, dz)| {
-            (self.maps.sample(x + dx, z + dz).height - sample.height).abs() >= slope
-        });
+        let rise = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            .iter()
+            .map(|(dx, dz)| (self.maps.sample(x + dx, z + dz).height - sample.height).abs())
+            .max()
+            .unwrap_or(0);
         let ground = Ground {
             sample,
             biome,
-            steep,
+            steep: rise >= slope,
+            sloped: rise >= 1,
+            at: (x, z),
         };
         self.rules().top_block(&ground, y)
     }
@@ -87,6 +94,7 @@ impl Generator {
         SurfaceRules {
             content: &self.content,
             seed: self.seed,
+            bands: &self.bands,
         }
     }
 
@@ -108,6 +116,8 @@ impl Generator {
                     sample,
                     biome,
                     steep: ring.plain.is_steep(lx as i32, lz as i32, slope),
+                    sloped: ring.plain.is_steep(lx as i32, lz as i32, 1),
+                    at: (origin.0 + lx as i32, origin.1 + lz as i32),
                 };
                 tops[lz][lx] = rules.fill(&mut column, (lx, lz), &ground, grid.as_ref());
             }

@@ -19,7 +19,7 @@ mod terrain;
 mod trees;
 
 pub use climate::Sample;
-pub use content::{Biome, Feature, MAX_CROWN, Plants, Terrain, WorldgenContent};
+pub use content::{Bands, Biome, Feature, MAX_CROWN, Plants, Terrain, WorldgenContent};
 pub use deposits::{Deposit, Vein};
 pub use generator::Generator;
 pub use spline::Spline;

@@ -1,0 +1,1 @@
+Material(ramp: "orange_terracotta", pattern: Noise(cells: (4, 4), octaves: 2))

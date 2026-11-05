@@ -1,0 +1,15 @@
+Biome(
+    climate: (temperature: 0.5, humidity: 0.4, continentalness: 0.25, erosion: 0.2),
+    map_color: "#2a8a1e",
+    surface: "strata:grass_block",
+    subsurface: "strata:dirt",
+    underwater: "strata:gravel",
+    features: [
+        (feature: "strata:jungle_tree", per_column: 1.6),
+        (feature: "strata:oak_tree", per_column: 2.0),
+        (feature: "strata:jungle_bush", per_column: 4.0),
+        (feature: "strata:ferns", per_column: 3.0),
+        (feature: "strata:tall_grass", per_column: 3.0),
+        (feature: "strata:flowers", per_column: 0.3),
+    ],
+)

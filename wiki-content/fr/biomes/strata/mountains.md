@@ -13,7 +13,7 @@ Belvédères, châteaux perchés, tunnels à travers la roche, et des falaises d
 ## Comportement
 
 - **Sol** : blocs d'herbe sur les pentes, avec de la terre dessous.
-- **Altitude** : au-dessus d'une certaine hauteur, l'herbe laisse place à la pierre nue, puis, encore plus haut, à des calottes de bloc de neige.
+- **Altitude** : au-dessus d'une certaine hauteur, l'herbe laisse place à la pierre nue, puis, encore plus haut (vers 230 blocs), aux **pics enneigés**.
 - **Végétation** : des sapins sur les pentes herbeuses.
 - **Rivages** : du gravier au bord de l'eau.
 

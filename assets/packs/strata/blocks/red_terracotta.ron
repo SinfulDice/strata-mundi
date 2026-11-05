@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:red_terracotta"),
+    hardness: 1.25,
+    sound: Some("strata:stone"),
+    category: Some("strata:natural"),
+)

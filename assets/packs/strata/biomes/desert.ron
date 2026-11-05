@@ -1,5 +1,5 @@
 Biome(
-    climate: (temperature: 0.6, humidity: -0.5, continentalness: 0.25, erosion: 0.3),
+    climate: (temperature: 0.6, humidity: -0.5, continentalness: 0.25, erosion: 0.2),
     map_color: "#e0cc8f",
     surface: "strata:sand",
     subsurface: "strata:sandstone",

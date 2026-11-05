@@ -1,0 +1,11 @@
+// The tops of the mountains, whatever the climate.
+Biome(
+    climate: (temperature: -0.05, humidity: 0.0, continentalness: 0.45, erosion: -0.65),
+    map_color: "#f4f8fc",
+    min_height: 230,
+    surface: "strata:snow_block",
+    subsurface: "strata:snow_block",
+    subsurface_depth: 2,
+    underwater: "strata:gravel",
+    frozen: true,
+)

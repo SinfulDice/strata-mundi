@@ -1,0 +1,10 @@
+// A sandy strip between the sea and the land, only where the shore is low.
+Biome(
+    climate: (temperature: 0.15, humidity: 0.0, continentalness: -0.3, erosion: 0.2),
+    map_color: "#f0e2a8",
+    max_height: 121,
+    surface: "strata:sand",
+    subsurface: "strata:sand",
+    subsurface_depth: 4,
+    underwater: "strata:sand",
+)

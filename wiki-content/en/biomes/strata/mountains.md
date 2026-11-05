@@ -13,7 +13,7 @@ Lookouts, clifftop castles, tunnels through the rock, and stone cliffs where ore
 ## Behaviour
 
 - **Ground**: grass blocks on the slopes, with dirt underneath.
-- **Altitude**: above a certain height, grass gives way to bare stone, then, higher still, to caps of snow blocks.
+- **Altitude**: above a certain height, grass gives way to bare stone, then, higher still (around 230 blocks), to the **snowy peaks**.
 - **Vegetation**: firs on the grassy slopes.
 - **Shores**: gravel along the water.
 

@@ -1,4 +1,6 @@
-use crate::defs::{BiomeDef, CavesDef, Climate, DimensionDef, FeatureDef, Relief, TerrainDef};
+use crate::defs::{
+    BandsDef, BiomeDef, CavesDef, Climate, DimensionDef, FeatureDef, Relief, TerrainDef,
+};
 use crate::deposits::Deposit;
 use crate::fnv1a;
 use crate::trees::{Tree, TreeDef};
@@ -72,10 +74,19 @@ pub struct Biome {
     pub min_height: Option<i32>,
     pub max_height: Option<i32>,
     pub river: bool,
+    pub bands: Option<Bands>,
     pub map_color: [u8; 3],
     pub spawn: bool,
     /// `(feature index, attempts per column)`.
     pub features: Vec<(usize, f64)>,
+}
+
+/// Layers by height: `blocks[y % len]`, shifted by a little noise.
+#[derive(Debug, Clone)]
+pub struct Bands {
+    pub blocks: Vec<BlockId>,
+    pub depth: i32,
+    pub waviness: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -343,6 +354,7 @@ fn load_biomes(
                 min_height: value.min_height,
                 max_height: value.max_height,
                 river: value.river,
+                bands: value.bands.as_ref().and_then(|def| bands(def, &mut r)),
                 map_color: {
                     let [r, g, b, _] = value.map_color.0.0;
                     [r, g, b]
@@ -352,6 +364,15 @@ fn load_biomes(
             }
         })
         .collect()
+}
+
+fn bands(def: &BandsDef, r: &mut Resolver<'_>) -> Option<Bands> {
+    let blocks = r.blocks(&def.blocks);
+    (!blocks.is_empty()).then(|| Bands {
+        blocks,
+        depth: def.depth.min(64) as i32,
+        waviness: def.waviness.clamp(0.0, 16.0),
+    })
 }
 
 /// Pack data must never make generation absurdly slow (huge overhangs scan many blocks).
@@ -369,6 +390,10 @@ fn bounded_relief(relief: &Relief) -> Relief {
         rivers.banks = rivers.banks.clamp(0.0, 0.5);
         rivers.depth = rivers.depth.clamp(0.0, 64.0);
         rivers.highest = rivers.highest.clamp(0.0, 400.0);
+    }
+    if let Some(wetlands) = &mut relief.wetlands {
+        wetlands.level = wetlands.level.clamp(-16.0, 16.0);
+        wetlands.bumps = wetlands.bumps.clamp(0.0, 16.0);
     }
     relief
 }

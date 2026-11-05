@@ -3,7 +3,8 @@
 
 use crate::Seed;
 use crate::climate::Sample;
-use crate::content::{Biome, WorldgenContent};
+use crate::content::{Bands, Biome, WorldgenContent};
+use crate::noise::Noise;
 use crate::terrain::{Grid, is_solid};
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
@@ -13,6 +14,10 @@ pub struct Ground<'a> {
     pub sample: &'a Sample,
     pub biome: &'a Biome,
     pub steep: bool,
+    /// Not flat: some neighbour is higher or lower (banded biomes show their layers).
+    pub sloped: bool,
+    /// World position `(x, z)`.
+    pub at: (i32, i32),
 }
 
 /// Plain heights of a column and of the ring of blocks around it, indexed `[z + 1][x + 1]`.
@@ -35,32 +40,59 @@ impl Heights {
 pub struct SurfaceRules<'a> {
     pub content: &'a WorldgenContent,
     pub seed: Seed,
+    /// Waviness of the coloured layers of banded biomes.
+    pub bands: &'a Noise,
 }
 
 impl SurfaceRules<'_> {
     /// Top block of the ground at height `y`: beach sand near the sea, rocky or snowy
-    /// above peak heights, bare rock on steep slopes.
+    /// above peak heights, bare rock (or coloured layers) on steep slopes.
     pub fn top_block(&self, ground: &Ground<'_>, y: i32) -> BlockId {
-        let terrain = &self.content.terrain;
-        if y <= terrain.sea_level + 1 {
+        if y <= self.content.terrain.sea_level + 1 {
             return ground.biome.underwater;
         }
         match peak(ground.biome, y) {
             Some(block) => block,
-            None if ground.steep => ground.biome.steep.unwrap_or(terrain.stone),
-            None => ground.biome.surface,
+            None => match (&ground.biome.bands, ground.sloped) {
+                (Some(bands), true) => self.band(bands, ground.at, y),
+                _ if ground.steep => ground.biome.steep.unwrap_or(self.content.terrain.stone),
+                _ => ground.biome.surface,
+            },
         }
     }
 
-    fn below_surface_block(&self, ground: &Ground<'_>, surface_y: i32) -> BlockId {
+    fn below_surface_block(&self, ground: &Ground<'_>, surface_y: i32, y: i32) -> BlockId {
         let biome = ground.biome;
-        if peak(biome, surface_y).is_some() || ground.steep {
+        if peak(biome, surface_y).is_some() {
+            self.content.terrain.stone
+        } else if let (Some(bands), true) = (&biome.bands, ground.sloped) {
+            self.band(bands, ground.at, y)
+        } else if ground.steep {
             self.content.terrain.stone
         } else if surface_y <= self.content.terrain.sea_level + 1 {
             biome.underwater
         } else {
             biome.subsurface
         }
+    }
+
+    /// Deeper than the soil: the biome's coloured layers, if any, else `None` (rock).
+    fn layer_block(
+        &self,
+        ground: &Ground<'_>,
+        surface_y: i32,
+        depth: i32,
+        y: i32,
+    ) -> Option<BlockId> {
+        let bands = ground.biome.bands.as_ref()?;
+        let dry = surface_y > self.content.terrain.sea_level + 1;
+        (dry && depth < bands.depth).then(|| self.band(bands, ground.at, y))
+    }
+
+    fn band(&self, bands: &Bands, (x, z): (i32, i32), y: i32) -> BlockId {
+        let shift = (self.bands.at(f64::from(x), f64::from(z)) * bands.waviness).round() as i32;
+        let index = (y + shift).rem_euclid(bands.blocks.len() as i32) as usize;
+        bands.blocks[index]
     }
 
     /// Fills one block column top-down and returns the height of its highest solid block.
@@ -108,7 +140,9 @@ impl SurfaceRules<'_> {
             } else if since_open == 0 {
                 self.top_block(ground, y)
             } else if since_open < soil_depth {
-                self.below_surface_block(ground, surface_y)
+                self.below_surface_block(ground, surface_y, y)
+            } else if let Some(block) = self.layer_block(ground, surface_y, since_open, y) {
+                block
             } else if y < deep_level {
                 terrain.deep_stone
             } else {

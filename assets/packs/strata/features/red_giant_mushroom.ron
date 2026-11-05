@@ -3,5 +3,5 @@ Tree(
     leaves: "strata:red_mushroom_block",
     height: (5, 8),
     crown: Cap(radius: 2, skirt: 3),
-    on: ["strata:grass_block", "strata:dirt"],
+    on: ["strata:grass_block", "strata:dirt", "strata:mycelium"],
 )

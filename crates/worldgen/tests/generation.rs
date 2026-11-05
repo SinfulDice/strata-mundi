@@ -61,6 +61,7 @@ fn different_seeds_give_different_worlds() {
 #[test]
 fn every_biome_appears_and_is_translated() {
     let (content, worldgen) = common::load();
+    assert_eq!(worldgen.biomes().len(), 18);
     let generator = strata_worldgen::Generator::new(strata_worldgen::Seed(7), worldgen.clone());
     let mut found = BTreeSet::new();
     for gx in -60..60 {
@@ -79,6 +80,84 @@ fn every_biome_appears_and_is_translated() {
             );
         }
     }
+}
+
+const NEW_BIOMES: [&str; 11] = [
+    "swamp",
+    "jungle",
+    "savanna",
+    "birch_forest",
+    "taiga",
+    "beach",
+    "snowy_peaks",
+    "flower_meadow",
+    "badlands",
+    "deep_ocean",
+    "mushroom_fields",
+];
+
+/// First point of a square spiral (step 64) whose biome is `name`.
+fn find_biome(generator: &strata_worldgen::Generator, name: &str) -> Option<(i32, i32)> {
+    (0..64).find_map(|ring: i32| {
+        (-ring..=ring)
+            .flat_map(|a| [(a, -ring), (a, ring), (-ring, a), (ring, a)])
+            .map(|(gx, gz)| (gx * 64, gz * 64))
+            .find(|&(x, z)| generator.sample(x, z).1.id.name() == name)
+    })
+}
+
+#[test]
+fn new_biomes_are_found_for_a_known_seed() {
+    let generator = common::generator(42);
+    for name in NEW_BIOMES {
+        assert!(find_biome(&generator, name).is_some(), "{name} not found");
+    }
+}
+
+/// Badlands cliffs and plateaus show their coloured layers.
+#[test]
+fn badlands_show_coloured_layers() {
+    let generator = common::generator(42);
+    let (x, z) = find_biome(&generator, "badlands").expect("badlands");
+    let (_, biome) = generator.sample(x, z);
+    let bands = biome.bands.as_ref().expect("badlands have bands");
+    let column = generator.generate(ColumnPos {
+        x: x.div_euclid(16),
+        z: z.div_euclid(16),
+    });
+    let (lx, lz) = (x.rem_euclid(16) as u32, z.rem_euclid(16) as u32);
+    let top = generator.surface_height(x, z);
+    let layered = (top - 20..top)
+        .filter(|&y| bands.blocks.contains(&column.get(lx, y, lz)))
+        .count();
+    assert!(layered >= 10, "only {layered} layered blocks under {x},{z}");
+}
+
+/// Swamps sink to the sea level: shallow water over mud.
+#[test]
+fn swamps_have_shallow_water_over_mud() {
+    let generator = common::generator(42);
+    let sea_level = generator.content().terrain.sea_level;
+    let (x, z) = (0..20_000)
+        .map(|i| ((i % 140) * 24 - 1680, (i / 140) * 24 - 1680))
+        .find(|&(x, z)| {
+            let (sample, biome) = generator.sample(x, z);
+            biome.id.name() == "swamp" && sample.height < sea_level && sample.river == 0.0
+        })
+        .expect("a swamp pool");
+    let (sample, biome) = generator.sample(x, z);
+    assert!(sea_level - sample.height <= 4, "swamp water too deep");
+    let column = generator.generate(ColumnPos {
+        x: x.div_euclid(16),
+        z: z.div_euclid(16),
+    });
+    let (lx, lz) = (x.rem_euclid(16) as u32, z.rem_euclid(16) as u32);
+    let floor = generator.surface_height(x, z);
+    assert_eq!(column.get(lx, floor, lz), biome.underwater);
+    assert_eq!(
+        column.get(lx, sea_level, lz),
+        generator.content().terrain.water
+    );
 }
 
 #[test]

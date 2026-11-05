@@ -43,6 +43,13 @@ Dimension(
             overhang: [(-0.8, 1.0), (-0.3, 0.55), (0.1, 0.12), (0.25, 0.0)],
             overhang_blocks: 22.0,
             rivers: Some((width: 0.022, banks: 0.06, depth: 5.0, highest: 45.0)),
+            // Humid, flat lowlands sink to the sea: the pools and islets of swamps.
+            wetlands: Some((
+                humidity: [(0.3, 0.0), (0.42, 1.0), (0.56, 1.0), (0.66, 0.0)],
+                erosion: [(0.58, 0.0), (0.72, 1.0)],
+                level: 0.8,
+                bumps: 3.0,
+            )),
         ),
     ),
 )

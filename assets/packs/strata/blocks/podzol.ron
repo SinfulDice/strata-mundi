@@ -1,0 +1,6 @@
+Block(
+    textures: TopBottomSides(top: "strata:podzol_top", bottom: "strata:dirt", sides: "strata:podzol_side"),
+    hardness: 0.5,
+    sound: Some("strata:grass"),
+    category: Some("strata:natural"),
+)

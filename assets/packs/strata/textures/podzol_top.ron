@@ -1,0 +1,1 @@
+Material(ramp: "podzol", pattern: Noise(cells: (16, 16), octaves: 2))

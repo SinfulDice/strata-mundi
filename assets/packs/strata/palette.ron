@@ -53,4 +53,13 @@
     "mushroom_spots": ["#cfc6b8", "#e6dfd4", "#f8f4ee"],
     "vine": ["#1e4a16", "#2a601d", "#367526", "#448a30"],
     "dead_bush": ["#5a3c1c", "#7c5628", "#a07638"],
+    "red_sand": ["#a24a1c", "#b85a24", "#c86a2e", "#d67c3a"],
+    "terracotta": ["#8a4a32", "#97543a", "#a35e42", "#ae684a"],
+    "white_terracotta": ["#b89c88", "#c6aa94", "#d0b5a0", "#d9c0ab"],
+    "orange_terracotta": ["#9a5222", "#a85c28", "#b4662e", "#bf7036"],
+    "yellow_terracotta": ["#a87a26", "#b5862c", "#c09232", "#ca9c3a"],
+    "red_terracotta": ["#7a2e22", "#863628", "#913e2e", "#9b4634"],
+    "mud": ["#2e2624", "#3a302c", "#463a34", "#52443c"],
+    "mycelium": ["#5e4e5c", "#6e5c6a", "#80707a", "#948690"],
+    "podzol": ["#4a3218", "#5a3e1e", "#6a4a26", "#7a5830"],
 }

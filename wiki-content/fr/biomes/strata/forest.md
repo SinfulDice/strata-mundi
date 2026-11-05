@@ -4,7 +4,7 @@ Une forêt de chênes dense et verdoyante, où les couronnes se touchent presque
 
 ## Obtention
 
-Les forêts apparaissent dans les régions tempérées et humides, sur un relief doux. Avec les plaines, c'est l'un des deux biomes où le monde peut vous faire **commencer**.
+Les forêts apparaissent dans les régions tempérées et humides, sur un relief doux. Avec les plaines, la forêt de bouleaux et la prairie fleurie, c'est l'un des biomes où le monde peut vous faire **commencer**.
 
 ## Utilisations
 

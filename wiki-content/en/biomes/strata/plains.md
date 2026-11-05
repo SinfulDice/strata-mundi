@@ -4,7 +4,7 @@ Wide stretches of soft grass rolling as far as the eye can see, dotted with lone
 
 ## Obtaining
 
-Plains appear in temperate, rather dry regions, on gentle terrain. They're one of the two biomes where the world can make you **start** (along with the forest).
+Plains appear in temperate, rather dry regions, on gentle terrain. They're one of the biomes where the world can make you **start** (along with the forest, the birch forest and the flower meadow).
 
 ## Usage
 

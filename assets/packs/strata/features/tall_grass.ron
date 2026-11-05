@@ -1,1 +1,1 @@
-Plants(blocks: [("strata:tall_grass", 1)], on: ["strata:grass_block"], radius: 4, count: (6, 12))
+Plants(blocks: [("strata:tall_grass", 1)], on: ["strata:grass_block", "strata:podzol"], radius: 4, count: (6, 12))

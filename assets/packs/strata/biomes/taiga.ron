@@ -1,0 +1,13 @@
+Biome(
+    climate: (temperature: -0.35, humidity: 0.35, continentalness: 0.2, erosion: 0.2),
+    map_color: "#2f5a46",
+    surface: "strata:podzol",
+    subsurface: "strata:dirt",
+    underwater: "strata:gravel",
+    features: [
+        (feature: "strata:fir_tree", per_column: 4.0),
+        (feature: "strata:ferns", per_column: 2.5),
+        (feature: "strata:tall_grass", per_column: 1.0),
+        (feature: "strata:mushrooms", per_column: 0.8),
+    ],
+)

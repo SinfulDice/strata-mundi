@@ -3,5 +3,5 @@ Tree(
     leaves: "strata:fir_leaves",
     height: (6, 9),
     crown: Cone(radius: 3),
-    on: ["strata:grass_block", "strata:snowy_grass_block"],
+    on: ["strata:grass_block", "strata:snowy_grass_block", "strata:podzol"],
 )

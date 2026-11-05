@@ -4,7 +4,7 @@ De grandes étendues d'herbe douce qui ondulent à perte de vue, ponctuées de c
 
 ## Obtention
 
-Les plaines apparaissent dans les régions tempérées et plutôt sèches, sur un relief doux. C'est l'un des deux biomes où le monde peut vous faire **commencer** (avec la forêt).
+Les plaines apparaissent dans les régions tempérées et plutôt sèches, sur un relief doux. C'est l'un des biomes où le monde peut vous faire **commencer** (avec la forêt, la forêt de bouleaux et la prairie fleurie).
 
 ## Utilisations
 

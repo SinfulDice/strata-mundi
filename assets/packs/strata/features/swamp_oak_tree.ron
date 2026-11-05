@@ -4,5 +4,5 @@ Tree(
     height: (4, 6),
     crown: Blob(radius: 4, height: 2),
     vines: "strata:vine",
-    on: ["strata:grass_block", "strata:dirt"],
+    on: ["strata:grass_block", "strata:dirt", "strata:mud"],
 )

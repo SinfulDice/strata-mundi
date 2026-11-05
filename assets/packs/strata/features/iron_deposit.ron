@@ -13,5 +13,5 @@ Deposit(
     chance: 0.4,
     sign: Some("strata:ferrous_rock"),
     sign_share: 0.05,
-    sign_on: ["strata:grass_block", "strata:snowy_grass_block", "strata:stone", "strata:sand", "strata:sandstone", "strata:gravel", "strata:dirt"],
+    sign_on: ["strata:grass_block", "strata:snowy_grass_block", "strata:stone", "strata:sand", "strata:sandstone", "strata:gravel", "strata:dirt", "strata:red_sand", "strata:podzol", "strata:mycelium", "strata:snow_block"],
 )

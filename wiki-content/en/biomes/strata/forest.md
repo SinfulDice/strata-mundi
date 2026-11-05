@@ -4,7 +4,7 @@ A dense, lush oak forest, where the crowns almost touch and you weave your way b
 
 ## Obtaining
 
-Forests appear in temperate, humid regions, on gentle terrain. Along with the plains, it's one of the two biomes where the world can make you **start**.
+Forests appear in temperate, humid regions, on gentle terrain. Along with the plains, the birch forest and the flower meadow, it's one of the biomes where the world can make you **start**.
 
 ## Usage
 

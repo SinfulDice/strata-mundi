@@ -125,6 +125,22 @@ pub struct Relief {
     /// Distance between rivers, roughly, in blocks.
     #[serde(default = "default_river_scale")]
     pub river_scale: f64,
+    #[serde(default)]
+    pub wetlands: Option<Wetlands>,
+}
+
+/// Humid, worn-down lowlands sink to the sea level: shallow pools and islets (marshes).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Wetlands {
+    /// Humidity → 0 to 1.
+    pub humidity: Spline,
+    /// Erosion → 0 to 1.
+    pub erosion: Spline,
+    /// Height of the flattened land, in blocks above the sea (negative = under water).
+    pub level: f64,
+    /// Bumps of the flattened land, in blocks.
+    pub bumps: f64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -182,6 +198,8 @@ pub struct BiomeDef {
     /// Only chosen on river beds (and never elsewhere).
     #[serde(default)]
     pub river: bool,
+    #[serde(default)]
+    pub bands: Option<BandsDef>,
     /// Color on the generation preview map.
     #[serde(default = "grey")]
     pub map_color: HexColor,
@@ -190,6 +208,19 @@ pub struct BiomeDef {
     pub spawn: bool,
     #[serde(default)]
     pub features: Vec<Placement>,
+}
+
+/// Coloured layers by height under the surface and on cliffs (badlands strata).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BandsDef {
+    /// One block per height, repeated upwards; repeat a block for a thicker layer.
+    pub blocks: Vec<Identifier>,
+    /// How far below the surface the layers go, in blocks.
+    pub depth: u32,
+    /// Waviness of the layers, in blocks.
+    #[serde(default = "default_band_waviness")]
+    pub waviness: f64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -391,4 +422,8 @@ fn yes() -> bool {
 
 fn default_subsurface_depth() -> u32 {
     3
+}
+
+fn default_band_waviness() -> f64 {
+    2.0
 }

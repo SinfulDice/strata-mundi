@@ -1,0 +1,25 @@
+// Hot, dry plateaus; their terraces show coloured strata.
+Biome(
+    climate: (temperature: 0.55, humidity: -0.35, continentalness: 0.35, erosion: 0.55),
+    map_color: "#c8643a",
+    min_height: 145,
+    surface: "strata:red_sand",
+    subsurface: "strata:red_sand",
+    subsurface_depth: 2,
+    underwater: "strata:red_sand",
+    bands: (
+        blocks: [
+            "strata:terracotta", "strata:terracotta", "strata:orange_terracotta",
+            "strata:terracotta", "strata:yellow_terracotta", "strata:yellow_terracotta",
+            "strata:terracotta", "strata:white_terracotta", "strata:terracotta",
+            "strata:terracotta", "strata:red_terracotta", "strata:red_terracotta",
+            "strata:terracotta", "strata:orange_terracotta", "strata:orange_terracotta",
+            "strata:terracotta", "strata:terracotta", "strata:white_terracotta",
+        ],
+        depth: 32,
+    ),
+    features: [
+        (feature: "strata:dead_bushes", per_column: 0.6),
+        (feature: "strata:cactus", per_column: 0.2),
+    ],
+)

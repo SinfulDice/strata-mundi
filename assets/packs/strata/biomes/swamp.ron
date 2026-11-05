@@ -1,0 +1,15 @@
+// Humid lowlands sunk to the sea level by the `wetlands` of the relief: mud pools, islets.
+Biome(
+    climate: (temperature: 0.3, humidity: 0.45, continentalness: 0.1, erosion: 0.8),
+    map_color: "#4c6a3a",
+    max_height: 124,
+    surface: "strata:grass_block",
+    subsurface: "strata:dirt",
+    underwater: "strata:mud",
+    features: [
+        (feature: "strata:swamp_oak_tree", per_column: 1.5),
+        (feature: "strata:tall_grass", per_column: 3.0),
+        (feature: "strata:ferns", per_column: 1.0),
+        (feature: "strata:mushrooms", per_column: 0.8),
+    ],
+)
