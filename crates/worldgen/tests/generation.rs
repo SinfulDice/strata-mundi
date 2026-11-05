@@ -132,7 +132,7 @@ fn trees_cross_column_borders_whole() {
         .features
         .iter()
         .filter_map(|f| match f {
-            strata_worldgen::Feature::Tree { log, leaves, .. } => Some((*log, *leaves)),
+            strata_worldgen::Feature::Tree(tree) => Some((tree.log, tree.leaves)),
             _ => None,
         })
         .collect();

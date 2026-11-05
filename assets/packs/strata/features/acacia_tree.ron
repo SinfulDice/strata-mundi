@@ -1,0 +1,8 @@
+Tree(
+    log: "strata:acacia_log",
+    leaves: "strata:acacia_leaves",
+    height: (6, 8),
+    crown: Flat(radius: 4),
+    trunk: Leaning(lean: (2, 3)),
+    on: ["strata:grass_block"],
+)

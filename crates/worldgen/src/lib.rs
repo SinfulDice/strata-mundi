@@ -16,12 +16,14 @@ mod spawn;
 mod spline;
 mod surface;
 mod terrain;
+mod trees;
 
 pub use climate::Sample;
-pub use content::{Biome, Feature, Plants, Terrain, WorldgenContent};
+pub use content::{Biome, Feature, MAX_CROWN, Plants, Terrain, WorldgenContent};
 pub use deposits::{Deposit, Vein};
 pub use generator::Generator;
 pub use spline::Spline;
+pub use trees::{Part, Tree};
 
 /// World seed as typed by the player, hashed into 64 bits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -1,0 +1,1 @@
+Material(ramp: "red_mushroom_cap", pattern: Noise(cells: (4, 4), octaves: 2))

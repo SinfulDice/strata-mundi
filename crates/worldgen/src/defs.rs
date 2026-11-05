@@ -209,6 +209,11 @@ pub enum FeatureDef {
         leaves: Identifier,
         height: (u32, u32),
         crown: Crown,
+        #[serde(default)]
+        trunk: Trunk,
+        /// Block hanging under the crown's lowest outer leaves; `None` = no vines.
+        #[serde(default)]
+        vines: Option<Identifier>,
         on: Vec<Identifier>,
     },
     /// A single stack of one block (cactus).
@@ -276,6 +281,24 @@ pub enum Crown {
     Round { radius: u32 },
     /// Layered cone (fir).
     Cone { radius: u32 },
+    /// Ellipsoid around the trunk's top: `radius` across, `height` up and down.
+    Blob { radius: u32, height: u32 },
+    /// Wide, flat canopy of two layers (acacia).
+    Flat { radius: u32 },
+    /// Giant mushroom cap: flat if `skirt` is 0, else a dome whose sides hang down
+    /// `skirt` blocks.
+    Cap { radius: u32, skirt: u32 },
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
+pub enum Trunk {
+    /// One block wide.
+    #[default]
+    Straight,
+    /// Two blocks by two (jungle).
+    Thick,
+    /// Straight, then leaning toward a random side by `lean` blocks (acacia).
+    Leaning { lean: (u32, u32) },
 }
 
 fn zero() -> Spline {

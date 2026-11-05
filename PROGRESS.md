@@ -5,7 +5,7 @@
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 4 — Biomes supplémentaires
   - [x] Végétation en croix : `RenderKind::Cross` (mailleur, shader, icône, raycast, pas de collision), feature de végétation éparse du pack ; herbes hautes, fougère, buisson mort, buisson, fleurs (≥ 5), petits champignons ; ajoutée aux biomes existants
-  - [ ] Nouveaux arbres et bois : bouleau, jungle (grand), acacia (tronc penché, couronne plate), chêne des marais, champignons géants (chapeaux et pied) ; nouvelles formes de couronne dans le pack
+  - [x] Nouveaux arbres et bois : bouleau, jungle (grand), acacia (tronc penché, couronne plate), chêne des marais, champignons géants (chapeaux et pied) ; nouvelles formes de couronne dans le pack
   - [ ] 12 nouveaux biomes (marais, jungle, savane, forêt de bouleaux, taïga, plage, pics enneigés, prairie fleurie, badlands à strates, océan profond, champignons géants ; rivière déjà faite) avec leurs blocs de surface, placement climatique, carte, traductions, wiki ; tests (tous atteignables, déterminisme), captures
 - **Dernière session** : 05/11/2026
 
@@ -56,6 +56,7 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 23/10/2026 (jalon 8) | Maillage d'une section de surface | 0,18 ms | `meshing/mesh_section_terrain` |
 | 23/10/2026 (jalon 8) | Maillage pire cas (damier) | 1,06 ms | `meshing/mesh_section_checkerboard` |
 | 23/10/2026 (jalon 8) | Génération d'une colonne | 2,27 ms (+9 %, bruit de VM partagée, sous le seuil de 10 %) | `generation/generate_column` |
+| 05/11/2026 (v0.2 j4, arbres) | Génération d'une colonne (plaine / montagne / caverne / gisement) | 1,56 / 2,37 / 1,18 / 2,70 ms | `generation/*` |
 | 04/11/2026 (v0.2 j1) | Génération d'une colonne (relief 3D) | 1,80 ms | `generation/generate_column` |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :

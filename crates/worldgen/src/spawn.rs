@@ -18,7 +18,7 @@ pub fn find(generator: &Generator) -> BlockPos {
         let has_trees = biome
             .features
             .iter()
-            .any(|(index, _)| matches!(generator.content().features[*index], Feature::Tree { .. }));
+            .any(|(index, _)| matches!(generator.content().features[*index], Feature::Tree(_)));
         if !biome.spawn || !has_trees || sample.height <= sea_level + 1 {
             continue;
         }

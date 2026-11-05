@@ -1,0 +1,7 @@
+Tree(
+    log: "strata:mushroom_stem",
+    leaves: "strata:brown_mushroom_block",
+    height: (5, 8),
+    crown: Cap(radius: 3, skirt: 0),
+    on: ["strata:grass_block", "strata:dirt"],
+)

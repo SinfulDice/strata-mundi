@@ -16,6 +16,11 @@ impl Rng {
         rng
     }
 
+    /// Continues from a value already drawn from another generator.
+    pub fn from_state(state: u64) -> Self {
+        Self(state)
+    }
+
     pub fn next_u64(&mut self) -> u64 {
         self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut z = self.0;

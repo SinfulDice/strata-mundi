@@ -111,4 +111,9 @@
     "Red": "RED",
     "Brown": "BROWN",
     "Plants": "PLANTZ",
+    "Birch": "WHITE TREE",
+    "Jungle": "JUNGUL",
+    "Acacia": "FLAT TREE",
+    "Stem": "LEG",
+    "Vine": "DANGLY GREEN ROPE",
 }

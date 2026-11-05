@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:red_mushroom_block"),
+    hardness: 0.2,
+    sound: Some("strata:wood"),
+    category: Some("strata:natural"),
+)

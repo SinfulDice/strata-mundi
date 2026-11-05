@@ -1,0 +1,7 @@
+Block(
+    textures: Column(end: "strata:birch_log_top", side: "strata:birch_log"),
+    hardness: 2.0,
+    sound: Some("strata:wood"),
+    category: Some("strata:natural"),
+    placement: Axis,
+)

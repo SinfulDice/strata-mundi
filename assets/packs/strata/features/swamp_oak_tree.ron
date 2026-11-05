@@ -1,0 +1,8 @@
+Tree(
+    log: "strata:oak_log",
+    leaves: "strata:oak_leaves",
+    height: (4, 6),
+    crown: Blob(radius: 4, height: 2),
+    vines: "strata:vine",
+    on: ["strata:grass_block", "strata:dirt"],
+)

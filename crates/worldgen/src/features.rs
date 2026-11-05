@@ -2,9 +2,9 @@
 //! its eight neighbours, so trees cross borders seamlessly whatever the loading order.
 
 use crate::content::{Feature, MAX_CROWN};
-use crate::defs::Crown;
 use crate::generator::Generator;
 use crate::rng::Rng;
+use crate::trees::{Part, Tree};
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
 use strata_core::coords::{ColumnPos, SECTION_SIZE};
@@ -124,42 +124,48 @@ struct Writer<'a> {
 }
 
 impl Writer<'_> {
+    /// Local coordinates of `(dx, dz)` from the origin, if inside the column.
+    fn local(&self, dx: i32, dz: i32) -> Option<(u32, u32)> {
+        let local = |c: i32, origin: i32| c - origin * SECTION_SIZE;
+        let lx = local(self.x + dx, self.column.pos.x);
+        let lz = local(self.z + dz, self.column.pos.z);
+        ((0..16).contains(&lx) && (0..16).contains(&lz)).then_some((lx as u32, lz as u32))
+    }
+
     /// `(dx, dy, dz)` from the feature origin. Only replaces air (and leaves, for logs).
     fn put(&mut self, offset: (i32, i32, i32), block: BlockId, over: Option<BlockId>) {
-        let (x, z) = (self.x + offset.0, self.z + offset.2);
-        let local = |c: i32, origin: i32| c - origin * SECTION_SIZE;
-        let (lx, lz) = (local(x, self.column.pos.x), local(z, self.column.pos.z));
-        if !(0..16).contains(&lx) || !(0..16).contains(&lz) {
+        let Some((lx, lz)) = self.local(offset.0, offset.2) else {
             return;
-        }
+        };
         let y = self.base + offset.1;
-        let current = self.column.get(lx as u32, y, lz as u32);
+        let current = self.column.get(lx, y, lz);
         if current == BlockId::AIR || Some(current) == over {
-            self.column.set(lx as u32, y, lz as u32, block);
+            self.column.set(lx, y, lz, block);
+        }
+    }
+
+    /// A run of `block` down from `top`, stopping at the first block that is not air.
+    fn hang(&mut self, top: (i32, i32, i32), length: i32, block: BlockId) {
+        let Some((lx, lz)) = self.local(top.0, top.2) else {
+            return;
+        };
+        let top = self.base + top.1;
+        for y in (top - length + 1..=top).rev() {
+            if self.column.get(lx, y, lz) != BlockId::AIR {
+                return;
+            }
+            self.column.set(lx, y, lz, block);
         }
     }
 }
 
 fn place(feature: &Feature, ground: BlockId, variant: u64, writer: &mut Writer<'_>) {
-    let pick = |(low, high): (u32, u32)| low as i32 + (variant % u64::from(high - low + 1)) as i32;
     match feature {
-        Feature::Tree {
-            log,
-            leaves,
-            height,
-            crown,
-            on,
-        } if on.contains(&ground) => {
-            let trunk = pick(*height);
-            crown_shape(*crown, trunk, variant, |offset| {
-                writer.put(offset, *leaves, None)
-            });
-            for y in 0..trunk {
-                writer.put((0, y, 0), *log, Some(*leaves));
-            }
-        }
+        Feature::Tree(tree) if tree.on.contains(&ground) => place_tree(tree, variant, writer),
         Feature::Pillar { block, height, on } if on.contains(&ground) => {
-            for y in 0..pick(*height) {
+            let (low, high) = *height;
+            let top = low as i32 + (variant % u64::from(high - low + 1)) as i32;
+            for y in 0..top {
                 writer.put((0, y, 0), *block, None);
             }
         }
@@ -167,40 +173,14 @@ fn place(feature: &Feature, ground: BlockId, variant: u64, writer: &mut Writer<'
     }
 }
 
-fn crown_shape(crown: Crown, trunk: i32, variant: u64, mut leaf: impl FnMut((i32, i32, i32))) {
-    match crown {
-        Crown::Round { radius } => {
-            let r = radius as i32;
-            for dy in -2..=1 {
-                let layer_r = if dy >= 0 { r - 1 } else { r };
-                for dx in -layer_r..=layer_r {
-                    for dz in -layer_r..=layer_r {
-                        let corner = dx.abs() == layer_r && dz.abs() == layer_r;
-                        let trimmed = corner && (variant >> ((dx + dz + dy + 8) % 32)) & 1 == 0;
-                        if !trimmed || dy < -1 {
-                            leaf((dx, trunk + dy, dz));
-                        }
-                    }
-                }
-            }
-            leaf((0, trunk + 1, 0));
-        }
-        Crown::Cone { radius } => {
-            let r = radius as i32;
-            for dy in 2..=trunk {
-                let from_top = trunk - dy;
-                let layer_r =
-                    ((from_top + 1) / 2).min(r) - i32::from(from_top % 2 == 1 && from_top > 2);
-                for dx in -layer_r..=layer_r {
-                    for dz in -layer_r..=layer_r {
-                        if dx.abs() + dz.abs() <= layer_r + 1 {
-                            leaf((dx, dy, dz));
-                        }
-                    }
-                }
-            }
-            leaf((0, trunk, 0));
-            leaf((0, trunk + 1, 0));
+fn place_tree(tree: &Tree, variant: u64, writer: &mut Writer<'_>) {
+    for part in tree.parts(variant) {
+        match (part, tree.vines) {
+            // Leaves win over the vines of a neighbouring tree of the same kind.
+            (Part::Leaf(offset), _) => writer.put(offset, tree.leaves, tree.vines),
+            (Part::Log(offset), _) => writer.put(offset, tree.log, Some(tree.leaves)),
+            (Part::Vine { top, length }, Some(vine)) => writer.hang(top, length, vine),
+            (Part::Vine { .. }, None) => {}
         }
     }
 }

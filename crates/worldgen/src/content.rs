@@ -1,8 +1,7 @@
-use crate::defs::{
-    BiomeDef, CavesDef, Climate, Crown, DimensionDef, FeatureDef, Relief, TerrainDef,
-};
+use crate::defs::{BiomeDef, CavesDef, Climate, DimensionDef, FeatureDef, Relief, TerrainDef};
 use crate::deposits::Deposit;
 use crate::fnv1a;
+use crate::trees::{Tree, TreeDef};
 use std::collections::BTreeMap;
 use std::path::Path;
 use strata_core::content::{Block, BlockId, Registry};
@@ -81,13 +80,7 @@ pub struct Biome {
 
 #[derive(Debug, Clone)]
 pub enum Feature {
-    Tree {
-        log: BlockId,
-        leaves: BlockId,
-        height: (u32, u32),
-        crown: Crown,
-        on: Vec<BlockId>,
-    },
+    Tree(Tree),
     Pillar {
         block: BlockId,
         height: (u32, u32),
@@ -120,7 +113,10 @@ impl Feature {
     /// Blocks it adds above the ground (trees, cactus, plants).
     pub fn surface_blocks(&self) -> Vec<BlockId> {
         match self {
-            Self::Tree { log, leaves, .. } => vec![*log, *leaves],
+            Self::Tree(tree) => [tree.log, tree.leaves]
+                .into_iter()
+                .chain(tree.vines)
+                .collect(),
             Self::Pillar { block, .. } => vec![*block],
             Self::Plants(plants) => plants.blocks.iter().map(|(block, _)| *block).collect(),
             Self::Ore { .. } | Self::Deposit(_) => Vec::new(),
@@ -247,24 +243,24 @@ fn load_features(
                     leaves,
                     height,
                     crown,
+                    trunk,
+                    vines,
                     on,
-                } => Feature::Tree {
-                    log: r.block(&log),
-                    leaves: r.block(&leaves),
-                    height: bounded(height, MAX_TREE_HEIGHT),
-                    crown: match crown {
-                        Crown::Round { radius } => Crown::Round {
-                            radius: radius.min(MAX_CROWN),
-                        },
-                        Crown::Cone { radius } => Crown::Cone {
-                            radius: radius.min(MAX_CROWN),
-                        },
-                    },
-                    on: r.blocks(&on),
-                },
+                } => {
+                    let def = TreeDef {
+                        log: &log,
+                        leaves: &leaves,
+                        height,
+                        crown,
+                        trunk,
+                        vines: vines.as_ref(),
+                        on: &on,
+                    };
+                    Feature::Tree(Tree::resolve(def, &mut r))
+                }
                 FeatureDef::Pillar { block, height, on } => Feature::Pillar {
                     block: r.block(&block),
-                    height: bounded(height, MAX_TREE_HEIGHT),
+                    height: bounded(height, MAX_PILLAR_HEIGHT),
                     on: r.blocks(&on),
                 },
                 FeatureDef::Plants {
@@ -421,11 +417,11 @@ fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, 
 /// Features are written from the 3×3 neighbouring columns: anything wider than 16 blocks
 /// from its root would be cut, so sizes are bounded.
 pub const MAX_CROWN: u32 = 8;
-const MAX_TREE_HEIGHT: u32 = 32;
+const MAX_PILLAR_HEIGHT: u32 = 32;
 /// Patches are written from the 3×3 neighbouring columns too.
 pub const MAX_PATCH_RADIUS: u32 = MAX_CROWN;
 const MAX_PATCH_PLANTS: u32 = 64;
 
-fn bounded((a, b): (u32, u32), max: u32) -> (u32, u32) {
+pub(crate) fn bounded((a, b): (u32, u32), max: u32) -> (u32, u32) {
     (a.min(b).min(max), a.max(b).min(max))
 }
