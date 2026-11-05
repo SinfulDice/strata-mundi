@@ -3,7 +3,8 @@
 use super::super::menu::Shared;
 use crate::settings::MAX_SCALE;
 use crate::settings::{
-    ANISOTROPY, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE, SENSITIVITY, VERTICAL_DISTANCE,
+    ANISOTROPY, BRIGHTNESS, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE, SENSITIVITY,
+    VERTICAL_DISTANCE,
 };
 use crate::settings::{
     AUTO_THREADS, ColorFilter, FontChoice, Preset, Settings, Vegetation, default_worker_threads,
@@ -19,6 +20,8 @@ pub enum Setting {
     Vsync,
     Fov,
     AmbientOcclusion,
+    SmoothLighting,
+    Brightness,
     Fog,
     LiquidAnimation,
     Mipmaps,
@@ -56,6 +59,8 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Vsync,
     Setting::Fov,
     Setting::AmbientOcclusion,
+    Setting::SmoothLighting,
+    Setting::Brightness,
     Setting::Fog,
     Setting::LiquidAnimation,
     Setting::Mipmaps,
@@ -150,6 +155,11 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::Vsync => (on_off(shared, g.vsync), None),
         Setting::Fov => (format!("{}°", g.fov), gauge(g.fov, FOV)),
         Setting::AmbientOcclusion => (on_off(shared, g.ambient_occlusion), None),
+        Setting::SmoothLighting => (on_off(shared, g.smooth_lighting), None),
+        Setting::Brightness => (
+            format!("{} %", g.brightness),
+            gauge(g.brightness, BRIGHTNESS),
+        ),
         Setting::Fog => (on_off(shared, g.fog), None),
         Setting::LiquidAnimation => (on_off(shared, g.liquid_animation), None),
         Setting::Mipmaps => (on_off(shared, g.mipmaps), None),
@@ -217,7 +227,9 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
 }
 
 pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
-    let graphics_changed = !matches!(setting, Setting::Preset) && GRAPHICS.contains(&setting);
+    // Brightness is a taste, kept by every preset.
+    let graphics_changed =
+        !matches!(setting, Setting::Preset | Setting::Brightness) && GRAPHICS.contains(&setting);
     let cores = default_worker_threads() + 2;
     let (g, i, c, game) = (
         &mut s.graphics,
@@ -237,6 +249,8 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Vsync => g.vsync = !g.vsync,
         Setting::Fov => range(&mut g.fov, FOV, 5, step),
         Setting::AmbientOcclusion => g.ambient_occlusion = !g.ambient_occlusion,
+        Setting::SmoothLighting => g.smooth_lighting = !g.smooth_lighting,
+        Setting::Brightness => range(&mut g.brightness, BRIGHTNESS, 10, step),
         Setting::Fog => g.fog = !g.fog,
         Setting::LiquidAnimation => g.liquid_animation = !g.liquid_animation,
         Setting::Mipmaps => g.mipmaps = !g.mipmaps,
@@ -309,5 +323,13 @@ mod tests {
         assert!(settings.preset.is_some());
         step_setting(Setting::RenderDistance, &mut settings, -100);
         assert_eq!(settings.graphics.render_distance, 2);
+        step_setting(Setting::Preset, &mut settings, 1);
+        step_setting(Setting::Brightness, &mut settings, 1);
+        assert!(settings.preset.is_some(), "brightness keeps the preset");
+        step_setting(Setting::Preset, &mut settings, 1);
+        assert_eq!(
+            settings.graphics.brightness, 60,
+            "and every preset keeps it"
+        );
     }
 }

@@ -102,6 +102,10 @@ pub struct GraphicsSettings {
     /// Vertical field of view, in degrees.
     pub fov: u32,
     pub ambient_occlusion: bool,
+    /// Light blended across each face from the cells around its corners.
+    pub smooth_lighting: bool,
+    /// Lifts dark areas, in percent (0 = moody, 100 = bright); the same in every preset.
+    pub brightness: u32,
     /// Fades the far terrain into the sky, hiding where the world stops.
     pub fog: bool,
     /// Ripples on water and lava (a few shader operations).
@@ -146,6 +150,8 @@ impl GraphicsSettings {
             vsync: true,
             fov: 70,
             ambient_occlusion,
+            smooth_lighting: preset != Preset::VeryLow,
+            brightness: DEFAULT_BRIGHTNESS,
             fog: true,
             liquid_animation: preset != Preset::VeryLow,
             mipmaps: !matches!(preset, Preset::VeryLow | Preset::Ds),
@@ -180,6 +186,8 @@ pub const RENDER_DISTANCE: (u32, u32) = (2, 32);
 pub const VERTICAL_DISTANCE: (u32, u32) = (2, 16);
 pub const RENDER_SCALE: (u32, u32) = (50, 200);
 pub const FOV: (u32, u32) = (50, 110);
+pub const BRIGHTNESS: (u32, u32) = (0, 100);
+pub const DEFAULT_BRIGHTNESS: u32 = 50;
 pub const ANISOTROPY: [u32; 5] = [1, 2, 4, 8, 16];
 /// More threads than this is never useful, whatever the file says.
 const MAX_THREADS: usize = 64;
@@ -192,6 +200,7 @@ impl GraphicsSettings {
         clamp(&mut self.vertical_distance, VERTICAL_DISTANCE);
         clamp(&mut self.render_scale, RENDER_SCALE);
         clamp(&mut self.fov, FOV);
+        clamp(&mut self.brightness, BRIGHTNESS);
         if !ANISOTROPY.contains(&self.anisotropy) {
             self.anisotropy = 1;
         }

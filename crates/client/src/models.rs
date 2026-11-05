@@ -4,6 +4,7 @@
 use bytemuck::{Pod, Zeroable};
 use glam::{DVec3, Vec2, Vec3};
 use strata_core::content::{Content, EntityTypeId, ModelBox};
+use strata_core::light::{MAX_LIGHT, PackedLight};
 
 /// Light of each face (up, down, north, south, east, west), like blocks.
 const SHADES: [f32; 6] = [1.0, 0.5, 0.8, 0.8, 0.6, 0.6];
@@ -17,13 +18,15 @@ pub struct ModelVertex {
     pub uv: [f32; 2],
     pub layer: u32,
     pub shade: f32,
+    /// Sky and block light of the entity's cell, 0 to 1.
+    pub light: [f32; 2],
 }
 
 impl ModelVertex {
     pub const LAYOUT: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
         array_stride: std::mem::size_of::<Self>() as wgpu::BufferAddress,
         step_mode: wgpu::VertexStepMode::Vertex,
-        attributes: &wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x2, 2 => Uint32, 3 => Float32],
+        attributes: &wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x2, 2 => Uint32, 3 => Float32, 4 => Float32x2],
     };
 }
 
@@ -72,14 +75,15 @@ impl ModelLibrary {
         self.meshes.get(usize::from(kind.0)).map(|mesh| mesh.radius)
     }
 
-    /// Appends the triangles of `kind` at `pose`, relative to `camera`.
+    /// Appends the triangles of `kind` at `pose`, lit by `light`, relative to `camera`.
     pub fn place(
         &self,
-        kind: EntityTypeId,
-        pose: ModelPose,
+        (kind, pose, light): (EntityTypeId, ModelPose, PackedLight),
         camera: DVec3,
         out: &mut Vec<ModelVertex>,
     ) {
+        let max = f32::from(MAX_LIGHT);
+        let light = [light.sky(), light.block()].map(|level| f32::from(level) / max);
         let Some(mesh) = self.meshes.get(usize::from(kind.0)) else {
             return;
         };
@@ -94,6 +98,7 @@ impl ModelLibrary {
                 uv: corner.uv.to_array(),
                 layer: mesh.layer,
                 shade: corner.shade,
+                light,
             }
         }));
     }
@@ -196,8 +201,7 @@ mod tests {
         };
         let mut out = Vec::new();
         models.place(
-            EntityTypeId(0),
-            pose,
+            (EntityTypeId(0), pose, PackedLight::new(15, 3)),
             DVec3::new(10.0, 60.0, 10.0),
             &mut out,
         );
@@ -208,6 +212,7 @@ mod tests {
             "the front now points east"
         );
         assert!(out.iter().all(|v| v.position[1] >= 4.0 && v.layer == 3));
+        assert!(out.iter().all(|v| v.light == [1.0, 0.2]));
         assert!(models.radius(EntityTypeId(0)).is_some_and(|r| r > 1.0));
         assert!(models.radius(EntityTypeId(1)).is_none());
     }

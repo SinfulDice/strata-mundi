@@ -9,13 +9,15 @@ use std::sync::Arc;
 use strata_core::chunk::Column;
 use strata_core::content::{BlockId, Content, Face, surface_sixteenths};
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN, WORLD_HEIGHT};
-use strata_core::light::{ColumnLight, PackedLight, SectionLight, section_index};
+use strata_core::light::{ColumnLight, PackedLight, section_index};
+
+mod light;
 
 #[derive(Debug, Default)]
 pub struct ClientWorld {
     /// Shared with the lighting thread, copied only when a block changes.
     columns: HashMap<ColumnPos, Arc<Column>>,
-    /// Light received from the lighting thread; open sky where none arrived yet.
+    /// Light of the lit columns, from the lighting thread (or computed for a capture).
     light: HashMap<ColumnPos, ColumnLight>,
     /// Highest non-empty section of each column, kept up to date (asked every frame).
     tops: HashMap<ColumnPos, usize>,
@@ -43,34 +45,6 @@ impl ClientWorld {
 
     pub fn loaded_columns(&self) -> impl Iterator<Item = &Arc<Column>> {
         self.columns.values()
-    }
-
-    /// New light for one section of a loaded column (ignored once the column is gone).
-    pub fn set_section_light(&mut self, pos: ColumnPos, index: usize, light: SectionLight) {
-        if !self.columns.contains_key(&pos) {
-            return;
-        }
-        let column = self
-            .light
-            .entry(pos)
-            .or_insert_with(|| ColumnLight::below_open_sky(None));
-        if let Some(section) = column.section_mut(index) {
-            *section = light;
-        }
-    }
-
-    /// Open sky where no light was computed.
-    pub fn light_at(&self, pos: BlockPos) -> PackedLight {
-        if !pos.is_in_height_range() {
-            return PackedLight::OPEN_SKY;
-        }
-        let index = (pos.y / SECTION_SIZE) as usize;
-        self.light
-            .get(&column_of(pos.x, pos.z))
-            .and_then(|column| column.section(index))
-            .map_or(PackedLight::OPEN_SKY, |section| {
-                section.get(section_index(local(pos.x), local(pos.y), local(pos.z)))
-            })
     }
 
     pub fn column_count(&self) -> usize {
@@ -263,14 +237,14 @@ fn around<T>(map: &HashMap<ColumnPos, T>, cx: i32, cz: i32) -> [[Option<&T>; 3];
     })
 }
 
-fn column_of(x: i32, z: i32) -> ColumnPos {
+pub(crate) fn column_of(x: i32, z: i32) -> ColumnPos {
     ColumnPos {
         x: x.div_euclid(SECTION_SIZE),
         z: z.div_euclid(SECTION_SIZE),
     }
 }
 
-fn local(c: i32) -> u32 {
+pub(crate) fn local(c: i32) -> u32 {
     c.rem_euclid(SECTION_SIZE) as u32
 }
 
@@ -284,7 +258,7 @@ fn split(c: i32) -> (usize, u32) {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[test]
@@ -298,43 +272,8 @@ mod tests {
         assert_eq!(blocks.get(0, 0, 0), BlockId::AIR);
     }
 
-    #[test]
-    fn neighborhood_reads_light_across_column_borders() {
-        use strata_core::content::Block;
-        use strata_core::light::{LightTable, Lighting};
-        let mut world = ClientWorld::default();
-        for x in -16..32 {
-            for z in -16..32 {
-                world.set_block(x, 0, z, BlockId(1));
-            }
-        }
-        world.set_block(15, 20, 3, BlockId(2));
-        let block = |light_opacity, light_emission| Block {
-            light_opacity,
-            light_emission,
-            ..Block::air()
-        };
-        let lights = LightTable::new([Block::air(), block(15, 0), block(0, 14)].iter());
-        let mut lighting = Lighting::default();
-        let positions: Vec<_> = world.columns.keys().copied().collect();
-        for &pos in &positions {
-            lighting.light_column(&world.columns, &lights, pos);
-        }
-        for pos in positions {
-            let sections = lighting.column(pos).map(|c| c.sections().to_vec());
-            for (index, light) in sections.into_iter().flatten().enumerate() {
-                world.set_section_light(pos, index, light);
-            }
-        }
-        let blocks = world.neighborhood((1, 0, 1), &table());
-        assert_eq!(blocks.light(-1, 4, 3).block(), 14);
-        assert_eq!(blocks.light(0, 4, 3).block(), 13);
-        assert_eq!(blocks.light(0, 4, 3).sky(), 15);
-        assert_eq!(world.light_at(BlockPos::new(16, 20, 4)).block(), 12);
-    }
-
     /// Ids: 0 air, 1 bedrock, 2 deep stone.
-    fn table() -> BlockTable {
+    pub(super) fn table() -> BlockTable {
         use strata_core::content::{Block, RenderKind};
         let solid = Block {
             render: RenderKind::Opaque,
@@ -344,7 +283,7 @@ mod tests {
     }
 
     /// Bedrock at y 0, deep stone at y 1-4 and air above, over a 3×3 block of columns.
-    fn cavern_floor() -> ClientWorld {
+    pub(super) fn cavern_floor() -> ClientWorld {
         let mut world = ClientWorld::default();
         for x in -16..32 {
             for z in -16..32 {

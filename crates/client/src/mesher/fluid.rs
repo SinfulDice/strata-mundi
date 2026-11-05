@@ -4,11 +4,11 @@
 
 use super::greedy::{CORNERS, FaceFrame, FaceKey, Vec3i, add};
 use super::neighborhood::{BlockTable, MeshBlock, MeshFluid, Neighborhood};
+use super::shading::{Shading, shade_face};
 use strata_core::content::{BlockId, Face, RenderKind};
 
 /// A full block, in sixteenths.
 const FULL: u8 = 16;
-const FULL_LIGHT: u8 = 3;
 
 /// How a face's corners are lowered (liquids); `single` faces are never merged.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,10 +70,10 @@ fn is_full(blocks: &Neighborhood, table: &BlockTable, pos: Vec3i, family: BlockI
 pub fn fluid_face(
     blocks: &Neighborhood,
     table: &BlockTable,
-    face: Face,
-    frame: &FaceFrame,
+    (face, frame): (Face, &FaceFrame),
     pos: Vec3i,
     (block, fluid): (&MeshBlock, MeshFluid),
+    shading: Shading,
 ) -> Option<FaceKey> {
     let front = add(pos, frame.normal);
     let neighbour = at(blocks, front);
@@ -103,10 +103,15 @@ pub fn fluid_face(
         animation: fluid.animation,
         single: sloped || (lowered && face != Face::Up),
     };
+    // No ambient occlusion on liquids.
+    let shading = Shading {
+        ambient_occlusion: false,
+        ..shading
+    };
     Some(FaceKey::new(
         block.faces[face.index()],
         false,
-        [FULL_LIGHT; 4],
+        shade_face(blocks, table, frame, front, shading),
         block.render == RenderKind::Translucent,
         surface,
     ))
@@ -207,6 +212,7 @@ mod tests {
         });
         let options = MeshOptions {
             ambient_occlusion: true,
+            smooth_lighting: true,
             vegetation: Vegetation::Full,
         };
         mesh_section(&blocks, &table(), options)

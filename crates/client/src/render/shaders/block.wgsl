@@ -8,6 +8,8 @@ struct Camera {
     // x: seconds, wrapped; y: liquid animation strength (0 = still); z: 1 when the fog
     // counts the full distance (eyes in a liquid), 0 for the horizontal distance only.
     effects: vec4<f32>,
+    // x: sky light factor (1 by day); y: brightness (0-1); z: light of the darkest places.
+    light: vec4<f32>,
 };
 
 @group(0) @binding(0) var<uniform> camera: Camera;
@@ -25,6 +27,8 @@ struct VertexOutput {
     @location(3) relative: vec3<f32>,
     // Ripple strength of liquid surfaces, 0 elsewhere.
     @location(4) @interpolate(flat) wave: f32,
+    // Sky and block light, 0 to 1, blended between corners.
+    @location(5) light: vec2<f32>,
 };
 
 // Per face (up, down, north, south, east, west), lit from above like Minecraft; 6 is the
@@ -71,6 +75,7 @@ fn vs_main(@location(0) geometry: u32, @location(1) texture: u32) -> VertexOutpu
     out.layer = texture & 0xffffu;
     out.shade = face_shade(face) * ao_light(ao);
     out.wave = speed;
+    out.light = vec2<f32>(f32(texture >> 28u), f32((texture >> 24u) & 15u)) / 15.0;
     return out;
 }
 
@@ -89,6 +94,10 @@ fn fogged(color: vec3<f32>, relative: vec3<f32>) -> vec3<f32> {
     return mix(color, camera.sky.rgb, amount * amount * camera.options.w);
 }
 
+fn lit(input: VertexOutput) -> vec3<f32> {
+    return input.shade * light_color(input.light.x, input.light.y);
+}
+
 // Opaque and cutout blocks: pixels are either kept or dropped (leaves, glass frames).
 @fragment
 fn fs_cutout(input: VertexOutput) -> @location(0) vec4<f32> {
@@ -96,12 +105,12 @@ fn fs_cutout(input: VertexOutput) -> @location(0) vec4<f32> {
     if texel.a < 0.5 {
         discard;
     }
-    return vec4<f32>(fogged(texel.rgb * input.shade, input.relative), 1.0);
+    return vec4<f32>(fogged(texel.rgb * lit(input), input.relative), 1.0);
 }
 
 // Translucent blocks (water, ice): blended, never discarded.
 @fragment
 fn fs_translucent(input: VertexOutput) -> @location(0) vec4<f32> {
     let texel = textureSample(block_textures, block_sampler, rippled(input.uv, input.wave), input.layer);
-    return vec4<f32>(fogged(texel.rgb * input.shade, input.relative), texel.a);
+    return vec4<f32>(fogged(texel.rgb * lit(input), input.relative), texel.a);
 }

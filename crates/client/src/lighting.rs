@@ -17,15 +17,21 @@ enum LightJob {
     Changed(Arc<Column>, Vec<(BlockPos, BlockId)>),
 }
 
-/// Sections whose light changed (or the light of their border), with their new light.
+/// One batch of jobs done: the columns lit for the first time, and the sections whose
+/// light changed (or the light of their border), with their new light.
+#[derive(Default)]
 pub struct LightResult {
+    pub lit: Vec<ColumnPos>,
     pub sections: Vec<(ColumnPos, usize, SectionLight)>,
+    pub(crate) jobs: usize,
 }
 
 pub struct LightWorker {
     jobs: Option<Sender<LightJob>>,
     results: Receiver<LightResult>,
     thread: Option<JoinHandle<()>>,
+    /// Jobs sent whose result has not been taken yet.
+    outstanding: usize,
 }
 
 impl LightWorker {
@@ -39,29 +45,41 @@ impl LightWorker {
             jobs: Some(jobs),
             results,
             thread: Some(thread),
+            outstanding: 0,
         })
     }
 
-    pub fn insert(&self, column: Arc<Column>) {
+    pub fn insert(&mut self, column: Arc<Column>) {
         self.send(LightJob::Insert(column));
     }
 
-    pub fn remove(&self, pos: ColumnPos) {
+    pub fn remove(&mut self, pos: ColumnPos) {
         self.send(LightJob::Remove(pos));
     }
 
-    pub fn changed(&self, column: Arc<Column>, changes: Vec<(BlockPos, BlockId)>) {
+    pub fn changed(&mut self, column: Arc<Column>, changes: Vec<(BlockPos, BlockId)>) {
         self.send(LightJob::Changed(column, changes));
     }
 
-    pub fn finished(&self) -> impl Iterator<Item = LightResult> + '_ {
-        self.results.try_iter()
+    pub fn finished(&mut self) -> Vec<LightResult> {
+        let results: Vec<_> = self.results.try_iter().collect();
+        let done: usize = results.iter().map(|result| result.jobs).sum();
+        self.outstanding = self.outstanding.saturating_sub(done);
+        results
     }
 
-    fn send(&self, job: LightJob) {
-        if let Some(jobs) = &self.jobs
-            && jobs.send(job).is_err()
-        {
+    /// Every job sent so far is done and its result taken.
+    pub fn is_idle(&self) -> bool {
+        self.outstanding == 0
+    }
+
+    fn send(&mut self, job: LightJob) {
+        let Some(jobs) = &self.jobs else {
+            return;
+        };
+        if jobs.send(job).is_ok() {
+            self.outstanding += 1;
+        } else {
             tracing::warn!("the lighting thread stopped");
         }
     }
@@ -87,32 +105,41 @@ fn work(jobs: &Receiver<LightJob>, results: &Sender<LightResult>, table: &LightT
     let mut state = LightState::default();
     while let Ok(first) = jobs.recv() {
         let _span = tracing::trace_span!("lighting").entered();
-        state.apply(first, table);
+        let mut result = LightResult {
+            jobs: 1,
+            ..LightResult::default()
+        };
+        state.apply(first, table, &mut result.lit);
         for job in jobs.try_iter() {
-            state.apply(job, table);
+            state.apply(job, table, &mut result.lit);
+            result.jobs += 1;
         }
-        let result = state.changed_sections();
-        if !result.sections.is_empty() && results.send(result).is_err() {
+        result.sections = state.changed_sections();
+        if results.send(result).is_err() {
             return;
         }
     }
 }
 
 impl LightState {
-    fn apply(&mut self, job: LightJob, table: &LightTable) {
+    fn apply(&mut self, job: LightJob, table: &LightTable, lit: &mut Vec<ColumnPos>) {
         match job {
             LightJob::Insert(column) => {
                 let pos = column.pos;
                 self.blocks.insert(pos, column);
                 for near in around(pos) {
-                    if !self.lighting.is_lit(near) && self.is_complete(near) {
-                        self.lighting.light_column(&self.blocks, table, near);
+                    if !self.lighting.is_lit(near)
+                        && self.is_complete(near)
+                        && self.lighting.light_column(&self.blocks, table, near)
+                    {
+                        lit.push(near);
                     }
                 }
             }
             LightJob::Remove(pos) => {
                 self.blocks.remove(&pos);
                 self.lighting.remove_column(pos);
+                lit.retain(|&p| p != pos);
             }
             LightJob::Changed(column, changes) => {
                 self.blocks.insert(column.pos, column);
@@ -128,17 +155,15 @@ impl LightState {
         around(pos).all(|near| self.blocks.contains_key(&near))
     }
 
-    fn changed_sections(&mut self) -> LightResult {
-        let sections = self
-            .lighting
+    fn changed_sections(&mut self) -> Vec<(ColumnPos, usize, SectionLight)> {
+        self.lighting
             .take_changed()
             .into_iter()
             .filter_map(|(pos, index)| {
                 let light = self.lighting.column(pos)?.section(index)?.clone();
                 Some((pos, index, light))
             })
-            .collect();
-        LightResult { sections }
+            .collect()
     }
 }
 
@@ -167,41 +192,41 @@ mod tests {
         LightTable::new([Block::air(), torch].iter())
     }
 
-    fn wait(worker: &LightWorker) -> Vec<(ColumnPos, usize, SectionLight)> {
+    fn wait(worker: &mut LightWorker) -> (Vec<ColumnPos>, Vec<(ColumnPos, usize, SectionLight)>) {
         let start = Instant::now();
+        let (mut lit, mut sections) = (Vec::new(), Vec::new());
         while start.elapsed() < Duration::from_secs(10) {
-            let sections: Vec<_> = worker.finished().flat_map(|r| r.sections).collect();
-            if !sections.is_empty() {
-                return sections;
+            for result in worker.finished() {
+                lit.extend(result.lit);
+                sections.extend(result.sections);
+            }
+            if worker.is_idle() {
+                break;
             }
             thread::sleep(Duration::from_millis(5));
         }
-        Vec::new()
+        (lit, sections)
     }
 
     #[test]
     fn columns_are_lit_once_their_neighbours_arrive_and_torches_update_them() {
-        let worker = LightWorker::spawn(table()).unwrap();
+        let mut worker = LightWorker::spawn(table()).unwrap();
         let mut columns = std::collections::HashMap::new();
         for pos in around(ColumnPos { x: 0, z: 0 }) {
             let column = Arc::new(Column::empty(pos));
             columns.insert(pos, Arc::clone(&column));
             worker.insert(column);
         }
-        let lit = wait(&worker);
-        assert!(
-            lit.iter()
-                .any(|(pos, _, _)| *pos == ColumnPos { x: 0, z: 0 })
-        );
-        assert!(
-            lit.iter()
-                .all(|(pos, _, _)| *pos == ColumnPos { x: 0, z: 0 })
-        );
         let origin = ColumnPos { x: 0, z: 0 };
+        let (lit, sections) = wait(&mut worker);
+        assert_eq!(lit, vec![origin], "only the column with its 8 neighbours");
+        assert_eq!(sections.len(), 32);
+        assert!(sections.iter().all(|(pos, _, _)| *pos == origin));
         let mut column = Arc::clone(&columns[&origin]);
         Arc::make_mut(&mut column).set(4, 100, 4, BlockId(1));
         worker.changed(column, vec![(BlockPos::new(4, 100, 4), BlockId::AIR)]);
-        let changed = wait(&worker);
+        let (lit, changed) = wait(&mut worker);
+        assert!(lit.is_empty());
         let section = changed
             .iter()
             .find(|(pos, index, _)| *pos == origin && *index == 6)

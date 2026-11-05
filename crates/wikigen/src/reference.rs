@@ -209,6 +209,7 @@ fn presets(ctx: &Ctx<'_>) -> String {
             fps => fps.to_string(),
         }),
         line("option-ambient-occlusion", &|g| yes_no(g.ambient_occlusion)),
+        line("option-smooth-lighting", &|g| yes_no(g.smooth_lighting)),
         line("option-mipmaps", &|g| yes_no(g.mipmaps)),
         line("option-liquid-animation", &|g| yes_no(g.liquid_animation)),
         line("option-vegetation", &|g| {

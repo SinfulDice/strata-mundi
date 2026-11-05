@@ -9,19 +9,31 @@ macro_rules! shader {
     };
 }
 
-const BUILT_IN: [(&str, &str); 5] = [
+const BUILT_IN: [(&str, &str); 6] = [
     shader!("block.wgsl"),
+    shader!("light.wgsl"),
     shader!("model.wgsl"),
     shader!("outline.wgsl"),
     shader!("post.wgsl"),
     shader!("ui.wgsl"),
 ];
 
+/// Shaders that use the light functions of `light.wgsl`.
+const LIT: [&str; 2] = ["block.wgsl", "model.wgsl"];
+
 pub fn module(device: &wgpu::Device, name: &str) -> wgpu::ShaderModule {
     device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some(name),
-        source: wgpu::ShaderSource::Wgsl(source(name)),
+        source: wgpu::ShaderSource::Wgsl(full_source(name)),
     })
+}
+
+fn full_source(name: &str) -> Cow<'static, str> {
+    if LIT.contains(&name) {
+        Cow::Owned(format!("{}\n{}", source(name), source("light.wgsl")))
+    } else {
+        source(name)
+    }
 }
 
 fn source(name: &str) -> Cow<'static, str> {
@@ -44,6 +56,7 @@ mod tests {
     fn every_shader_is_built_in() {
         for name in [
             "block.wgsl",
+            "light.wgsl",
             "model.wgsl",
             "outline.wgsl",
             "post.wgsl",

@@ -11,6 +11,7 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use strata_core::content::Content;
+use strata_core::light::LightTable;
 use strata_core::texture::RgbaImage;
 use thiserror::Error;
 
@@ -42,7 +43,7 @@ pub struct View {
 /// Renders one frame without any window (works headless with Mesa lavapipe) and saves it as PNG.
 pub fn capture(
     content: &Content,
-    world: &ClientWorld,
+    world: &mut ClientWorld,
     view: &View,
     path: &Path,
 ) -> Result<(), ScreenshotError> {
@@ -52,11 +53,13 @@ pub fn capture(
     Ok(())
 }
 
+/// The world is lit first, so its light is complete before meshing.
 pub fn render_image(
     content: &Content,
-    world: &ClientWorld,
+    world: &mut ClientWorld,
     view: &View,
 ) -> Result<RgbaImage, ScreenshotError> {
+    world.compute_light(&LightTable::from_content(content));
     let gpu = Gpu::new(Gpu::create_instance(), None)?;
     let filtering = TextureFiltering {
         mipmaps: view.graphics.mipmaps,
@@ -68,11 +71,7 @@ pub fn render_image(
     renderer.vertical_distance = view.graphics.vertical_distance;
     renderer.options = RenderOptions::for_capture(&view.graphics);
     renderer.models.library = ModelLibrary::from_content(content);
-    renderer.models.entities = world
-        .entities
-        .iter()
-        .map(|(_, kind, pose)| (kind, pose))
-        .collect();
+    renderer.models.entities = world.entity_models().collect();
     let table = BlockTable::from_content(content);
     if world.is_inside_opaque(view.camera.position, &table) {
         tracing::warn!(

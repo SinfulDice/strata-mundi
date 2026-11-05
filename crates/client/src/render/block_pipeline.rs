@@ -14,6 +14,9 @@ pub struct CameraUniform {
     /// x: seconds (wrapped); y: liquid animation strength; z: 1 = fog over the full
     /// distance (eyes in a liquid).
     pub effects: [f32; 4],
+    /// x: sky light factor (1 = day, lower at night); y: brightness (0-1); z: light of
+    /// the darkest places.
+    pub light: [f32; 4],
 }
 
 pub const SECTION_OFFSET_SIZE: u32 = 16;

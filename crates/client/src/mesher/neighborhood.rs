@@ -113,6 +113,7 @@ const UNKNOWN: MeshBlock = MeshBlock {
     turned: [false; 6],
     fluid: None,
     solid_cube: false,
+    lamp: false,
 };
 
 /// What the mesher needs to know about each block, indexed by `BlockId`.
@@ -131,6 +132,8 @@ pub struct MeshBlock {
     pub fluid: Option<MeshFluid>,
     /// Opaque and not a liquid: hides every neighbouring face.
     pub solid_cube: bool,
+    /// Gives off light: a plane-shaped lamp (torch) is not vegetation, never thinned out.
+    pub lamp: bool,
 }
 
 /// A liquid cell: its family (source block), surface height and animation code.
@@ -155,6 +158,7 @@ impl BlockTable {
                         .is_some_and(|o| texture_turned(face, o.axis))
                 }),
                 solid_cube: block.render == RenderKind::Opaque && block.fluid.is_none(),
+                lamp: block.light_emission > 0,
                 fluid: block.fluid.map(|state| MeshFluid {
                     family: state.source,
                     height: surface_sixteenths(state.level),

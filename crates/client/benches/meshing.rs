@@ -2,6 +2,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 use strata_client::mesher::{BlockTable, MeshOptions, Neighborhood, mesh_section};
 use strata_core::content::{Block, BlockId, FluidLevel, FluidState, RenderKind, TextureId};
+use strata_core::light::PackedLight;
 
 fn table() -> BlockTable {
     let solid = |layer| Block {
@@ -54,8 +55,14 @@ fn checkerboard(x: i32, y: i32, z: i32) -> BlockId {
     BlockId(u16::from((x + y + z).rem_euclid(2) == 0))
 }
 
+/// Light read from the neighbourhood like in game (open sky, dimmer low down).
+fn daylight(_: i32, y: i32, _: i32) -> PackedLight {
+    PackedLight::new(if y > 8 { 15 } else { 12 }, 0)
+}
+
 const AO: MeshOptions = MeshOptions {
     ambient_occlusion: true,
+    smooth_lighting: true,
     vegetation: strata_client::settings::Vegetation::Full,
 };
 
@@ -64,9 +71,15 @@ fn meshing(c: &mut Criterion) {
     // Real sections know their palette, which lets the mesher skip the liquid checks.
     let land: Vec<BlockId> = (0..WATER).map(BlockId).collect();
     let flooded: Vec<BlockId> = (0..WATER + 8).map(BlockId).collect();
-    let surface = Neighborhood::build(terrain).of_section([0; 3], &land, &table);
-    let worst = Neighborhood::build(checkerboard).of_section([0; 3], &land, &table);
-    let water = Neighborhood::build(flowing_water).of_section([0; 3], &flooded, &table);
+    let surface = Neighborhood::build(terrain)
+        .with_light(daylight)
+        .of_section([0; 3], &land, &table);
+    let worst = Neighborhood::build(checkerboard)
+        .with_light(daylight)
+        .of_section([0; 3], &land, &table);
+    let water = Neighborhood::build(flowing_water)
+        .with_light(daylight)
+        .of_section([0; 3], &flooded, &table);
     c.bench_function("mesh_section_terrain", |b| {
         b.iter(|| mesh_section(black_box(&surface), &table, AO))
     });

@@ -4,6 +4,9 @@ mod cross;
 mod fluid;
 mod greedy;
 mod neighborhood;
+mod shading;
+#[cfg(test)]
+mod shading_tests;
 mod vertex;
 mod workers;
 
@@ -51,6 +54,7 @@ mod tests {
 
     const AO: MeshOptions = MeshOptions {
         ambient_occlusion: true,
+        smooth_lighting: true,
         vegetation: Vegetation::Full,
     };
 
@@ -128,7 +132,7 @@ mod tests {
                 let [x, y, z] = vertex.position();
                 assert!((5..=6).contains(&x) && (5..=6).contains(&y) && (5..=6).contains(&z));
                 assert_eq!((vertex.geometry >> 15) & 7, vertex::CROSS_FACE as u32);
-                assert_eq!(vertex.texture, 5);
+                assert_eq!(vertex.texture & 0xffff, 5);
             }
         }
         assert_ne!(

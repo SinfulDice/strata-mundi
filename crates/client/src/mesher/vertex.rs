@@ -1,22 +1,25 @@
 use bytemuck::{Pod, Zeroable};
+use strata_core::light::PackedLight;
 
 /// Value of the face field for plant planes, after the six cube faces.
 pub const CROSS_FACE: usize = 6;
 
 /// 8-byte vertex: position inside the section (0..=16), face, ambient occlusion, texture
-/// repeat (0..=16), texture layer and liquid surface, decoded by the shader.
+/// repeat (0..=16), texture layer, liquid surface and light, decoded by the shader.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Pod, Zeroable)]
 pub struct PackedVertex {
     /// x:5 y:5 z:5 face:3 ao:2 u:5 v:5
     pub geometry: u32,
-    /// layer:16 drop:4 animation:2 (free:2, light:8 reserved for milestone 6). `drop`
-    /// lowers the vertex by sixteenths of a block (liquid surfaces).
+    /// layer:16 drop:4 animation:2 free:2 block_light:4 sky_light:4. `drop` lowers the
+    /// vertex by sixteenths of a block (liquid surfaces).
     pub texture: u32,
 }
 
 /// Lowest a vertex can be pushed down, in sixteenths.
 pub const MAX_DROP: u8 = 15;
+const SURFACE_BITS: u32 = 0x003f_0000;
+const LIGHT_BITS: u32 = 0xff00_0000;
 
 impl PackedVertex {
     pub const LAYOUT: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
@@ -44,11 +47,22 @@ impl PackedVertex {
     pub fn with_surface(self, drop: u8, animation: u8) -> Self {
         debug_assert!(drop <= MAX_DROP && animation < 4);
         Self {
-            texture: (self.texture & 0xffff)
+            texture: (self.texture & !SURFACE_BITS)
                 | (u32::from(drop.min(MAX_DROP)) << 16)
                 | (u32::from(animation & 3) << 20),
             ..self
         }
+    }
+
+    pub fn with_light(self, light: PackedLight) -> Self {
+        Self {
+            texture: (self.texture & !LIGHT_BITS) | (u32::from(light.0) << 24),
+            ..self
+        }
+    }
+
+    pub fn light(self) -> PackedLight {
+        PackedLight((self.texture >> 24) as u8)
     }
 
     pub fn drop(self) -> u8 {
@@ -89,12 +103,16 @@ impl MeshData {
     }
 
     /// Corners in counter-clockwise order seen from outside. The diagonal is chosen so that
-    /// ambient occlusion interpolates without the classic anisotropy artefact.
+    /// ambient occlusion and light interpolate without the classic anisotropy artefact.
     pub fn push_quad(&mut self, corners: [PackedVertex; 4]) {
         let base = self.vertices.len() as u32;
-        let ao = corners.map(|c| u32::from(c.ao()));
+        let shade = corners.map(|c| {
+            let light = c.light();
+            (u32::from(c.ao()), u32::from(light.sky().max(light.block())))
+        });
         self.vertices.extend_from_slice(&corners);
-        let indices = if ao[0] + ao[2] < ao[1] + ao[3] {
+        let sum = |i: usize, j: usize| (shade[i].0 + shade[j].0, shade[i].1 + shade[j].1);
+        let indices = if sum(0, 2) < sum(1, 3) {
             [base + 1, base + 2, base + 3, base + 1, base + 3, base]
         } else {
             [base, base + 1, base + 2, base, base + 2, base + 3]
@@ -119,6 +137,9 @@ mod tests {
         let surface = vertex.with_surface(MAX_DROP, 2);
         assert_eq!((surface.drop(), surface.animation()), (MAX_DROP, 2));
         assert_eq!(surface.texture & 0xffff, 900);
-        assert_eq!(surface.texture >> 24, 0, "light bits left free");
+        let lit = surface.with_light(PackedLight::new(12, 5));
+        assert_eq!(lit.light(), PackedLight::new(12, 5));
+        assert_eq!((lit.drop(), lit.animation()), (MAX_DROP, 2));
+        assert_eq!(lit.with_surface(3, 1).light(), PackedLight::new(12, 5));
     }
 }

@@ -52,6 +52,11 @@ impl MeshScheduler {
         self.dirty.insert(key);
     }
 
+    #[cfg(test)]
+    pub fn take_dirty(&mut self) -> HashSet<SectionKey> {
+        std::mem::take(&mut self.dirty)
+    }
+
     /// Stops tracking a column that left the view distance.
     pub fn forget_column(&mut self, pos: ColumnPos) {
         for index in 0..SECTIONS_PER_COLUMN as usize {

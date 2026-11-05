@@ -278,12 +278,7 @@ impl Session {
         view.world.entities.advance(f64::from(frame_seconds));
         let entities = &mut self.renderer.models.entities;
         entities.clear();
-        entities.extend(
-            view.world
-                .entities
-                .iter()
-                .map(|(_, kind, pose)| (kind, pose)),
-        );
+        entities.extend(view.world.entity_models());
         view.update(
             &self.gpu,
             &mut self.renderer,

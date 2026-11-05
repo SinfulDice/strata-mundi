@@ -8,11 +8,12 @@ use super::mesh::StreamBuffer;
 use crate::camera::Camera;
 use crate::models::{ModelLibrary, ModelPose, ModelVertex};
 use strata_core::content::EntityTypeId;
+use strata_core::light::PackedLight;
 
 pub struct ModelPipeline {
     pub library: ModelLibrary,
-    /// Entities to draw this frame.
-    pub entities: Vec<(EntityTypeId, ModelPose)>,
+    /// Entities to draw this frame, with the light of their cell.
+    pub entities: Vec<(EntityTypeId, ModelPose, PackedLight)>,
     pipeline: wgpu::RenderPipeline,
     vertices: StreamBuffer,
     scratch: Vec<ModelVertex>,
@@ -78,14 +79,14 @@ impl ModelPipeline {
     /// render pass begins.
     pub(super) fn prepare(&mut self, gpu: &Gpu, camera: &Camera, frustum: &Frustum) {
         self.scratch.clear();
-        for &(kind, pose) in &self.entities {
+        for &(kind, pose, light) in &self.entities {
             let Some(radius) = self.library.radius(kind) else {
                 continue;
             };
             let centre = camera.relative(pose.position);
             if frustum.intersects_box(centre - radius, centre + radius) {
                 self.library
-                    .place(kind, pose, camera.position, &mut self.scratch);
+                    .place((kind, pose, light), camera.position, &mut self.scratch);
             }
         }
         self.count = self.scratch.len() as u32;

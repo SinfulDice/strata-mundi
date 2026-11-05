@@ -1,0 +1,20 @@
+// Light for captures (`--scene light`): a closed cave under a meadow, lit only by a
+// torch on the border between two columns (x = 0), with a dark side tunnel.
+(
+    fills: [
+        (from: (-14, 0, -14), to: (14, 0, 14), block: "strata:bedrock"),
+        (from: (-14, 1, -14), to: (14, 12, 14), block: "strata:stone"),
+        (from: (-14, 13, -14), to: (14, 15, 14), block: "strata:dirt"),
+        (from: (-14, 16, -14), to: (14, 16, 14), block: "strata:grass_block"),
+        (from: (-10, 4, -4), to: (8, 8, 4), block: "strata:air"),
+        (from: (-3, 9, -2), to: (3, 9, 2), block: "strata:air"),
+        (from: (-10, 4, 5), to: (-8, 6, 13), block: "strata:air"),
+        (from: (0, 4, 0), to: (0, 4, 0), block: "strata:torch"),
+        (from: (-6, 4, -3), to: (-6, 4, -3), block: "strata:iron_ore"),
+        (from: (4, 4, 3), to: (4, 4, 3), block: "strata:coal_ore"),
+        (from: (-4, 17, -6), to: (-4, 21, -6), block: "strata:oak_log"),
+        (from: (-6, 20, -8), to: (-2, 21, -4), block: "strata:oak_leaves"),
+        (from: (2, 17, 5), to: (2, 17, 5), block: "strata:poppy"),
+        (from: (3, 17, -8), to: (3, 17, -8), block: "strata:tall_grass"),
+    ],
+)

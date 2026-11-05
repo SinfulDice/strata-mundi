@@ -73,7 +73,7 @@ pub fn render_biomes(
         let eye = DVec3::new(f64::from(ex), eye_y, f64::from(ez));
         let distance = f64::from(BACK) * std::f64::consts::SQRT_2;
         let pitch = ((target - eye_y) / distance).atan().to_degrees() as f32;
-        let world = offline::generate_around(&generator, eye.x, eye.z, VIEW_RADIUS);
+        let mut world = offline::generate_around(&generator, eye.x, eye.z, VIEW_RADIUS);
         let view = View {
             camera: Camera::new(eye, 135.0, pitch, 70.0),
             size: (960, 540),
@@ -84,7 +84,8 @@ pub fn render_biomes(
             },
         };
         let path = image_path(dir, &biome.id);
-        capture(content, &world, &view, &path).with_context(|| format!("biome {}", biome.id))?;
+        capture(content, &mut world, &view, &path)
+            .with_context(|| format!("biome {}", biome.id))?;
     }
     tracing::info!(dir = %dir.display(), "biome views written");
     Ok(())

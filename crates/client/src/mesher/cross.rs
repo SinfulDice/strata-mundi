@@ -2,12 +2,11 @@
 //! culling keeps them visible from anywhere. They hide nothing and nothing hides them.
 
 use super::neighborhood::{BlockTable, Neighborhood, SIZE};
+use super::shading::FULL_AO;
 use super::vertex::{CROSS_FACE, MeshData, PackedVertex};
 use crate::settings::Vegetation;
 use strata_core::content::{Face, RenderKind};
-
-/// Ambient occlusion is not applied to plants yet: every corner fully lit.
-const FULL_LIGHT: u8 = 3;
+use strata_core::light::PackedLight;
 
 pub fn mesh_crosses(
     blocks: &Neighborhood,
@@ -15,7 +14,7 @@ pub fn mesh_crosses(
     vegetation: Vegetation,
     target: &mut MeshData,
 ) {
-    if vegetation == Vegetation::Off || !blocks.contents().cross {
+    if !blocks.contents().cross {
         return;
     }
     let origin = blocks.origin();
@@ -25,8 +24,10 @@ pub fn mesh_crosses(
                 let block = table.get(blocks.get(x as i32, y as i32, z as i32));
                 let world = [x, y, z].map(|c| c as i32);
                 let world = std::array::from_fn(|i| origin[i] + world[i]);
-                if block.render == RenderKind::Cross && is_drawn(vegetation, world) {
-                    push_cross(target, [x, y, z], block.faces[Face::North.index()]);
+                if block.render == RenderKind::Cross && (block.lamp || is_drawn(vegetation, world))
+                {
+                    let light = blocks.light(x as i32, y as i32, z as i32);
+                    push_cross(target, [x, y, z], block.faces[Face::North.index()], light);
                 }
             }
         }
@@ -51,10 +52,12 @@ fn position_hash(x: i32, y: i32, z: i32) -> u32 {
     h ^ (h >> 12)
 }
 
-fn push_cross(target: &mut MeshData, [x, y, z]: [u32; 3], layer: u16) {
+/// Plants have no ambient occlusion and take the light of their own cell.
+fn push_cross(target: &mut MeshData, [x, y, z]: [u32; 3], layer: u16, light: PackedLight) {
     for (from, to) in [([x, z], [x + 1, z + 1]), ([x + 1, z], [x, z + 1])] {
         let corner = |[cx, cz]: [u32; 2], up: u32, u: u32| {
-            PackedVertex::new([cx, y + up, cz], CROSS_FACE, FULL_LIGHT, [u, 1 - up], layer)
+            PackedVertex::new([cx, y + up, cz], CROSS_FACE, FULL_AO, [u, 1 - up], layer)
+                .with_light(light)
         };
         let front = [
             corner(from, 0, 0),

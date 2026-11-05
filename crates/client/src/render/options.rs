@@ -1,7 +1,7 @@
 //! What the image looks like without a rebuild: fog, sky color, liquid tint, scale and
 //! filter.
 
-use crate::settings::{ColorFilter, GraphicsSettings, Settings};
+use crate::settings::{ColorFilter, DEFAULT_BRIGHTNESS, GraphicsSettings, Settings};
 use strata_core::coords::SECTION_SIZE;
 
 /// Clear color (sRGB) until the sky arrives in v0.2.
@@ -47,6 +47,9 @@ pub struct Immersion {
 /// camera, so even what is close takes the liquid's tint.
 pub(super) const IMMERSED_FOG_LEAD: f32 = 0.5;
 
+/// Light level of the darkest places, so that nothing is ever pitch black.
+pub(super) const MIN_AMBIENT: f32 = 0.2;
+
 /// Animation time wraps after an hour, keeping `f32` precise (one tiny jump an hour).
 pub(super) const TIME_WRAP: f32 = 3600.0;
 
@@ -60,6 +63,8 @@ pub struct RenderOptions {
     pub render_scale: f32,
     pub color_filter: ColorFilter,
     pub liquid_animation: bool,
+    /// 0 (moody) to 1 (bright): how much dark areas are lifted.
+    pub brightness: f32,
 }
 
 impl Default for RenderOptions {
@@ -70,6 +75,7 @@ impl Default for RenderOptions {
             render_scale: 1.0,
             color_filter: ColorFilter::None,
             liquid_animation: true,
+            brightness: DEFAULT_BRIGHTNESS as f32 / 100.0,
         }
     }
 }
@@ -91,6 +97,7 @@ impl RenderOptions {
             render_scale: 1.0,
             color_filter: ColorFilter::None,
             liquid_animation: graphics.liquid_animation,
+            brightness: graphics.brightness as f32 / 100.0,
         }
     }
 

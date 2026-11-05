@@ -5,7 +5,7 @@
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 6 — Lumière
   - [x] Moteur de lumière (core, sans GPU) : lumière du ciel 0-15 (descend verticalement, se diffuse) et des blocs (émission et opacité du pack, flood fill), stockage compact par section, mise à jour incrémentale à la pose/casse (ajout et retrait), y compris aux frontières de colonnes ; calcul côté client sur threads de travail (donnée dérivée) ; blocs lumineux : torche, lanterne, pierre lumineuse (glowstone), lave émissive ; test obligatoire (poser puis casser une torche = état initial), tests aux frontières
-  - [ ] Rendu de la lumière : lumière lissée par sommet combinée à l'AO (bits réservés du sommet), facteur de lumière du ciel en uniforme (pour la nuit du jalon 7, sans remailler), remaillage des sections touchées par un changement de lumière ; réglage (lissage on/off) ; captures d'une grotte éclairée par une torche à cheval sur deux colonnes
+  - [x] Rendu de la lumière : lumière lissée par sommet combinée à l'AO (bits réservés du sommet), facteur de lumière du ciel en uniforme (pour la nuit du jalon 7, sans remailler), remaillage des sections touchées par un changement de lumière ; réglage (lissage on/off) ; captures d'une grotte éclairée par une torche à cheval sur deux colonnes
 - **Dernière session** : 05/11/2026
 
 ## Fait
@@ -62,6 +62,7 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 04/11/2026 (v0.2 j1) | Génération d'une colonne (relief 3D) | 1,80 ms | `generation/generate_column` |
 | 05/11/2026 (v0.2 j5) | Grand écoulement (lac par une brèche de 32 blocs, jusqu'à stabilisation) | 5,93 ms | `fluids/large_flow_settles` |
 | 05/11/2026 (v0.2 j5, relecture) | Maillage surface / damier / eau qui coule / voisinage | 0,19 / 1,00 / 0,25 / 0,045 ms | `meshing/*` |
+| 05/11/2026 (v0.2 j6) | Maillage surface / damier / eau, lumière lissée | 0,21 / 1,44 / 0,31 ms | `meshing/*` (D046) |
 | 05/11/2026 (v0.2 j6) | Lumière initiale d'une colonne générée (voisines éclairées) | 1,20 ms | `light/light_generated_column` |
 | 05/11/2026 (v0.2 j6) | Poser puis casser une torche en plein air | 0,65 ms | `light/light_place_and_break_torch` |
 

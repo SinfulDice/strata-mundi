@@ -31,7 +31,9 @@ pub use frustum::in_vertical_range;
 use glam::DVec3;
 use mesh::GpuMesh;
 pub use model_pipeline::ModelPipeline;
-use options::{FOG_START, IMMERSED_FOG_LEAD, SKY_SRGB, TIME_WRAP, linear_color, linear_rgba};
+use options::{
+    FOG_START, IMMERSED_FOG_LEAD, MIN_AMBIENT, SKY_SRGB, TIME_WRAP, linear_color, linear_rgba,
+};
 use outline::OutlinePipeline;
 use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
@@ -64,6 +66,9 @@ pub struct Renderer {
     pub immersion: Option<Immersion>,
     /// Seconds since start (wrapped), for animated liquids.
     time: f32,
+    /// How much of the sky light reaches the world (1 by day, dimmer at night), applied
+    /// in the shader so the night falls without meshing again.
+    pub sky_light: f32,
     /// Entity models and those to draw this frame.
     pub models: ModelPipeline,
 }
@@ -104,6 +109,7 @@ impl Renderer {
             options: RenderOptions::default(),
             immersion: None,
             time: 0.0,
+            sky_light: 1.0,
             models,
         })
     }
@@ -182,6 +188,12 @@ impl Renderer {
                 self.time,
                 f32::from(u8::from(self.options.liquid_animation)),
                 full,
+                0.0,
+            ],
+            light: [
+                self.sky_light.clamp(0.0, 1.0),
+                self.options.brightness,
+                MIN_AMBIENT,
                 0.0,
             ],
         }

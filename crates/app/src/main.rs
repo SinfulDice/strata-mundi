@@ -59,7 +59,7 @@ fn main() -> anyhow::Result<()> {
     if let Some(path) = &args.texture_sheet {
         return Ok(write_texture_sheet(
             &loaded.content,
-            &content::preview(&loaded),
+            &mut content::preview(&loaded),
             path,
         )?);
     }
@@ -136,7 +136,7 @@ fn screenshot(
     graphics: GraphicsSettings,
     path: &Path,
 ) -> anyhow::Result<()> {
-    let (world, position) = if args.seed.is_some() {
+    let (mut world, position) = if args.seed.is_some() {
         let position = args.pos.unwrap_or_else(|| {
             let spawn = generator.spawn_point();
             [
@@ -163,7 +163,7 @@ fn screenshot(
         size: args.size,
         graphics,
     };
-    Ok(capture(&loaded.content, &world, &view, path)?)
+    Ok(capture(&loaded.content, &mut world, &view, path)?)
 }
 
 fn load_bench(

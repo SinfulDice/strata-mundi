@@ -19,7 +19,7 @@ const SCENE_SIZE: (u32, u32) = (TILE * COLUMNS + GAP * (COLUMNS - 1), 540);
 
 pub fn write_texture_sheet(
     content: &Content,
-    preview: &ClientWorld,
+    preview: &mut ClientWorld,
     path: &Path,
 ) -> Result<(), ScreenshotError> {
     let tiles: Vec<RgbaImage> = sheet_order(content)

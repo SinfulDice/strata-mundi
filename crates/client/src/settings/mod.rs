@@ -9,8 +9,8 @@ mod interface;
 pub use controls::{ControlSettings, DEAD_ZONE, SENSITIVITY};
 pub use game::GameSettings;
 pub use graphics::{
-    ANISOTROPY, AUTO_THREADS, FOV, GraphicsSettings, Preset, RENDER_DISTANCE, RENDER_SCALE,
-    VERTICAL_DISTANCE, Vegetation, default_worker_threads,
+    ANISOTROPY, AUTO_THREADS, BRIGHTNESS, DEFAULT_BRIGHTNESS, FOV, GraphicsSettings, Preset,
+    RENDER_DISTANCE, RENDER_SCALE, VERTICAL_DISTANCE, Vegetation, default_worker_threads,
 };
 pub use interface::{ColorFilter, FontChoice, InterfaceSettings, MAX_SCALE};
 
@@ -67,7 +67,11 @@ impl Settings {
 
     pub fn apply_preset(&mut self, preset: Preset) {
         self.preset = Some(preset);
-        self.graphics = GraphicsSettings::for_preset(preset);
+        let brightness = self.graphics.brightness;
+        self.graphics = GraphicsSettings {
+            brightness,
+            ..GraphicsSettings::for_preset(preset)
+        };
     }
 }
 
