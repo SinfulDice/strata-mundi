@@ -15,14 +15,14 @@ sequenceDiagram
     S->>G: colonnes manquantes (les plus proches et devant d'abord)
     G-->>S: colonnes générées
     S-->>C: Column (au plus 48 par tick)
-    C->>C: maillage quand les 8 voisines sont là
+    C->>C: lumière puis maillage quand les 8 voisines sont là
     S-->>C: UnloadColumn (trop loin)
 ```
 
 - **Priorité** : les colonnes d'un disque de rayon « distance de rendu » sont triées par distance, celles **devant** le joueur passant avant celles derrière.
 - **Files bornées** : le serveur ne demande pas plus de travail que les threads de génération peuvent en absorber ; s'il a déjà quitté une zone, les demandes la concernant sont abandonnées.
 - **Hystérésis** : une colonne n'est oubliée qu'à 2 colonnes au-delà de la distance de rendu, pour qu'un aller-retour sur une frontière ne la recharge pas sans cesse.
-- **Maillage** : une colonne est maillée quand ses 8 voisines sont arrivées ; ses bords et son occlusion ambiante sont alors justes du premier coup.
+- **Lumière et maillage** : une colonne est d'abord éclairée (thread dédié) quand ses 8 voisines sont arrivées, puis maillée quand sa colonne et ses 8 voisines sont éclairées ; ses bords, son occlusion ambiante et sa lumière lissée sont alors justes du premier coup. Il faut donc 5 × 5 colonnes chargées autour d'une colonne pour la dessiner (un anneau de colonnes maillées de moins en bordure). Voir [Lumière](lumiere.md).
 - **Frustum culling** : seules les sections dans le champ de vision de la caméra sont dessinées (les 4 côtés et le plan proche du cône de vision ; pas de plan lointain).
 - **Sans gel** : génération et maillage tournent sur d'autres threads ; le thread principal ne fait qu'insérer les colonnes reçues et envoyer à la carte graphique pendant au plus 4 ms par image.
 - **Distance de rendu réglable à chaud** : touches **F7** (moins) et **F8** (plus), ou l'écran d'options. Le client envoie `ViewDistance` (2 à 32) ; le serveur charge ou décharge en conséquence au tick suivant.

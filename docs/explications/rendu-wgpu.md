@@ -25,6 +25,7 @@ Choix importants :
 - **Reverse-Z et plan lointain infini** : la profondeur est stockée « à l'envers » (proche = 1, loin = 0), ce qui donne une précision presque uniforme jusqu'à l'horizon : pas de scintillement des faces lointaines.
 - **Couleurs sRGB** : les textures et l'image finale sont en sRGB (l'espace de couleur des écrans) ; la carte graphique fait les conversions. La couleur du ciel est donc convertie en « linéaire » avant d'être donnée.
 - **Ombrage par face** : comme Minecraft, le dessus est le plus clair, les côtés plus sombres, le dessous le plus sombre.
+- **Lumière** : chaque sommet porte un niveau de ciel et un niveau de blocs ; `shaders/light.wgsl`, ajouté à `block.wgsl` et `model.wgsl`, les convertit en couleur (courbe, luminosité, plancher d'ambiance, teinte chaude des torches). Un uniforme de la caméra, `light`, donne le facteur du ciel, la luminosité et le plancher. Voir [Lumière](lumiere.md).
 - **Perte de surface** : si la fenêtre est redimensionnée, minimisée ou si le système « perd » la surface d'affichage, on la reconfigure et on saute l'image au lieu de planter.
 
 **Captures sans écran** (`--screenshot`) : le même `Renderer` dessine dans une texture en mémoire (`OffscreenTarget`), qu'on recopie vers le processeur puis qu'on enregistre en PNG. Sur le serveur cloud sans carte graphique, c'est **Mesa lavapipe** (Vulkan exécuté par le processeur) qui fait le travail.
@@ -36,6 +37,7 @@ Choix importants :
 | Carte graphique, device, queue | `crates/client/src/render/gpu.rs` (`Gpu`) |
 | Fenêtre et swapchain | `crates/client/src/render/surface.rs` (`WindowSurface`) |
 | Pipeline des blocs | `crates/client/src/render/block_pipeline.rs`, `shaders/block.wgsl` |
+| Lumière des shaders | `crates/client/src/render/shaders/light.wgsl` |
 | Sommets, cube | `crates/client/src/render/mesh.rs` (`BlockVertex`, `cube`) |
 | Tableau de textures | `crates/client/src/render/texture_array.rs` |
 | Image complète | `crates/client/src/render/mod.rs` (`Renderer::render`) |
