@@ -1,7 +1,7 @@
 //! The day and night of a dimension: where the sun is, how much sky light reaches the
 //! ground, and the phase of the moon, all as continuous functions of the world time.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 
 /// Shortest and longest full day a pack may ask for, in ticks (1 minute to 10 hours).
@@ -11,7 +11,7 @@ const MIN_SHARE: f64 = 0.05;
 pub const MOON_PHASES: u64 = 8;
 
 /// `day` of `dimensions/<name>.ron`, before bounds are applied.
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DayCycleDef {
     /// Ticks of a full day and night (24 000 = 20 minutes).
@@ -93,6 +93,16 @@ impl DayCycle {
         }
     }
 
+    /// The bounded values, as the server sends them to its players.
+    pub fn def(&self) -> DayCycleDef {
+        DayCycleDef {
+            length: self.length,
+            day_share: self.day_share,
+            twilight: self.twilight,
+            night_light: self.night_light,
+        }
+    }
+
     pub fn length(&self) -> u64 {
         self.length
     }
@@ -170,9 +180,12 @@ impl DayCycle {
         }
     }
 
-    /// One phase per night, `0` full and `4` new, in a cycle of eight nights.
+    /// One phase per night, `0` full and `4` new, in a cycle of eight nights. The phase
+    /// turns at noon, while the moon is under the horizon, so it never changes in sight.
     pub fn moon_phase(&self, time: u64) -> u8 {
-        (self.day(time) % MOON_PHASES) as u8
+        // The morning before the first noon still shows the night before it (phase 7).
+        let lead = self.length * MOON_PHASES - self.moment(Moment::Noon);
+        (time.saturating_add(lead) / self.length % MOON_PHASES) as u8
     }
 }
 
@@ -249,6 +262,38 @@ mod tests {
         assert_eq!(phases, [0, 1, 2, 3, 4, 5, 6, 7, 0]);
         let night = cycle.moment(Moment::Night);
         assert_eq!(cycle.moon_phase(night), cycle.moon_phase(length - 1));
+    }
+
+    #[test]
+    fn the_moon_never_changes_phase_in_sight() {
+        for day_share in [0.5, 0.2, 0.8] {
+            let cycle = DayCycle::new(&DayCycleDef {
+                day_share,
+                ..DayCycleDef::default()
+            });
+            for tick in 1..cycle.length() * 3 {
+                // The moon faces the sun; its height is at most -sin of the sun's angle.
+                let moon_height = -cycle.sun_angle(tick as f64).sin();
+                if moon_height > -0.12 {
+                    assert_eq!(
+                        cycle.moon_phase(tick),
+                        cycle.moon_phase(tick - 1),
+                        "phase changed in sight at tick {tick} (share {day_share})"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bounded_values_survive_a_second_pass() {
+        let cycle = DayCycle::new(&DayCycleDef {
+            length: 5,
+            day_share: 0.99,
+            twilight: 0.3,
+            night_light: 0.4,
+        });
+        assert_eq!(DayCycle::new(&cycle.def()), cycle);
     }
 
     #[test]

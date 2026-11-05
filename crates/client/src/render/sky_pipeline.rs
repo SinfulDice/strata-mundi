@@ -1,4 +1,4 @@
-//! The sky behind the world: one screen-covering triangle drawn first, with the
+//! The sky behind the world: one screen-covering triangle on the far plane, with the
 //! gradient, the glow of sunrise and sunset, the sun, the moon and the stars.
 
 use super::depth::DEPTH_FORMAT;
@@ -22,7 +22,7 @@ struct SkyUniform {
     across: [f32; 4],
     /// Sun layer, moon layer, moon phase.
     bodies: [u32; 4],
-    /// x: twinkle.
+    /// x: twinkle; y: star time (seconds wrapped on a turn).
     stars: [f32; 4],
 }
 
@@ -79,7 +79,13 @@ impl SkyPipeline {
         }
     }
 
-    pub fn write(&self, queue: &wgpu::Queue, sky: &SkyFrame, view_projection: Mat4) {
+    pub fn write(
+        &self,
+        queue: &wgpu::Queue,
+        sky: &SkyFrame,
+        view_projection: Mat4,
+        star_time: f32,
+    ) {
         let uniform = SkyUniform {
             inverse_view_proj: view_projection.inverse().to_cols_array_2d(),
             zenith: sky.zenith.extend(sky.glow_strength).to_array(),
@@ -88,7 +94,7 @@ impl SkyPipeline {
             sun: sky.sun.extend(sky.sun_size).to_array(),
             across: sky.across.extend(sky.moon_size).to_array(),
             bodies: [sky.sun_layer, sky.moon_layer, sky.moon_phase, 0],
-            stars: [sky.star_twinkle, 0.0, 0.0, 0.0],
+            stars: [sky.star_twinkle, star_time, 0.0, 0.0],
         };
         queue.write_buffer(&self.buffer, 0, bytemuck::bytes_of(&uniform));
     }
@@ -117,11 +123,12 @@ fn create_pipeline(
             compilation_options: Default::default(),
         },
         primitive: Default::default(),
-        // Behind everything: drawn first, without touching the depth buffer.
+        // On the far plane (0 in reverse-Z), after the opaque world: only the pixels it
+        // left empty are shaded. The depth buffer is left untouched.
         depth_stencil: Some(wgpu::DepthStencilState {
             format: DEPTH_FORMAT,
             depth_write_enabled: Some(false),
-            depth_compare: Some(wgpu::CompareFunction::Always),
+            depth_compare: Some(wgpu::CompareFunction::GreaterEqual),
             stencil: Default::default(),
             bias: Default::default(),
         }),

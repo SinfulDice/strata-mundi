@@ -1,6 +1,7 @@
 //! The cloud layer: no mesh at all, one instance per cell of a grid that follows the
 //! camera, shaped in the vertex shader from a repeating pixel-art pattern. Volumes are
-//! drawn in two passes (depth, then color) so their translucent faces never pile up.
+//! drawn in two passes (depth, then color) so their translucent faces never pile up; a
+//! flat layer cannot overlap itself and takes a single pass.
 
 use super::depth::DEPTH_FORMAT;
 use crate::settings::CloudMode;
@@ -32,6 +33,7 @@ pub(super) struct CloudDraw {
     uniform: CloudUniform,
     vertices: u32,
     instances: u32,
+    full: bool,
 }
 
 impl CloudDraw {
@@ -64,6 +66,7 @@ impl CloudDraw {
             },
             vertices: if full { BOX_VERTICES } else { FLAT_VERTICES },
             instances: side * side,
+            full,
         })
     }
 }
@@ -79,6 +82,7 @@ fn pattern_origin(camera: DVec3, drift: DVec2, cell_size: f32) -> Vec2 {
 pub struct CloudPipeline {
     depth: wgpu::RenderPipeline,
     color: wgpu::RenderPipeline,
+    flat: wgpu::RenderPipeline,
     buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
 }
@@ -131,6 +135,7 @@ impl CloudPipeline {
         Self {
             depth: create_pipeline(device, &layout, &shader, color_format, Pass::Depth),
             color: create_pipeline(device, &layout, &shader, color_format, Pass::Color),
+            flat: create_pipeline(device, &layout, &shader, color_format, Pass::Flat),
             buffer,
             bind_group,
         }
@@ -143,7 +148,12 @@ impl CloudPipeline {
     /// Expects the camera and texture groups to be bound already.
     pub(super) fn draw(&self, pass: &mut wgpu::RenderPass<'_>, draw: &CloudDraw) {
         pass.set_bind_group(2, &self.bind_group, &[]);
-        for pipeline in [&self.depth, &self.color] {
+        let passes = if draw.full {
+            [Some(&self.depth), Some(&self.color)]
+        } else {
+            [Some(&self.flat), None]
+        };
+        for pipeline in passes.into_iter().flatten() {
             pass.set_pipeline(pipeline);
             pass.draw(0..draw.vertices, 0..draw.instances);
         }
@@ -156,6 +166,8 @@ enum Pass {
     Depth,
     /// Blended where the depth pass left that surface.
     Color,
+    /// Depth and color at once (one flat layer).
+    Flat,
 }
 
 fn create_pipeline(
@@ -167,7 +179,11 @@ fn create_pipeline(
 ) -> wgpu::RenderPipeline {
     let depth = pass == Pass::Depth;
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some(if depth { "cloud depth" } else { "clouds" }),
+        label: Some(match pass {
+            Pass::Depth => "cloud depth",
+            Pass::Color => "clouds",
+            Pass::Flat => "flat clouds",
+        }),
         layout: Some(layout),
         vertex: wgpu::VertexState {
             module: shader,
@@ -179,12 +195,12 @@ fn create_pipeline(
         primitive: Default::default(),
         depth_stencil: Some(wgpu::DepthStencilState {
             format: DEPTH_FORMAT,
-            depth_write_enabled: Some(depth),
+            depth_write_enabled: Some(pass != Pass::Color),
             // Reverse-Z, like the blocks.
-            depth_compare: Some(if depth {
-                wgpu::CompareFunction::GreaterEqual
-            } else {
+            depth_compare: Some(if pass == Pass::Color {
                 wgpu::CompareFunction::Equal
+            } else {
+                wgpu::CompareFunction::GreaterEqual
             }),
             stencil: Default::default(),
             bias: Default::default(),

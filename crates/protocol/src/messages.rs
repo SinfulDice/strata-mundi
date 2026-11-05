@@ -5,6 +5,7 @@ use strata_core::content::{BlockId, EntityTypeId, Face, ItemId};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
 use strata_core::physics::{Body, MoveInput, MovementSettings};
+use strata_core::sky::DayCycleDef;
 
 /// Ticks between two `ServerMessage::DayTime` while the time goes on.
 pub const DAY_TIME_PERIOD: u64 = 20;
@@ -87,6 +88,18 @@ pub struct HotbarState {
     pub selected: u8,
 }
 
+/// The day of the player's dimension, given on arrival so the first image of the world
+/// already has its sky.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct DayState {
+    /// Ticks since the first sunrise.
+    pub time: u64,
+    /// Whether the time goes on.
+    pub flows: bool,
+    /// The server's cycle (bounded), whatever the client's packs say.
+    pub cycle: DayCycleDef,
+}
+
 /// State broadcast by the server.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ServerMessage {
@@ -100,6 +113,7 @@ pub enum ServerMessage {
         hotbar: HotbarState,
         /// Yaw and pitch, in radians.
         look: [f32; 2],
+        day: DayState,
     },
     /// Sent once per tick so the client can interpolate between ticks.
     Tick {
@@ -151,6 +165,26 @@ mod tests {
     fn round_trip<T: Serialize + serde::de::DeserializeOwned>(value: &T) -> T {
         let bytes = postcard::to_stdvec(value).unwrap();
         postcard::from_bytes(&bytes).unwrap()
+    }
+
+    #[test]
+    fn the_day_cycle_survives_serialization() {
+        let day = DayState {
+            time: 123_456,
+            flows: true,
+            cycle: DayCycleDef {
+                length: 30_000,
+                day_share: 0.62,
+                twilight: 0.04,
+                night_light: 0.15,
+            },
+        };
+        assert_eq!(round_trip(&day), day);
+        let time = ServerMessage::DayTime {
+            time: 9,
+            cycle: false,
+        };
+        assert_eq!(round_trip(&time), time);
     }
 
     #[test]

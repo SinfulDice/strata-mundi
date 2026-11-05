@@ -8,7 +8,7 @@ mod worlds;
 
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{
-    ClientMessage, DAY_TIME_PERIOD, EntityState, HotbarState, NetEntity, ServerMessage,
+    ClientMessage, DAY_TIME_PERIOD, DayState, EntityState, HotbarState, NetEntity, ServerMessage,
 };
 pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};
 
@@ -17,4 +17,4 @@ pub const MIN_VIEW_DISTANCE: u32 = 2;
 pub const MAX_VIEW_DISTANCE: u32 = 32;
 
 /// Bumped whenever a message changes in an incompatible way.
-pub const PROTOCOL_VERSION: u32 = 4;
+pub const PROTOCOL_VERSION: u32 = 5;

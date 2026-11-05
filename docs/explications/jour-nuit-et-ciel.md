@@ -18,7 +18,7 @@ graph LR
     F --> S[Angle du soleil]
     F --> L[Clarté du ciel : 0,2 à 1]
     F --> G[Lueur du crépuscule]
-    T --> P[Phase de la lune : numéro du jour modulo 8]
+    T --> P[Phase de la lune : jours comptés de midi à midi, modulo 8]
     T --> N[Dérive des nuages]
 ```
 
@@ -39,23 +39,23 @@ Tout est **borné** : un pack ne peut pas demander un jour de 0 tick ni une nuit
 2. Une courbe douce (*smoothstep*) la transforme en 0 (nuit) à 1 (jour), avec une transition progressive autour du lever et du coucher.
 3. Le facteur final vaut `night_light + (1 − night_light) × cette valeur` : il ne descend jamais sous 0,2 et ne fait jamais de saut. Un test le vérifie tick par tick, y compris avec des jours très inégaux (70 % de jour).
 
-Le soleil fait un demi-tour pendant le jour et un demi-tour pendant la nuit, quelle que soit la part du jour : il se lève à l'est, passe haut vers le sud (le chemin est penché de `path_tilt` degrés) et se couche à l'ouest. La lune est à l'opposé. Elle a **8 phases**, une par jour (la nuit comprise), de pleine à nouvelle puis de nouveau pleine.
+Le soleil fait un demi-tour pendant le jour et un demi-tour pendant la nuit, quelle que soit la part du jour : il se lève à l'est, passe haut vers le sud (le chemin est penché de `path_tilt` degrés) et se couche à l'ouest. La lune est à l'opposé. Elle a **8 phases**, une par nuit, de pleine à nouvelle puis de nouveau pleine. La phase change **à midi**, quand la lune est sous l'horizon : on ne la voit jamais changer.
 
 ### Le temps voyage du serveur au client
 
-Le serveur est seul maître de l'heure (il la sauvegarde dans `world.ron`, champ `day_time`). Elle avance à chaque tick joué, donc elle **gèle en pause**. Il l'envoie dans un message `DayTime` à l'arrivée du joueur, toutes les 20 ticks (une fois par seconde) et après chaque commande.
+Le serveur est seul maître de l'heure (il la sauvegarde dans `world.ron`, champ `day_time`). Elle avance à chaque tick joué, donc elle **gèle en pause**. À l'arrivée du joueur, le message de bienvenue (`Welcome`) contient l'heure **et le cycle du serveur** (durée, part du jour, crépuscule, lumière de nuit) : le client calcule le ciel avec les règles du serveur, pas avec ses propres packs, et connaît l'heure dès la première image. Ensuite, un message `DayTime` arrive toutes les 20 ticks (une fois par seconde) et après chaque commande.
 
 Entre deux messages, le client ne reste pas figé (le soleil sauterait chaque seconde) : sa propre horloge, `DayClock`, avance toute seule au rythme de 20 ticks par seconde.
 
 - Si elle est en retard, elle accélère (jusqu'à deux fois) ; en avance, elle ralentit, jusqu'à s'arrêter. **Elle ne recule jamais.**
-- Elle ne dépasse pas le dernier message de plus d'une seconde et demie : quand le serveur s'arrête (pause), elle s'arrête aussi.
+- En pause, elle s'arrête tout de suite ; et elle ne dépasse jamais le dernier message de plus d'une seconde et demie (si le serveur s'arrête, elle s'arrête aussi).
 - Un écart de plus de 200 ticks (typiquement `/time set`) est rejoint d'un coup.
 
 ### Dessiner le ciel
 
 À chaque image, le client calcule un `SkyFrame` : toutes les couleurs et directions du moment. Les couleurs du fichier de ciel (`skies/terra.ron`) sont mélangées entre le jeu de couleurs de nuit et celui de jour selon la clarté, puis tirées vers celui du **crépuscule** (horizon orangé du côté du soleil) selon la lueur.
 
-Le ciel est dessiné par **un seul triangle plein écran** (`sky.wgsl`), en premier, sans profondeur : tout le reste se dessine par-dessus. Pour chaque pixel, le shader retrouve la direction regardée, puis ajoute :
+Le ciel est dessiné par **un seul triangle plein écran** (`sky.wgsl`) posé sur le plan le plus lointain, **après** les blocs opaques : le test de profondeur ne laisse calculer que les pixels où rien n'a été dessiné (inutile de colorier le ciel derrière une montagne). Pour chaque pixel, le shader retrouve la direction regardée, puis ajoute :
 
 - un dégradé zénith (en haut) vers horizon ;
 - la lueur orangée près de l'horizon, côté soleil ;
@@ -75,7 +75,7 @@ Le fichier de ciel peut contenir une section `clouds` (hauteur, épaisseur, tail
 - **Pas de maillage** : une grille d'instances suit la caméra, une par cellule de 12 blocs. Le *vertex shader* tire pour chaque cellule une valeur de bruit (deux échelles) ; si elle est sous la couverture, la cellule est réduite à rien. Cela donne des nuages en carrés façon pixel art.
 - **Dérive** : le motif glisse à `vitesse × temps du monde`. Même heure, mêmes nuages ; en pause, ils s'arrêtent.
 - **Motif répété** toutes les 256 cellules, avec la position de la caméra calculée en grande précision : pas de tremblement loin de l'origine.
-- **Deux passes** : d'abord la profondeur seule, puis la couleur là où la profondeur est exactement la même. Résultat : une seule surface par pixel, donc des nuages translucides qui ne s'empilent pas en zones plus sombres.
+- **Deux passes** (mode complet) : d'abord la profondeur seule, puis la couleur là où la profondeur est exactement la même. Résultat : une seule surface par pixel, donc des nuages translucides qui ne s'empilent pas en zones plus sombres. En mode simple, une couche plate ne peut pas se recouvrir : une seule passe suffit.
 - Couleur : de la teinte de nuit à celle de jour selon la clarté, rosée au crépuscule, fondue dans le brouillard au loin.
 
 Réglages : **étoiles** (oui/non, coupées en « très bas ») et **nuages** (désactivés, simples = une face plate par cellule, complets = boîtes avec dessus, dessous et côtés ombrés). Ils s'appliquent à chaud.

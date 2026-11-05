@@ -23,7 +23,7 @@ struct Sky {
     across: vec4<f32>,
     // Sun texture layer, moon texture layer, moon phase (0 full, 4 new).
     bodies: vec4<u32>,
-    // x: how much stars twinkle.
+    // x: how much stars twinkle; y: seconds wrapped on a full turn (2π).
     stars: vec4<f32>,
 };
 
@@ -99,8 +99,9 @@ fn star(dir: vec3<f32>) -> f32 {
     if h.x >= sky.glow.w {
         return 0.0;
     }
-    let speed = 1.0 + 2.5 * h.z;
-    let flicker = 1.0 - sky.stars.x * 0.5 * (1.0 + sin(camera.effects.x * speed + h.y * 2.0 * PI));
+    // Whole speeds, so the time wrapping on a turn never makes a star jump.
+    let speed = 1.0 + floor(h.z * 3.0);
+    let flicker = 1.0 - sky.stars.x * 0.5 * (1.0 + sin(sky.stars.y * speed + h.y * 2.0 * PI));
     return visibility * (0.35 + 0.65 * h.y) * flicker;
 }
 

@@ -19,7 +19,7 @@ mod ui_pipeline;
 
 pub use gpu::{Gpu, GpuError};
 pub use offscreen::{OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError};
-pub(crate) use options::srgb_to_linear;
+pub(crate) use options::linear_rgb;
 pub use options::{Immersion, RenderOptions};
 pub use post::PostProcess;
 pub use surface::{Acquired, WindowSurface};
@@ -36,7 +36,7 @@ pub use frustum::in_vertical_range;
 use glam::DVec3;
 use mesh::GpuMesh;
 pub use model_pipeline::ModelPipeline;
-use options::{FOG_START, IMMERSED_FOG_LEAD, MIN_AMBIENT, TIME_WRAP, linear_rgb};
+use options::{FOG_START, IMMERSED_FOG_LEAD, MIN_AMBIENT, TIME_WRAP};
 use outline::OutlinePipeline;
 use sky_pipeline::SkyPipeline;
 use std::collections::HashMap;
@@ -70,6 +70,9 @@ pub struct Renderer {
     pub immersion: Option<Immersion>,
     /// Seconds since start (wrapped), for animated liquids.
     time: f32,
+    /// Seconds wrapped on a full turn: stars twinkle at whole multiples of it, so the
+    /// wrap never shows.
+    star_time: f32,
     /// The sky of this frame. Its light (1 by day, dimmer at night) is applied in the
     /// shader, so the night falls without meshing again.
     pub sky: SkyFrame,
@@ -127,6 +130,7 @@ impl Renderer {
             options: RenderOptions::default(),
             immersion: None,
             time: 0.0,
+            star_time: 0.0,
             sky: SkyFrame::default(),
             sky_pipeline,
             clouds,
@@ -180,6 +184,7 @@ impl Renderer {
 
     pub fn advance_time(&mut self, seconds: f32) {
         self.time = (self.time + seconds).rem_euclid(TIME_WRAP);
+        self.star_time = (self.star_time + seconds).rem_euclid(std::f32::consts::TAU);
     }
 
     /// Fog over the horizontal distance into the sky, or a thick full-distance fog of the
@@ -239,7 +244,7 @@ impl Renderer {
         let clouds = self.cloud_draw(camera).filter(|_| draw_sky);
         if draw_sky {
             self.sky_pipeline
-                .write(&gpu.queue, &self.sky, view_projection);
+                .write(&gpu.queue, &self.sky, view_projection, self.star_time);
         }
         if let Some(clouds) = &clouds {
             self.clouds.write(&gpu.queue, clouds);
@@ -268,11 +273,6 @@ impl Renderer {
             occlusion_query_set: None,
             multiview_mask: None,
         });
-        if draw_sky {
-            // With the eyes in a liquid, its fog hides the sky.
-            self.blocks.set_groups(&mut pass);
-            self.sky_pipeline.draw(&mut pass);
-        }
         self.blocks.bind(&mut pass, BlockPass::Cutout);
         for section in self.visible_sections(camera, &frustum) {
             if let Some(mesh) = &section.cutout {
@@ -281,6 +281,12 @@ impl Renderer {
             }
         }
         self.models.draw(&mut pass, &self.blocks);
+        if draw_sky {
+            // Only where nothing opaque was drawn; with the eyes in a liquid, its fog
+            // hides the sky.
+            self.blocks.set_groups(&mut pass);
+            self.sky_pipeline.draw(&mut pass);
+        }
         if let Some(block) = self.outline {
             let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
             self.outline_pipeline

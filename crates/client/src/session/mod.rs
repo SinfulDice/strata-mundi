@@ -251,7 +251,7 @@ impl Session {
             }
             Stage::Playing(world) => {
                 world.set_paused(pause);
-                if let Some(day) = &mut world.game.day {
+                if let Some(day) = world.game.day.as_mut().filter(|_| !pause) {
                     day.advance(frame_seconds);
                 }
                 let wanted = settled_columns(self.applied.graphics.render_distance);

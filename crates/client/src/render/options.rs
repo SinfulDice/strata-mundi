@@ -8,7 +8,7 @@ use strata_core::coords::SECTION_SIZE;
 /// Fog starts at this fraction of the render distance.
 pub(super) const FOG_START: f32 = 0.6;
 
-pub(crate) fn srgb_to_linear(c: u8) -> f64 {
+fn srgb_to_linear(c: u8) -> f64 {
     let c = f64::from(c) / 255.0;
     if c <= 0.04045 {
         c / 12.92
@@ -17,7 +17,7 @@ pub(crate) fn srgb_to_linear(c: u8) -> f64 {
     }
 }
 
-pub(super) fn linear_rgb([r, g, b]: [u8; 3]) -> Vec3 {
+pub(crate) fn linear_rgb([r, g, b]: [u8; 3]) -> Vec3 {
     Vec3::from_array([r, g, b].map(|c| srgb_to_linear(c) as f32))
 }
 

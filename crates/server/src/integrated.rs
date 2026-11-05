@@ -14,8 +14,8 @@ use strata_core::content::Content;
 use strata_core::dimension::DimensionId;
 use strata_core::sky::DayCycle;
 use strata_protocol::{
-    ClientMessage, DAY_TIME_PERIOD, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE, ServerConnection,
-    ServerMessage,
+    ClientMessage, DAY_TIME_PERIOD, DayState, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE,
+    ServerConnection, ServerMessage,
 };
 use strata_worldgen::Generator;
 
@@ -41,7 +41,6 @@ pub struct IntegratedServer {
     /// Capture sent with `Disconnect`, written by the final save.
     leaving_icon: Option<Vec<u8>>,
     content: Arc<Content>,
-    cycle: DayCycle,
 }
 
 impl IntegratedServer {
@@ -88,6 +87,11 @@ impl IntegratedServer {
                 border: game.border,
                 hotbar: game.hotbar(),
                 look: game.look(),
+                day: DayState {
+                    time: meta.day_time,
+                    flows: meta.day_cycle,
+                    cycle: config.content.day_cycle(&config.dimension).def(),
+                },
             });
             for message in game.take_entity_messages() {
                 connection.send(message);
@@ -99,7 +103,6 @@ impl IntegratedServer {
             None => RegionStore::in_memory(names),
         };
         let workers = GenerationWorkers::spawn(config.generation_threads, config.generator)?;
-        let cycle = config.content.day_cycle(&config.dimension);
         let server = Self {
             connection,
             loader: ColumnLoader::new(workers, store),
@@ -110,7 +113,6 @@ impl IntegratedServer {
             paused: false,
             tick: 0,
             leaving_icon: None,
-            cycle,
             content: config.content,
         };
         server.send_day_time();
@@ -207,11 +209,12 @@ impl IntegratedServer {
     }
 
     fn run_command(&mut self, line: &str) {
+        let cycle = self.day_cycle();
         let mut console = Console {
             game: &mut self.game,
             meta: &mut self.persistence.meta,
             content: &self.content,
-            cycle: self.cycle,
+            cycle,
         };
         let ran = console.run(line);
         tracing::info!(line, answer = %ran.feedback.key, "command");
@@ -220,6 +223,11 @@ impl IntegratedServer {
         }
         self.connection.send(ServerMessage::Feedback(ran.feedback));
         self.send_day_time();
+    }
+
+    /// The cycle of the player's dimension, as it is now.
+    fn day_cycle(&self) -> DayCycle {
+        self.content.day_cycle(&self.dimension)
     }
 
     fn send_day_time(&self) {

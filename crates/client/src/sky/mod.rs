@@ -5,9 +5,9 @@ mod clock;
 
 pub use clock::DayClock;
 
-use crate::render::srgb_to_linear;
+use crate::render::linear_rgb;
 use glam::{DVec2, Vec3};
-use strata_core::sky::{Clouds, DayCycle, Sky};
+use strata_core::sky::{Clouds, DayCycle, Moment, Sky};
 use strata_core::texture::Rgba;
 
 /// Share of the twilight color taken by the whole sky (the glow itself is on the
@@ -84,26 +84,13 @@ pub struct SkyFrame {
 impl Default for SkyFrame {
     /// The plain blue sky of the title screen before any world, without sun.
     fn default() -> Self {
-        let blue = linear(Rgba([0x78, 0xa7, 0xff, 255]));
-        Self {
-            zenith: blue,
-            horizon: blue,
-            glow: blue,
-            glow_strength: 0.0,
-            fog: blue,
-            light: 1.0,
-            sun: Vec3::Y,
-            across: Vec3::Z,
-            sun_size: 0.0,
-            moon_size: 0.0,
-            sun_layer: 0,
-            moon_layer: 0,
-            moon_phase: 0,
-            stars: 0.0,
-            star_density: 0.0,
-            star_twinkle: 0.0,
-            clouds: None,
-        }
+        let cycle = DayCycle::default();
+        Self::at(
+            &Sky::fallback(),
+            &cycle,
+            cycle.moment(Moment::Noon) as f64,
+            false,
+        )
     }
 }
 
@@ -156,14 +143,13 @@ fn sun_basis(angle: f32, tilt: f32) -> (Vec3, Vec3) {
 }
 
 fn linear(Rgba([r, g, b, _]): Rgba) -> Vec3 {
-    Vec3::from_array([r, g, b].map(|c| srgb_to_linear(c) as f32))
+    linear_rgb([r, g, b])
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
-    use strata_core::sky::Moment;
 
     fn terra() -> (Sky, DayCycle) {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");

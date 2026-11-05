@@ -22,20 +22,23 @@ impl Session {
 
     /// The sky of the world being played at its time, or of the title panorama in the
     /// morning.
+    /// The day cycle is the server's; the looks of the sky are the client's own.
     pub(super) fn sky_frame(&self) -> SkyFrame {
-        let (dimension, time) = match &self.stage {
+        let (dimension, cycle, time) = match &self.stage {
             Stage::Title(title) => {
                 let cycle = self.content.day_cycle(&title.dimension);
-                (&title.dimension, cycle.moment(Moment::Day) as f64)
+                (&title.dimension, cycle, cycle.moment(Moment::Day) as f64)
             }
-            Stage::Playing(world) => match (&world.game.dimension, &world.game.day) {
-                (Some(dimension), Some(day)) => (dimension, day.time()),
-                _ => return self.renderer.sky,
-            },
+            Stage::Playing(world) => {
+                let game = &world.game;
+                match (&game.dimension, game.day_cycle, &game.day) {
+                    (Some(dimension), Some(cycle), Some(day)) => (dimension, cycle, day.time()),
+                    _ => return self.renderer.sky,
+                }
+            }
             Stage::Empty => return self.renderer.sky,
         };
         let sky = self.content.sky(dimension);
-        let cycle = self.content.day_cycle(dimension);
         SkyFrame::at(&sky, &cycle, time, self.applied.graphics.stars)
     }
 

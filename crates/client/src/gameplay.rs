@@ -18,6 +18,7 @@ use strata_core::cinematic::Cinematic;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
 use strata_core::dimension::DimensionId;
 use strata_core::physics::{EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
+use strata_core::sky::DayCycle;
 use strata_protocol::commands::Feedback;
 use strata_protocol::{ClientConnection, ClientMessage, HotbarState, ServerMessage};
 
@@ -42,6 +43,8 @@ pub struct Gameplay {
     pub dimension: Option<DimensionId>,
     /// The world time, once the server has given it.
     pub day: Option<DayClock>,
+    /// The server's day cycle (not the client's packs), from the welcome message.
+    pub day_cycle: Option<DayCycle>,
     player: Option<LocalPlayer>,
     border: i32,
     /// Last hotbar sent to the server, to send only changes.
@@ -67,6 +70,7 @@ impl Gameplay {
             feedback: Vec::new(),
             dimension: None,
             day: None,
+            day_cycle: None,
             player: None,
             border: DEFAULT_WORLD_BORDER,
             sent_hotbar: HotbarState::default(),
@@ -87,8 +91,11 @@ impl Gameplay {
                 border,
                 hotbar,
                 look,
+                day,
             } => {
                 self.dimension = Some(dimension);
+                self.day = Some(DayClock::at(day.time, day.flows));
+                self.day_cycle = Some(DayCycle::new(&day.cycle));
                 self.border = border;
                 (self.camera.yaw, self.camera.pitch) = (look[0], look[1]);
                 self.hotbar.restore(&hotbar);
