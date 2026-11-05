@@ -36,11 +36,12 @@ graph LR
 2. **Faces visibles** : une face est dessinée seulement si le bloc d'à côté n'est pas opaque. Entre deux blocs transparents identiques (eau contre eau, verre contre verre), la face est cachée ; les feuilles gardent la leur (`cull_same: false`).
 3. **Fusion gloutonne** (*greedy meshing*) : dans chaque tranche, les faces voisines identiques (même texture, même ombrage) sont fusionnées en un seul grand rectangle. Un sol plat de 16×16 devient 2 triangles au lieu de 512. La texture se répète simplement sur le rectangle.
 4. **Occlusion ambiante** : chaque coin de face regarde ses trois voisins devant lui ; plus il y a de blocs, plus le coin est sombre (4 niveaux). C'est ce qui assombrit doucement le pied d'un arbre ou le fond d'un couloir. La diagonale de chaque carré est choisie pour éviter un dégradé de travers. Réglable (0 = désactivée).
-5. **Deux maillages** : opaque et « découpé » (feuilles, verre : pixels gardés ou jetés) d'un côté, **translucide** (eau, glace : mélangée) de l'autre. Le translucide est dessiné après, des sections lointaines aux proches, sans écrire la profondeur.
+5. **Plantes en croix** : les blocs `Cross` (herbes, fleurs) sont mis de côté avant la fusion : deux plans diagonaux, chacun émis dans les deux sens (8 sommets), sans occlusion ni masquage de voisines. Voir [Biomes et végétation](biomes-et-vegetation.md).
+6. **Deux maillages** : opaque et « découpé » (feuilles, verre : pixels gardés ou jetés) d'un côté, **translucide** (eau, glace : mélangée) de l'autre. Le translucide est dessiné après, des sections lointaines aux proches, sans écrire la profondeur.
 
 ### Format des sommets
 
-Chaque sommet tient en **8 octets** : position dans la section (0 à 16), face, occlusion, répétition de texture, numéro de couche de texture. Le shader décode ces bits. La position de la section est envoyée à part (relative à la caméra). C'est 3,5 fois moins qu'un sommet « classique » : moins de mémoire GPU, important pour le DS.
+Chaque sommet tient en **8 octets** : position dans la section (0 à 16), face (0 à 5, ou 6 pour une plante en croix, éclairée à plat), occlusion, répétition de texture, numéro de couche de texture. Le shader décode ces bits. La position de la section est envoyée à part (relative à la caméra). C'est 3,5 fois moins qu'un sommet « classique » : moins de mémoire GPU, important pour le DS.
 
 ### Threads
 
@@ -54,7 +55,7 @@ Mesures (`cargo bench -p strata-client`, machine cloud) : ~0,27 ms par section d
 |---|---|
 | Sections, palette, colonnes | `crates/core/src/chunk/` (`Section`, `PackedArray`, `Column`) |
 | Monde côté client | `crates/client/src/world.rs` (`ClientWorld`) |
-| Mailleur | `crates/client/src/mesher/` (`greedy.rs`, `neighborhood.rs`, `vertex.rs`) |
+| Mailleur | `crates/client/src/mesher/` (`greedy.rs`, `cross.rs`, `neighborhood.rs`, `vertex.rs`) |
 | Threads de maillage | `crates/client/src/mesher/workers.rs`, `crates/client/src/mesh_scheduler.rs` |
 | Rendu des sections | `crates/client/src/render/mod.rs`, `block_pipeline.rs`, `shaders/block.wgsl` |
 | Benchmarks | `crates/client/benches/meshing.rs` |

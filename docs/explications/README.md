@@ -14,6 +14,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 8. [Génération du monde](generation-du-monde.md) : climat, relief, biomes, grottes, arbres.
    - [Relief](relief.md) : courbes du climat, densité 3D, falaises, plateaux, rivières, carte `--map`.
    - [Grottes](grottes.md) : spaghetti, nouilles, cavernes, ravins, aquifères, lave, toits sous les mers.
+   - [Biomes et végétation](biomes-et-vegetation.md) : les 18 biomes, plantes en croix, touffes, formes d'arbres, strates des badlands.
 9. [Monde infini](monde-infini.md) : chargement autour du joueur, frustum.
 10. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
 11. [ECS](ecs.md) : entités et composants du serveur.
@@ -48,7 +49,7 @@ graph TD
 | Crate | Rôle | Dépend de |
 |---|---|---|
 | `core` | Types purs du jeu : coordonnées, blocs, chunks, registres, packs. Aucune fenêtre ni carte graphique : testable partout. | — |
-| `worldgen` | Fabrique le terrain à partir d'une graine (seed) : climat, relief, biomes, grottes, arbres, carte vue du ciel. Même graine = même monde. | `core` |
+| `worldgen` | Fabrique le terrain à partir d'une graine (seed) : climat, relief, biomes, grottes, arbres, plantes, carte vue du ciel. Même graine = même monde. | `core` |
 | `protocol` | Les messages échangés entre client et serveur. | `core` |
 | `server` | Le « maître du jeu » : simule le monde 20 fois par seconde, décide de tout, sauvegarde. | `core`, `worldgen`, `protocol` |
 | `client` | Ce que voit et touche le joueur : affichage, clavier, manette, menus. Il ne modifie jamais le monde lui-même, il **demande** au serveur. | `core`, `protocol` |

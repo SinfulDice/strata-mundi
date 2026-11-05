@@ -21,19 +21,11 @@ Quatre grandes « cartes » de bruit (des valeurs qui varient doucement d'un end
 
 - Mer à **y = 120**, côtes, plaines, collines, **plateaux en terrasses**, **rivières**, et des **montagnes** jusqu'à ~400 avec falaises et surplombs là où l'érosion est faible.
 - Depuis la v0.2, le relief vient de **courbes réglables dans le pack** et d'une **densité 3D** autour de la surface : tout est expliqué dans [Relief](relief.md).
-- Chaque biome est un point dans l'espace « température, humidité, continentalité, érosion » ; on prend le plus proche parmi ceux dont les conditions sont remplies (plage de hauteur, lit de rivière).
+- Chaque biome est un point dans l'espace « température, humidité, continentalité, érosion » ; on prend le plus proche parmi ceux dont les conditions sont remplies (`min_height` / `max_height`, lit de rivière).
 
 ### Les biomes
 
-| Biome | Surface | Particularités |
-|---|---|---|
-| Plaines | herbe | quelques chênes, lieu de départ possible |
-| Forêt | herbe | chênes denses, lieu de départ possible |
-| Désert | sable, grès dessous | cactus |
-| Océan | sable, gravier au fond | eau jusqu'à y = 120 |
-| Montagnes | herbe, puis pierre (≥ 200) et neige (≥ 265) | sapins |
-| Toundra enneigée | herbe enneigée | eau gelée en surface, sapins |
-| Rivière | herbe, sable au fond | seulement sur le lit des rivières (v0.2) |
+Il y a **18 biomes** : plaines, prairie fleurie, forêt, forêt de bouleaux, taïga, toundra enneigée, désert, savane, jungle, marais, badlands, montagnes, pics enneigés, océan, océan profond, plage, rivière et champs de champignons. La liste détaillée, les conditions de hauteur et les strates sont dans [Biomes et végétation](biomes-et-vegetation.md).
 
 Sur les pentes raides, la surface devient de la roche nue (voir [Relief](relief.md)).
 
@@ -45,7 +37,7 @@ Tout est décrit dans le pack : `biomes/*.ron` (climat, blocs, éléments, coule
 2. **Grottes** : tunnels « spaghetti », nouilles, grandes cavernes, ravins, nappes d'eau souterraines et lave en profondeur, sans jamais ouvrir une mer ou une rivière. Détails dans [Grottes](grottes.md).
 3. **Minerais** en petits filons, chacun dans sa plage de hauteur (charbon partout, diamant tout en bas) ; dans la roche profonde, c'est la variante « profonde ».
    **Grands gisements** (`Deposit`, liste `deposits` de `terra.ron`) : le monde est découpé en cellules de 256 blocs ; un hachage de chaque cellule décide si elle contient une veine géante (fer ou cuivre), son centre, sa longueur (40-80 blocs), son épaisseur (6-10) et son orientation. La veine est une lentille autour d'un segment, gonflée par un bruit 3D, faite de roche de remplissage (roche ferrugineuse, roche vert-de-gris) avec ~35 % de minerai ; elle ne remplace que la pierre et la roche profonde. Au-dessus de son empreinte, 5 % des blocs de surface à l'air libre deviennent cette roche : le signe à repérer. Chaque colonne regarde les cellules voisines, donc le résultat ne dépend pas de l'ordre de génération.
-4. **Arbres et cactus** : chaque colonne place les éléments enracinés chez elle **et chez ses 8 voisines**, en n'écrivant que la partie qui tombe chez elle. Ainsi un arbre à cheval sur deux colonnes est toujours entier, dans n'importe quel ordre de génération. La hauteur du sol d'une voisine est recalculée exactement (`surface_height`, voir [Relief](relief.md)), surplombs compris.
+4. **Arbres, cactus et plantes** (formes d'arbres, touffes d'herbes et de fleurs : [Biomes et végétation](biomes-et-vegetation.md)) : chaque colonne place les éléments enracinés chez elle **et chez ses 8 voisines**, en n'écrivant que la partie qui tombe chez elle. Ainsi un arbre à cheval sur deux colonnes est toujours entier, dans n'importe quel ordre de génération. La hauteur du sol d'une voisine est recalculée exactement (`surface_height`, voir [Relief](relief.md)), surplombs compris.
 
 Tout le hasard vient de générateurs **initialisés par la graine et la position** de la colonne : rien ne dépend de l'ordre de génération ni du thread utilisé.
 
@@ -65,7 +57,9 @@ Mesures : ~2 ms par colonne (`cargo bench -p strata-worldgen`).
 | Relief (courbes, densité 3D, carte) | voir [Relief](relief.md) |
 | Colonne complète | `crates/worldgen/src/generator.rs` (`Generator::generate`) |
 | Grottes | `crates/worldgen/src/caves/` (voir [Grottes](grottes.md)) |
-| Minerais, arbres | `crates/worldgen/src/features.rs` |
+| Minerais, arbres, cactus | `crates/worldgen/src/features.rs`, `trees.rs` |
+| Plantes en touffes | `crates/worldgen/src/plants.rs` |
+| Strates et surface | `crates/worldgen/src/surface.rs` |
 | Grands gisements | `crates/worldgen/src/deposits/` |
 | Point de départ | `crates/worldgen/src/spawn.rs` |
 | Tests (déterminisme, biomes, départ) | `crates/worldgen/tests/generation.rs` |
