@@ -18,12 +18,12 @@ graph LR
 1. **Initialisation** (`Gpu`) : on choisit une carte graphique compatible Vulkan et on ouvre un *device* (pour créer des ressources) et une *queue* (pour envoyer du travail).
 2. **Ressources** : les textures 16×16 générées par le code sont rangées dans un **tableau de textures** (une couche par texture). Les sommets du cube sont envoyés une fois dans un *buffer*.
 3. **Pipeline** : il décrit comment dessiner : quel *shader* (petit programme exécuté par la carte graphique, écrit en WGSL dans `shaders/block.wgsl`), quel format de sommets, test de profondeur, faces arrière ignorées (*culling*).
-4. **Chaque image** : on écrit la matrice de la caméra, on ouvre une *passe de rendu* qui efface l'image en bleu ciel, on dessine chaque objet, on soumet, on présente.
+4. **Chaque image** : on écrit la matrice de la caméra, on ouvre une *passe de rendu* qui efface l'image à la couleur de l'horizon du moment, on dessine le ciel (un triangle plein écran), puis les blocs, les nuages et le reste, on soumet, on présente. Voir [Jour, nuit et ciel](jour-nuit-et-ciel.md).
 
 Choix importants :
 - **Rendu relatif à la caméra** : la position du joueur est gardée en `f64` (très précise). Au moment de dessiner, on calcule la position de chaque objet *par rapport à la caméra* et on l'envoie à la carte graphique (en `f32`, moins précis mais suffisant pour des petites distances). Sans ça, à des millions de blocs de l'origine, l'image tremblerait.
 - **Reverse-Z et plan lointain infini** : la profondeur est stockée « à l'envers » (proche = 1, loin = 0), ce qui donne une précision presque uniforme jusqu'à l'horizon : pas de scintillement des faces lointaines.
-- **Couleurs sRGB** : les textures et l'image finale sont en sRGB (l'espace de couleur des écrans) ; la carte graphique fait les conversions. La couleur du ciel est donc convertie en « linéaire » avant d'être donnée.
+- **Couleurs sRGB** : les textures et l'image finale sont en sRGB (l'espace de couleur des écrans) ; la carte graphique fait les conversions. Les couleurs du ciel sont donc converties en « linéaire » avant d'être données.
 - **Ombrage par face** : comme Minecraft, le dessus est le plus clair, les côtés plus sombres, le dessous le plus sombre.
 - **Lumière** : chaque sommet porte un niveau de ciel et un niveau de blocs ; `shaders/light.wgsl`, ajouté à `block.wgsl` et `model.wgsl`, les convertit en couleur (courbe, luminosité, plancher d'ambiance, teinte chaude des torches). Un uniforme de la caméra, `light`, donne le facteur du ciel, la luminosité et le plancher. Voir [Lumière](lumiere.md).
 - **Perte de surface** : si la fenêtre est redimensionnée, minimisée ou si le système « perd » la surface d'affichage, on la reconfigure et on saute l'image au lieu de planter.
@@ -38,6 +38,8 @@ Choix importants :
 | Fenêtre et swapchain | `crates/client/src/render/surface.rs` (`WindowSurface`) |
 | Pipeline des blocs | `crates/client/src/render/block_pipeline.rs`, `shaders/block.wgsl` |
 | Lumière des shaders | `crates/client/src/render/shaders/light.wgsl` |
+| Ciel (soleil, lune, étoiles) | `crates/client/src/render/sky_pipeline.rs`, `shaders/sky.wgsl` |
+| Nuages | `crates/client/src/render/cloud_pipeline.rs`, `shaders/clouds.wgsl` |
 | Sommets, cube | `crates/client/src/render/mesh.rs` (`BlockVertex`, `cube`) |
 | Tableau de textures | `crates/client/src/render/texture_array.rs` |
 | Image complète | `crates/client/src/render/mod.rs` (`Renderer::render`) |

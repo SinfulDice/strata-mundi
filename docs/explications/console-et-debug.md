@@ -16,7 +16,8 @@ Une ligne de saisie en bas de l'écran, les réponses au-dessus :
 | `/tp <x> <y> <z>` | téléporte ; `~` = sa propre coordonnée, `~5` = 5 blocs plus loin | serveur |
 | `/give <objet>` | met l'objet dans la case choisie (`stone` = `strata:stone`) | serveur |
 | `/gamemode <creative\|survival>` | mode de jeu (survie en v0.3) | serveur |
-| `/time <set\|add\|query> [valeur]` | heure du monde : `day`, `noon`, `night`, `midnight` ou un nombre de ticks (une journée = 24 000 ticks = 20 minutes) | serveur |
+| `/time <set\|add\|query> [valeur]` | heure du monde : `day`, `noon`, `night`, `midnight` ou un nombre de ticks (une journée = 24 000 ticks = 20 minutes) ; `set` avance toujours jusqu'au prochain moment demandé, sans retour en arrière ; `query` donne l'heure, la durée et le numéro du jour | serveur |
+| `/daycycle <on\|off\|query>` | arrête ou relance l'écoulement du temps (sauvegardé avec le monde) | serveur |
 | `/seed` | graine du monde | serveur |
 | `/cinematic <id>` | joue une cinématique des packs | client |
 
