@@ -22,6 +22,8 @@ pub struct LocalPlayer {
     jump_was_held: bool,
     /// A double tap waiting for the next tick (frames usually outnumber ticks).
     toggle_pending: bool,
+    /// Sitting in a boat: the server moves the body, inputs only steer.
+    pub riding: bool,
 }
 
 impl LocalPlayer {
@@ -36,6 +38,7 @@ impl LocalPlayer {
             since_jump_press: f64::INFINITY,
             jump_was_held: false,
             toggle_pending: false,
+            riding: false,
         }
     }
 
@@ -60,7 +63,9 @@ impl LocalPlayer {
             self.sequence = self.sequence.wrapping_add(1);
             input.toggle_flight = std::mem::take(&mut self.toggle_pending);
             self.previous = self.body;
-            step(&mut self.body, &input, &self.movement, terrain);
+            if !self.riding {
+                step(&mut self.body, &input, &self.movement, terrain);
+            }
             self.pending.push_back((self.sequence, input));
             if self.pending.len() > MAX_PENDING {
                 self.pending.pop_front();
@@ -80,7 +85,7 @@ impl LocalPlayer {
             self.pending.pop_front();
         }
         let mut body = server;
-        for (_, input) in &self.pending {
+        for (_, input) in self.pending.iter().filter(|_| !self.riding) {
             step(&mut body, input, &self.movement, terrain);
         }
         if body.position.distance(self.body.position) > 1e-3 {
@@ -147,6 +152,20 @@ mod tests {
         forced.on_ground = true;
         client.reconcile(sent.last().unwrap().0, forced, &floor);
         assert_eq!(client.body.position, forced.position);
+    }
+
+    #[test]
+    fn a_rider_follows_the_server_without_walking() {
+        let mut client = LocalPlayer::new(Body::at(DVec3::ZERO), settings());
+        client.riding = true;
+        let sent = client.advance(0.2, forward(), &floor);
+        assert_eq!(client.body.position, DVec3::ZERO, "inputs only steer");
+        let seat = Body::at(DVec3::new(3.0, 1.0, 0.0));
+        client.reconcile(sent[0].0, seat, &floor);
+        assert_eq!(
+            client.body.position, seat.position,
+            "no replay while riding"
+        );
     }
 
     #[test]

@@ -73,10 +73,14 @@ impl Screens {
                 Some(game) => HudModel {
                     hotbar: &game.hotbar,
                     target: aimed_block_name(game, content, &language),
+                    mount: game
+                        .is_riding()
+                        .then(|| content.translations.text(&language, "hud-dismount")),
                 },
                 None => HudModel {
                     hotbar: &sample,
                     target: Some(content.translations.text(&language, "ui-editor-sample")),
+                    mount: Some(content.translations.text(&language, "hud-dismount")),
                 },
             };
             let hud_ctx = UiContext {

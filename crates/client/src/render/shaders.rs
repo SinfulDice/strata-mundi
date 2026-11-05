@@ -9,8 +9,9 @@ macro_rules! shader {
     };
 }
 
-const BUILT_IN: [(&str, &str); 4] = [
+const BUILT_IN: [(&str, &str); 5] = [
     shader!("block.wgsl"),
+    shader!("model.wgsl"),
     shader!("outline.wgsl"),
     shader!("post.wgsl"),
     shader!("ui.wgsl"),
@@ -41,7 +42,13 @@ fn source(name: &str) -> Cow<'static, str> {
 mod tests {
     #[test]
     fn every_shader_is_built_in() {
-        for name in ["block.wgsl", "outline.wgsl", "post.wgsl", "ui.wgsl"] {
+        for name in [
+            "block.wgsl",
+            "model.wgsl",
+            "outline.wgsl",
+            "post.wgsl",
+            "ui.wgsl",
+        ] {
             assert!(!super::source(name).is_empty(), "{name}");
         }
     }

@@ -79,6 +79,7 @@ wiki-controls-layout = KEYZ R NAEMD LIEK ON QWERTY. ON AZERTY, W IZ Z N A IZ Q.
 wiki-presets = PRESETZ SIDE BY SIDE
 wiki-mechanic-world-generation = HOW TEH WORLD IZ MADE
 wiki-mechanic-fluids = WET STUFFZ
+wiki-mechanic-boats = FLOATEEZ
 wiki-mechanic-saving = SAEVIN
 wiki-mechanic-game-modes = GAEM MODEZ
 wiki-unbreakable = NO BREAK. EVR.

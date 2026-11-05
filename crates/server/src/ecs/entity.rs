@@ -10,6 +10,19 @@ impl Entity {
     pub fn index(self) -> usize {
         self.index as usize
     }
+
+    /// Network form: never the same for two entities, even when a slot is reused.
+    pub fn to_bits(self) -> u64 {
+        u64::from(self.index) | (u64::from(self.generation) << 32)
+    }
+
+    /// Any value gives a handle; a forged one simply finds no live entity.
+    pub fn from_bits(bits: u64) -> Self {
+        Self {
+            index: bits as u32,
+            generation: (bits >> 32) as u32,
+        }
+    }
 }
 
 /// Hands out entity handles and recycles freed slots.
@@ -72,5 +85,7 @@ mod tests {
         assert!(!entities.is_alive(first));
         assert!(entities.is_alive(second));
         assert!(!entities.despawn(first));
+        assert_eq!(Entity::from_bits(second.to_bits()), second);
+        assert_ne!(first.to_bits(), second.to_bits());
     }
 }

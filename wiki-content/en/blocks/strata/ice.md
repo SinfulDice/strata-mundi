@@ -12,7 +12,7 @@ Skating rinks (no sliding yet), frosted windows, snow palaces. It also forms a n
 
 ## Behaviour
 
-A solid, **translucent** block: you can see through it, slightly tinted. It's safe to walk on. For now it neither melts nor makes you slip: very well-behaved ice.
+A solid, **translucent** block: you can see through it, slightly tinted. It's safe to walk on. It doesn't melt and you don't slip on foot, but **boats** slide on it almost without friction, much faster than on water.
 
 ## Tips
 

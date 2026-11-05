@@ -1,3 +1,8 @@
 item-strata-bucket = BUKKIT
 item-strata-water_bucket = BUKKIT OF WATUR
 item-strata-lava_bucket = BUKKIT OF HOT JUICE
+item-strata-oak_boat = OAK FLOATEE
+item-strata-fir_boat = POINTY TREE FLOATEE
+item-strata-birch_boat = WHITE TREE FLOATEE
+item-strata-jungle_boat = JUNGUL FLOATEE
+item-strata-acacia_boat = FLAT TREE FLOATEE

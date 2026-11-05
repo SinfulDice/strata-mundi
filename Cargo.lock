@@ -3114,6 +3114,7 @@ dependencies = [
 name = "strata-protocol"
 version = "0.1.0"
 dependencies = [
+ "postcard",
  "serde",
  "strata-core",
 ]

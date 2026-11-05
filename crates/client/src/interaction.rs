@@ -1,15 +1,16 @@
-//! Aiming at blocks, breaking, placing and picking them. The client only sends intents;
+//! Aiming at blocks and entities, breaking, placing and picking blocks, getting into boats. The client only sends intents;
 //! the world changes when the server answers with `BlockChanged`.
 
 use crate::camera::Camera;
 use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
 use crate::world::ClientWorld;
+use glam::DVec3;
 use std::sync::Arc;
 use strata_core::content::{BlockId, Content, HitBox, ItemAction, ItemId, ItemKind};
-use strata_core::physics::LiquidCell;
-use strata_core::raycast::{RayHit, raycast};
-use strata_protocol::ClientMessage;
+use strata_core::physics::{Aabb, LiquidCell};
+use strata_core::raycast::{RayHit, ray_box, raycast};
+use strata_protocol::{ClientMessage, NetEntity};
 
 /// Creative reach, in blocks from the eyes.
 const REACH: f64 = 5.0;
@@ -80,6 +81,14 @@ impl BlockInfo {
         }
     }
 
+    /// Boats go on liquids too: any liquid counts as a full block.
+    fn boat_hit_box(&self, block: BlockId) -> Option<HitBox> {
+        match self.liquid(block) {
+            Some(_) => Some(HitBox::FULL),
+            None => self.hit_box(block),
+        }
+    }
+
     pub fn item_of(&self, block: BlockId) -> Option<ItemId> {
         self.items.get(usize::from(block.0)).copied().flatten()
     }
@@ -95,6 +104,10 @@ impl BlockInfo {
 #[derive(Default)]
 pub struct Interaction {
     pub target: Option<RayHit>,
+    /// Entity aimed at, closer than any block.
+    pub entity: Option<NetEntity>,
+    /// The boat the player sits in: never aimed at.
+    pub mount: Option<NetEntity>,
     cooldown: f32,
 }
 
@@ -109,7 +122,14 @@ impl Interaction {
         hotbar: &mut Hotbar,
     ) -> Option<ClientMessage> {
         self.target = aim(camera, world, |block| info.hit_box(block));
+        self.entity = aim_entity(camera, world, info, self.target, self.mount);
+        if self.entity.is_some() {
+            self.target = None;
+        }
         self.cooldown = (self.cooldown - dt).max(0.0);
+        if let Some(message) = self.entity_action(input) {
+            return Some(message);
+        }
         let triggered =
             |action| input.just_pressed(action) || (input.is_held(action) && self.cooldown == 0.0);
         let held = hotbar.selected();
@@ -147,7 +167,63 @@ impl Interaction {
     }
 }
 
-/// Buckets: a full one pours against what is aimed at, an empty one takes the source.
+impl Interaction {
+    /// Right click gets into the aimed boat, left click takes it away (creative).
+    fn entity_action(&mut self, input: &InputState) -> Option<ClientMessage> {
+        let entity = self.entity?;
+        let message = if input.just_pressed(Action::Use) {
+            ClientMessage::InteractEntity(entity)
+        } else if input.just_pressed(Action::Attack) {
+            ClientMessage::AttackEntity(entity)
+        } else {
+            return None;
+        };
+        self.cooldown = REPEAT_DELAY;
+        Some(message)
+    }
+}
+
+/// The closest entity the view ray crosses within reach, if no block is closer.
+fn aim_entity(
+    camera: &Camera,
+    world: &ClientWorld,
+    info: &BlockInfo,
+    block: Option<RayHit>,
+    mount: Option<NetEntity>,
+) -> Option<NetEntity> {
+    let direction = camera.forward().as_dvec3().try_normalize()?;
+    let origin = camera.position;
+    let block_distance = block
+        .and_then(|hit| {
+            let shape = info.hit_box(world.block_at(hit.block))?;
+            let corner = DVec3::new(
+                f64::from(hit.block.x),
+                f64::from(hit.block.y),
+                f64::from(hit.block.z),
+            );
+            let (min, max) = (
+                corner + DVec3::from(shape.min),
+                corner + DVec3::from(shape.max),
+            );
+            ray_box(origin, direction, min, max, REACH)
+        })
+        .unwrap_or(REACH);
+    world
+        .entities
+        .iter()
+        .filter(|(id, _, _)| Some(*id) != mount)
+        .filter_map(|(id, kind, pose)| {
+            let size = info.content.entities.get(kind)?.size;
+            let aabb = Aabb::standing(pose.position, size.width, size.height);
+            let distance = ray_box(origin, direction, aabb.min, aabb.max, REACH)?;
+            (distance < block_distance).then_some((distance, id))
+        })
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .map(|(_, id)| id)
+}
+
+/// Buckets: a full one pours against what is aimed at, an empty one takes the source;
+/// boats go on the aimed liquid or block.
 fn use_item(
     camera: &Camera,
     world: &ClientWorld,
@@ -158,6 +234,7 @@ fn use_item(
     let target = match action {
         ItemAction::PlaceFluid(_) => aim(camera, world, |block| info.hit_box(block)),
         ItemAction::TakeFluid => aim(camera, world, |block| info.bucket_hit_box(block)),
+        ItemAction::PlaceEntity(_) => aim(camera, world, |block| info.boat_hit_box(block)),
     }?;
     Some(ClientMessage::UseItem {
         item,

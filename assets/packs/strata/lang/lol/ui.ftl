@@ -107,3 +107,4 @@ ui-crash-ignore = NVM
 ui-update-available = NEW GAEM { $version } ON GITHUB, KTHX
 ui-reload-failed = NO RELOAD, CHECK TEH LOG.
 ui-reload-blocks-changed = BLOKZ CHANGED, RESTART PLZ.
+hud-dismount = <key:Sneak>: GIT OFF TEH FLOATEE

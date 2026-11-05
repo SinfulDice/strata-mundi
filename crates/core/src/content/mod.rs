@@ -1,6 +1,7 @@
 //! Game content loaded from packs: blocks, items, textures, translations and cinematics.
 
 mod block;
+mod entity;
 mod fluid;
 mod item;
 mod liquid;
@@ -11,11 +12,12 @@ mod textures;
 pub use block::{
     Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
 };
+pub use entity::{EntityDef, EntityType, ModelBox};
 pub use fluid::{Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SPREAD};
 pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
-pub use registry::{BlockId, ItemId, Registry, RegistryId, TextureId};
+pub use registry::{BlockId, EntityTypeId, ItemId, Registry, RegistryId, TextureId};
 pub use textures::{TextureLibrary, missing_id};
 
 use crate::cinematic::{self, Cinematic};
@@ -30,6 +32,7 @@ use std::collections::BTreeMap;
 pub struct Content {
     pub blocks: Registry<BlockId, Block>,
     pub items: Registry<ItemId, Item>,
+    pub entities: Registry<EntityTypeId, EntityType>,
     /// Liquids by source block.
     pub fluids: BTreeMap<BlockId, Fluid>,
     pub textures: TextureLibrary,
@@ -51,12 +54,18 @@ impl Content {
         let presentation = PackSet::joined(packs, resource_packs);
         let textures = TextureLibrary::load(&presentation, &mut errors);
         let (blocks, fluids) = load_blocks(packs, &textures, &mut errors);
-        let items = load_items(packs, &blocks, &textures, &mut errors);
+        let entities = entity::load_entities(packs, &textures, &mut errors);
+        let known = Known {
+            blocks: &blocks,
+            entities: &entities,
+        };
+        let items = load_items(packs, &known, &textures, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
         let cinematics = cinematic::load(packs, &mut errors);
         let content = Self {
             blocks,
             items,
+            entities,
             fluids,
             textures,
             translations,
@@ -184,6 +193,7 @@ fn load_blocks(
             rooted: value.rooted,
             hanging: value.hanging,
             fluid: None,
+            slipperiness: value.slipperiness.clamp(0.0, 0.99),
         };
         let inserted = match (fluid_def, placement) {
             (Some(def), Placement::Fixed) => {
@@ -239,14 +249,20 @@ fn insert_turned(blocks: &mut Registry<BlockId, Block>, id: &Identifier, upright
     true
 }
 
+/// What items may refer to.
+struct Known<'a> {
+    blocks: &'a Registry<BlockId, Block>,
+    entities: &'a Registry<EntityTypeId, EntityType>,
+}
+
 fn load_items(
     packs: &PackSet,
-    blocks: &Registry<BlockId, Block>,
+    known: &Known<'_>,
     textures: &TextureLibrary,
     errors: &mut Vec<PackError>,
 ) -> Registry<ItemId, Item> {
     let mut items = Registry::default();
-    for (block_id, id, block) in blocks.iter().filter(|(_, _, b)| b.has_item) {
+    for (block_id, id, block) in known.blocks.iter().filter(|(_, _, b)| b.has_item) {
         items.insert(
             id.clone(),
             Item {
@@ -267,7 +283,7 @@ fn load_items(
         });
         let action = value
             .action
-            .and_then(|action| item_action(blocks, action, &source, errors));
+            .and_then(|action| item_action(known, action, &source, errors));
         let item = Item {
             max_stack: value.max_stack.max(1),
             category: value.category,
@@ -285,13 +301,24 @@ fn load_items(
 }
 
 fn item_action(
-    blocks: &Registry<BlockId, Block>,
+    known: &Known<'_>,
     action: ItemActionDef,
     source: &std::path::Path,
     errors: &mut Vec<PackError>,
 ) -> Option<ItemAction> {
+    let blocks = known.blocks;
     match action {
         ItemActionDef::TakeFluid => Some(ItemAction::TakeFluid),
+        ItemActionDef::PlaceEntity(id) => {
+            let entity = known.entities.key(&id);
+            if entity.is_none() {
+                errors.push(PackError::invalid(
+                    source,
+                    format!("PlaceEntity: unknown entity `{id}`"),
+                ));
+            }
+            entity.map(ItemAction::PlaceEntity)
+        }
         ItemActionDef::PlaceFluid(id) => {
             let fluid = blocks.key(&id).filter(|&key| {
                 blocks

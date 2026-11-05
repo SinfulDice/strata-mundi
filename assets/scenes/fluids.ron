@@ -1,5 +1,6 @@
 // Liquids for captures (`--scene fluids`): a waterfall from a lake on a cliff, its flow
-// on the ground, a lava pit with its short flow, and a pond to look at from inside.
+// on the ground, a lava pit with its short flow, and a pond to look at from inside, with
+// two boats afloat (bottom at the surface minus the draft) and one on the grass.
 (
     fills: [
         (from: (-14, 0, -14), to: (14, 0, 14), block: "strata:bedrock"),
@@ -130,5 +131,10 @@
         (from: (-11, 3, 4), to: (-11, 4, 4), block: "strata:oak_planks"),
         (from: (-9, 3, 2), to: (-9, 3, 2), block: "strata:stone"),
         (from: (-10, 3, 6), to: (-10, 3, 6), block: "strata:gravel"),
+    ],
+    entities: [
+        (kind: "strata:oak_boat", position: (-10.2, 5.6875, 5.6), yaw: 0.5),
+        (kind: "strata:birch_boat", position: (-11.6, 5.6875, 1.9), yaw: 1.9),
+        (kind: "strata:acacia_boat", position: (-5.5, 6.0, 7.5), yaw: -0.4),
     ],
 )

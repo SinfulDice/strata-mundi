@@ -1,4 +1,4 @@
-//! Items used on the world: buckets pour and take liquid sources.
+//! Items used on the world: buckets pour and take liquid sources, boats are put down.
 
 use super::Game;
 use crate::loader::ColumnLoader;
@@ -38,6 +38,10 @@ impl Game {
                     return Vec::new();
                 }
                 (against, BlockId::AIR)
+            }
+            ItemAction::PlaceEntity(kind) => {
+                self.place_entity(loader, kind, against, face);
+                return Vec::new();
             }
         };
         let mut changes = Vec::new();

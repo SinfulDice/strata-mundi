@@ -5,6 +5,7 @@ mod depth;
 mod frustum;
 mod gpu;
 mod mesh;
+mod model_pipeline;
 mod offscreen;
 mod outline;
 mod post;
@@ -28,6 +29,7 @@ use frustum::Frustum;
 pub use frustum::in_vertical_range;
 use glam::DVec3;
 use mesh::GpuMesh;
+pub use model_pipeline::ModelPipeline;
 use outline::OutlinePipeline;
 use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
@@ -90,6 +92,8 @@ pub struct Renderer {
     pub immersion: Option<Immersion>,
     /// Seconds since start (wrapped), for animated liquids.
     time: f32,
+    /// Entity models and those to draw this frame.
+    pub models: ModelPipeline,
 }
 
 /// The eyes are inside a liquid: a thick fog of its color hides everything farther.
@@ -173,6 +177,12 @@ impl Renderer {
     ) -> Result<Self, GpuError> {
         let textures = texture_array(gpu, textures, filtering)?;
         let blocks = BlockPipeline::new(&gpu.device, color_format, &textures);
+        let models = ModelPipeline::new(
+            &gpu.device,
+            color_format,
+            &blocks.camera_layout,
+            &blocks.texture_layout,
+        );
         Ok(Self {
             outline_pipeline: OutlinePipeline::new(
                 &gpu.device,
@@ -188,6 +198,7 @@ impl Renderer {
             options: RenderOptions::default(),
             immersion: None,
             time: 0.0,
+            models,
         })
     }
 
@@ -284,6 +295,7 @@ impl Renderer {
         let frustum = Frustum::from_view_projection(view_projection);
         let uniform = self.camera_uniform(view_projection.to_cols_array_2d());
         self.blocks.write_camera(&gpu.queue, &uniform);
+        self.models.prepare(gpu, camera, &frustum);
         let backdrop = self.immersion.map_or(SKY_SRGB, |liquid| liquid.color);
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("world"),
@@ -315,6 +327,7 @@ impl Renderer {
                 mesh.draw(&mut pass);
             }
         }
+        self.models.draw(&mut pass, &self.blocks);
         if let Some(block) = self.outline {
             let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
             self.outline_pipeline
@@ -352,6 +365,7 @@ impl Renderer {
     pub fn clear(&mut self) {
         self.columns.clear();
         self.outline = None;
+        self.models.entities.clear();
     }
 
     /// Back to front, so that blending sees what is behind each surface.

@@ -1,10 +1,11 @@
 //! Resources read again while the game runs (textures, translations, interface files,
-//! shaders): edit a pack, press the key, see the result. Blocks and items cannot change
+//! shaders): edit a pack, press the key, see the result. Blocks, items and entity types cannot change
 //! this way, since the server and the open world use them.
 
 use super::Session;
 use crate::app::ClientError;
 use crate::mesher::BlockTable;
+use crate::models::ModelLibrary;
 use crate::render::{PostProcess, RenderOptions, Renderer, TextureFiltering, UiPipeline};
 use crate::ui::UiAtlas;
 use std::sync::Arc;
@@ -45,6 +46,7 @@ impl Session {
         renderer.ambient_occlusion = f32::from(u8::from(graphics.ambient_occlusion));
         renderer.vertical_distance = graphics.vertical_distance;
         renderer.options = RenderOptions::from_settings(&self.applied);
+        renderer.models.library = ModelLibrary::from_content(&content);
         self.renderer = renderer;
         self.post = post;
         self.table = Arc::new(BlockTable::from_content(&content));
@@ -73,4 +75,6 @@ fn same_registries(old: &Content, new: &Content) -> bool {
     names(old.blocks.iter().map(|(_, id, _)| id)) == names(new.blocks.iter().map(|(_, id, _)| id))
         && names(old.items.iter().map(|(_, id, _)| id))
             == names(new.items.iter().map(|(_, id, _)| id))
+        && names(old.entities.iter().map(|(_, id, _)| id))
+            == names(new.entities.iter().map(|(_, id, _)| id))
 }

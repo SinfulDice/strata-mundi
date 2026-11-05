@@ -69,4 +69,9 @@ impl StreamBuffer {
         gpu.queue.write_buffer(&buffer, 0, data);
         self.buffer.insert(buffer)
     }
+
+    /// The buffer of the last write, if any.
+    pub fn buffer(&self) -> Option<&wgpu::Buffer> {
+        self.buffer.as_ref()
+    }
 }

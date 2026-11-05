@@ -1,5 +1,6 @@
 //! The client's copy of the blocks around the player, as sent by the server.
 
+use crate::entities::ClientEntities;
 use crate::mesher::{BlockTable, Neighborhood, SectionKey};
 use crate::render::Immersion;
 use glam::DVec3;
@@ -13,6 +14,7 @@ pub struct ClientWorld {
     columns: HashMap<ColumnPos, Column>,
     /// Highest non-empty section of each column, kept up to date (asked every frame).
     tops: HashMap<ColumnPos, usize>,
+    pub entities: ClientEntities,
 }
 
 impl ClientWorld {

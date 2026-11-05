@@ -58,6 +58,10 @@ impl<T> Storage<T> {
         self.position(entity).map(|p| &mut self.dense[p])
     }
 
+    pub fn len(&self) -> usize {
+        self.dense.len()
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
         self.owners.iter().copied().zip(&self.dense)
     }

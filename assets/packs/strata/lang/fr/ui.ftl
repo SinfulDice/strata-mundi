@@ -107,3 +107,4 @@ ui-crash-ignore = Ne pas signaler
 ui-update-available = Nouvelle version { $version } disponible sur GitHub
 ui-reload-failed = Ressources non rechargées : voir le journal.
 ui-reload-blocks-changed = Blocs ou objets modifiés : relancez le jeu.
+hud-dismount = <key:Sneak> : descendre du bateau

@@ -1,4 +1,4 @@
-use super::registry::{BlockId, TextureId};
+use super::registry::{BlockId, EntityTypeId, TextureId};
 use crate::id::Identifier;
 use serde::Deserialize;
 
@@ -23,6 +23,8 @@ pub enum ItemActionDef {
     PlaceFluid(Identifier),
     /// Takes the liquid source it is used on (an empty bucket).
     TakeFluid,
+    /// Puts this entity on the aimed liquid or block (a boat).
+    PlaceEntity(Identifier),
 }
 
 fn default_stack() -> u16 {
@@ -42,6 +44,7 @@ pub enum ItemAction {
     /// Source block of the liquid poured.
     PlaceFluid(BlockId),
     TakeFluid,
+    PlaceEntity(EntityTypeId),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

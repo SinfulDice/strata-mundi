@@ -4,15 +4,18 @@
 //! <saves>/<id>/world.ron                          description, versioned
 //!              player.ron                         the player's character
 //!              icon.png                           capture taken at the last save
+//!              entities/<namespace>/<dimension>.ron  boats
 //!              regions/<namespace>/<dimension>/   modified columns only
 //! <backups>/<id>/<date>/                          rotating copies
 //! ```
 
 mod backup;
+mod entities;
 mod meta;
 mod region;
 
 pub use backup::back_up;
+pub use entities::{EntitiesData, SavedBoat};
 pub use meta::{FORMAT_VERSION, PlayerData, WorldMeta};
 pub use region::{BlockNames, REGION_SIZE, RegionStore};
 pub use strata_core::files::write_atomic;

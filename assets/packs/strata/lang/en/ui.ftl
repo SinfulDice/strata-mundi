@@ -107,3 +107,4 @@ ui-crash-ignore = Don't report
 ui-update-available = New version { $version } available on GitHub
 ui-reload-failed = Resources not reloaded: see the log.
 ui-reload-blocks-changed = Blocks or items changed: restart the game.
+hud-dismount = <key:Sneak>: get off the boat

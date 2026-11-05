@@ -1,4 +1,5 @@
-//! What the player does in the world: moving (predicted), looking, aiming, building.
+//! What the player does in the world: moving (predicted), looking, aiming, building,
+//! riding boats.
 
 use crate::camera::Camera;
 use crate::cinematic::PlayingShot;
@@ -105,6 +106,17 @@ impl Gameplay {
                 self.sent_hotbar = hotbar;
             }
             ServerMessage::Feedback(feedback) => self.feedback.push(feedback),
+            ServerMessage::EntitySpawned(state) => self.view.world.entities.spawn(state),
+            ServerMessage::EntityMoved { id, position, yaw } => {
+                self.view.world.entities.moved(id, position, yaw);
+            }
+            ServerMessage::EntityRemoved(id) => self.view.world.entities.remove(id),
+            ServerMessage::Mounted(mount) => {
+                self.interaction.mount = mount;
+                if let Some(player) = &mut self.player {
+                    player.riding = mount.is_some();
+                }
+            }
             ServerMessage::Tick { .. } | ServerMessage::Saved => {}
         }
     }
@@ -149,6 +161,9 @@ impl Gameplay {
             }
             self.camera.position = player.eyes();
         }
+        if let Some(eyes) = self.riding_eyes() {
+            self.camera.position = eyes;
+        }
         let message = self.interaction.update(
             dt,
             &self.camera,
@@ -160,6 +175,26 @@ impl Gameplay {
         if let Some(message) = message {
             connection.send(message);
         }
+    }
+
+    /// Sitting in a boat, the eyes follow the boat as drawn, so both move as one.
+    fn riding_eyes(&self) -> Option<DVec3> {
+        let mount = self.interaction.mount?;
+        let entities = &self.view.world.entities;
+        let pose = entities.pose(mount)?;
+        let seat = self
+            .info
+            .content
+            .entities
+            .get(entities.kind(mount)?)?
+            .boat?
+            .seat;
+        Some(pose.position + DVec3::Y * (seat + EYE_HEIGHT))
+    }
+
+    /// Whether the player sits in a boat (the HUD tells how to get off).
+    pub fn is_riding(&self) -> bool {
+        self.interaction.mount.is_some()
     }
 
     fn ease_sprint_zoom(&mut self, dt: f32, sprinting: bool) {

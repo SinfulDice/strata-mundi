@@ -51,4 +51,7 @@ pub struct PlayerData {
     /// Item identifiers, so a world survives packs being added or reordered.
     pub hotbar: Vec<Option<Identifier>>,
     pub selected: usize,
+    /// The boat the player sits in: its index in the dimension's saved boats.
+    #[serde(default)]
+    pub boat: Option<usize>,
 }

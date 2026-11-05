@@ -1,11 +1,15 @@
-//! Player movement shared by the server (authoritative) and the client (prediction):
+//! Movement (players, boats) shared by the server (authoritative) and the client (prediction):
 //! the same code on both sides, so they agree tick after tick.
 
 mod aabb;
+mod boat;
 mod body;
 mod swim;
 
 pub use aabb::Aabb;
+pub use boat::{
+    BoatBody, BoatControls, BoatHandling, BoxSize, DEFAULT_SLIPPERINESS, liquid_surface, step_boat,
+};
 pub use body::{Body, EYE_HEIGHT, HEIGHT, MoveInput, MovementSettings, TICK, WIDTH, step};
 pub use swim::LiquidCell;
 
@@ -17,6 +21,11 @@ pub trait Terrain {
 
     fn liquid(&self, _x: i32, _y: i32, _z: i32) -> Option<LiquidCell> {
         None
+    }
+
+    /// Fraction of a sliding speed kept per tick on this block (boats; ice slides).
+    fn slipperiness(&self, _x: i32, _y: i32, _z: i32) -> f64 {
+        DEFAULT_SLIPPERINESS
     }
 }
 

@@ -14,4 +14,5 @@
     (name: "biome-snowy_peaks-42", seed: "42", pos: (-180.0, 410.0, 240.0), look: (135.0, -40.0)),
     (name: "fluids-fall", scene: "fluids", pos: (13.0, 11.0, 15.0), look: (-40.0, -20.0)),
     (name: "fluids-underwater", scene: "fluids", pos: (-12.5, 4.3, 0.5), look: (150.0, 8.0)),
+    (name: "boat", scene: "fluids", pos: (-6.0, 8.5, 9.5), look: (-38.0, -24.0)),
 ]

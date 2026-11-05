@@ -1,9 +1,12 @@
 use std::sync::Arc;
-use strata_core::content::{BlockId, Content, Face, ItemAction, ItemId, Orientation};
+use strata_core::content::{
+    BlockId, Content, EntityType, EntityTypeId, Face, ItemAction, ItemId, Orientation,
+};
 use strata_core::physics::LiquidCell;
 use strata_core::updates::UpdateRules;
 
-/// What the server needs to know about blocks to judge collisions and player actions.
+/// What the server needs to know about blocks, items and entity types to judge
+/// collisions and player actions.
 #[derive(Debug, Clone)]
 pub struct BlockRules {
     solid: Vec<bool>,
@@ -14,6 +17,8 @@ pub struct BlockRules {
     item_count: usize,
     actions: Vec<Option<ItemAction>>,
     liquids: Vec<Option<LiquidCell>>,
+    slipperiness: Vec<f32>,
+    entities: Vec<EntityType>,
     updates: Arc<UpdateRules>,
 }
 
@@ -38,6 +43,16 @@ impl BlockRules {
                 .map(|(_, _, item)| item.action)
                 .collect(),
             liquids: content.liquids(),
+            slipperiness: content
+                .blocks
+                .iter()
+                .map(|(_, _, block)| block.slipperiness)
+                .collect(),
+            entities: content
+                .entities
+                .iter()
+                .map(|(_, _, entity)| entity.clone())
+                .collect(),
             orientation: content
                 .blocks
                 .iter()
@@ -82,6 +97,19 @@ impl BlockRules {
     /// The liquid a body can swim in at this block.
     pub fn liquid(&self, block: BlockId) -> Option<LiquidCell> {
         self.liquids.get(usize::from(block.0)).copied().flatten()
+    }
+
+    /// Fraction of a sliding speed kept per tick on top of the block.
+    pub fn slipperiness(&self, block: BlockId) -> f64 {
+        self.slipperiness
+            .get(usize::from(block.0))
+            .map_or(strata_core::physics::DEFAULT_SLIPPERINESS, |&s| {
+                f64::from(s)
+            })
+    }
+
+    pub fn entity(&self, kind: EntityTypeId) -> Option<&EntityType> {
+        self.entities.get(usize::from(kind.0))
     }
 
     /// Whether it is a liquid source (what an empty bucket takes).

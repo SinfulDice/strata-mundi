@@ -1,0 +1,1 @@
+Item(texture: "strata:oak_boat", max_stack: 1, category: Some("strata:transport"), action: Some(PlaceEntity("strata:oak_boat")))

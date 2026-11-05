@@ -208,6 +208,14 @@ pub struct BlockDef {
     /// Makes the block the source of a flowing liquid.
     #[serde(default)]
     pub fluid: Option<FluidDef>,
+    /// Fraction of a sliding speed kept per tick on top of it (boats): 0.6 by default,
+    /// ice 0.98.
+    #[serde(default = "default_slipperiness")]
+    pub slipperiness: f32,
+}
+
+fn default_slipperiness() -> f32 {
+    crate::physics::DEFAULT_SLIPPERINESS as f32
 }
 
 fn default_stack() -> u16 {
@@ -245,6 +253,7 @@ pub struct Block {
     pub rooted: bool,
     pub hanging: bool,
     pub fluid: Option<FluidState>,
+    pub slipperiness: f32,
 }
 
 impl Block {
@@ -265,6 +274,7 @@ impl Block {
             rooted: false,
             hanging: false,
             fluid: None,
+            slipperiness: default_slipperiness(),
         }
     }
 

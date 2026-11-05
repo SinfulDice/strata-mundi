@@ -57,7 +57,7 @@ impl IntegratedServer {
     fn start(connection: ServerConnection, config: ServerConfig) -> std::io::Result<Self> {
         let persistence = Persistence::new(config.world, Arc::clone(&config.content));
         let generator = Arc::clone(&config.generator);
-        let (body, look, hotbar) = persistence.player_start(&config.dimension, || {
+        let start = persistence.player_start(&config.dimension, || {
             let spawn = generator.spawn_point();
             tracing::info!(?spawn, "spawn point chosen");
             DVec3::new(
@@ -70,12 +70,13 @@ impl IntegratedServer {
         let mut game = Game::new(
             BlockRules::new(&config.content),
             meta.border,
-            body,
+            start.body,
             meta.mode,
         );
-        game.set_hotbar(hotbar);
-        game.set_look(look);
+        game.set_hotbar(start.hotbar);
+        game.set_look(start.look);
         game.set_fluid_settings(meta.fluids);
+        game.restore_boats(persistence.boats(&config.dimension), start.boat);
         if let (Some(body), Some(movement)) = (game.player_body(), game.movement()) {
             connection.send(ServerMessage::Welcome {
                 dimension: config.dimension.clone(),
@@ -85,6 +86,9 @@ impl IntegratedServer {
                 hotbar: game.hotbar(),
                 look: game.look(),
             });
+            for message in game.take_entity_messages() {
+                connection.send(message);
+            }
         }
         let names = Arc::new(BlockNames::new(&config.content.blocks));
         let store = match persistence.regions(&config.dimension) {
@@ -129,7 +133,9 @@ impl IntegratedServer {
             let Some(message) = received else {
                 return true;
             };
-            if !self.handle(message) {
+            let running = self.handle(message);
+            self.send_entity_messages();
+            if !running {
                 return false;
             }
         }
@@ -170,6 +176,12 @@ impl IntegratedServer {
                 let changes = self.game.use_item(&mut self.loader, item, against, face);
                 self.broadcast_changes(changes);
             }
+            ClientMessage::InteractEntity(id) => {
+                self.game.interact_entity(id);
+            }
+            ClientMessage::AttackEntity(id) => {
+                self.game.attack_entity(&self.loader, id);
+            }
             ClientMessage::Hotbar(hotbar) => {
                 self.game.set_hotbar(hotbar);
             }
@@ -206,6 +218,12 @@ impl IntegratedServer {
             .save(&self.game, &mut self.loader, &self.dimension, icon);
     }
 
+    fn send_entity_messages(&mut self) {
+        for message in self.game.take_entity_messages() {
+            self.connection.send(message);
+        }
+    }
+
     fn broadcast_changes(&self, changes: Vec<BlockChange>) {
         for (pos, block) in changes {
             self.connection
@@ -218,6 +236,7 @@ impl IntegratedServer {
         self.tick += 1;
         let changes = self.game.tick(&mut self.loader);
         self.broadcast_changes(changes);
+        self.send_entity_messages();
         if self.persistence.count_tick() {
             self.save(None);
         }

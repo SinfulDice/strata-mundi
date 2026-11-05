@@ -25,7 +25,7 @@ pub struct BlockPipeline {
     camera_buffer: wgpu::Buffer,
     pub camera_layout: wgpu::BindGroupLayout,
     camera_bind_group: wgpu::BindGroup,
-    texture_layout: wgpu::BindGroupLayout,
+    pub texture_layout: wgpu::BindGroupLayout,
     texture_bind_group: wgpu::BindGroup,
 }
 
@@ -94,6 +94,11 @@ impl BlockPipeline {
             BlockPass::Cutout => &self.cutout,
             BlockPass::Translucent => &self.translucent,
         });
+        self.set_groups(pass);
+    }
+
+    /// The camera and block textures, shared with the model pipeline.
+    pub fn set_groups(&self, pass: &mut wgpu::RenderPass<'_>) {
         pass.set_bind_group(0, &self.camera_bind_group, &[]);
         pass.set_bind_group(1, &self.texture_bind_group, &[]);
     }

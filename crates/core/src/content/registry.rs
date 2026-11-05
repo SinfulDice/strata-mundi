@@ -103,6 +103,10 @@ registry_id!(
 );
 registry_id!(ItemId);
 registry_id!(
+    /// Numeric id of an entity type (boats; creatures from v0.4).
+    EntityTypeId
+);
+registry_id!(
     /// Layer in the block texture array; 0 is the "missing texture" pattern.
     TextureId
 );

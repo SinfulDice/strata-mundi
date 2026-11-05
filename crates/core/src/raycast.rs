@@ -85,10 +85,26 @@ fn box_entry(
     reach: f64,
 ) -> Option<Face> {
     let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
-    let (min, max) = (
-        corner + DVec3::from(shape.min),
-        corner + DVec3::from(shape.max),
-    );
+    let min = corner + DVec3::from(shape.min);
+    let max = corner + DVec3::from(shape.max);
+    let (near, axis) = slab(origin, direction, min, max)?;
+    (near <= reach).then(|| entered_face(axis, direction[axis].signum() as i32))
+}
+
+/// Distance along the ray (`direction` of length 1) to where it enters the box from `min`
+/// to `max`, if it does within `reach`; 0 from inside.
+pub fn ray_box(origin: DVec3, direction: DVec3, min: DVec3, max: DVec3, reach: f64) -> Option<f64> {
+    let inside = (0..3).all(|i| (min[i]..=max[i]).contains(&origin[i]));
+    if inside {
+        return Some(0.0);
+    }
+    slab(origin, direction, min, max)
+        .map(|(near, _)| near)
+        .filter(|&near| near <= reach)
+}
+
+/// Entry distance and axis of the ray into a box, if ahead.
+fn slab(origin: DVec3, direction: DVec3, min: DVec3, max: DVec3) -> Option<(f64, usize)> {
     let (mut near, mut far, mut axis) = (f64::NEG_INFINITY, f64::INFINITY, 0);
     for i in 0..3 {
         let d = direction[i];
@@ -105,8 +121,7 @@ fn box_entry(
         }
         far = far.min(exit);
     }
-    (near <= far && near >= 0.0 && near <= reach)
-        .then(|| entered_face(axis, direction[axis].signum() as i32))
+    (near <= far && near >= 0.0).then_some((near, axis))
 }
 
 /// Moving +X enters the next block through its west face, and so on.

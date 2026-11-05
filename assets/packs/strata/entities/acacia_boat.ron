@@ -1,0 +1,13 @@
+Entity(
+    model: "strata:boat",
+    texture: "strata:acacia_planks",
+    size: (1.375, 0.5625),
+    boat: Some(Boat(
+        thrust: 0.8,
+        reverse_thrust: 0.25,
+        turn_speed: 2.5,
+        water_momentum: 0.9,
+        draft: 0.1875,
+        seat: -0.3,
+    )),
+)

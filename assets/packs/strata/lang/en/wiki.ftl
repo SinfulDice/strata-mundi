@@ -79,6 +79,7 @@ wiki-controls-layout = Keys are named by their position on a QWERTY keyboard: on
 wiki-presets = Presets compared
 wiki-mechanic-world-generation = World generation
 wiki-mechanic-fluids = Liquids
+wiki-mechanic-boats = Boats
 wiki-mechanic-saving = Saving
 wiki-mechanic-game-modes = Game modes
 wiki-unbreakable = unbreakable

@@ -1,19 +1,21 @@
 //! The authoritative game state: players (ECS entities) and the blocks around them.
 
+mod boat;
 mod bucket;
+mod terrain;
 
 use crate::ecs::{Ecs, Entity, PlayerControl};
 use crate::loader::{Bounded, ColumnLoader};
 use crate::rules::BlockRules;
-use crate::systems::player_movement;
+use crate::systems::{boat_movement, player_movement};
 use glam::DVec3;
 use std::sync::Arc;
 use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
-use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings, TerrainFns, solid_at};
+use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
 use strata_core::updates::{BlockUpdates, FluidSettings, cell};
-use strata_protocol::{GameMode, HotbarState};
+use strata_protocol::{GameMode, HotbarState, ServerMessage};
 
 /// Farthest a player may break or place, measured from the eyes to the block centre
 /// (a little more than the client's reach, for rounding).
@@ -31,6 +33,8 @@ pub struct Game {
     pub border: i32,
     updates: BlockUpdates,
     tick: u64,
+    /// Entity news for the clients, taken by the server after each tick or action.
+    entity_messages: Vec<ServerMessage>,
 }
 
 impl Game {
@@ -54,6 +58,7 @@ impl Game {
             border,
             updates,
             tick: 0,
+            entity_messages: Vec::new(),
         }
     }
 
@@ -88,6 +93,7 @@ impl Game {
         if !feet.iter().all(|c| c.is_finite()) || !self.is_creative() {
             return false;
         }
+        self.leave_boat(self.player);
         let Some(body) = self.ecs.bodies.get_mut(self.player) else {
             return false;
         };
@@ -151,22 +157,26 @@ impl Game {
         self.updates.set_settings(settings);
     }
 
-    /// Runs one tick of player physics and liquids; returns the blocks changed.
+    /// Runs one tick of player and boat physics and liquids; returns the blocks changed.
     pub fn tick(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         self.tick += 1;
-        let (rules, border) = (&self.rules, self.border);
-        let terrain = TerrainFns {
-            solid: |x: i32, y: i32, z: i32| {
-                solid_at(BlockPos::new(x, y, z), border, |pos| {
-                    loader.block(pos).map(|block| rules.is_solid(block))
-                })
-            },
-            liquid: |x: i32, y: i32, z: i32| {
-                let block = loader.block(BlockPos::new(x, y, z))?;
-                rules.liquid(block)
-            },
+        let border = self.border;
+        let terrain = terrain::WorldTerrain {
+            loader,
+            rules: &self.rules,
+            border,
         };
-        player_movement(&mut self.ecs, &terrain);
+        let dismounts = player_movement(&mut self.ecs, &terrain);
+        for rider in dismounts {
+            self.dismount(loader, rider);
+        }
+        let terrain = terrain::WorldTerrain {
+            loader,
+            rules: &self.rules,
+            border,
+        };
+        let moved = boat_movement(&mut self.ecs, &self.rules, &terrain);
+        self.report_moves(&moved);
         let mut changes = Vec::new();
         let mut world = Bounded { loader, border };
         self.updates.tick(&mut world, &mut changes);

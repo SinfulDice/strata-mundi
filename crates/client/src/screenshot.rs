@@ -1,5 +1,6 @@
 use crate::camera::Camera;
 use crate::mesher::{BlockTable, MeshOptions, mesh_section};
+use crate::models::ModelLibrary;
 use crate::render::{
     Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, RenderOptions, Renderer,
     Target, TextureFiltering,
@@ -66,6 +67,12 @@ pub fn render_image(
     renderer.ambient_occlusion = f32::from(u8::from(ao));
     renderer.vertical_distance = view.graphics.vertical_distance;
     renderer.options = RenderOptions::for_capture(&view.graphics);
+    renderer.models.library = ModelLibrary::from_content(content);
+    renderer.models.entities = world
+        .entities
+        .iter()
+        .map(|(_, kind, pose)| (kind, pose))
+        .collect();
     let table = BlockTable::from_content(content);
     if world.is_inside_opaque(view.camera.position, &table) {
         tracing::warn!(

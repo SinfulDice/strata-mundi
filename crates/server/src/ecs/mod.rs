@@ -9,7 +9,8 @@ pub use entity::{Entities, Entity};
 pub use storage::Storage;
 
 use std::collections::VecDeque;
-use strata_core::physics::{Body, MoveInput, MovementSettings};
+use strata_core::content::EntityTypeId;
+use strata_core::physics::{BoatBody, BoatControls, Body, MoveInput, MovementSettings};
 use strata_protocol::{GameMode, HotbarState};
 
 /// Every component storage of the simulation.
@@ -19,6 +20,32 @@ pub struct Ecs {
     pub bodies: Storage<Body>,
     pub controls: Storage<PlayerControl>,
     pub hotbars: Storage<HotbarState>,
+    pub boats: Storage<Boat>,
+    /// What each riding player sits in.
+    pub mounts: Storage<Entity>,
+}
+
+/// A boat entity: its type, motion, the pilot's last wishes and who sits in it.
+#[derive(Debug, Clone)]
+pub struct Boat {
+    pub kind: EntityTypeId,
+    pub body: BoatBody,
+    pub controls: BoatControls,
+    pub pilot: Option<Entity>,
+    /// Position and yaw last sent to clients, to send only changes.
+    pub sent: (glam::DVec3, f32),
+}
+
+impl Boat {
+    pub fn new(kind: EntityTypeId, body: BoatBody) -> Self {
+        Self {
+            kind,
+            body,
+            controls: BoatControls::default(),
+            pilot: None,
+            sent: (body.position, body.yaw),
+        }
+    }
 }
 
 /// Inputs received from a player's client, applied one per physics step.
@@ -37,6 +64,8 @@ pub struct PlayerControl {
     pub look: [f32; 2],
     /// Tick of the last block broken or placed (rate limit).
     pub last_action: Option<u64>,
+    /// Sneak was held in the last input: getting off a boat needs a new press.
+    pub sneaking: bool,
 }
 
 impl PlayerControl {
@@ -50,6 +79,7 @@ impl PlayerControl {
             idle_ticks: 0,
             look: [0.0; 2],
             last_action: None,
+            sneaking: false,
         }
     }
 }
@@ -59,6 +89,8 @@ impl Ecs {
         self.bodies.remove(entity);
         self.controls.remove(entity);
         self.hotbars.remove(entity);
+        self.boats.remove(entity);
+        self.mounts.remove(entity);
         self.entities.despawn(entity);
     }
 }

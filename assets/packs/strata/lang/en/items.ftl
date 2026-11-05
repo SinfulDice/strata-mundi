@@ -1,3 +1,8 @@
 item-strata-bucket = Bucket
 item-strata-water_bucket = Water Bucket
 item-strata-lava_bucket = Lava Bucket
+item-strata-oak_boat = Oak Boat
+item-strata-fir_boat = Fir Boat
+item-strata-birch_boat = Birch Boat
+item-strata-jungle_boat = Jungle Boat
+item-strata-acacia_boat = Acacia Boat

@@ -6,7 +6,7 @@
 - **Jalon en cours** : 5 — Fluides
   - [x] Simulation des fluides (core + serveur) : niveaux 1-7 générés depuis une définition `fluid` du pack, sources, chute prioritaire puis écoulement vers la pente la plus proche, file de blocs actifs (aucun balayage), vitesses eau/lave, eau + lave = pierre ou obsidienne, mises à jour de voisinage générales (plantes, liquides), eau générée inerte jusqu'à perturbation ; tests obligatoires (source dans un trou fermé se stabilise ; aucune propagation infinie)
   - [x] Rendu et physique des fluides : surface inclinée selon les niveaux, transparence, légère animation, brouillard sous l'eau ; nager, couler, ralentissement (physique partagée) ; seau créatif (prendre/poser une source)
-  - [ ] Bateaux : entité pilotable sur l'eau (ECS serveur, messages, rendu d'un modèle simple côté client), plusieurs essences de bois, glisse sur la glace, monter/descendre, objet bateau créatif
+  - [x] Bateaux : entité pilotable sur l'eau (ECS serveur, messages, rendu d'un modèle simple côté client), plusieurs essences de bois, glisse sur la glace, monter/descendre, objet bateau créatif ; types d'entité et modèles en boîtes en pack, physique partagée `core::physics::boat`, glissance de bloc, interpolation client, sauvegarde `entities/…`, D044
 - **Dernière session** : 05/11/2026
 
 ## Fait

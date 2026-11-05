@@ -1,7 +1,7 @@
 use crate::commands::Feedback;
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::Column;
-use strata_core::content::{BlockId, Face, ItemId};
+use strata_core::content::{BlockId, EntityTypeId, Face, ItemId};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
 use strata_core::physics::{Body, MoveInput, MovementSettings};
@@ -42,6 +42,10 @@ pub enum ClientMessage {
         against: BlockPos,
         face: Face,
     },
+    /// Right click on an entity (get into a boat).
+    InteractEntity(NetEntity),
+    /// Left click on an entity (creative: takes a boat away).
+    AttackEntity(NetEntity),
     /// The hotbar changed (creative: the client picks any item; kept with the world).
     Hotbar(HotbarState),
     /// Stop or resume the world (pause menu; any menu if the player asked for it).
@@ -56,6 +60,21 @@ pub enum ClientMessage {
     },
     /// A console line for the server (`tp 0 80 0`, without the `/`).
     Command(String),
+}
+
+/// An entity as the network names it: stable while it lives, never reused by another.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct NetEntity(pub u64);
+
+/// What a client needs to draw an entity other than its own player.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct EntityState {
+    pub id: NetEntity,
+    pub kind: EntityTypeId,
+    /// Bottom centre.
+    pub position: [f64; 3],
+    /// Radians, 0 = north (-Z).
+    pub yaw: f32,
 }
 
 /// The nine quick slots and the selected one.
@@ -96,10 +115,63 @@ pub enum ServerMessage {
         pos: BlockPos,
         block: BlockId,
     },
+    /// An entity came into existence (or is already there when the player arrives).
+    EntitySpawned(EntityState),
+    /// An entity moved or turned during the last tick.
+    EntityMoved {
+        id: NetEntity,
+        position: [f64; 3],
+        yaw: f32,
+    },
+    EntityRemoved(NetEntity),
+    /// The player now rides this entity (a boat), or walks again (`None`).
+    Mounted(Option<NetEntity>),
     /// Answer to `ClientMessage::Save`: everything is on disk.
     Saved,
     /// The server changed the hotbar (`/give`).
     Hotbar(HotbarState),
     /// Answer to a console command.
     Feedback(Feedback),
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    fn round_trip<T: Serialize + serde::de::DeserializeOwned>(value: &T) -> T {
+        let bytes = postcard::to_stdvec(value).unwrap();
+        postcard::from_bytes(&bytes).unwrap()
+    }
+
+    #[test]
+    fn entity_messages_survive_serialization() {
+        let id = NetEntity(7 | (3 << 32));
+        let state = EntityState {
+            id,
+            kind: EntityTypeId(2),
+            position: [12.5, 63.8125, -40.25],
+            yaw: 1.5,
+        };
+        let server = [
+            ServerMessage::EntitySpawned(state),
+            ServerMessage::EntityMoved {
+                id,
+                position: [1.0, 2.0, 3.0],
+                yaw: -0.5,
+            },
+            ServerMessage::EntityRemoved(id),
+            ServerMessage::Mounted(Some(id)),
+            ServerMessage::Mounted(None),
+        ];
+        for message in &server {
+            assert_eq!(&round_trip(message), message);
+        }
+        for message in [
+            ClientMessage::InteractEntity(id),
+            ClientMessage::AttackEntity(id),
+        ] {
+            assert_eq!(round_trip(&message), message);
+        }
+    }
 }

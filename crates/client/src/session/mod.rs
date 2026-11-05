@@ -10,6 +10,7 @@ use crate::debug_overlay::DebugOverlay;
 use crate::input::{Action, Binding, Gamepads, InputState};
 use crate::launcher::Launcher;
 use crate::mesher::BlockTable;
+use crate::models::ModelLibrary;
 use crate::render::{Gpu, PostProcess, RenderOptions, Renderer, TextureFiltering, WindowSurface};
 use crate::screens::Screens;
 use crate::settings::Settings;
@@ -76,6 +77,7 @@ impl Session {
         renderer.ambient_occlusion = f32::from(u8::from(applied.graphics.ambient_occlusion));
         renderer.vertical_distance = applied.graphics.vertical_distance;
         renderer.options = RenderOptions::from_settings(&applied);
+        renderer.models.library = ModelLibrary::from_content(&config.content);
         let table = Arc::new(BlockTable::from_content(&config.content));
         let bench = config.bench.map(|bench| BenchRun::new(bench, &gpu));
         let screens = Screens::new(
@@ -273,6 +275,13 @@ impl Session {
                 (&mut world.game.view, world.game.camera.position)
             }
         };
+        view.world.entities.advance(f64::from(frame_seconds));
+        self.renderer.models.entities = view
+            .world
+            .entities
+            .iter()
+            .map(|(_, kind, pose)| (kind, pose))
+            .collect();
         view.update(
             &self.gpu,
             &mut self.renderer,
