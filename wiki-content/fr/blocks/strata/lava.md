@@ -12,7 +12,7 @@ Décor des profondeurs et repère : quand on la voit, on n'est plus très loin d
 
 ## Comportement
 
-La lave **coule**, mais lentement (un bloc toutes les 1,5 seconde) et peu loin : **3 blocs** sur un sol plat, d'abord vers le bas. Celle du monde reste immobile tant qu'on ne la dérange pas. Au contact de l'eau, une source de lave devient de l'**obsidienne** et la lave qui coule devient de la **pierre**. Elle n'est pas solide : on s'y enfonce et on y **nage** très lentement, bien plus difficilement que dans l'eau ; la tête dedans, on ne voit plus qu'un brouillard orange. Elle ne brûle pas encore. Elle ne se vise qu'avec un seau vide et ne se casse pas ; en revanche, on peut **poser un bloc à sa place**.
+La lave **coule**, mais lentement (un bloc toutes les 1,5 seconde) et peu loin : **3 blocs** sur un sol plat, d'abord vers le bas. Celle du monde reste immobile tant qu'on ne la dérange pas. Au contact de l'eau, une source de lave devient de l'**obsidienne** et la lave qui coule devient de la **pierre**. Elle n'est pas solide : on s'y enfonce et on y **nage** très lentement, bien plus difficilement que dans l'eau ; la tête dedans, on ne voit plus qu'un brouillard orange. Elle ne brûle pas encore, mais **éclaire** (niveau 15) tout autour d'elle. Elle ne se vise qu'avec un seau vide et ne se casse pas ; en revanche, on peut **poser un bloc à sa place**.
 
 ## Conseils
 

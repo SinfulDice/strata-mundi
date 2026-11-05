@@ -1,0 +1,11 @@
+Block(
+    textures: All("strata:torch"),
+    render: Cross,
+    solid: false,
+    light_opacity: 0,
+    light_emission: 14,
+    hardness: 0.0,
+    sound: Some("strata:wood"),
+    category: Some("strata:building"),
+    rooted: true,
+)

@@ -9,6 +9,7 @@ pub mod files;
 pub mod font;
 pub mod id;
 pub mod lang;
+pub mod light;
 pub mod pack;
 pub mod physics;
 pub mod raycast;

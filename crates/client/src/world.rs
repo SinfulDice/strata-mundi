@@ -5,13 +5,18 @@ use crate::mesher::{BlockTable, Neighborhood, SectionKey};
 use crate::render::Immersion;
 use glam::DVec3;
 use std::collections::HashMap;
+use std::sync::Arc;
 use strata_core::chunk::Column;
 use strata_core::content::{BlockId, Content, Face, surface_sixteenths};
-use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
+use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN, WORLD_HEIGHT};
+use strata_core::light::{ColumnLight, PackedLight, SectionLight, section_index};
 
 #[derive(Debug, Default)]
 pub struct ClientWorld {
-    columns: HashMap<ColumnPos, Column>,
+    /// Shared with the lighting thread, copied only when a block changes.
+    columns: HashMap<ColumnPos, Arc<Column>>,
+    /// Light received from the lighting thread; open sky where none arrived yet.
+    light: HashMap<ColumnPos, ColumnLight>,
     /// Highest non-empty section of each column, kept up to date (asked every frame).
     tops: HashMap<ColumnPos, usize>,
     pub entities: ClientEntities,
@@ -20,13 +25,52 @@ pub struct ClientWorld {
 impl ClientWorld {
     pub fn insert(&mut self, column: Column) {
         let pos = column.pos;
-        self.columns.insert(pos, column);
+        self.columns.insert(pos, Arc::new(column));
+        self.light.remove(&pos);
         self.refresh_top(pos);
     }
 
     pub fn remove(&mut self, pos: ColumnPos) {
         self.columns.remove(&pos);
+        self.light.remove(&pos);
         self.tops.remove(&pos);
+    }
+
+    /// The column as shared with the lighting thread.
+    pub fn shared_column(&self, pos: ColumnPos) -> Option<Arc<Column>> {
+        self.columns.get(&pos).cloned()
+    }
+
+    pub fn loaded_columns(&self) -> impl Iterator<Item = &Arc<Column>> {
+        self.columns.values()
+    }
+
+    /// New light for one section of a loaded column (ignored once the column is gone).
+    pub fn set_section_light(&mut self, pos: ColumnPos, index: usize, light: SectionLight) {
+        if !self.columns.contains_key(&pos) {
+            return;
+        }
+        let column = self
+            .light
+            .entry(pos)
+            .or_insert_with(|| ColumnLight::below_open_sky(None));
+        if let Some(section) = column.section_mut(index) {
+            *section = light;
+        }
+    }
+
+    /// Open sky where no light was computed.
+    pub fn light_at(&self, pos: BlockPos) -> PackedLight {
+        if !pos.is_in_height_range() {
+            return PackedLight::OPEN_SKY;
+        }
+        let index = (pos.y / SECTION_SIZE) as usize;
+        self.light
+            .get(&column_of(pos.x, pos.z))
+            .and_then(|column| column.section(index))
+            .map_or(PackedLight::OPEN_SKY, |section| {
+                section.get(section_index(local(pos.x), local(pos.y), local(pos.z)))
+            })
     }
 
     pub fn column_count(&self) -> usize {
@@ -51,6 +95,14 @@ impl ClientWorld {
             .get(&pos)
             .map(|column| section_keys_of(column).collect())
             .unwrap_or_default()
+    }
+
+    /// Empty sections have no mesh; unloaded ones count as empty.
+    pub fn is_section_empty(&self, pos: ColumnPos, index: usize) -> bool {
+        self.columns
+            .get(&pos)
+            .and_then(|column| column.section(index))
+            .is_none_or(|section| section.is_empty())
     }
 
     /// Highest non-empty section of a loaded column.
@@ -123,10 +175,11 @@ impl ClientWorld {
     /// Creates the column if needed (used to build scenes on the client).
     pub fn set_block(&mut self, x: i32, y: i32, z: i32, block: BlockId) {
         let pos = column_of(x, z);
-        self.columns
+        let column = self
+            .columns
             .entry(pos)
-            .or_insert_with(|| Column::empty(pos))
-            .set(local(x), y, local(z), block);
+            .or_insert_with(|| Arc::new(Column::empty(pos)));
+        Arc::make_mut(column).set(local(x), y, local(z), block);
         self.refresh_top(pos);
     }
 
@@ -161,21 +214,27 @@ impl ClientWorld {
     /// Section `key` plus a one-block border, with the 3×3 neighbouring columns looked up once.
     pub fn neighborhood(&self, key: SectionKey, table: &BlockTable) -> Neighborhood {
         let (cx, cz, section) = key;
-        let near: [[Option<&Column>; 3]; 3] = std::array::from_fn(|dz| {
-            std::array::from_fn(|dx| {
-                self.columns.get(&ColumnPos {
-                    x: cx + dx as i32 - 1,
-                    z: cz + dz as i32 - 1,
-                })
-            })
-        });
+        let columns = around(&self.columns, cx, cz);
+        let lights = around(&self.light, cx, cz);
         let base_y = section as i32 * SECTION_SIZE;
         let blocks = Neighborhood::build(|x, y, z| {
             let (dx, lx) = split(x);
             let (dz, lz) = split(z);
-            near[dz][dx].map_or(BlockId::AIR, |column| column.get(lx, base_y + y, lz))
+            columns[dz][dx].map_or(BlockId::AIR, |column| column.get(lx, base_y + y, lz))
+        })
+        .with_light(|x, y, z| {
+            let (dx, lx) = split(x);
+            let (dz, lz) = split(z);
+            let y = base_y + y;
+            let Some(section) = lights[dz][dx]
+                .filter(|_| (0..WORLD_HEIGHT).contains(&y))
+                .and_then(|column| column.section((y / SECTION_SIZE) as usize))
+            else {
+                return PackedLight::OPEN_SKY;
+            };
+            section.get(section_index(lx, local(y), lz))
         });
-        let palette = near[1][1]
+        let palette = columns[1][1]
             .and_then(|column| column.section(section))
             .map_or(&[][..], |s| s.palette());
         let origin = [cx * SECTION_SIZE, base_y, cz * SECTION_SIZE];
@@ -183,13 +242,25 @@ impl ClientWorld {
     }
 }
 
-fn section_keys_of(column: &Column) -> impl Iterator<Item = SectionKey> + '_ {
+fn section_keys_of(column: &Arc<Column>) -> impl Iterator<Item = SectionKey> + '_ {
     column
         .sections()
         .iter()
         .enumerate()
         .filter(|(_, section)| !section.is_empty())
         .map(move |(index, _)| (column.pos.x, column.pos.z, index))
+}
+
+/// The values of the 3×3 columns centred on `(cx, cz)`, by `[dz][dx]`.
+fn around<T>(map: &HashMap<ColumnPos, T>, cx: i32, cz: i32) -> [[Option<&T>; 3]; 3] {
+    std::array::from_fn(|dz| {
+        std::array::from_fn(|dx| {
+            map.get(&ColumnPos {
+                x: cx + dx as i32 - 1,
+                z: cz + dz as i32 - 1,
+            })
+        })
+    })
 }
 
 fn column_of(x: i32, z: i32) -> ColumnPos {
@@ -225,6 +296,41 @@ mod tests {
         assert_eq!(blocks.get(-1, 4, 0), BlockId(3));
         assert_eq!(blocks.get(16, 0, 15), BlockId(4));
         assert_eq!(blocks.get(0, 0, 0), BlockId::AIR);
+    }
+
+    #[test]
+    fn neighborhood_reads_light_across_column_borders() {
+        use strata_core::content::Block;
+        use strata_core::light::{LightTable, Lighting};
+        let mut world = ClientWorld::default();
+        for x in -16..32 {
+            for z in -16..32 {
+                world.set_block(x, 0, z, BlockId(1));
+            }
+        }
+        world.set_block(15, 20, 3, BlockId(2));
+        let block = |light_opacity, light_emission| Block {
+            light_opacity,
+            light_emission,
+            ..Block::air()
+        };
+        let lights = LightTable::new([Block::air(), block(15, 0), block(0, 14)].iter());
+        let mut lighting = Lighting::default();
+        let positions: Vec<_> = world.columns.keys().copied().collect();
+        for &pos in &positions {
+            lighting.light_column(&world.columns, &lights, pos);
+        }
+        for pos in positions {
+            let sections = lighting.column(pos).map(|c| c.sections().to_vec());
+            for (index, light) in sections.into_iter().flatten().enumerate() {
+                world.set_section_light(pos, index, light);
+            }
+        }
+        let blocks = world.neighborhood((1, 0, 1), &table());
+        assert_eq!(blocks.light(-1, 4, 3).block(), 14);
+        assert_eq!(blocks.light(0, 4, 3).block(), 13);
+        assert_eq!(blocks.light(0, 4, 3).sky(), 15);
+        assert_eq!(world.light_at(BlockPos::new(16, 20, 4)).block(), 12);
     }
 
     /// Ids: 0 air, 1 bedrock, 2 deep stone.

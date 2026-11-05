@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
 
 pub const SECTION_SIZE: i32 = 16;
 pub const SECTIONS_PER_COLUMN: i32 = 32;
@@ -47,6 +49,43 @@ impl BlockPos {
     /// before any neighbour arithmetic, so hostile coordinates cannot overflow.
     pub const fn is_valid(self, border: i32) -> bool {
         self.is_in_height_range() && self.is_inside_border(border)
+    }
+}
+
+/// Map keyed by column, with a hash much cheaper than the default one: column
+/// positions come from the game, not from an attacker, so collision resistance is useless
+/// and hashing was most of the cost of light propagation.
+pub type ColumnMap<V> = HashMap<ColumnPos, V, BuildHasherDefault<ColumnHasher>>;
+
+/// Multiply-rotate hash (as in rustc's `FxHasher`) for small integer keys.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ColumnHasher(u64);
+
+impl Hasher for ColumnHasher {
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        bytes.iter().for_each(|&byte| self.add(u64::from(byte)));
+    }
+
+    fn write_i32(&mut self, value: i32) {
+        self.add(u64::from(value as u32));
+    }
+
+    fn write_u64(&mut self, value: u64) {
+        self.add(value);
+    }
+
+    fn write_usize(&mut self, value: usize) {
+        self.add(value as u64);
+    }
+}
+
+impl ColumnHasher {
+    fn add(&mut self, value: u64) {
+        self.0 = (self.0.rotate_left(5) ^ value).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95);
     }
 }
 

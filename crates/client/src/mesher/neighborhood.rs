@@ -1,5 +1,6 @@
 use super::greedy::texture_turned;
 use strata_core::content::{Block, BlockId, Content, Face, RenderKind, surface_sixteenths};
+use strata_core::light::PackedLight;
 
 pub const SIZE: usize = 16;
 const PADDED: usize = SIZE + 2;
@@ -9,6 +10,8 @@ const PADDED: usize = SIZE + 2;
 #[derive(Debug, Clone)]
 pub struct Neighborhood {
     blocks: Vec<BlockId>,
+    /// Same layout as `blocks`; empty = open sky everywhere.
+    light: Vec<PackedLight>,
     /// World position of the section's (0, 0, 0) block.
     origin: [i32; 3],
     contents: Contents,
@@ -42,9 +45,24 @@ impl Neighborhood {
         }
         Self {
             blocks,
+            light: Vec::new(),
             origin: [0; 3],
             contents: Contents::ANY,
         }
+    }
+
+    /// Adds the light of the section and its border, `light(x, y, z)` as in `build`.
+    pub fn with_light(mut self, light: impl Fn(i32, i32, i32) -> PackedLight) -> Self {
+        let mut cells = Vec::with_capacity(PADDED * PADDED * PADDED);
+        for y in -1..=SIZE as i32 {
+            for z in -1..=SIZE as i32 {
+                for x in -1..=SIZE as i32 {
+                    cells.push(light(x, y, z));
+                }
+            }
+        }
+        self.light = cells;
+        self
     }
 
     /// Where the section sits in the world, and what it may hold given its palette (every
@@ -70,9 +88,22 @@ impl Neighborhood {
     }
 
     pub fn get(&self, x: i32, y: i32, z: i32) -> BlockId {
-        let p = |c: i32| (c + 1) as usize;
-        self.blocks[(p(y) * PADDED + p(z)) * PADDED + p(x)]
+        self.blocks[padded_index(x, y, z)]
     }
+
+    /// Coordinates from -1 to 16, like `get`.
+    pub fn light(&self, x: i32, y: i32, z: i32) -> PackedLight {
+        self.light
+            .get(padded_index(x, y, z))
+            .copied()
+            .unwrap_or(PackedLight::OPEN_SKY)
+    }
+}
+
+#[inline]
+fn padded_index(x: i32, y: i32, z: i32) -> usize {
+    let p = |c: i32| (c + 1) as usize;
+    (p(y) * PADDED + p(z)) * PADDED + p(x)
 }
 
 const UNKNOWN: MeshBlock = MeshBlock {

@@ -6,6 +6,7 @@ use crate::camera::Camera;
 use crate::gameplay::Gameplay;
 use crate::interaction::BlockInfo;
 use crate::launcher::RunningWorld;
+use crate::lighting::LightWorker;
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::MeshOptions;
 use crate::render::{OffscreenTarget, Target};
@@ -17,6 +18,7 @@ use crate::ui::ICON_SIZE;
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::sync::Arc;
+use strata_core::light::LightTable;
 use strata_protocol::{
     ClientMessage, Disconnected, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE, ServerMessage,
 };
@@ -33,7 +35,9 @@ impl Session {
     }
 
     fn new_view(&self, world: ClientWorld) -> Result<WorldView, ClientError> {
-        Ok(WorldView::new(world, self.new_meshing()?))
+        let lighting = LightWorker::spawn(LightTable::from_content(&self.content))
+            .map_err(ClientError::Threads)?;
+        Ok(WorldView::new(world, self.new_meshing()?, lighting))
     }
     /// Meshing restarted with the current settings, for the world on screen.
     pub(super) fn remesh(&mut self) -> Result<(), ClientError> {

@@ -172,9 +172,12 @@ pub struct BlockDef {
     pub solid: bool,
     #[serde(default)]
     pub render: RenderKind,
-    /// How much light the block stops, 0 (none) to 15 (all). Used from v0.2.
+    /// How much light the block stops, 0 (none) to 15 (all).
     #[serde(default = "full_opacity")]
     pub light_opacity: u8,
+    /// Light the block gives off, 0 (none) to 15 (lava, glowstone).
+    #[serde(default)]
+    pub light_emission: u8,
     /// Time to mine, like Minecraft; negative = unbreakable. Used from v0.3.
     #[serde(default = "one")]
     pub hardness: f32,
@@ -240,6 +243,7 @@ pub struct Block {
     pub solid: bool,
     pub render: RenderKind,
     pub light_opacity: u8,
+    pub light_emission: u8,
     pub hardness: f32,
     /// Texture layer of each face, indexed by `Face::index`.
     pub faces: [TextureId; 6],
@@ -262,6 +266,7 @@ impl Block {
             solid: false,
             render: RenderKind::Invisible,
             light_opacity: 0,
+            light_emission: 0,
             hardness: 0.0,
             faces: [TextureId::MISSING; 6],
             sound: None,

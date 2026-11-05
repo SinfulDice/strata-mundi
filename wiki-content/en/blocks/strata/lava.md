@@ -12,7 +12,7 @@ Scenery of the depths and a landmark: when you see it, the bedrock is not far be
 
 ## Behaviour
 
-Lava **flows**, but slowly (one block every 1.5 seconds) and not far: **3 blocks** on flat ground, downwards first. The world's lava stays still until disturbed. Touching water, a lava source turns into **obsidian** and flowing lava into **stone**. It isn't solid: you sink into it and **swim** very slowly, much harder than in water; with your head inside, all you see is an orange fog. It doesn't burn yet. Only an empty bucket can target it and it can't be broken; however, you can **place a block in its place**.
+Lava **flows**, but slowly (one block every 1.5 seconds) and not far: **3 blocks** on flat ground, downwards first. The world's lava stays still until disturbed. Touching water, a lava source turns into **obsidian** and flowing lava into **stone**. It isn't solid: you sink into it and **swim** very slowly, much harder than in water; with your head inside, all you see is an orange fog. It doesn't burn yet, but it **gives off light** (level 15) all around. Only an empty bucket can target it and it can't be broken; however, you can **place a block in its place**.
 
 ## Tips
 

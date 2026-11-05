@@ -66,3 +66,6 @@ block-strata-mud = SQUISHY DIRTZ
 block-strata-mycelium = SHROOM DIRTZ
 block-strata-podzol = NEEDLE DIRTZ
 block-strata-obsidian = SHINY DARK ROCK
+block-strata-torch = FIRE STIK
+block-strata-lantern = GLOWY BOX
+block-strata-glowstone = GLOWY ROCK

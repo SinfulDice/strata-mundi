@@ -12,6 +12,7 @@ mod hotbar;
 pub mod input;
 mod interaction;
 pub mod launcher;
+mod lighting;
 mod look;
 mod mesh_scheduler;
 pub mod mesher;

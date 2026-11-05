@@ -1,0 +1,11 @@
+Block(
+    textures: All("strata:lantern"),
+    render: Cross,
+    solid: false,
+    light_opacity: 0,
+    light_emission: 15,
+    hardness: 3.5,
+    sound: Some("strata:metal"),
+    category: Some("strata:building"),
+    rooted: true,
+)

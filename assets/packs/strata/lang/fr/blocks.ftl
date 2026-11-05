@@ -66,3 +66,6 @@ block-strata-mud = Boue
 block-strata-mycelium = Mycélium
 block-strata-podzol = Podzol
 block-strata-obsidian = Obsidienne
+block-strata-torch = Torche
+block-strata-lantern = Lanterne
+block-strata-glowstone = Pierre lumineuse

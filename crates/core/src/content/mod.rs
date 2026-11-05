@@ -161,10 +161,10 @@ fn load_blocks(
             ));
             continue;
         }
-        if value.light_opacity > 15 {
+        if value.light_opacity > 15 || value.light_emission > 15 {
             errors.push(PackError::invalid(
                 &source,
-                "light_opacity must be between 0 and 15",
+                "light_opacity and light_emission must be between 0 and 15",
             ));
         }
         let faces = Face::ALL.map(|face| match value.textures.face(face) {
@@ -183,6 +183,7 @@ fn load_blocks(
             solid: value.solid,
             render: value.render,
             light_opacity: value.light_opacity.min(15),
+            light_emission: value.light_emission.min(15),
             hardness: value.hardness,
             faces,
             sound: value.sound,
