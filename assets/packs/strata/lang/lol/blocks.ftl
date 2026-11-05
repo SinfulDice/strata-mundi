@@ -69,3 +69,4 @@ block-strata-obsidian = SHINY DARK ROCK
 block-strata-torch = FIRE STIK
 block-strata-lantern = GLOWY BOX
 block-strata-glowstone = GLOWY ROCK
+block-strata-fire = HOT FIRE

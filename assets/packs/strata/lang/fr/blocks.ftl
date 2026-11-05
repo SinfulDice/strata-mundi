@@ -69,3 +69,4 @@ block-strata-obsidian = Obsidienne
 block-strata-torch = Torche
 block-strata-lantern = Lanterne
 block-strata-glowstone = Pierre lumineuse
+block-strata-fire = Feu

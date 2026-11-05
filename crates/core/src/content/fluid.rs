@@ -31,6 +31,9 @@ pub struct FluidDef {
     pub renewable: bool,
     #[serde(default)]
     pub hardens: Option<HardeningDef>,
+    /// Fire cannot stay next to it (water).
+    #[serde(default)]
+    pub puts_out_fire: bool,
     #[serde(default)]
     pub motion: LiquidMotion,
     #[serde(default)]
@@ -96,6 +99,7 @@ pub struct Fluid {
     pub slope_search: u8,
     pub renewable: bool,
     pub hardens: Option<Hardening>,
+    pub puts_out_fire: bool,
     pub motion: LiquidMotion,
     pub view: LiquidView,
 }
@@ -185,6 +189,7 @@ pub(super) fn insert_fluid(
             slope_search: def.slope_search.min(MAX_SLOPE_SEARCH),
             renewable: def.renewable,
             hardens: None,
+            puts_out_fire: def.puts_out_fire,
             motion: def.motion.clamped(),
             view: def.view,
         },

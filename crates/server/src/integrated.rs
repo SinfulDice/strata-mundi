@@ -78,6 +78,7 @@ impl IntegratedServer {
         game.set_hotbar(start.hotbar);
         game.set_look(start.look);
         game.set_fluid_settings(meta.fluids);
+        game.set_fire_settings(meta.fire);
         game.restore_boats(persistence.boats(&config.dimension), start.boat);
         if let (Some(body), Some(movement)) = (game.player_body(), game.movement()) {
             connection.send(ServerMessage::Welcome {

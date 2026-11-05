@@ -1,0 +1,1 @@
+Item(texture: "strata:flint_and_steel", max_stack: 1, category: Some("strata:tools"), action: Some(Ignite("strata:fire")))

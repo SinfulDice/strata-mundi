@@ -10,6 +10,7 @@ Block(
         spread: 7,
         slope_search: 4,
         renewable: true,
+        puts_out_fire: true,
         motion: (speed: 0.5, drag: 0.8, gravity: 0.15),
         view: (fog_color: "#1e4a8c", fog_distance: 12.0, animation: Ripple),
     ),

@@ -69,3 +69,4 @@ block-strata-obsidian = Obsidian
 block-strata-torch = Torch
 block-strata-lantern = Lantern
 block-strata-glowstone = Glowstone
+block-strata-fire = Fire

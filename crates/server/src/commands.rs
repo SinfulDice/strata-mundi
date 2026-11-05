@@ -56,6 +56,7 @@ impl Console<'_> {
             "seed" => Some(self.seed()),
             "fluids" => self.fluids(args),
             "daycycle" => self.day_cycle(args),
+            "fire" => self.fire(args),
             _ => None,
         };
         ran.unwrap_or_else(usage).into()
@@ -186,6 +187,24 @@ impl Console<'_> {
         Some(Feedback::ok("command-fluids-now", &args))
     }
 
+    /// `spread on|off`, `destroy on|off` or `query`; saved with the world.
+    fn fire(&mut self, args: &[&str]) -> Option<Feedback> {
+        let fire = &mut self.meta.fire;
+        match args {
+            [] | ["query"] => {}
+            ["spread", value] => fire.spread = on_off(value)?,
+            ["destroy", value] => fire.destroy = on_off(value)?,
+            _ => return None,
+        }
+        self.game.set_fire_settings(*fire);
+        let word = |on: bool| if on { "on" } else { "off" }.to_owned();
+        let args = [
+            ("spread", word(fire.spread)),
+            ("destroy", word(fire.destroy)),
+        ];
+        Some(Feedback::ok("command-fire-now", &args))
+    }
+
     fn seed(&self) -> Feedback {
         let shown = if self.meta.seed_text.is_empty() {
             (self.meta.seed as i64).to_string()
@@ -193,6 +212,14 @@ impl Console<'_> {
             self.meta.seed_text.clone()
         };
         Feedback::ok("command-seed-is", &[("seed", shown)])
+    }
+}
+
+fn on_off(text: &str) -> Option<bool> {
+    match text {
+        "on" => Some(true),
+        "off" => Some(false),
+        _ => None,
     }
 }
 
@@ -242,7 +269,7 @@ mod tests {
     use strata_core::coords::DEFAULT_WORLD_BORDER;
     use strata_core::pack::PackSet;
     use strata_core::physics::Body;
-    use strata_core::updates::FluidSettings;
+    use strata_core::updates::{FireSettings, FluidSettings};
 
     fn setup() -> (Game, WorldMeta, Content) {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
@@ -304,6 +331,38 @@ mod tests {
             FluidSettings {
                 flow: true,
                 updates_per_tick: 512
+            }
+        );
+    }
+
+    #[test]
+    fn fire_spread_and_destroy_are_saved_with_the_world() {
+        let (mut game, mut meta, content) = setup();
+        let mut console = Console {
+            game: &mut game,
+            meta: &mut meta,
+            content: &content,
+            cycle: DayCycle::default(),
+        };
+        let off = console.run("fire spread off").feedback;
+        assert_eq!(off.key, "command-fire-now");
+        assert_eq!(
+            (off.args[0].1.as_str(), off.args[1].1.as_str()),
+            ("off", "on")
+        );
+        assert_eq!(console.run("fire destroy off").feedback.args[1].1, "off");
+        assert_eq!(console.run("fire query").feedback.args[0].1, "off");
+        assert_eq!(
+            console.run("fire destroy maybe").feedback.key,
+            "command-usage"
+        );
+        assert_eq!(console.run("fire burn").feedback.key, "command-usage");
+        console.run("fire spread on");
+        assert_eq!(
+            meta.fire,
+            FireSettings {
+                spread: true,
+                destroy: false
             }
         );
     }

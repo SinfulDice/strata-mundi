@@ -1,14 +1,16 @@
-//! Items used on the world: buckets pour and take liquid sources, boats are put down.
+//! Items used on the world: buckets pour and take liquid sources, flint and steel lights
+//! fires, boats are put down.
 
 use super::Game;
-use crate::loader::ColumnLoader;
+use crate::loader::{Bounded, ColumnLoader};
 use strata_core::content::{BlockId, Face, ItemAction, ItemId};
 use strata_core::coords::BlockPos;
 use strata_core::updates::BlockChange;
 
 impl Game {
     /// Validated use of `item`, in the selected hotbar slot, on `face` of the block at
-    /// `against`. Buckets are creative only until survival (v0.3) gives them a content.
+    /// `against`. Buckets and flint and steel are creative only until survival (v0.3)
+    /// gives them a content and wear.
     pub fn use_item(
         &mut self,
         loader: &mut ColumnLoader,
@@ -22,8 +24,8 @@ impl Game {
         let (Some(action), true) = (self.rules.item_action(item), held) else {
             return Vec::new();
         };
-        let bucket = matches!(action, ItemAction::PlaceFluid(_) | ItemAction::TakeFluid);
-        if bucket && !self.is_creative() {
+        let creative_only = !matches!(action, ItemAction::PlaceEntity(_));
+        if creative_only && !self.is_creative() {
             return Vec::new();
         }
         let (target, block) = match action {
@@ -45,6 +47,12 @@ impl Game {
                 }
                 (against, BlockId::AIR)
             }
+            ItemAction::Ignite(fire) => {
+                let Some(target) = self.fire_target(loader, against, face) else {
+                    return Vec::new();
+                };
+                (target, fire)
+            }
             ItemAction::PlaceEntity(kind) => {
                 self.place_entity(loader, kind, against, face);
                 return Vec::new();
@@ -55,6 +63,25 @@ impl Game {
             self.set_block(loader, target, block, &mut changes);
         }
         changes
+    }
+
+    /// Where flint and steel used on `face` of `against` lights a fire: in the air (or a
+    /// plant) in front, if a fire may burn there.
+    fn fire_target(
+        &self,
+        loader: &mut ColumnLoader,
+        against: BlockPos,
+        face: Face,
+    ) -> Option<BlockPos> {
+        let target = self.placement_target(loader, against, face)?;
+        let current = loader.block(target)?;
+        let free = current == BlockId::AIR
+            || (self.rules.is_replaceable(current) && self.rules.updates().fire(current).is_none());
+        let world = Bounded {
+            loader,
+            border: self.border,
+        };
+        (free && self.updates.fire_can_stay(&world, target) == Some(true)).then_some(target)
     }
 }
 
@@ -103,6 +130,39 @@ mod tests {
                 "the flow dries up without its source"
             );
         }
+    }
+
+    #[test]
+    fn flint_and_steel_lights_a_fire_that_dies_without_fuel() {
+        let mut w = world();
+        hold(&mut w, &["strata:flint_and_steel"], 0);
+        let flint = item(&w, "strata:flint_and_steel");
+        let fire = block(&w.content, "strata:fire");
+        let ground = BlockPos::new(11, 63, 8);
+        let lit = w.game.use_item(&mut w.loader, flint, ground, Face::Up);
+        assert_eq!(lit, vec![(BlockPos::new(11, 64, 8), fire)]);
+        wait(&mut w, 3);
+        assert!(
+            w.game
+                .use_item(&mut w.loader, flint, ground, Face::Up)
+                .is_empty(),
+            "already burning"
+        );
+        let water = block(&w.content, "strata:water");
+        assert!(w.loader.set_block(BlockPos::new(12, 64, 8), water));
+        let wet = BlockPos::new(13, 63, 8);
+        assert!(
+            w.game
+                .use_item(&mut w.loader, flint, wet, Face::Up)
+                .is_empty(),
+            "no fire next to water"
+        );
+        wait(&mut w, 100);
+        assert_ne!(
+            w.loader.block(BlockPos::new(11, 64, 8)),
+            Some(fire),
+            "put out by the water next to it"
+        );
     }
 
     #[test]

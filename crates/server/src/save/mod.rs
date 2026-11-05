@@ -23,7 +23,7 @@ pub use strata_core::files::write_atomic;
 use meta::FormatOnly;
 use std::path::{Path, PathBuf};
 use strata_core::dimension::DimensionId;
-use strata_core::updates::FluidSettings;
+use strata_core::updates::{FireSettings, FluidSettings};
 use strata_protocol::{NewWorld, WorldStatus, WorldSummary};
 use thiserror::Error;
 
@@ -208,6 +208,10 @@ pub fn create(
             flow: new.fluids,
             ..FluidSettings::default()
         },
+        fire: FireSettings {
+            spread: new.fire_spread,
+            destroy: new.fire_destroy,
+        },
     };
     folder.write_meta(&meta)?;
     Ok((folder, meta))
@@ -289,6 +293,8 @@ mod tests {
             border: 1000,
             fluids: true,
             day_cycle: true,
+            fire_spread: true,
+            fire_destroy: true,
         }
     }
 

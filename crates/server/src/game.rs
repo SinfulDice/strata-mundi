@@ -14,7 +14,7 @@ use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
-use strata_core::updates::{BlockUpdates, FluidSettings, cell};
+use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings, cell};
 use strata_protocol::{GameMode, HotbarState, ServerMessage};
 
 /// Farthest a player may break or place, measured from the eyes to the block centre
@@ -157,7 +157,11 @@ impl Game {
         self.updates.set_settings(settings);
     }
 
-    /// Runs one tick of player and boat physics and liquids; returns the blocks changed.
+    pub fn set_fire_settings(&mut self, settings: FireSettings) {
+        self.updates.set_fire_settings(settings);
+    }
+
+    /// Runs one tick of player and boat physics, liquids and fire; returns the blocks changed.
     pub fn tick(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         self.tick += 1;
         let border = self.border;

@@ -38,6 +38,14 @@ ui-new-world-day-cycle = DAI AN NITE: { $cycle ->
         [on] YES PLZ
        *[off] TIEM IZ STUCK
     }
+ui-new-world-fire-spread = HOT FIRE: { $spread ->
+        [on] GOEZ EVRYWHER
+       *[off] STAYZ PUT
+    }
+ui-new-world-fire-destroy = BURNY: { $destroy ->
+        [on] NOMZ BLOKZ
+       *[off] NO NOMZ
+    }
 ui-new-world-create = MAEK IT
 
 ui-delete-question = DELEET "{ $name }"? RLY?

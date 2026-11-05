@@ -4,7 +4,7 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 8 — Feu et textures vivantes
-  - [ ] Feu : bloc de feu (lumineux, sans collision, animé à la sous-tâche suivante), propagation aux blocs inflammables (inflammabilité et combustion dans le pack), extinction et usure, ne brûle pas sous l'eau, options de monde (empêcher la propagation, empêcher la destruction), briquet créatif pour allumer ; prévu pour l'extinction par la pluie (v0.5) ; tests (propagation bornée, options, déterminisme)
+  - [x] Feu : bloc de feu (lumineux, sans collision, animé à la sous-tâche suivante), propagation aux blocs inflammables (inflammabilité et combustion dans le pack), extinction et usure, ne brûle pas sous l'eau, options de monde (empêcher la propagation, empêcher la destruction), briquet créatif pour allumer ; prévu pour l'extinction par la pluie (v0.5) ; tests (propagation bornée, options, déterminisme)
   - [ ] Textures vivantes : textures animées (images et durées du pack ; eau, lave, feu, portail d'essai), textures connectées (verre, bibliothèque — nouveau bloc), variantes aléatoires par position (herbe, pierre…), formats documentés dans `docs/guide-textures.md`, réglage d'animation ; captures
 - **Dernière session** : 05/11/2026
 

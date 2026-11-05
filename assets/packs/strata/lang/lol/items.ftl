@@ -6,3 +6,4 @@ item-strata-fir_boat = POINTY TREE FLOATEE
 item-strata-birch_boat = WHITE TREE FLOATEE
 item-strata-jungle_boat = JUNGUL FLOATEE
 item-strata-acacia_boat = FLAT TREE FLOATEE
+item-strata-flint_and_steel = SPARKY ROKZ

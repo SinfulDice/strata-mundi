@@ -8,4 +8,5 @@ Block(
     category: Some("strata:plants"),
     replaceable: true,
     hanging: true,
+    flammability: Some((catch: 15, burn: 100)),
 )

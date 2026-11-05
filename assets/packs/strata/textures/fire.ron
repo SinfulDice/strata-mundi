@@ -1,0 +1,26 @@
+Sprite(
+    colors: {
+        'R': ("fire", 0),
+        'O': ("fire", 1),
+        'Y': ("fire", 2),
+        'W': ("fire", 3),
+    },
+    rows: [
+        "................",
+        "......R.........",
+        "......R.....R...",
+        ".R...RO.....R...",
+        ".R...ROR...RO...",
+        ".RO..ROR...ROR..",
+        "ROO.ROYOR..ROR.R",
+        "ROOR.ROYO.ROYOR.",
+        ".ROOROYYOROYOOR.",
+        "RROYOOYWYOOYYOR.",
+        ".ROYYOYWYOYWYOOR",
+        "ROOYWYYWWYYWYYOR",
+        "ROYYWWYWWWYWWYOR",
+        ".OYWWWWWWWWWWYO.",
+        "ROYWWWWWWWWWWWYR",
+        "OYYWWWWWWWWWWWYO",
+    ],
+)

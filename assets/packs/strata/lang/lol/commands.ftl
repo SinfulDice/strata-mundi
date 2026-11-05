@@ -13,6 +13,13 @@ command-daycycle-now = DAI AN NITE: { $cycle ->
         [on] TIEM GOEZ ON
        *[off] TIEM IZ STUCK
     }.
+command-fire-now = HOT FIRE: { $spread ->
+        [on] GOEZ EVRYWHER
+       *[off] STAYZ PUT
+    }, { $destroy ->
+        [on] NOMZ WUT BURNZ
+       *[off] NOMZ NOTHIN
+    }.
 command-seed-is = SEED: { $seed }
 command-fluids-now = WATR AN LAVA: { $flow ->
         [on] GOEZ SPLOOSH
@@ -35,6 +42,8 @@ command-fluids-usage = /fluids [on|off|query|<budget>]
 command-fluids-help = MAEKZ WATR AN LAVA GO SPLOOSH OR STOP; A NUMBR SETZ HOW MANY UPDAETZ PER TICK.
 command-daycycle-usage = /daycycle [on|off|query]
 command-daycycle-help = MAEKZ TIEM GO OR STOP.
+command-fire-usage = /fire [spread|destroy] [on|off] OR /fire query
+command-fire-help = LETZ HOT FIRE GO EVRYWHER OR NOT, AN NOM BLOKZ OR NOT.
 command-cinematic-usage = /cinematic <id>
 command-cinematic-help = PLAYZ A MOOVEE.
 ui-console-placeholder = TYPE A COMMANDZ…

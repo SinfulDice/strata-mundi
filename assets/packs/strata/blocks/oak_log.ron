@@ -4,4 +4,5 @@ Block(
     sound: Some("strata:wood"),
     category: Some("strata:natural"),
     placement: Axis,
+    flammability: Some((catch: 5, burn: 5)),
 )

@@ -1,0 +1,27 @@
+// Fire for captures (`--scene fire`): a meadow grove at night, flames in the leaves,
+// at the foot of a trunk, on a stump and in a campfire on stone.
+(
+    fills: [
+        (from: (-14, 0, -14), to: (14, 0, 14), block: "strata:bedrock"),
+        (from: (-14, 1, -14), to: (14, 12, 14), block: "strata:stone"),
+        (from: (-14, 13, -14), to: (14, 15, 14), block: "strata:dirt"),
+        (from: (-14, 16, -14), to: (14, 16, 14), block: "strata:grass_block"),
+        (from: (-4, 17, -6), to: (-4, 21, -6), block: "strata:oak_log"),
+        (from: (-6, 20, -8), to: (-2, 21, -4), block: "strata:oak_leaves"),
+        (from: (-4, 20, -6), to: (-4, 21, -6), block: "strata:oak_log"),
+        (from: (4, 17, -5), to: (4, 22, -5), block: "strata:birch_log"),
+        (from: (2, 21, -7), to: (6, 23, -3), block: "strata:birch_leaves"),
+        (from: (4, 21, -5), to: (4, 22, -5), block: "strata:birch_log"),
+        (from: (-1, 17, -7), to: (-1, 17, -7), block: "strata:oak_log"),
+        (from: (-5, 22, -7), to: (-3, 22, -5), block: "strata:fire"),
+        (from: (3, 24, -5), to: (5, 24, -4), block: "strata:fire"),
+        (from: (-3, 17, -6), to: (-3, 18, -6), block: "strata:fire"),
+        (from: (-1, 18, -7), to: (-1, 18, -7), block: "strata:fire"),
+        (from: (-2, 17, -3), to: (-1, 17, -3), block: "strata:tall_grass"),
+        (from: (-3, 17, -4), to: (-3, 17, -4), block: "strata:fire"),
+        (from: (-1, 16, 1), to: (1, 16, 3), block: "strata:stone"),
+        (from: (0, 17, 2), to: (0, 17, 2), block: "strata:fire"),
+        (from: (2, 17, 6), to: (2, 17, 6), block: "strata:poppy"),
+        (from: (-5, 17, 4), to: (-5, 17, 4), block: "strata:tall_grass"),
+    ],
+)

@@ -128,6 +128,8 @@ pub struct CreateForm {
     pub mode: GameMode,
     pub fluids: bool,
     pub day_cycle: bool,
+    pub fire_spread: bool,
+    pub fire_destroy: bool,
 }
 
 impl CreateForm {
@@ -141,6 +143,8 @@ impl CreateForm {
             mode: GameMode::Creative,
             fluids: true,
             day_cycle: true,
+            fire_spread: true,
+            fire_destroy: true,
         }
     }
 
@@ -163,6 +167,8 @@ impl CreateForm {
             border,
             fluids: self.fluids,
             day_cycle: self.day_cycle,
+            fire_spread: self.fire_spread,
+            fire_destroy: self.fire_destroy,
         }
     }
 }
@@ -190,6 +196,14 @@ impl ScreenModel for CreateModel<'_> {
                 "ui-new-world-day-cycle",
                 &[("cycle", on_off(self.form.day_cycle).to_owned())],
             )),
+            "fire_spread" => Some(self.shared.tr_with(
+                "ui-new-world-fire-spread",
+                &[("spread", on_off(self.form.fire_spread).to_owned())],
+            )),
+            "fire_destroy" => Some(self.shared.tr_with(
+                "ui-new-world-fire-destroy",
+                &[("destroy", on_off(self.form.fire_destroy).to_owned())],
+            )),
             _ => None,
         }
     }
@@ -215,6 +229,14 @@ impl ScreenModel for CreateModel<'_> {
             }
             "day_cycle" => {
                 self.form.day_cycle = !self.form.day_cycle;
+                return;
+            }
+            "fire_spread" => {
+                self.form.fire_spread = !self.form.fire_spread;
+                return;
+            }
+            "fire_destroy" => {
+                self.form.fire_destroy = !self.form.fire_destroy;
                 return;
             }
             "create" => Effect::Action(UiAction::Create(self.form.world())),

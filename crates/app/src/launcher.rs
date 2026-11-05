@@ -57,6 +57,7 @@ impl GameLauncher {
             day_time: self.args.time.unwrap_or(0),
             day_cycle: true,
             fluids: Default::default(),
+            fire: Default::default(),
         };
         self.start(meta, None)
             .context("could not start the server thread")

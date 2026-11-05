@@ -48,7 +48,7 @@ impl CommandSpec {
 
 pub const TIME_PRESETS: [&str; 4] = ["day", "noon", "night", "midnight"];
 
-pub const COMMANDS: [CommandSpec; 9] = [
+pub const COMMANDS: [CommandSpec; 10] = [
     CommandSpec {
         name: "help",
         args: &[Arg::Command],
@@ -88,6 +88,15 @@ pub const COMMANDS: [CommandSpec; 9] = [
     CommandSpec {
         name: "fluids",
         args: &[Arg::Choice(&["on", "off", "query"])],
+        runs: Runs::Server,
+        cheat: true,
+    },
+    CommandSpec {
+        name: "fire",
+        args: &[
+            Arg::Choice(&["spread", "destroy", "query"]),
+            Arg::Choice(&["on", "off"]),
+        ],
         runs: Runs::Server,
         cheat: true,
     },

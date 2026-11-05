@@ -25,6 +25,8 @@ pub enum ItemActionDef {
     TakeFluid,
     /// Puts this entity on the aimed liquid or block (a boat).
     PlaceEntity(Identifier),
+    /// Lights this fire against the aimed face (flint and steel).
+    Ignite(Identifier),
 }
 
 fn default_stack() -> u16 {
@@ -45,6 +47,8 @@ pub enum ItemAction {
     PlaceFluid(BlockId),
     TakeFluid,
     PlaceEntity(EntityTypeId),
+    /// Fire block lit.
+    Ignite(BlockId),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

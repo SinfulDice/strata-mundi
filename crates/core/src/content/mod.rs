@@ -2,6 +2,7 @@
 
 mod block;
 mod entity;
+mod fire;
 mod fluid;
 mod item;
 mod liquid;
@@ -13,6 +14,7 @@ pub use block::{
     Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
 };
 pub use entity::{EntityDef, EntityType, ModelBox};
+pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
 pub use fluid::{
     Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SLOPE_SEARCH, MAX_SPREAD,
 };
@@ -218,6 +220,8 @@ fn load_blocks(
             hanging: value.hanging,
             fluid: None,
             slipperiness: value.slipperiness.clamp(0.0, 0.99),
+            flammability: value.flammability,
+            fire: value.fire.map(FireDef::clamped),
         };
         let inserted = match (fluid_def, placement) {
             (Some(def), Placement::Fixed) => {
@@ -357,6 +361,18 @@ fn item_action(
                 ));
             }
             fluid.map(ItemAction::PlaceFluid)
+        }
+        ItemActionDef::Ignite(id) => {
+            let fire = blocks
+                .key(&id)
+                .filter(|&key| blocks.get(key).is_some_and(|block| block.fire.is_some()));
+            if fire.is_none() {
+                errors.push(PackError::invalid(
+                    source,
+                    format!("Ignite: `{id}` is not a fire"),
+                ));
+            }
+            fire.map(ItemAction::Ignite)
         }
     }
 }

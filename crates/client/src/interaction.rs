@@ -223,7 +223,7 @@ fn aim_entity(
 }
 
 /// Buckets: a full one pours against what is aimed at, an empty one takes the source;
-/// boats go on the aimed liquid or block.
+/// flint and steel lights the aimed face; boats go on the aimed liquid or block.
 fn use_item(
     camera: &Camera,
     world: &ClientWorld,
@@ -232,7 +232,9 @@ fn use_item(
     action: ItemAction,
 ) -> Option<ClientMessage> {
     let target = match action {
-        ItemAction::PlaceFluid(_) => aim(camera, world, |block| info.hit_box(block)),
+        ItemAction::PlaceFluid(_) | ItemAction::Ignite(_) => {
+            aim(camera, world, |block| info.hit_box(block))
+        }
         ItemAction::TakeFluid => aim(camera, world, |block| info.bucket_hit_box(block)),
         ItemAction::PlaceEntity(_) => aim(camera, world, |block| info.boat_hit_box(block)),
     }?;

@@ -1,0 +1,11 @@
+Block(
+    textures: All("strata:fire"),
+    render: Cross,
+    solid: false,
+    light_opacity: 0,
+    light_emission: 15,
+    hardness: 0.0,
+    has_item: false,
+    replaceable: true,
+    fire: (tick_rate: 30, max_age: 15),
+)

@@ -248,6 +248,8 @@ mod tests {
             border: 5_000,
             fluids: true,
             day_cycle: true,
+            fire_spread: true,
+            fire_destroy: true,
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {
@@ -293,6 +295,8 @@ mod tests {
             border: 5_000,
             fluids: true,
             day_cycle: true,
+            fire_spread: true,
+            fire_destroy: true,
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {

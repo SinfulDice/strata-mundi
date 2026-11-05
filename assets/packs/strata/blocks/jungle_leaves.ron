@@ -6,4 +6,5 @@ Block(
     hardness: 0.2,
     sound: Some("strata:grass"),
     category: Some("strata:natural"),
+    flammability: Some((catch: 30, burn: 60)),
 )

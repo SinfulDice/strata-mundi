@@ -1,4 +1,4 @@
-use crate::content::{BlockId, Content, Fluid, FluidLevel, FluidState};
+use crate::content::{BlockId, Content, FireDef, Flammability, Fluid, FluidLevel, FluidState};
 use std::collections::BTreeMap;
 
 /// What block updates need to know about each block, indexed by `BlockId`.
@@ -16,6 +16,10 @@ struct Traits {
     /// A liquid may flow into it, sweeping it away (air, plants).
     open: bool,
     fluid: Option<FluidState>,
+    flammability: Option<Flammability>,
+    fire: Option<FireDef>,
+    /// A liquid that puts fires out.
+    douses: bool,
 }
 
 /// A block as seen by the simulation.
@@ -42,6 +46,14 @@ impl UpdateRules {
                         && block.fluid.is_none()
                         && (block.replaceable || block.rooted || block.hanging)),
                 fluid: block.fluid,
+                flammability: block.flammability,
+                fire: block.fire,
+                douses: block.fluid.is_some_and(|state| {
+                    content
+                        .fluids
+                        .get(&state.source)
+                        .is_some_and(|fluid| fluid.puts_out_fire)
+                }),
             })
             .collect();
         Self {
@@ -101,6 +113,21 @@ impl UpdateRules {
                 .map(|state| state.level),
             _ => None,
         }
+    }
+
+    pub fn fire(&self, block: BlockId) -> Option<FireDef> {
+        self.traits(block).fire
+    }
+
+    pub(super) fn flammability(&self, cell: Cell) -> Option<Flammability> {
+        match cell {
+            Cell::Block(block) => self.traits(block).flammability,
+            _ => None,
+        }
+    }
+
+    pub(super) fn douses(&self, cell: Cell) -> bool {
+        matches!(cell, Cell::Block(block) if self.traits(block).douses)
     }
 
     pub(super) fn has_support_rule(&self, block: BlockId) -> bool {

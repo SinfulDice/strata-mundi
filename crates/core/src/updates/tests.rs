@@ -6,9 +6,9 @@ use crate::pack::PackSet;
 use std::path::Path;
 use std::sync::OnceLock;
 
-const GROUND: i32 = 64;
+pub(super) const GROUND: i32 = 64;
 
-fn content() -> &'static Content {
+pub(super) fn content() -> &'static Content {
     static CONTENT: OnceLock<Content> = OnceLock::new();
     CONTENT.get_or_init(|| {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
@@ -17,19 +17,19 @@ fn content() -> &'static Content {
     })
 }
 
-fn id(name: &str) -> BlockId {
+pub(super) fn id(name: &str) -> BlockId {
     content().blocks.key(&name.parse().unwrap()).unwrap()
 }
 
 /// Endless flat stone below y = 64, air above; columns beyond `loaded` are not loaded.
-struct Plane {
-    blocks: HashMap<BlockPos, BlockId>,
+pub(super) struct Plane {
+    pub(super) blocks: HashMap<BlockPos, BlockId>,
     stone: BlockId,
     loaded: i32,
 }
 
 impl Plane {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self {
             blocks: HashMap::new(),
             stone: id("strata:stone"),
@@ -37,7 +37,7 @@ impl Plane {
         }
     }
 
-    fn put(&mut self, pos: BlockPos, block: BlockId) {
+    pub(super) fn put(&mut self, pos: BlockPos, block: BlockId) {
         self.blocks.insert(pos, block);
     }
 
@@ -76,7 +76,7 @@ impl BlockAccess for Plane {
     }
 }
 
-fn updates() -> BlockUpdates {
+pub(super) fn updates() -> BlockUpdates {
     BlockUpdates::new(
         Arc::new(UpdateRules::new(content())),
         FluidSettings::default(),
@@ -102,7 +102,7 @@ fn level(world: &Plane, pos: BlockPos) -> Option<FluidLevel> {
         .map(|s| s.level)
 }
 
-fn at(x: i32, y: i32, z: i32) -> BlockPos {
+pub(super) fn at(x: i32, y: i32, z: i32) -> BlockPos {
     BlockPos::new(x, y, z)
 }
 

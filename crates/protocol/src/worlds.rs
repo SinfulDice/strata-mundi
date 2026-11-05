@@ -22,6 +22,10 @@ pub struct NewWorld {
     pub fluids: bool,
     /// The time of day goes on (it can be stopped later with `/daycycle`).
     pub day_cycle: bool,
+    /// Fire lights new fires around it (`/fire spread`).
+    pub fire_spread: bool,
+    /// Burning blocks are consumed (`/fire destroy`).
+    pub fire_destroy: bool,
 }
 
 /// Whether a saved world can be opened by this version of the game.

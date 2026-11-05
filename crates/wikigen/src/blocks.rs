@@ -107,6 +107,10 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, block: &Block, key: &str) -> Vec<(Strin
             ctx.tr("wiki-fact-oriented"),
             escape(&yes_no(block.orientation.is_some())),
         ),
+        (
+            ctx.tr("wiki-fact-flammable"),
+            escape(&yes_no(block.flammability.is_some())),
+        ),
         (ctx.tr("wiki-fact-id"), format!("<code>{id}</code>")),
         (ctx.tr("wiki-fact-added"), escape(&ctx.added_in(key))),
     ]);

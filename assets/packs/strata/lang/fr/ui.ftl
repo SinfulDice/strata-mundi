@@ -38,6 +38,14 @@ ui-new-world-day-cycle = Cycle jour/nuit : { $cycle ->
         [on] activé
        *[off] heure figée
     }
+ui-new-world-fire-spread = Feu : { $spread ->
+        [on] se propage
+       *[off] contenu
+    }
+ui-new-world-fire-destroy = Brûle : { $destroy ->
+        [on] oui
+       *[off] rien
+    }
 ui-new-world-create = Créer
 
 ui-delete-question = Supprimer « { $name } » ?

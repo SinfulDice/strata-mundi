@@ -1,11 +1,11 @@
-// New world: name, seed (empty = random), world border, game mode, liquids, day cycle.
+// New world: name, seed (empty = random), world border, game mode, liquids, day cycle, fire.
 Screen(
     root: [
         Panel(
             id: "window",
             anchor: Center,
             at: (0, 0),
-            size: (240, 220),
+            size: (240, 244),
             children: [
                 Label(id: "title", anchor: TopLeft, at: (8, 5), text: "ui-new-world-title"),
                 Label(id: "name_label", anchor: TopLeft, at: (8, 22), text: "ui-new-world-name", dim: true),
@@ -17,6 +17,8 @@ Screen(
                 Button(id: "mode", anchor: TopLeft, at: (8, 108), size: (224, 18), text: "@mode"),
                 Button(id: "fluids", anchor: TopLeft, at: (8, 130), size: (224, 18), text: "@fluids"),
                 Button(id: "day_cycle", anchor: TopLeft, at: (8, 152), size: (224, 18), text: "@day_cycle"),
+                Button(id: "fire_spread", anchor: TopLeft, at: (8, 174), size: (110, 18), text: "@fire_spread"),
+                Button(id: "fire_destroy", anchor: TopLeft, at: (122, 174), size: (110, 18), text: "@fire_destroy"),
                 Button(id: "create", anchor: BottomLeft, at: (8, -8), size: (108, 18), text: "ui-new-world-create"),
                 Button(id: "back", anchor: BottomRight, at: (-8, -8), size: (108, 18), text: "ui-back"),
             ],

@@ -1,3 +1,4 @@
+use super::fire::{FireDef, Flammability};
 use super::fluid::{FluidDef, FluidState};
 use super::registry::{BlockId, TextureId};
 use crate::id::Identifier;
@@ -226,6 +227,12 @@ pub struct BlockDef {
     /// ice 0.98.
     #[serde(default = "default_slipperiness")]
     pub slipperiness: f32,
+    /// How fire next to it catches and burns it; not flammable when absent.
+    #[serde(default)]
+    pub flammability: Option<Flammability>,
+    /// Makes the block a fire.
+    #[serde(default)]
+    pub fire: Option<FireDef>,
 }
 
 fn default_slipperiness() -> f32 {
@@ -269,6 +276,8 @@ pub struct Block {
     pub hanging: bool,
     pub fluid: Option<FluidState>,
     pub slipperiness: f32,
+    pub flammability: Option<Flammability>,
+    pub fire: Option<FireDef>,
 }
 
 impl Block {
@@ -291,6 +300,8 @@ impl Block {
             hanging: false,
             fluid: None,
             slipperiness: default_slipperiness(),
+            flammability: None,
+            fire: None,
         }
     }
 

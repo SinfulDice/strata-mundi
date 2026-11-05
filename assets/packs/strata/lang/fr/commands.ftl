@@ -13,6 +13,13 @@ command-daycycle-now = Cycle jour/nuit : { $cycle ->
         [on] l'heure avance
        *[off] l'heure est figée
     }.
+command-fire-now = Feu : { $spread ->
+        [on] se propage
+       *[off] ne se propage pas
+    }, { $destroy ->
+        [on] détruit ce qui brûle
+       *[off] ne détruit rien
+    }.
 command-seed-is = Graine : { $seed }
 command-fluids-now = Fluides : { $flow ->
         [on] ils coulent
@@ -35,6 +42,8 @@ command-fluids-usage = /fluids [on|off|query|<budget>]
 command-fluids-help = Fait couler ou fige l'eau et la lave ; un nombre règle les mises à jour de fluides par tick.
 command-daycycle-usage = /daycycle [on|off|query]
 command-daycycle-help = Fait avancer l'heure ou la fige.
+command-fire-usage = /fire [spread|destroy] [on|off] ou /fire query
+command-fire-help = Laisse le feu se propager ou non, détruire ce qui brûle ou non.
 command-cinematic-usage = /cinematic <id>
 command-cinematic-help = Joue une cinématique des packs.
 ui-console-placeholder = Tapez une commande…

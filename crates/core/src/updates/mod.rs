@@ -1,12 +1,17 @@
 //! Block updates: when a block changes, its six neighbours react (unsupported plants
 //! drop, liquids wake up). Liquids then flow from a queue of active blocks planned for a
 //! given tick: the world is never scanned, and still water stays still until disturbed.
+//! Fires share the queue and its budget: they age, spread and burn out.
 
+mod fire;
+#[cfg(test)]
+mod fire_tests;
 mod fluid;
 mod rules;
 #[cfg(test)]
 mod tests;
 
+pub use fire::FireSettings;
 pub use rules::{Cell, UpdateRules};
 
 use crate::content::{BlockId, Face};
@@ -29,6 +34,10 @@ pub trait BlockAccess {
     /// Inside the world (height and border).
     fn contains(&self, pos: BlockPos) -> bool {
         pos.is_in_height_range()
+    }
+    /// Rain falls on this block and puts out fire there. No weather before v0.5.
+    fn rains_on(&self, _pos: BlockPos) -> bool {
+        false
     }
 }
 
@@ -53,6 +62,9 @@ impl Default for FluidSettings {
 pub struct BlockUpdates {
     rules: Arc<UpdateRules>,
     settings: FluidSettings,
+    fire: FireSettings,
+    /// Age of each burning fire (0 to 15); lost when its column unloads.
+    fire_ages: HashMap<BlockPos, u8>,
     /// Planned updates by (tick, order of planning): deterministic.
     queue: BTreeMap<(u64, u64), BlockPos>,
     planned: HashMap<BlockPos, (u64, u64)>,
@@ -67,6 +79,8 @@ impl BlockUpdates {
         Self {
             rules,
             settings,
+            fire: FireSettings::default(),
+            fire_ages: HashMap::new(),
             queue: BTreeMap::new(),
             planned: HashMap::new(),
             next_order: 0,
@@ -79,13 +93,13 @@ impl BlockUpdates {
         &self.rules
     }
 
-    /// Turning the flow off forgets the active blocks: they stay as they are.
+    /// Turning the flow off forgets the active liquids: they stay as they are.
     pub fn set_settings(&mut self, settings: FluidSettings) {
         self.settings = settings;
-        if !settings.flow {
-            self.queue.clear();
-            self.planned.clear();
-        }
+    }
+
+    pub fn set_fire_settings(&mut self, settings: FireSettings) {
+        self.fire = settings;
     }
 
     /// Blocks waiting for an update.
@@ -109,7 +123,8 @@ impl BlockUpdates {
         pending.push((pos, block));
         while let Some((pos, block)) = pending.pop() {
             changes.push((pos, block));
-            self.plan_fluid(pos, block);
+            self.fire_ages.remove(&pos);
+            self.plan_block(pos, block);
             for face in Face::ALL {
                 let neighbour = pos.neighbour(face);
                 if let Some(dropped) = self.react(world, neighbour) {
@@ -121,12 +136,9 @@ impl BlockUpdates {
         true
     }
 
-    /// Advances one tick: runs the liquid updates due, within the budget.
+    /// Advances one tick: runs the liquid and fire updates due, within the budget.
     pub fn tick(&mut self, world: &mut impl BlockAccess, changes: &mut Vec<BlockChange>) {
         self.now += 1;
-        if !self.settings.flow {
-            return;
-        }
         for _ in 0..self.settings.updates_per_tick {
             let Some((&(tick, order), &pos)) = self.queue.first_key_value() else {
                 break;
@@ -136,17 +148,29 @@ impl BlockUpdates {
             }
             self.queue.remove(&(tick, order));
             self.planned.remove(&pos);
-            self.update_fluid(world, pos, changes);
+            match cell(world, pos) {
+                Cell::Block(block) if self.rules.fire(block).is_some() => {
+                    self.update_fire(world, pos, changes);
+                }
+                Cell::Block(_) if self.settings.flow => self.update_fluid(world, pos, changes),
+                _ => {
+                    self.fire_ages.remove(&pos);
+                }
+            }
         }
     }
 
-    /// A neighbour changed: liquids wake up, unsupported blocks drop (returns AIR, already
-    /// written).
+    /// A neighbour changed: liquids and fires wake up, unsupported blocks drop and fires
+    /// without fuel or next to water go out (returns AIR, already written).
     fn react(&mut self, world: &mut impl BlockAccess, pos: BlockPos) -> Option<BlockId> {
         let Cell::Block(block) = cell(world, pos) else {
             return None;
         };
-        self.plan_fluid(pos, block);
+        self.plan_block(pos, block);
+        if self.rules.fire(block).is_some() {
+            let out = self.fire_can_stay(world, pos) == Some(false);
+            return (out && world.set_block(pos, BlockId::AIR)).then_some(BlockId::AIR);
+        }
         if !self.rules.has_support_rule(block) {
             return None;
         }
@@ -154,6 +178,14 @@ impl BlockUpdates {
         let above = cell(world, pos.neighbour(Face::Up));
         let supported = self.rules.is_supported(block, below, above)?;
         (!supported && world.set_block(pos, BlockId::AIR)).then_some(BlockId::AIR)
+    }
+
+    fn plan_block(&mut self, pos: BlockPos, block: BlockId) {
+        if let Some(fire) = self.rules.fire(block) {
+            self.plan_fire(pos, fire);
+        } else if self.settings.flow {
+            self.plan_fluid(pos, block);
+        }
     }
 
     fn plan_fluid(&mut self, pos: BlockPos, block: BlockId) {
@@ -169,9 +201,6 @@ impl BlockUpdates {
 
     /// Keeps the earliest of two plans for the same block.
     fn plan(&mut self, pos: BlockPos, tick: u64) {
-        if !self.settings.flow {
-            return;
-        }
         if let Some(&old) = self.planned.get(&pos) {
             if old.0 <= tick {
                 return;
