@@ -9,5 +9,7 @@ Block(
         spread: 3,
         slope_search: 2,
         hardens: (touching: "strata:water", source: "strata:obsidian", flowing: "strata:stone"),
+        motion: (speed: 0.25, drag: 0.5, gravity: 0.25),
+        view: (fog_color: "#c8501a", fog_distance: 2.5, animation: Ooze),
     ),
 )

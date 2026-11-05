@@ -1,5 +1,5 @@
 use super::greedy::texture_turned;
-use strata_core::content::{Block, BlockId, Face, RenderKind};
+use strata_core::content::{Block, BlockId, Content, Face, RenderKind, surface_sixteenths};
 
 pub const SIZE: usize = 16;
 const PADDED: usize = SIZE + 2;
@@ -57,6 +57,15 @@ impl Neighborhood {
     }
 }
 
+const UNKNOWN: MeshBlock = MeshBlock {
+    render: RenderKind::Invisible,
+    cull_same: true,
+    faces: [0; 6],
+    turned: [false; 6],
+    fluid: None,
+    solid_cube: false,
+};
+
 /// What the mesher needs to know about each block, indexed by `BlockId`.
 #[derive(Debug, Clone)]
 pub struct BlockTable {
@@ -70,6 +79,18 @@ pub struct MeshBlock {
     pub faces: [u16; 6],
     /// Faces whose texture is turned a quarter, for blocks lying on their side (logs).
     pub turned: [bool; 6],
+    pub fluid: Option<MeshFluid>,
+    /// Opaque and not a liquid: hides every neighbouring face.
+    pub solid_cube: bool,
+}
+
+/// A liquid cell: its family (source block), surface height and animation code.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MeshFluid {
+    pub family: BlockId,
+    /// Sixteenths of a block (2 to 16).
+    pub height: u8,
+    pub animation: u8,
 }
 
 impl BlockTable {
@@ -84,24 +105,42 @@ impl BlockTable {
                         .orientation
                         .is_some_and(|o| texture_turned(face, o.axis))
                 }),
+                solid_cube: block.render == RenderKind::Opaque && block.fluid.is_none(),
+                fluid: block.fluid.map(|state| MeshFluid {
+                    family: state.source,
+                    height: surface_sixteenths(state.level),
+                    animation: 0,
+                }),
             })
             .collect();
         Self { entries }
     }
 
-    pub fn get(&self, id: BlockId) -> MeshBlock {
-        self.entries
-            .get(usize::from(id.0))
-            .copied()
-            .unwrap_or(MeshBlock {
-                render: RenderKind::Invisible,
-                cull_same: true,
-                faces: [0; 6],
-                turned: [false; 6],
-            })
+    /// Every block of the content, liquids with their surface animation.
+    pub fn from_content(content: &Content) -> Self {
+        let mut table = Self::new(content.blocks.iter().map(|(_, _, block)| block));
+        for entry in &mut table.entries {
+            if let Some(fluid) = &mut entry.fluid
+                && let Some(def) = content.fluids.get(&fluid.family)
+            {
+                fluid.animation = def.view.animation.code();
+            }
+        }
+        table
     }
 
+    #[inline]
+    pub fn get(&self, id: BlockId) -> &MeshBlock {
+        self.entries.get(usize::from(id.0)).unwrap_or(&UNKNOWN)
+    }
+
+    #[inline]
     pub fn is_opaque(&self, id: BlockId) -> bool {
         self.get(id).render == RenderKind::Opaque
+    }
+
+    #[inline]
+    pub fn family(&self, id: BlockId) -> Option<BlockId> {
+        self.get(id).fluid.map(|fluid| fluid.family)
     }
 }

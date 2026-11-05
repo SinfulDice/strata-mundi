@@ -78,6 +78,7 @@ wiki-controls-gamepad = Gamepad
 wiki-controls-layout = Keys are named by their position on a QWERTY keyboard: on AZERTY, W is Z and A is Q.
 wiki-presets = Presets compared
 wiki-mechanic-world-generation = World generation
+wiki-mechanic-fluids = Liquids
 wiki-mechanic-saving = Saving
 wiki-mechanic-game-modes = Game modes
 wiki-unbreakable = unbreakable

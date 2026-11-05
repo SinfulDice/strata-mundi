@@ -27,6 +27,10 @@ pub struct Args {
     #[arg(long, value_name = "YAW,PITCH", value_parser = parse_vec2, allow_hyphen_values = true)]
     pub look: Option<[f32; 2]>,
 
+    /// Without `--seed`: the diorama `assets/scenes/<NAME>.ron` captured by `--screenshot`.
+    #[arg(long, value_name = "NAME", default_value = "preview")]
+    pub scene: String,
+
     /// Save every texture side by side above a render of the preview scene, then quit.
     #[arg(long, value_name = "PNG")]
     pub texture_sheet: Option<PathBuf>,

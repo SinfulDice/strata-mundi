@@ -6,7 +6,8 @@ use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
 use crate::world::ClientWorld;
 use std::sync::Arc;
-use strata_core::content::{BlockId, Content, HitBox, ItemId, ItemKind};
+use strata_core::content::{BlockId, Content, HitBox, ItemAction, ItemId, ItemKind};
+use strata_core::physics::LiquidCell;
 use strata_core::raycast::{RayHit, raycast};
 use strata_protocol::ClientMessage;
 
@@ -21,6 +22,8 @@ pub struct BlockInfo {
     solid: Vec<bool>,
     hit_boxes: Vec<Option<HitBox>>,
     items: Vec<Option<ItemId>>,
+    liquids: Vec<Option<LiquidCell>>,
+    sources: Vec<bool>,
 }
 
 impl BlockInfo {
@@ -36,11 +39,19 @@ impl BlockInfo {
             .iter()
             .map(|(key, _, _)| content.block_name(key).and_then(|id| content.items.key(id)))
             .collect();
+        let liquids = content.liquids();
+        let sources = content
+            .blocks
+            .iter()
+            .map(|(key, _, block)| block.fluid.is_some_and(|state| state.source == key))
+            .collect();
         Self {
             content,
             solid,
             hit_boxes,
             items,
+            liquids,
+            sources,
         }
     }
 
@@ -53,6 +64,20 @@ impl BlockInfo {
 
     pub fn hit_box(&self, block: BlockId) -> Option<HitBox> {
         self.hit_boxes.get(usize::from(block.0)).copied().flatten()
+    }
+
+    pub fn liquid(&self, block: BlockId) -> Option<LiquidCell> {
+        self.liquids.get(usize::from(block.0)).copied().flatten()
+    }
+
+    /// What an empty bucket can aim at: a liquid source counts as a full block.
+    fn bucket_hit_box(&self, block: BlockId) -> Option<HitBox> {
+        let source = self.sources.get(usize::from(block.0)) == Some(&true);
+        if source {
+            Some(HitBox::FULL)
+        } else {
+            self.hit_box(block)
+        }
     }
 
     pub fn item_of(&self, block: BlockId) -> Option<ItemId> {
@@ -83,8 +108,19 @@ impl Interaction {
         input: &InputState,
         hotbar: &mut Hotbar,
     ) -> Option<ClientMessage> {
-        self.target = aim(camera, world, info);
+        self.target = aim(camera, world, |block| info.hit_box(block));
         self.cooldown = (self.cooldown - dt).max(0.0);
+        let triggered =
+            |action| input.just_pressed(action) || (input.is_held(action) && self.cooldown == 0.0);
+        let held = hotbar.selected();
+        let action = held.and_then(|item| info.content.items.get(item)?.action);
+        if let (Some(item), Some(action), true) = (held, action, triggered(Action::Use)) {
+            let message = use_item(camera, world, info, item, action);
+            if message.is_some() {
+                self.cooldown = REPEAT_DELAY;
+            }
+            return message;
+        }
         let target = self.target?;
         if input.just_pressed(Action::PickBlock) {
             if let Some(item) = info.item_of(world.block_at(target.block)) {
@@ -92,8 +128,6 @@ impl Interaction {
             }
             return None;
         }
-        let triggered =
-            |action| input.just_pressed(action) || (input.is_held(action) && self.cooldown == 0.0);
         let message = if triggered(Action::Attack) {
             Some(ClientMessage::BreakBlock { pos: target.block })
         } else if triggered(Action::Use) {
@@ -113,9 +147,32 @@ impl Interaction {
     }
 }
 
-fn aim(camera: &Camera, world: &ClientWorld, info: &BlockInfo) -> Option<RayHit> {
+/// Buckets: a full one pours against what is aimed at, an empty one takes the source.
+fn use_item(
+    camera: &Camera,
+    world: &ClientWorld,
+    info: &BlockInfo,
+    item: ItemId,
+    action: ItemAction,
+) -> Option<ClientMessage> {
+    let target = match action {
+        ItemAction::PlaceFluid(_) => aim(camera, world, |block| info.hit_box(block)),
+        ItemAction::TakeFluid => aim(camera, world, |block| info.bucket_hit_box(block)),
+    }?;
+    Some(ClientMessage::UseItem {
+        item,
+        against: target.block,
+        face: target.face,
+    })
+}
+
+fn aim(
+    camera: &Camera,
+    world: &ClientWorld,
+    hit_box: impl Fn(BlockId) -> Option<HitBox>,
+) -> Option<RayHit> {
     let direction = camera.forward().as_dvec3();
     raycast(camera.position, direction, REACH, |pos| {
-        info.hit_box(world.block_at(pos))
+        hit_box(world.block_at(pos))
     })
 }

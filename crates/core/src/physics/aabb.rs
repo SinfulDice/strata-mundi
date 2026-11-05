@@ -32,7 +32,7 @@ impl Aabb {
     }
 
     /// Block coordinates the box overlaps on `axis` (touching faces excluded).
-    fn cells(&self, axis: usize) -> std::ops::RangeInclusive<i32> {
+    pub(super) fn cells(&self, axis: usize) -> std::ops::RangeInclusive<i32> {
         (self.min[axis] + EPSILON).floor() as i32..=(self.max[axis] - EPSILON).floor() as i32
     }
 

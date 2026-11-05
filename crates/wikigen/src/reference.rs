@@ -10,7 +10,7 @@ use strata_client::settings::{GraphicsSettings, Preset};
 use strata_protocol::commands::{COMMANDS, CommandSpec, Runs};
 
 /// Mechanics pages, by text key (`mechanics/<name>`).
-const MECHANICS: [&str; 3] = ["world-generation", "saving", "game-modes"];
+const MECHANICS: [&str; 4] = ["world-generation", "fluids", "saving", "game-modes"];
 
 pub fn pages(ctx: &Ctx<'_>) -> Vec<Page> {
     let mut pages: Vec<Page> = COMMANDS.iter().map(|spec| command(ctx, spec)).collect();
@@ -204,6 +204,7 @@ fn presets(ctx: &Ctx<'_>) -> String {
         }),
         line("option-ambient-occlusion", &|g| yes_no(g.ambient_occlusion)),
         line("option-mipmaps", &|g| yes_no(g.mipmaps)),
+        line("option-liquid-animation", &|g| yes_no(g.liquid_animation)),
         line("option-vegetation", &|g| {
             ctx.tr(&format!("vegetation-{}", g.vegetation.id()))
         }),

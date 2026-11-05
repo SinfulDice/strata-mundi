@@ -86,7 +86,27 @@ pub struct Renderer {
     /// Sections farther than this above or below the camera's section are not drawn.
     pub vertical_distance: u32,
     pub options: RenderOptions,
+    /// Liquid the camera's eyes are in, if any.
+    pub immersion: Option<Immersion>,
+    /// Seconds since start (wrapped), for animated liquids.
+    time: f32,
 }
+
+/// The eyes are inside a liquid: a thick fog of its color hides everything farther.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Immersion {
+    /// sRGB.
+    pub color: [u8; 3],
+    /// Blocks until the fog is complete.
+    pub distance: f32,
+}
+
+/// With the eyes in a liquid, the fog starts this fraction of its distance behind the
+/// camera, so even what is close takes the liquid's tint.
+const IMMERSED_FOG_LEAD: f32 = 0.5;
+
+/// Animation time wraps after an hour, keeping `f32` precise (one tiny jump an hour).
+const TIME_WRAP: f32 = 3600.0;
 
 /// Image settings that need no rebuild, taken from the player's settings.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -97,6 +117,7 @@ pub struct RenderOptions {
     /// 3D resolution, as a fraction of the window.
     pub render_scale: f32,
     pub color_filter: ColorFilter,
+    pub liquid_animation: bool,
 }
 
 impl Default for RenderOptions {
@@ -106,6 +127,7 @@ impl Default for RenderOptions {
             fog_end: f32::MAX,
             render_scale: 1.0,
             color_filter: ColorFilter::None,
+            liquid_animation: true,
         }
     }
 }
@@ -126,6 +148,7 @@ impl RenderOptions {
             fog_end: (graphics.render_distance as f32 - 0.5) * SECTION_SIZE as f32,
             render_scale: 1.0,
             color_filter: ColorFilter::None,
+            liquid_animation: graphics.liquid_animation,
         }
     }
 
@@ -163,6 +186,8 @@ impl Renderer {
             ambient_occlusion: 1.0,
             vertical_distance: u32::MAX,
             options: RenderOptions::default(),
+            immersion: None,
+            time: 0.0,
         })
     }
 
@@ -210,6 +235,41 @@ impl Renderer {
         *slot = Some(section);
     }
 
+    pub fn advance_time(&mut self, seconds: f32) {
+        self.time = (self.time + seconds).rem_euclid(TIME_WRAP);
+    }
+
+    /// Fog over the horizontal distance into the sky, or a thick full-distance fog of the
+    /// liquid's color with the eyes inside one.
+    fn camera_uniform(&self, view_proj: [[f32; 4]; 4]) -> CameraUniform {
+        let (fog, color, full) = match self.immersion {
+            Some(liquid) => {
+                let end = liquid.distance.max(0.5);
+                ([-end * IMMERSED_FOG_LEAD, end, 1.0], liquid.color, 1.0)
+            }
+            None => (
+                [
+                    self.options.fog_end * FOG_START,
+                    self.options.fog_end,
+                    f32::from(u8::from(self.options.fog)),
+                ],
+                SKY_SRGB,
+                0.0,
+            ),
+        };
+        CameraUniform {
+            view_proj,
+            options: [self.ambient_occlusion, fog[0], fog[1], fog[2]],
+            sky: linear_rgba(color),
+            effects: [
+                self.time,
+                f32::from(u8::from(self.options.liquid_animation)),
+                full,
+                0.0,
+            ],
+        }
+    }
+
     pub fn render(
         &mut self,
         gpu: &Gpu,
@@ -222,19 +282,9 @@ impl Renderer {
         let aspect = target.size.0 as f32 / target.size.1.max(1) as f32;
         let view_projection = camera.view_projection(aspect);
         let frustum = Frustum::from_view_projection(view_projection);
-        self.blocks.write_camera(
-            &gpu.queue,
-            &CameraUniform {
-                view_proj: view_projection.to_cols_array_2d(),
-                options: [
-                    self.ambient_occlusion,
-                    self.options.fog_end * FOG_START,
-                    self.options.fog_end,
-                    f32::from(u8::from(self.options.fog)),
-                ],
-                sky: linear_rgba(SKY_SRGB),
-            },
-        );
+        let uniform = self.camera_uniform(view_projection.to_cols_array_2d());
+        self.blocks.write_camera(&gpu.queue, &uniform);
+        let backdrop = self.immersion.map_or(SKY_SRGB, |liquid| liquid.color);
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("world"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -242,7 +292,7 @@ impl Renderer {
                 depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(linear_color(SKY_SRGB)),
+                    load: wgpu::LoadOp::Clear(linear_color(backdrop)),
                     store: wgpu::StoreOp::Store,
                 },
             })],

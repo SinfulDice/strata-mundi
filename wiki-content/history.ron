@@ -40,7 +40,7 @@
         "blocks/strata/verdigris_rock": [(version: "0.2.0", change: Added)],
         "blocks/strata/water": [
             (version: "0.1.0", change: Added),
-            (version: "0.2.0", change: Changed(fr: "L'eau coule.", en: "Water flows.", lol: "WATUR FLOWZ.")),
+            (version: "0.2.0", change: Changed(fr: "L'eau coule, on y nage, le seau la pose et la reprend.", en: "Water flows, you swim in it, the bucket pours and takes it.", lol: "WATUR FLOWZ, U SWIMZ IN IT, TEH BUKKIT PUTZ AN TAEKZ IT.")),
         ],
         "blocks/strata/tall_grass": [(version: "0.2.0", change: Added)],
         "blocks/strata/fern": [(version: "0.2.0", change: Added)],
@@ -108,6 +108,7 @@
         "commands/seed": [(version: "0.1.0", change: Added)],
         "commands/time": [(version: "0.1.0", change: Added)],
         "commands/tp": [(version: "0.1.0", change: Added)],
+        "mechanics/fluids": [(version: "0.2.0", change: Added)],
         "mechanics/game-modes": [(version: "0.1.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
         "mechanics/world-generation": [

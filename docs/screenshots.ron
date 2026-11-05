@@ -1,6 +1,7 @@
 // Reference screenshots checked by the `visual-tester` agent, in the `ultra` and `ds` presets.
 // Fields mirror the command line: `strata --screenshot screenshots/<name>-<preset>.png ...`
-// Without `pos`, the camera starts at the spawn point of the seed.
+// Without `pos`, the camera starts at the spawn point of the seed. Without `seed`, the
+// diorama `scene` (`assets/scenes/<scene>.ron`, `preview` by default) is captured.
 [
     (name: "preview", pos: (-12.0, 15.5, 14.0), look: (41.0, -28.0)),
     (name: "spawn-42", seed: "42", look: (30.0, -20.0)),
@@ -11,4 +12,6 @@
     (name: "biome-swamp-42", seed: "42", pos: (-190.0, 165.0, 835.0), look: (135.0, -28.0)),
     (name: "biome-mushroom_fields-42", seed: "42", pos: (260.0, 180.0, 1285.0), look: (135.0, -28.0)),
     (name: "biome-snowy_peaks-42", seed: "42", pos: (-180.0, 410.0, 240.0), look: (135.0, -40.0)),
+    (name: "fluids-fall", scene: "fluids", pos: (13.0, 11.0, 15.0), look: (-40.0, -20.0)),
+    (name: "fluids-underwater", scene: "fluids", pos: (-12.5, 4.3, 0.5), look: (150.0, 8.0)),
 ]

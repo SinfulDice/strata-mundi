@@ -36,6 +36,12 @@ pub enum ClientMessage {
         face: Face,
         block: BlockId,
     },
+    /// Use `item` (held in the hotbar) on `face` of the block at `against` (buckets).
+    UseItem {
+        item: ItemId,
+        against: BlockPos,
+        face: Face,
+    },
     /// The hotbar changed (creative: the client picks any item; kept with the world).
     Hotbar(HotbarState),
     /// Stop or resume the world (pause menu; any menu if the player asked for it).

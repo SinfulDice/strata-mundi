@@ -47,7 +47,7 @@ impl Session {
         renderer.options = RenderOptions::from_settings(&self.applied);
         self.renderer = renderer;
         self.post = post;
-        self.table = Arc::new(BlockTable::new(content.blocks.iter().map(|(_, _, b)| b)));
+        self.table = Arc::new(BlockTable::from_content(&content));
         self.content = Arc::new(content);
         self.screens.replace_assets(ui, atlas, ui_pipeline);
         self.screens.available_packs = self.launcher.resource_packs();

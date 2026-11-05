@@ -5,5 +5,12 @@ Block(
     light_opacity: 2,
     hardness: -1.0,
     has_item: false,
-    fluid: (tick_rate: 5, spread: 7, slope_search: 4, renewable: true),
+    fluid: (
+        tick_rate: 5,
+        spread: 7,
+        slope_search: 4,
+        renewable: true,
+        motion: (speed: 0.5, drag: 0.8, gravity: 0.15),
+        view: (fog_color: "#1e4a8c", fog_distance: 12.0, animation: Ripple),
+    ),
 )

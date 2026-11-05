@@ -9,8 +9,11 @@ pub struct CameraUniform {
     pub view_proj: [[f32; 4]; 4],
     /// x: ambient occlusion strength; y, z: fog start and end (blocks); w: fog on (1).
     pub options: [f32; 4],
-    /// Sky color, linear.
+    /// Sky color, linear (the fog color).
     pub sky: [f32; 4],
+    /// x: seconds (wrapped); y: liquid animation strength; z: 1 = fog over the full
+    /// distance (eyes in a liquid).
+    pub effects: [f32; 4],
 }
 
 pub const SECTION_OFFSET_SIZE: u32 = 16;
@@ -122,8 +125,9 @@ fn create_pipeline(
             buffers: &[Some(PackedVertex::LAYOUT)],
             compilation_options: Default::default(),
         },
+        // Translucent faces are two-sided: a water surface stays visible from below.
         primitive: wgpu::PrimitiveState {
-            cull_mode: Some(wgpu::Face::Back),
+            cull_mode: (!translucent).then_some(wgpu::Face::Back),
             ..Default::default()
         },
         depth_stencil: Some(wgpu::DepthStencilState {

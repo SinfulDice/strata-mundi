@@ -1,4 +1,6 @@
-use super::Aabb;
+use super::swim;
+use super::{Aabb, Terrain};
+use crate::content::LiquidMotion;
 use glam::{DVec2, DVec3};
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +9,7 @@ pub const TICK: f64 = 0.05;
 pub const WIDTH: f64 = 0.6;
 pub const HEIGHT: f64 = 1.8;
 pub const EYE_HEIGHT: f64 = 1.62;
-const GRAVITY: f64 = 32.0;
+pub(super) const GRAVITY: f64 = 32.0;
 const TERMINAL_SPEED: f64 = 78.4;
 const JUMP_SPEED: f64 = 8.4;
 const WALK_SPEED: f64 = 4.317;
@@ -72,12 +74,12 @@ impl Body {
     }
 }
 
-/// Advances `body` by one tick.
+/// Advances `body` by one tick. Flying ignores liquids.
 pub fn step(
     body: &mut Body,
     input: &MoveInput,
     settings: &MovementSettings,
-    solid: &impl Fn(i32, i32, i32) -> bool,
+    terrain: &impl Terrain,
 ) {
     if input.toggle_flight && settings.can_fly {
         body.flying = !body.flying;
@@ -85,11 +87,38 @@ pub fn step(
     if !settings.can_fly {
         body.flying = false;
     }
-    let wish = wished_velocity(body, input);
-    steer(body, wish, input);
+    let solid = |x, y, z| terrain.solid(x, y, z);
+    let liquid = if body.flying {
+        None
+    } else {
+        swim::immersion(body, terrain)
+    };
+    let wish = wished_velocity(body, input, liquid);
+    match liquid {
+        Some(_) => swim::steer(body, wish, input.jump),
+        None => steer(body, wish, input),
+    }
     let delta = body.velocity * TICK;
-    let blocked = move_body(body, delta, input, settings, solid);
-    fall(body);
+    let blocked = move_body(body, delta, input, settings, &solid);
+    let Some(motion) = liquid else {
+        fall(body);
+        after_dry_move(body, input, settings, wish, blocked, &solid);
+        return;
+    };
+    swim::sink(body, motion);
+    if blocked {
+        swim::climb_out(body, wish, &solid);
+    }
+}
+
+fn after_dry_move(
+    body: &mut Body,
+    input: &MoveInput,
+    settings: &MovementSettings,
+    wish: DVec2,
+    blocked: bool,
+    solid: &impl Fn(i32, i32, i32) -> bool,
+) {
     let may_jump = settings.auto_jump && body.on_ground && !body.flying && !input.sneak;
     if blocked && may_jump && faces_one_block_step(body, wish, solid) {
         body.velocity.y = JUMP_SPEED;
@@ -106,7 +135,7 @@ impl Body {
     }
 }
 
-fn wished_velocity(body: &Body, input: &MoveInput) -> DVec2 {
+fn wished_velocity(body: &Body, input: &MoveInput, liquid: Option<LiquidMotion>) -> DVec2 {
     let speed = match (body.flying, input.sprint, input.sneak) {
         (true, true, _) => FLY_SPEED * 2.0,
         (true, false, _) => FLY_SPEED,
@@ -114,6 +143,7 @@ fn wished_velocity(body: &Body, input: &MoveInput) -> DVec2 {
         (false, true, false) => SPRINT_SPEED,
         (false, false, false) => WALK_SPEED,
     };
+    let speed = liquid.map_or(speed, |motion| WALK_SPEED * motion.speed);
     let (sin, cos) = f64::from(input.yaw).sin_cos();
     let forward = DVec2::new(sin, -cos);
     let right = DVec2::new(cos, sin);

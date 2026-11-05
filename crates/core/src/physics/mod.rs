@@ -3,11 +3,49 @@
 
 mod aabb;
 mod body;
+mod swim;
 
 pub use aabb::Aabb;
 pub use body::{Body, EYE_HEIGHT, HEIGHT, MoveInput, MovementSettings, TICK, WIDTH, step};
+pub use swim::LiquidCell;
 
 use crate::coords::{BlockPos, WORLD_HEIGHT};
+
+/// The world as movement sees it: what stops a body, and what it can swim in.
+pub trait Terrain {
+    fn solid(&self, x: i32, y: i32, z: i32) -> bool;
+
+    fn liquid(&self, _x: i32, _y: i32, _z: i32) -> Option<LiquidCell> {
+        None
+    }
+}
+
+/// A plain solidity test is a world without liquids.
+impl<F: Fn(i32, i32, i32) -> bool> Terrain for F {
+    fn solid(&self, x: i32, y: i32, z: i32) -> bool {
+        self(x, y, z)
+    }
+}
+
+/// A world given by two lookups: solidity and liquids.
+pub struct TerrainFns<S, L> {
+    pub solid: S,
+    pub liquid: L,
+}
+
+impl<S, L> Terrain for TerrainFns<S, L>
+where
+    S: Fn(i32, i32, i32) -> bool,
+    L: Fn(i32, i32, i32) -> Option<LiquidCell>,
+{
+    fn solid(&self, x: i32, y: i32, z: i32) -> bool {
+        (self.solid)(x, y, z)
+    }
+
+    fn liquid(&self, x: i32, y: i32, z: i32) -> Option<LiquidCell> {
+        (self.liquid)(x, y, z)
+    }
+}
 
 /// What counts as solid for movement, the same on both sides: below the world and beyond
 /// the border is solid, above it is air. `block` tells whether a loaded block stops

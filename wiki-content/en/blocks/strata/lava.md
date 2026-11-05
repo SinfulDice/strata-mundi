@@ -4,7 +4,7 @@ Glowing orange molten rock sleeping at the bottom of the world. It makes for spl
 
 ## Obtaining
 
-Lava **has no item**: you won't find it in the creative inventory, nor with `/give`. In the world, it fills caves, caverns and ravines at the very bottom, near the bedrock, in lakes with a flat surface.
+Lava **has no item** of its own: in creative, the **lava bucket** (Tools tab) pours a source, and the empty **bucket** takes it back. In the world, it fills caves, caverns and ravines at the very bottom, near the bedrock, in lakes with a flat surface.
 
 ## Usage
 
@@ -12,7 +12,7 @@ Scenery of the depths and a landmark: when you see it, the bedrock is not far be
 
 ## Behaviour
 
-Lava **flows**, but slowly (one block every 1.5 seconds) and not far: **3 blocks** on flat ground, downwards first. The world's lava stays still until disturbed. Touching water, a lava source turns into **obsidian** and flowing lava into **stone**. It isn't solid, so you pass through it like air; it doesn't burn yet. It can't be targeted or broken; however, you can **place a block in its place**.
+Lava **flows**, but slowly (one block every 1.5 seconds) and not far: **3 blocks** on flat ground, downwards first. The world's lava stays still until disturbed. Touching water, a lava source turns into **obsidian** and flowing lava into **stone**. It isn't solid: you sink into it and **swim** very slowly, much harder than in water; with your head inside, all you see is an orange fog. It doesn't burn yet. Only an empty bucket can target it and it can't be broken; however, you can **place a block in its place**.
 
 ## Tips
 

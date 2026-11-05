@@ -1,6 +1,7 @@
 //! Turns sections of blocks into GPU-ready meshes.
 
 mod cross;
+mod fluid;
 mod greedy;
 mod neighborhood;
 mod vertex;

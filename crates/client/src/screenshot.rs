@@ -66,7 +66,7 @@ pub fn render_image(
     renderer.ambient_occlusion = f32::from(u8::from(ao));
     renderer.vertical_distance = view.graphics.vertical_distance;
     renderer.options = RenderOptions::for_capture(&view.graphics);
-    let table = BlockTable::new(content.blocks.iter().map(|(_, _, block)| block));
+    let table = BlockTable::from_content(content);
     if world.is_inside_opaque(view.camera.position, &table) {
         tracing::warn!(
             position = ?view.camera.position,
@@ -83,6 +83,7 @@ pub fn render_image(
     }
     let size = view.size;
     let camera = &view.camera;
+    renderer.immersion = world.immersion(camera.position, content);
     let target = OffscreenTarget::new(&gpu, size);
     let mut encoder = gpu.device.create_command_encoder(&Default::default());
     renderer.render(

@@ -4,7 +4,7 @@
 
 use glam::DVec3;
 use std::collections::VecDeque;
-use strata_core::physics::{Body, MoveInput, MovementSettings, TICK, step};
+use strata_core::physics::{Body, MoveInput, MovementSettings, TICK, Terrain, step};
 
 /// Two jump presses closer than this toggle flight (creative), like Minecraft.
 const DOUBLE_TAP_SECONDS: f64 = 0.3;
@@ -44,7 +44,7 @@ impl LocalPlayer {
         &mut self,
         dt: f64,
         mut input: MoveInput,
-        solid: &impl Fn(i32, i32, i32) -> bool,
+        terrain: &impl Terrain,
     ) -> Vec<(u32, MoveInput)> {
         self.since_tick += dt.min(0.25);
         self.since_jump_press += dt;
@@ -60,7 +60,7 @@ impl LocalPlayer {
             self.sequence = self.sequence.wrapping_add(1);
             input.toggle_flight = std::mem::take(&mut self.toggle_pending);
             self.previous = self.body;
-            step(&mut self.body, &input, &self.movement, solid);
+            step(&mut self.body, &input, &self.movement, terrain);
             self.pending.push_back((self.sequence, input));
             if self.pending.len() > MAX_PENDING {
                 self.pending.pop_front();
@@ -71,12 +71,7 @@ impl LocalPlayer {
     }
 
     /// Server state after input `sequence`: adopt it and replay the newer inputs.
-    pub fn reconcile(
-        &mut self,
-        sequence: u32,
-        server: Body,
-        solid: &impl Fn(i32, i32, i32) -> bool,
-    ) {
+    pub fn reconcile(&mut self, sequence: u32, server: Body, terrain: &impl Terrain) {
         while self
             .pending
             .front()
@@ -86,7 +81,7 @@ impl LocalPlayer {
         }
         let mut body = server;
         for (_, input) in &self.pending {
-            step(&mut body, input, &self.movement, solid);
+            step(&mut body, input, &self.movement, terrain);
         }
         if body.position.distance(self.body.position) > 1e-3 {
             tracing::debug!(

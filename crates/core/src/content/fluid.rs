@@ -1,6 +1,7 @@
 //! Liquids: a source block described in the pack, and flowing variants generated from it.
 
 use super::block::Block;
+use super::liquid::{LiquidMotion, LiquidView};
 use super::registry::{BlockId, Registry};
 use crate::id::Identifier;
 use crate::pack::PackError;
@@ -30,6 +31,10 @@ pub struct FluidDef {
     pub renewable: bool,
     #[serde(default)]
     pub hardens: Option<HardeningDef>,
+    #[serde(default)]
+    pub motion: LiquidMotion,
+    #[serde(default)]
+    pub view: LiquidView,
 }
 
 /// What this liquid turns into when it touches another one (lava meeting water).
@@ -91,6 +96,8 @@ pub struct Fluid {
     pub slope_search: u8,
     pub renewable: bool,
     pub hardens: Option<Hardening>,
+    pub motion: LiquidMotion,
+    pub view: LiquidView,
 }
 
 impl Fluid {
@@ -178,6 +185,8 @@ pub(super) fn insert_fluid(
             slope_search: def.slope_search.min(MAX_SLOPE_SEARCH),
             renewable: def.renewable,
             hardens: None,
+            motion: def.motion.clamped(),
+            view: def.view,
         },
         hardens: def.hardens,
         source: path.to_owned(),

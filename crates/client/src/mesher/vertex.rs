@@ -4,15 +4,19 @@ use bytemuck::{Pod, Zeroable};
 pub const CROSS_FACE: usize = 6;
 
 /// 8-byte vertex: position inside the section (0..=16), face, ambient occlusion, texture
-/// repeat (0..=16) and texture layer, decoded by the shader.
+/// repeat (0..=16), texture layer and liquid surface, decoded by the shader.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Pod, Zeroable)]
 pub struct PackedVertex {
     /// x:5 y:5 z:5 face:3 ao:2 u:5 v:5
     pub geometry: u32,
-    /// layer:16
+    /// layer:16 drop:4 animation:2 (free:2, light:8 reserved for milestone 6). `drop`
+    /// lowers the vertex by sixteenths of a block (liquid surfaces).
     pub texture: u32,
 }
+
+/// Lowest a vertex can be pushed down, in sixteenths.
+pub const MAX_DROP: u8 = 15;
 
 impl PackedVertex {
     pub const LAYOUT: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
@@ -34,6 +38,25 @@ impl PackedVertex {
             geometry,
             texture: u32::from(layer),
         }
+    }
+
+    /// A liquid vertex: lowered by `drop` sixteenths, animated with `animation` (0 = still).
+    pub fn with_surface(self, drop: u8, animation: u8) -> Self {
+        debug_assert!(drop <= MAX_DROP && animation < 4);
+        Self {
+            texture: (self.texture & 0xffff)
+                | (u32::from(drop.min(MAX_DROP)) << 16)
+                | (u32::from(animation & 3) << 20),
+            ..self
+        }
+    }
+
+    pub fn drop(self) -> u8 {
+        ((self.texture >> 16) & 15) as u8
+    }
+
+    pub fn animation(self) -> u8 {
+        ((self.texture >> 20) & 3) as u8
     }
 
     pub fn position(self) -> [u32; 3] {
@@ -93,5 +116,9 @@ mod tests {
         assert_eq!((vertex.geometry >> 15) & 7, 4);
         assert_eq!((vertex.geometry >> 20) & 31, 16);
         assert_eq!((vertex.geometry >> 25) & 31, 5);
+        let surface = vertex.with_surface(MAX_DROP, 2);
+        assert_eq!((surface.drop(), surface.animation()), (MAX_DROP, 2));
+        assert_eq!(surface.texture & 0xffff, 900);
+        assert_eq!(surface.texture >> 24, 0, "light bits left free");
     }
 }

@@ -162,6 +162,14 @@ impl IntegratedServer {
                     .place_block(&mut self.loader, against, face, block);
                 self.broadcast_changes(changes);
             }
+            ClientMessage::UseItem {
+                item,
+                against,
+                face,
+            } => {
+                let changes = self.game.use_item(&mut self.loader, item, against, face);
+                self.broadcast_changes(changes);
+            }
             ClientMessage::Hotbar(hotbar) => {
                 self.game.set_hotbar(hotbar);
             }

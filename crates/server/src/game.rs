@@ -1,5 +1,7 @@
 //! The authoritative game state: players (ECS entities) and the blocks around them.
 
+mod bucket;
+
 use crate::ecs::{Ecs, Entity, PlayerControl};
 use crate::loader::{Bounded, ColumnLoader};
 use crate::rules::BlockRules;
@@ -8,7 +10,7 @@ use glam::DVec3;
 use std::sync::Arc;
 use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
-use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings, solid_at};
+use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings, TerrainFns, solid_at};
 pub use strata_core::updates::BlockChange;
 use strata_core::updates::{BlockUpdates, FluidSettings, cell};
 use strata_protocol::{GameMode, HotbarState};
@@ -153,12 +155,18 @@ impl Game {
     pub fn tick(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         self.tick += 1;
         let (rules, border) = (&self.rules, self.border);
-        let solid = |x: i32, y: i32, z: i32| {
-            solid_at(BlockPos::new(x, y, z), border, |pos| {
-                loader.block(pos).map(|block| rules.is_solid(block))
-            })
+        let terrain = TerrainFns {
+            solid: |x: i32, y: i32, z: i32| {
+                solid_at(BlockPos::new(x, y, z), border, |pos| {
+                    loader.block(pos).map(|block| rules.is_solid(block))
+                })
+            },
+            liquid: |x: i32, y: i32, z: i32| {
+                let block = loader.block(BlockPos::new(x, y, z))?;
+                rules.liquid(block)
+            },
         };
-        player_movement(&mut self.ecs, &solid);
+        player_movement(&mut self.ecs, &terrain);
         let mut changes = Vec::new();
         let mut world = Bounded { loader, border };
         self.updates.tick(&mut world, &mut changes);
@@ -321,14 +329,14 @@ mod tests {
     use strata_core::coords::{ColumnPos, DEFAULT_WORLD_BORDER};
     use strata_core::pack::PackSet;
 
-    struct World {
-        game: Game,
-        loader: ColumnLoader,
-        content: Content,
+    pub(super) struct World {
+        pub(super) game: Game,
+        pub(super) loader: ColumnLoader,
+        pub(super) content: Content,
     }
 
     /// Stone up to y = 63 in column (0, 0), the player standing on it at (8.5, 64, 8.5).
-    fn world() -> World {
+    pub(super) fn world() -> World {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
         let packs = PackSet::discover(&dir, &mut Vec::new());
         let (content, _) = Content::load(&packs, &PackSet::default());
@@ -356,11 +364,11 @@ mod tests {
         }
     }
 
-    fn block(content: &Content, id: &str) -> BlockId {
+    pub(super) fn block(content: &Content, id: &str) -> BlockId {
         content.blocks.key(&id.parse().unwrap()).unwrap()
     }
 
-    fn wait(world: &mut World, ticks: u32) {
+    pub(super) fn wait(world: &mut World, ticks: u32) {
         for _ in 0..ticks {
             world.game.tick(&mut world.loader);
         }

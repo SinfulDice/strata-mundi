@@ -52,12 +52,15 @@ pub fn load(args: &Args, dimension: &DimensionId, enabled: &[String]) -> anyhow:
 }
 
 pub fn preview(loaded: &Loaded) -> ClientWorld {
-    load_preview(&loaded.assets.join("scenes/preview.ron"), &loaded.content).unwrap_or_else(
-        |error| {
-            tracing::warn!(%error, "preview scene unavailable");
-            ClientWorld::default()
-        },
-    )
+    scene(loaded, "preview")
+}
+
+pub fn scene(loaded: &Loaded, name: &str) -> ClientWorld {
+    let path = loaded.assets.join("scenes").join(format!("{name}.ron"));
+    load_preview(&path, &loaded.content).unwrap_or_else(|error| {
+        tracing::warn!(%error, "preview scene unavailable");
+        ClientWorld::default()
+    })
 }
 
 fn report(errors: &[PackError]) {

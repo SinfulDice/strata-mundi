@@ -1,0 +1,1 @@
+Item(texture: "strata:water_bucket", max_stack: 1, category: Some("strata:tools"), action: Some(PlaceFluid("strata:water")))

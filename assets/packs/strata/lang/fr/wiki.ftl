@@ -78,6 +78,7 @@ wiki-controls-gamepad = Manette
 wiki-controls-layout = Les touches sont désignées par leur position sur un clavier QWERTY : sur AZERTY, W est Z, A est Q.
 wiki-presets = Préréglages comparés
 wiki-mechanic-world-generation = Génération du monde
+wiki-mechanic-fluids = Liquides
 wiki-mechanic-saving = Sauvegarde
 wiki-mechanic-game-modes = Modes de jeu
 wiki-unbreakable = incassable

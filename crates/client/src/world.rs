@@ -1,10 +1,11 @@
 //! The client's copy of the blocks around the player, as sent by the server.
 
 use crate::mesher::{BlockTable, Neighborhood, SectionKey};
+use crate::render::Immersion;
 use glam::DVec3;
 use std::collections::HashMap;
 use strata_core::chunk::Column;
-use strata_core::content::BlockId;
+use strata_core::content::{BlockId, Content, Face, surface_sixteenths};
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 
 #[derive(Debug, Default)]
@@ -83,7 +84,33 @@ impl ClientWorld {
             y: position.y.floor() as i32,
             z: position.z.floor() as i32,
         };
-        table.is_opaque(self.block_at(block))
+        let id = self.block_at(block);
+        table.is_opaque(id) && table.family(id).is_none()
+    }
+
+    /// The liquid `eyes` are in (below its surface), for the fog seen from inside.
+    pub fn immersion(&self, eyes: DVec3, content: &Content) -> Option<Immersion> {
+        let pos = BlockPos {
+            x: eyes.x.floor() as i32,
+            y: eyes.y.floor() as i32,
+            z: eyes.z.floor() as i32,
+        };
+        let state = content.blocks.get(self.block_at(pos))?.fluid?;
+        let fluid = content.fluids.get(&state.source)?;
+        let above = content.blocks.get(self.block_at(pos.neighbour(Face::Up)));
+        let full = above
+            .and_then(|block| block.fluid)
+            .is_some_and(|above| above.source == state.source);
+        let surface = if full {
+            1.0
+        } else {
+            f64::from(surface_sixteenths(state.level)) / 16.0
+        };
+        let [r, g, b, _] = fluid.view.fog_color.0.0;
+        (eyes.y - f64::from(pos.y) < surface).then_some(Immersion {
+            color: [r, g, b],
+            distance: fluid.view.fog_distance,
+        })
     }
 
     /// Whether the column holding `pos` is loaded.

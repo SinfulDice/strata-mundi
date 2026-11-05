@@ -1,0 +1,26 @@
+Sprite(
+    colors: {
+        'O': ("iron", 0),
+        'h': ("iron", 1),
+        'H': ("iron", 2),
+        'W': ("iron", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "..OOOOOOOOOOOO..",
+        ".OWWHHHHHHHHWWO.",
+        ".OHOOOOOOOOOOHO.",
+        ".OHhOOOOOOOOhHO.",
+        "..OHhhhhhhhhHO..",
+        "..OHhhhhhhhhHO..",
+        "..OHhhhhhhhhHO..",
+        "...OHhhhhhhHO...",
+        "...OHhhhhhhHO...",
+        "...OHhhhhhhHO...",
+        "....OOOOOOOO....",
+        "................",
+        "................",
+    ],
+)

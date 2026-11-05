@@ -14,7 +14,7 @@ use crate::world::ClientWorld;
 use glam::DVec3;
 use strata_core::cinematic::Cinematic;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
-use strata_core::physics::{EYE_HEIGHT, MoveInput, solid_at};
+use strata_core::physics::{EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
 use strata_protocol::commands::Feedback;
 use strata_protocol::{ClientConnection, ClientMessage, HotbarState, ServerMessage};
 
@@ -92,9 +92,9 @@ impl Gameplay {
                 self.player = Some(LocalPlayer::new(body, movement));
             }
             ServerMessage::PlayerState { sequence, body } => {
-                let solid = solid_lookup(&self.view.world, &self.info, self.border);
+                let terrain = terrain(&self.view.world, &self.info, self.border);
                 if let Some(player) = &mut self.player {
-                    player.reconcile(sequence, body, &solid);
+                    player.reconcile(sequence, body, &terrain);
                 }
             }
             ServerMessage::Column(column) => self.view.insert(*column),
@@ -142,9 +142,9 @@ impl Gameplay {
             toggle_flight: false,
         };
         self.ease_sprint_zoom(dt, move_input.sprint && move_input.wish != [0.0; 2]);
-        let solid = solid_lookup(&self.view.world, &self.info, self.border);
+        let terrain = terrain(&self.view.world, &self.info, self.border);
         if let Some(player) = &mut self.player {
-            for (sequence, input) in player.advance(f64::from(dt), move_input, &solid) {
+            for (sequence, input) in player.advance(f64::from(dt), move_input, &terrain) {
                 connection.send(ClientMessage::Input { sequence, input });
             }
             self.camera.position = player.eyes();
@@ -200,17 +200,17 @@ impl Gameplay {
     }
 }
 
-/// The same solidity rules as the server (`solid_at`), on the client's copy of the world.
-fn solid_lookup<'a>(
-    world: &'a ClientWorld,
-    info: &'a BlockInfo,
-    border: i32,
-) -> impl Fn(i32, i32, i32) -> bool + 'a {
-    move |x, y, z| {
-        solid_at(BlockPos::new(x, y, z), border, |pos| {
-            world
-                .is_loaded(pos)
-                .then(|| info.is_solid(world.block_at(pos)))
-        })
+/// The same solidity and liquid rules as the server (`solid_at`), on the client's copy
+/// of the world.
+fn terrain<'a>(world: &'a ClientWorld, info: &'a BlockInfo, border: i32) -> impl Terrain + 'a {
+    TerrainFns {
+        solid: move |x, y, z| {
+            solid_at(BlockPos::new(x, y, z), border, |pos| {
+                world
+                    .is_loaded(pos)
+                    .then(|| info.is_solid(world.block_at(pos)))
+            })
+        },
+        liquid: move |x, y, z| info.liquid(world.block_at(BlockPos::new(x, y, z))),
     }
 }

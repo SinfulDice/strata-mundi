@@ -3,6 +3,7 @@
 mod block;
 mod fluid;
 mod item;
+mod liquid;
 mod png_file;
 mod registry;
 mod textures;
@@ -11,7 +12,8 @@ pub use block::{
     Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
 };
 pub use fluid::{Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SPREAD};
-pub use item::{Item, ItemDef, ItemKind};
+pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
+pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, ItemId, Registry, RegistryId, TextureId};
 pub use textures::{TextureLibrary, missing_id};
@@ -20,6 +22,7 @@ use crate::cinematic::{self, Cinematic};
 use crate::id::Identifier;
 use crate::lang::Translations;
 use crate::pack::{PackError, PackSet, Sourced};
+use crate::physics::LiquidCell;
 use std::collections::BTreeMap;
 
 /// Everything the game knows about, built once from the active packs.
@@ -67,6 +70,21 @@ impl Content {
         self.blocks
             .iter()
             .map(|(_, _, block)| block.solid)
+            .collect()
+    }
+
+    /// The liquid of each block (by `BlockId`), for swimming.
+    pub fn liquids(&self) -> Vec<Option<LiquidCell>> {
+        self.blocks
+            .iter()
+            .map(|(_, _, block)| {
+                let state = block.fluid?;
+                let fluid = self.fluids.get(&state.source)?;
+                Some(LiquidCell {
+                    motion: fluid.motion,
+                    surface: f64::from(surface_sixteenths(state.level)) / 16.0,
+                })
+            })
             .collect()
     }
 
@@ -235,6 +253,7 @@ fn load_items(
                 max_stack: block.max_stack,
                 category: block.category.clone(),
                 kind: ItemKind::Block(block_id),
+                action: None,
             },
         );
     }
@@ -246,10 +265,14 @@ fn load_items(
             ));
             TextureId::MISSING
         });
+        let action = value
+            .action
+            .and_then(|action| item_action(blocks, action, &source, errors));
         let item = Item {
             max_stack: value.max_stack.max(1),
             category: value.category,
             kind: ItemKind::Flat(texture),
+            action,
         };
         if items.insert(id.clone(), item).is_none() {
             errors.push(PackError::invalid(
@@ -259,4 +282,30 @@ fn load_items(
         }
     }
     items
+}
+
+fn item_action(
+    blocks: &Registry<BlockId, Block>,
+    action: ItemActionDef,
+    source: &std::path::Path,
+    errors: &mut Vec<PackError>,
+) -> Option<ItemAction> {
+    match action {
+        ItemActionDef::TakeFluid => Some(ItemAction::TakeFluid),
+        ItemActionDef::PlaceFluid(id) => {
+            let fluid = blocks.key(&id).filter(|&key| {
+                blocks
+                    .get(key)
+                    .and_then(|block| block.fluid)
+                    .is_some_and(|state| state.level == FluidLevel::Source)
+            });
+            if fluid.is_none() {
+                errors.push(PackError::invalid(
+                    source,
+                    format!("PlaceFluid: `{id}` is not a liquid source"),
+                ));
+            }
+            fluid.map(ItemAction::PlaceFluid)
+        }
+    }
 }

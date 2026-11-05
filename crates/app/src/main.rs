@@ -128,7 +128,7 @@ fn settings_for(args: &cli::Args, path: &Path) -> Settings {
 }
 
 /// With `--seed`, a freshly generated world around `--pos` (or the spawn point);
-/// without it, the preview diorama.
+/// without it, the `--scene` diorama.
 fn screenshot(
     args: &cli::Args,
     loaded: &content::Loaded,
@@ -154,7 +154,7 @@ fn screenshot(
         (world, position)
     } else {
         (
-            content::preview(loaded),
+            content::scene(loaded, &args.scene),
             args.pos.unwrap_or([-12.0, 15.5, 14.0]),
         )
     };

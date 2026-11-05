@@ -104,6 +104,8 @@ pub struct GraphicsSettings {
     pub ambient_occlusion: bool,
     /// Fades the far terrain into the sky, hiding where the world stops.
     pub fog: bool,
+    /// Ripples on water and lava (a few shader operations).
+    pub liquid_animation: bool,
     /// Smaller copies of textures for distant blocks (less shimmering).
     pub mipmaps: bool,
     /// Anisotropic filtering: 1 (off), 2, 4, 8 or 16.
@@ -145,6 +147,7 @@ impl GraphicsSettings {
             fov: 70,
             ambient_occlusion,
             fog: true,
+            liquid_animation: preset != Preset::VeryLow,
             mipmaps: !matches!(preset, Preset::VeryLow | Preset::Ds),
             // Off in every preset: it smooths the pixel art up close (left to taste).
             anisotropy: 1,

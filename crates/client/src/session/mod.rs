@@ -76,9 +76,7 @@ impl Session {
         renderer.ambient_occlusion = f32::from(u8::from(applied.graphics.ambient_occlusion));
         renderer.vertical_distance = applied.graphics.vertical_distance;
         renderer.options = RenderOptions::from_settings(&applied);
-        let table = Arc::new(BlockTable::new(
-            config.content.blocks.iter().map(|(_, _, b)| b),
-        ));
+        let table = Arc::new(BlockTable::from_content(&config.content));
         let bench = config.bench.map(|bench| BenchRun::new(bench, &gpu));
         let screens = Screens::new(
             &gpu,
@@ -238,6 +236,8 @@ impl Session {
 
     fn advance_stage(&mut self, frame_seconds: f32, menu_open: bool) {
         let pause = self.screens.wants_pause() || self.suspended;
+        self.renderer.advance_time(frame_seconds);
+        self.renderer.immersion = None;
         let (view, camera) = match &mut self.stage {
             Stage::Empty => return,
             Stage::Title(title) => {
@@ -265,6 +265,11 @@ impl Session {
                 }
                 world.game.sync_hotbar(&world.connection);
                 self.renderer.outline = world.game.interaction.target.map(|hit| hit.block);
+                self.renderer.immersion = world
+                    .game
+                    .view
+                    .world
+                    .immersion(world.game.camera.position, &self.content);
                 (&mut world.game.view, world.game.camera.position)
             }
         };
