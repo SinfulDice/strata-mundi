@@ -5,7 +5,7 @@ use crate::render::{
     Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, RenderOptions, Renderer,
     Target, TextureFiltering,
 };
-use crate::settings::GraphicsSettings;
+use crate::settings::{GraphicsSettings, Lighting};
 use crate::world::ClientWorld;
 use std::fs::File;
 use std::io::BufWriter;
@@ -59,7 +59,10 @@ pub fn render_image(
     world: &mut ClientWorld,
     view: &View,
 ) -> Result<RgbaImage, ScreenshotError> {
-    world.compute_light(&LightTable::from_content(content));
+    match view.graphics.lighting {
+        Lighting::Full => world.compute_light(&LightTable::from_content(content)),
+        Lighting::Flat => world.light_flat(),
+    }
     let gpu = Gpu::new(Gpu::create_instance(), None)?;
     let filtering = TextureFiltering {
         mipmaps: view.graphics.mipmaps,

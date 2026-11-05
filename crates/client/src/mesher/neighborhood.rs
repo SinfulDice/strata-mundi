@@ -1,6 +1,6 @@
 use super::greedy::texture_turned;
 use strata_core::content::{Block, BlockId, Content, Face, RenderKind, surface_sixteenths};
-use strata_core::light::PackedLight;
+use strata_core::light::{PackedLight, SectionLight, section_index};
 
 pub const SIZE: usize = 16;
 const PADDED: usize = SIZE + 2;
@@ -10,8 +10,7 @@ const PADDED: usize = SIZE + 2;
 #[derive(Debug, Clone)]
 pub struct Neighborhood {
     blocks: Vec<BlockId>,
-    /// Same layout as `blocks`; empty = open sky everywhere.
-    light: Vec<PackedLight>,
+    light: Light,
     /// World position of the section's (0, 0, 0) block.
     origin: [i32; 3],
     contents: Contents,
@@ -22,6 +21,19 @@ pub struct Neighborhood {
 pub struct Contents {
     pub liquid: bool,
     pub cross: bool,
+}
+
+/// The 3×3×3 sections around a section, by `[dy][dz][dx]` (each 0 to 2).
+pub type LightSections = Box<[[[SectionLight; 3]; 3]; 3]>;
+
+#[derive(Debug, Clone)]
+enum Light {
+    /// Open sky everywhere.
+    None,
+    /// As taken from the world (cheap shared copies), until a meshing thread resolves it.
+    Sections(LightSections),
+    /// Same layout as `blocks`.
+    Cells(Vec<PackedLight>),
 }
 
 impl Contents {
@@ -45,7 +57,7 @@ impl Neighborhood {
         }
         Self {
             blocks,
-            light: Vec::new(),
+            light: Light::None,
             origin: [0; 3],
             contents: Contents::ANY,
         }
@@ -61,8 +73,30 @@ impl Neighborhood {
                 }
             }
         }
-        self.light = cells;
+        self.light = Light::Cells(cells);
         self
+    }
+
+    /// Adds the light of the sections around, resolved per cell later by `resolve_light`
+    /// (on a meshing thread, not the render thread).
+    pub fn with_light_sections(mut self, sections: LightSections) -> Self {
+        self.light = Light::Sections(sections);
+        self
+    }
+
+    /// Copies the light of every cell out of the sections, for fast reads while meshing.
+    pub fn resolve_light(&mut self) {
+        if let Light::Sections(sections) = &self.light {
+            let mut cells = Vec::with_capacity(PADDED * PADDED * PADDED);
+            for y in -1..=SIZE as i32 {
+                for z in -1..=SIZE as i32 {
+                    for x in -1..=SIZE as i32 {
+                        cells.push(section_light(sections, x, y, z));
+                    }
+                }
+            }
+            self.light = Light::Cells(cells);
+        }
     }
 
     /// Where the section sits in the world, and what it may hold given its palette (every
@@ -93,11 +127,29 @@ impl Neighborhood {
 
     /// Coordinates from -1 to 16, like `get`.
     pub fn light(&self, x: i32, y: i32, z: i32) -> PackedLight {
-        self.light
-            .get(padded_index(x, y, z))
-            .copied()
-            .unwrap_or(PackedLight::OPEN_SKY)
+        match &self.light {
+            Light::None => PackedLight::OPEN_SKY,
+            Light::Sections(sections) => section_light(sections, x, y, z),
+            Light::Cells(cells) => cells
+                .get(padded_index(x, y, z))
+                .copied()
+                .unwrap_or(PackedLight::OPEN_SKY),
+        }
     }
+}
+
+/// Coordinates from -1 to 16 relative to the centre section.
+#[inline]
+fn section_light(sections: &LightSections, x: i32, y: i32, z: i32) -> PackedLight {
+    let split = |c: i32| ((c + 16).div_euclid(16) as usize, c.rem_euclid(16) as u32);
+    let ((dx, lx), (dy, ly), (dz, lz)) = (split(x), split(y), split(z));
+    sections
+        .get(dy)
+        .and_then(|plane| plane.get(dz))
+        .and_then(|row| row.get(dx))
+        .map_or(PackedLight::OPEN_SKY, |section| {
+            section.get(section_index(lx, ly, lz))
+        })
 }
 
 #[inline]

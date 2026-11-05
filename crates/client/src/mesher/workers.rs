@@ -83,8 +83,9 @@ fn work(
     table: &BlockTable,
     options: MeshOptions,
 ) {
-    for job in jobs {
+    for mut job in jobs {
         let _span = tracing::trace_span!("mesh_section").entered();
+        job.blocks.resolve_light();
         let mesh = mesh_section(&job.blocks, table, options);
         let result = MeshResult {
             key: job.key,

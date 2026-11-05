@@ -274,7 +274,7 @@ fn tab_settings(index: usize) -> Option<&'static [Setting]> {
 /// Every translation key the options screen may show, for the missing-translation test.
 #[cfg(test)]
 pub fn translation_keys() -> Vec<String> {
-    use crate::settings::{Preset, Vegetation};
+    use crate::settings::{Lighting, Preset, Vegetation};
     let settings = GRAPHICS
         .iter()
         .chain(INTERFACE)
@@ -291,6 +291,7 @@ pub fn translation_keys() -> Vec<String> {
                 .iter()
                 .map(|v| format!("vegetation-{}", v.id())),
         )
+        .chain(Lighting::ALL.iter().map(|l| format!("lighting-{}", l.id())))
         .collect();
     keys.extend(
         [

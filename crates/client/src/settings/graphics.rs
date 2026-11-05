@@ -86,6 +86,28 @@ impl Vegetation {
     }
 }
 
+/// How light is computed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Lighting {
+    /// Sky and lamps, on a background thread.
+    #[default]
+    Full,
+    /// Nothing computed: everything is lit like the open sky.
+    Flat,
+}
+
+impl Lighting {
+    pub const ALL: [Lighting; 2] = [Self::Full, Self::Flat];
+
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Full => "full",
+            Self::Flat => "flat",
+        }
+    }
+}
+
 /// Every graphics option. Threads at 0 mean "automatic".
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -102,6 +124,7 @@ pub struct GraphicsSettings {
     /// Vertical field of view, in degrees.
     pub fov: u32,
     pub ambient_occlusion: bool,
+    pub lighting: Lighting,
     /// Light blended across each face from the cells around its corners.
     pub smooth_lighting: bool,
     /// Lifts dark areas, in percent (0 = moody, 100 = bright); the same in every preset.
@@ -150,6 +173,7 @@ impl GraphicsSettings {
             vsync: true,
             fov: 70,
             ambient_occlusion,
+            lighting: Lighting::Full,
             smooth_lighting: preset != Preset::VeryLow,
             brightness: DEFAULT_BRIGHTNESS,
             fog: true,
@@ -167,9 +191,15 @@ impl GraphicsSettings {
         }
     }
 
-    /// Threads to start for meshing, `AUTO_THREADS` resolved for this machine.
+    /// Threads to start for meshing, `AUTO_THREADS` resolved for this machine. The
+    /// lighting thread takes the place of one of them when there are at least two.
     pub fn meshing_threads(&self) -> usize {
-        resolve_threads(self.worker_threads)
+        let threads = resolve_threads(self.worker_threads);
+        if self.lighting == Lighting::Full && threads >= 2 {
+            threads - 1
+        } else {
+            threads
+        }
     }
 
     pub fn world_threads(&self) -> usize {
@@ -239,5 +269,19 @@ mod tests {
         assert_eq!((ds.fps_limit, ds.meshing_threads()), (30, 1));
         assert!(ds.render_distance < GraphicsSettings::for_preset(Preset::Ultra).render_distance);
         assert_eq!(ds.vegetation, Vegetation::Reduced);
+    }
+
+    #[test]
+    fn the_lighting_thread_counts_among_the_worker_threads() {
+        let mut graphics = GraphicsSettings {
+            worker_threads: 3,
+            ..GraphicsSettings::default()
+        };
+        assert_eq!(graphics.meshing_threads(), 2);
+        graphics.lighting = Lighting::Flat;
+        assert_eq!(graphics.meshing_threads(), 3);
+        graphics.worker_threads = 1;
+        graphics.lighting = Lighting::Full;
+        assert_eq!(graphics.meshing_threads(), 1);
     }
 }

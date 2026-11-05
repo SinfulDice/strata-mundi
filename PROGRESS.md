@@ -6,6 +6,7 @@
 - **Jalon en cours** : 6 — Lumière
   - [x] Moteur de lumière (core, sans GPU) : lumière du ciel 0-15 (descend verticalement, se diffuse) et des blocs (émission et opacité du pack, flood fill), stockage compact par section, mise à jour incrémentale à la pose/casse (ajout et retrait), y compris aux frontières de colonnes ; calcul côté client sur threads de travail (donnée dérivée) ; blocs lumineux : torche, lanterne, pierre lumineuse (glowstone), lave émissive ; test obligatoire (poser puis casser une torche = état initial), tests aux frontières
   - [x] Rendu de la lumière : lumière lissée par sommet combinée à l'AO (bits réservés du sommet), facteur de lumière du ciel en uniforme (pour la nuit du jalon 7, sans remailler), remaillage des sections touchées par un changement de lumière ; réglage (lissage on/off) ; captures d'une grotte éclairée par une torche à cheval sur deux colonnes
+  - [x] Corrections de la relecture : lots bornés et éditions prioritaires, arrêt par drapeau, recalcul d'une colonne renvoyée, lumière provisoire de la case cassée, réglage « Éclairage » complet/plat (thread compté dans les threads de travail), lumière résolue sur le thread de maillage, curseur de blocs, thread mort détecté
 - **Dernière session** : 05/11/2026
 
 ## Fait
@@ -87,6 +88,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 - Réglages sans système en v0.1, ajoutés avec leur système : nuages, particules, distance de simulation (pas encore d'entités simulées), son.
 - Console : pas de saisie à la manette (règle du projet : « console exceptée ») ; `/gamemode survival` répond que la survie arrive en v0.3.
 - Wiki : images en PNG (pas de WebP sans dépendance C) ; la vue du biome montagnes montre une flèche de pierre très haute, fidèle à la génération actuelle (à revoir en fin de version).
+- Lumière (à mesurer) : un bloc changé copie la colonne entière (`Arc::make_mut`, 1 fois par colonne et par image) pour le thread de lumière ; la courbe de lumière est calculée par fragment dans le shader (une table serait moins chère). Une colonne renvoyée laisse chez ses voisines la lumière de ses anciens blocs.
 - Vérification de mise à jour : aucune release publiée avant le tag v0.1.0 (réponse 404, sans effet).
 
 ## Blocages

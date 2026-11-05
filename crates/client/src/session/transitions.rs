@@ -6,7 +6,6 @@ use crate::camera::Camera;
 use crate::gameplay::Gameplay;
 use crate::interaction::BlockInfo;
 use crate::launcher::RunningWorld;
-use crate::lighting::LightWorker;
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::MeshOptions;
 use crate::render::{OffscreenTarget, Target};
@@ -35,9 +34,13 @@ impl Session {
     }
 
     fn new_view(&self, world: ClientWorld) -> Result<WorldView, ClientError> {
-        let lighting = LightWorker::spawn(LightTable::from_content(&self.content))
-            .map_err(ClientError::Threads)?;
-        Ok(WorldView::new(world, self.new_meshing()?, lighting))
+        WorldView::new(
+            world,
+            self.new_meshing()?,
+            LightTable::from_content(&self.content),
+            self.applied.graphics.lighting,
+        )
+        .map_err(ClientError::Threads)
     }
     /// Meshing restarted with the current settings, for the world on screen.
     pub(super) fn remesh(&mut self) -> Result<(), ClientError> {
@@ -49,6 +52,14 @@ impl Session {
         };
         view.replace_meshing(meshing);
         Ok(())
+    }
+
+    pub(super) fn set_lighting(&mut self, mode: crate::settings::Lighting) {
+        match &mut self.stage {
+            Stage::Title(title) => title.view.set_lighting(mode),
+            Stage::Playing(world) => world.game.view.set_lighting(mode),
+            Stage::Empty => {}
+        }
     }
 
     pub(super) fn enter_title(&mut self) -> Result<(), ClientError> {

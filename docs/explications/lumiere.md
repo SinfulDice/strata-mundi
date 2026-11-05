@@ -37,7 +37,7 @@ Un octet par case : 4 bits de ciel, 4 bits de bloc. Une section 16×16×16 est s
 
 ### Thread dédié
 
-Le calcul tourne sur un thread `lighting`, à part du rendu et du maillage : la propagation se fait case après case sur une carte commune, ce qui se partage mal entre plusieurs threads. Le client lui confie les colonnes ; il renvoie les sections dont la lumière a changé. Une colonne est éclairée quand ses 8 voisines sont arrivées, comme pour le maillage.
+Le calcul tourne sur un thread `lighting`, à part du rendu et du maillage : la propagation se fait case après case sur une carte commune, ce qui se partage mal entre plusieurs threads. Le client lui confie les colonnes ; il renvoie les sections dont la lumière a changé. Une colonne est éclairée quand ses 8 voisines sont arrivées, comme pour le maillage. Le thread travaille par **lots courts** (16 travaux ou 4 ms au plus) pour que les résultats arrivent pendant le chargement, et traite d'abord les blocs posés ou cassés : la torche du joueur passe avant les colonnes qui arrivent. Une case cassée reçoit tout de suite une **lumière provisoire** (la meilleure de ses voisines, atténuée) pour que les faces découvertes ne s'affichent pas noires en attendant la réponse du thread.
 
 ### Du niveau à l'écran
 
@@ -54,7 +54,7 @@ graph LR
 3. **Shader** : il prend `max(ciel × facteur du ciel, bloc)`, applique la courbe de Minecraft (la clarté ne monte pas en ligne droite), la relève selon le réglage **luminosité**, garde un **plancher d'ambiance** (jamais tout noir), et teinte en chaud là où les blocs dominent le ciel. En plein jour, les couleurs sont inchangées.
 4. **Bateaux et modèles** : ils n'ont pas de cases propres ; ils prennent la lumière de la case juste au-dessus de leur position.
 
-Réglages : « éclairage lissé » (coupé en très bas : la face prend la lumière de la case devant elle) et « luminosité » (50 % par défaut).
+Réglages : « éclairage » (complet, ou **plat** : aucun calcul, tout est éclairé comme en plein ciel ; le thread de lumière prend la place d'un thread de maillage quand il y en a au moins deux), « éclairage lissé » (coupé en très bas : la face prend la lumière de la case devant elle) et « luminosité » (50 % par défaut).
 
 ### Ordre du maillage
 
@@ -74,7 +74,7 @@ Comme le lissage lit la lumière des voisines, une section n'est maillée qu'une
 | Lissage | `crates/client/src/mesher/shading.rs` (`shade_face`, `light_at`) |
 | Ordonnancement | `crates/client/src/streaming.rs`, `crates/client/src/mesh_scheduler.rs` |
 | Shader | `crates/client/src/render/shaders/light.wgsl` (ajouté à `block.wgsl` et `model.wgsl`) |
-| Réglages | `crates/client/src/settings/graphics.rs` (`smooth_lighting`, `brightness`) |
+| Réglages | `crates/client/src/settings/graphics.rs` (`lighting`, `smooth_lighting`, `brightness`) |
 | Benchmark | `crates/worldgen/benches/light.rs` |
 
 Décisions : D045 (moteur et thread) et D046 (rendu), dans `docs/decisions.md`.

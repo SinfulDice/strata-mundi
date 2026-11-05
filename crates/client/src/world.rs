@@ -1,15 +1,15 @@
 //! The client's copy of the blocks around the player, as sent by the server.
 
 use crate::entities::ClientEntities;
-use crate::mesher::{BlockTable, Neighborhood, SectionKey};
+use crate::mesher::{BlockTable, LightSections, Neighborhood, SectionKey};
 use crate::render::Immersion;
 use glam::DVec3;
 use std::collections::HashMap;
 use std::sync::Arc;
 use strata_core::chunk::Column;
 use strata_core::content::{BlockId, Content, Face, surface_sixteenths};
-use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN, WORLD_HEIGHT};
-use strata_core::light::{ColumnLight, PackedLight, section_index};
+use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
+use strata_core::light::{ColumnLight, PackedLight, SectionLight};
 
 mod light;
 
@@ -189,30 +189,37 @@ impl ClientWorld {
     pub fn neighborhood(&self, key: SectionKey, table: &BlockTable) -> Neighborhood {
         let (cx, cz, section) = key;
         let columns = around(&self.columns, cx, cz);
-        let lights = around(&self.light, cx, cz);
         let base_y = section as i32 * SECTION_SIZE;
         let blocks = Neighborhood::build(|x, y, z| {
             let (dx, lx) = split(x);
             let (dz, lz) = split(z);
             columns[dz][dx].map_or(BlockId::AIR, |column| column.get(lx, base_y + y, lz))
         })
-        .with_light(|x, y, z| {
-            let (dx, lx) = split(x);
-            let (dz, lz) = split(z);
-            let y = base_y + y;
-            let Some(section) = lights[dz][dx]
-                .filter(|_| (0..WORLD_HEIGHT).contains(&y))
-                .and_then(|column| column.section((y / SECTION_SIZE) as usize))
-            else {
-                return PackedLight::OPEN_SKY;
-            };
-            section.get(section_index(lx, local(y), lz))
-        });
+        .with_light_sections(self.light_sections(cx, cz, section));
         let palette = columns[1][1]
             .and_then(|column| column.section(section))
             .map_or(&[][..], |s| s.palette());
         let origin = [cx * SECTION_SIZE, base_y, cz * SECTION_SIZE];
         blocks.of_section(origin, palette, table)
+    }
+}
+
+impl ClientWorld {
+    /// Shared copies of the light around a section; open sky outside the world height and
+    /// in unlit columns.
+    fn light_sections(&self, cx: i32, cz: i32, section: usize) -> LightSections {
+        let lights = around(&self.light, cx, cz);
+        Box::new(std::array::from_fn(|dy| {
+            std::array::from_fn(|dz| {
+                std::array::from_fn(|dx| {
+                    (section + dy)
+                        .checked_sub(1)
+                        .and_then(|index| lights[dz][dx]?.section(index))
+                        .cloned()
+                        .unwrap_or(SectionLight::Uniform(PackedLight::OPEN_SKY))
+                })
+            })
+        }))
     }
 }
 

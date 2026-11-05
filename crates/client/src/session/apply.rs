@@ -59,8 +59,11 @@ impl Session {
             self.renderer
                 .set_texture_filtering(&self.gpu, textures, g.mipmaps, g.anisotropy);
         }
-        let remesh = (MeshOptions::from_graphics(&g), g.worker_threads)
-            != (MeshOptions::from_graphics(before), before.worker_threads);
+        if g.lighting != before.lighting {
+            self.set_lighting(g.lighting);
+        }
+        let remesh = (MeshOptions::from_graphics(&g), g.meshing_threads())
+            != (MeshOptions::from_graphics(before), before.meshing_threads());
         if remesh && let Err(error) = self.remesh() {
             tracing::error!(%error, "could not restart meshing");
         }

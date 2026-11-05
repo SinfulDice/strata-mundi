@@ -51,6 +51,17 @@ impl Face {
         self as usize
     }
 
+    pub const fn opposite(self) -> Face {
+        match self {
+            Self::Up => Self::Down,
+            Self::Down => Self::Up,
+            Self::North => Self::South,
+            Self::South => Self::North,
+            Self::East => Self::West,
+            Self::West => Self::East,
+        }
+    }
+
     pub const fn axis(self) -> Axis {
         match self {
             Self::Up | Self::Down => Axis::Y,

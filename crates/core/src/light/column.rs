@@ -2,9 +2,9 @@
 //! where light can still move (shaft edges, lamps, borders with lit neighbours).
 
 use super::storage::{ColumnLight, MAX_LIGHT, SectionLight, section_index};
-use super::{BlockSource, Channel, LightTable, Lighting, attenuate, block_at};
+use super::{BlockSource, Channel, LightTable, Lighting, attenuate};
 use crate::chunk::Column;
-use crate::content::Face;
+use crate::content::{BlockId, Face};
 use crate::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 
 const SIZE: usize = SECTION_SIZE as usize;
@@ -92,13 +92,21 @@ impl Lighting {
         face: Face,
         section: usize,
     ) {
+        let (dx, _, dz) = face.offset();
+        let other = ColumnPos {
+            x: pos.x + dx,
+            z: pos.z + dz,
+        };
+        let (Some(ours), Some(theirs)) = (blocks.column(pos), blocks.column(other)) else {
+            return;
+        };
         let base = BlockPos::new(
             pos.x * SECTION_SIZE,
             section as i32 * SECTION_SIZE,
             pos.z * SECTION_SIZE,
         );
         let last = SECTION_SIZE - 1;
-        for y in 0..SECTION_SIZE {
+        for y in base.y..base.y + SECTION_SIZE {
             for along in 0..SECTION_SIZE {
                 let (x, z) = match face {
                     Face::North => (along, 0),
@@ -106,8 +114,12 @@ impl Lighting {
                     Face::East => (last, along),
                     _ => (0, along),
                 };
-                let ours = BlockPos::new(base.x + x, base.y + y, base.z + z);
-                self.cross(blocks, table, channel, ours, face);
+                let local = |c: i32| c.rem_euclid(SECTION_SIZE) as u32;
+                let a = BlockPos::new(base.x + x, y, base.z + z);
+                let b = a.neighbour(face);
+                let block_a = ours.get(local(a.x), y, local(a.z));
+                let block_b = theirs.get(local(b.x), y, local(b.z));
+                self.cross(table, channel, (a, block_a), face, block_b);
             }
         }
     }
@@ -116,17 +128,14 @@ impl Lighting {
     /// brightens something.
     fn cross(
         &mut self,
-        blocks: &impl BlockSource,
         table: &LightTable,
         channel: Channel,
-        a: BlockPos,
+        (a, block_a): (BlockPos, BlockId),
         face: Face,
+        block_b: BlockId,
     ) {
         let b = a.neighbour(face);
         let (Some(light_a), Some(light_b)) = (self.light_at(a), self.light_at(b)) else {
-            return;
-        };
-        let (Some(block_a), Some(block_b)) = (block_at(blocks, a), block_at(blocks, b)) else {
             return;
         };
         let (level_a, level_b) = (light_a.get(channel), light_b.get(channel));

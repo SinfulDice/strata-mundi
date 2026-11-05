@@ -2,7 +2,7 @@
 //! darkens everything the old light may have reached, then the edge of the dark area and
 //! the sources inside it spread light back in.
 
-use super::{BlockSource, Channel, LightTable, Lighting, attenuate, block_at, source};
+use super::{BlockCursor, BlockSource, Channel, LightTable, Lighting, attenuate, block_at, source};
 use crate::content::{BlockId, Face};
 use crate::coords::BlockPos;
 
@@ -69,6 +69,7 @@ impl Lighting {
         table: &LightTable,
         channel: Channel,
     ) {
+        let mut blocks = BlockCursor::new(blocks);
         while let Some(pos) = self.queue.pop_front() {
             let Some(light) = self.light_at(pos) else {
                 continue;
@@ -82,7 +83,7 @@ impl Lighting {
                 let Some(near_light) = self.light_at(near) else {
                     continue;
                 };
-                let Some(block) = block_at(blocks, near) else {
+                let Some(block) = blocks.get(near) else {
                     continue;
                 };
                 let reached = attenuate(channel, level, face, table.opacity(block));
@@ -97,6 +98,7 @@ impl Lighting {
     /// Darkens what the removed light may have lit; queues the brighter edge and the
     /// sources found inside for `spread`.
     fn unspread(&mut self, blocks: &impl BlockSource, table: &LightTable, channel: Channel) {
+        let mut blocks = BlockCursor::new(blocks);
         while let Some((pos, level)) = self.removals.pop_front() {
             for face in Face::ALL {
                 let near = pos.neighbour(face);
@@ -104,7 +106,7 @@ impl Lighting {
                     continue;
                 };
                 let near_level = near_light.get(channel);
-                let Some(block) = block_at(blocks, near).filter(|_| near_level > 0) else {
+                let Some(block) = blocks.get(near).filter(|_| near_level > 0) else {
                     continue;
                 };
                 if near_level > attenuate(channel, level, face, table.opacity(block)) {

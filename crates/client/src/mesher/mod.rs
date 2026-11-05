@@ -11,7 +11,7 @@ mod vertex;
 mod workers;
 
 pub use greedy::{MeshOptions, SectionMesh, mesh_section};
-pub use neighborhood::{BlockTable, MeshBlock, Neighborhood};
+pub use neighborhood::{BlockTable, LightSections, MeshBlock, Neighborhood};
 pub use vertex::{MeshData, PackedVertex};
 pub use workers::{MeshJob, MeshResult, MeshWorkers, SectionKey};
 

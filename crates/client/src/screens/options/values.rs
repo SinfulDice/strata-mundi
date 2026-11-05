@@ -7,7 +7,8 @@ use crate::settings::{
     VERTICAL_DISTANCE,
 };
 use crate::settings::{
-    AUTO_THREADS, ColorFilter, FontChoice, Preset, Settings, Vegetation, default_worker_threads,
+    AUTO_THREADS, ColorFilter, FontChoice, Lighting, Preset, Settings, Vegetation,
+    default_worker_threads,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -20,6 +21,7 @@ pub enum Setting {
     Vsync,
     Fov,
     AmbientOcclusion,
+    Lighting,
     SmoothLighting,
     Brightness,
     Fog,
@@ -59,6 +61,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Vsync,
     Setting::Fov,
     Setting::AmbientOcclusion,
+    Setting::Lighting,
     Setting::SmoothLighting,
     Setting::Brightness,
     Setting::Fog,
@@ -155,6 +158,7 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::Vsync => (on_off(shared, g.vsync), None),
         Setting::Fov => (format!("{}°", g.fov), gauge(g.fov, FOV)),
         Setting::AmbientOcclusion => (on_off(shared, g.ambient_occlusion), None),
+        Setting::Lighting => (shared.tr(&format!("lighting-{}", g.lighting.id())), None),
         Setting::SmoothLighting => (on_off(shared, g.smooth_lighting), None),
         Setting::Brightness => (
             format!("{} %", g.brightness),
@@ -249,6 +253,7 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Vsync => g.vsync = !g.vsync,
         Setting::Fov => range(&mut g.fov, FOV, 5, step),
         Setting::AmbientOcclusion => g.ambient_occlusion = !g.ambient_occlusion,
+        Setting::Lighting => g.lighting = cycle(&Lighting::ALL, g.lighting, step),
         Setting::SmoothLighting => g.smooth_lighting = !g.smooth_lighting,
         Setting::Brightness => range(&mut g.brightness, BRIGHTNESS, 10, step),
         Setting::Fog => g.fog = !g.fog,

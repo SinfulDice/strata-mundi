@@ -205,6 +205,35 @@ fn block_at(blocks: &impl BlockSource, pos: BlockPos) -> Option<BlockId> {
     Some(column.get(local(pos.x), pos.y, local(pos.z)))
 }
 
+/// Reads blocks remembering the last column: light mostly moves inside one column, so
+/// most lookups skip the column map.
+struct BlockCursor<'a, B: BlockSource> {
+    blocks: &'a B,
+    last: Option<(ColumnPos, &'a Column)>,
+}
+
+impl<'a, B: BlockSource> BlockCursor<'a, B> {
+    fn new(blocks: &'a B) -> Self {
+        Self { blocks, last: None }
+    }
+
+    /// Block at `pos`, `None` where no column is loaded.
+    #[inline]
+    fn get(&mut self, pos: BlockPos) -> Option<BlockId> {
+        let at = pos.column();
+        let column = match self.last {
+            Some((last, column)) if last == at => column,
+            _ => {
+                let column = self.blocks.column(at)?;
+                self.last = Some((at, column));
+                column
+            }
+        };
+        let local = |c: i32| c.rem_euclid(SECTION_SIZE) as u32;
+        Some(column.get(local(pos.x), pos.y, local(pos.z)))
+    }
+}
+
 /// Light a block makes by itself: its emission, or the open sky above the top layer.
 fn source(channel: Channel, pos: BlockPos, block: BlockId, table: &LightTable) -> u8 {
     match channel {

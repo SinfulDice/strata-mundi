@@ -2,13 +2,20 @@
 //! (shared, not duplicated: columns are reference-counted and copied only on change).
 //! Light is derived data, so the client may compute it without ever writing the world.
 
-use crossbeam_channel::{Receiver, Sender, unbounded};
+use crossbeam_channel::{Receiver, Sender, TryRecvError, unbounded};
+use std::collections::VecDeque;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::{self, JoinHandle};
+use std::time::{Duration, Instant};
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, ColumnMap, ColumnPos};
 use strata_core::light::{LightTable, Lighting, SectionLight};
+
+/// A batch ends after this many jobs or this long, so results flow while columns stream in.
+const BATCH_JOBS: usize = 16;
+const BATCH_TIME: Duration = Duration::from_millis(4);
 
 enum LightJob {
     Insert(Arc<Column>),
@@ -30,22 +37,28 @@ pub struct LightWorker {
     jobs: Option<Sender<LightJob>>,
     results: Receiver<LightResult>,
     thread: Option<JoinHandle<()>>,
+    stop: Arc<AtomicBool>,
     /// Jobs sent whose result has not been taken yet.
     outstanding: usize,
+    failed: bool,
 }
 
 impl LightWorker {
     pub fn spawn(table: LightTable) -> std::io::Result<Self> {
         let (jobs, job_receiver) = unbounded();
         let (result_sender, results) = unbounded();
+        let stop = Arc::new(AtomicBool::new(false));
+        let stopping = Arc::clone(&stop);
         let thread = thread::Builder::new()
             .name("lighting".into())
-            .spawn(move || work(&job_receiver, &result_sender, &table))?;
+            .spawn(move || work(&job_receiver, &result_sender, &table, &stopping))?;
         Ok(Self {
             jobs: Some(jobs),
             results,
             thread: Some(thread),
+            stop,
             outstanding: 0,
+            failed: false,
         })
     }
 
@@ -62,34 +75,135 @@ impl LightWorker {
     }
 
     pub fn finished(&mut self) -> Vec<LightResult> {
-        let results: Vec<_> = self.results.try_iter().collect();
+        let mut results = Vec::new();
+        loop {
+            match self.results.try_recv() {
+                Ok(result) => results.push(result),
+                Err(TryRecvError::Empty) => break,
+                Err(TryRecvError::Disconnected) => {
+                    self.fail();
+                    break;
+                }
+            }
+        }
         let done: usize = results.iter().map(|result| result.jobs).sum();
         self.outstanding = self.outstanding.saturating_sub(done);
         results
     }
 
-    /// Every job sent so far is done and its result taken.
+    /// Every job sent so far is done and its result taken (or the thread is gone).
     pub fn is_idle(&self) -> bool {
-        self.outstanding == 0
+        self.outstanding == 0 || self.failed
+    }
+
+    /// The thread stopped on its own (a bug): reported once, the world is drawn without light.
+    pub fn has_failed(&self) -> bool {
+        self.failed
+    }
+
+    fn fail(&mut self) {
+        if !self.failed {
+            self.failed = true;
+            tracing::error!("the lighting thread stopped: the world is drawn without light");
+        }
     }
 
     fn send(&mut self, job: LightJob) {
-        let Some(jobs) = &self.jobs else {
-            return;
-        };
-        if jobs.send(job).is_ok() {
+        let sent = self
+            .jobs
+            .as_ref()
+            .is_some_and(|jobs| jobs.send(job).is_ok());
+        if sent {
             self.outstanding += 1;
         } else {
-            tracing::warn!("the lighting thread stopped");
+            self.fail();
         }
     }
 }
 
 impl Drop for LightWorker {
     fn drop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
         self.jobs = None;
         if let Some(thread) = self.thread.take() {
             let _ = thread.join();
+        }
+    }
+}
+
+/// Jobs received and not done yet: block changes and removals first (what the player
+/// does shows at once), then columns to light, in arrival order.
+#[derive(Default)]
+struct Pending {
+    edits: VecDeque<LightJob>,
+    inserts: VecDeque<Arc<Column>>,
+    /// Jobs merged into a later one, reported done with the next batch.
+    merged: usize,
+}
+
+impl Pending {
+    fn is_empty(&self) -> bool {
+        self.edits.is_empty() && self.inserts.is_empty()
+    }
+
+    /// Keeps each column's jobs in order although edits jump ahead of inserts.
+    fn push(&mut self, job: LightJob) {
+        match job {
+            LightJob::Insert(column) => {
+                self.drop_inserts(column.pos);
+                self.inserts.push_back(column);
+            }
+            LightJob::Changed(column, changes) => {
+                match self.inserts.iter_mut().find(|c| c.pos == column.pos) {
+                    // Lit from scratch with the new blocks anyway.
+                    Some(waiting) => {
+                        *waiting = column;
+                        self.merged += 1;
+                    }
+                    None => self.edits.push_back(LightJob::Changed(column, changes)),
+                }
+            }
+            LightJob::Remove(pos) => {
+                self.drop_inserts(pos);
+                self.edits.push_back(LightJob::Remove(pos));
+            }
+        }
+    }
+
+    fn drop_inserts(&mut self, pos: ColumnPos) {
+        let before = self.inserts.len();
+        self.inserts.retain(|column| column.pos != pos);
+        self.merged += before - self.inserts.len();
+    }
+
+    fn pop(&mut self) -> Option<LightJob> {
+        self.edits
+            .pop_front()
+            .or_else(|| self.inserts.pop_front().map(LightJob::Insert))
+    }
+}
+
+fn work(
+    jobs: &Receiver<LightJob>,
+    results: &Sender<LightResult>,
+    table: &LightTable,
+    stop: &AtomicBool,
+) {
+    let mut state = LightState::default();
+    let mut pending = Pending::default();
+    while !stop.load(Ordering::Relaxed) {
+        if pending.is_empty() {
+            match jobs.recv() {
+                Ok(job) => pending.push(job),
+                Err(_) => return,
+            }
+        }
+        jobs.try_iter().for_each(|job| pending.push(job));
+        let Some(result) = state.batch(&mut pending, table, stop) else {
+            return;
+        };
+        if results.send(result).is_err() {
+            return;
         }
     }
 }
@@ -101,32 +215,43 @@ struct LightState {
     lighting: Lighting,
 }
 
-fn work(jobs: &Receiver<LightJob>, results: &Sender<LightResult>, table: &LightTable) {
-    let mut state = LightState::default();
-    while let Ok(first) = jobs.recv() {
+impl LightState {
+    /// `None` when asked to stop.
+    fn batch(
+        &mut self,
+        pending: &mut Pending,
+        table: &LightTable,
+        stop: &AtomicBool,
+    ) -> Option<LightResult> {
         let _span = tracing::trace_span!("lighting").entered();
+        let start = Instant::now();
         let mut result = LightResult {
-            jobs: 1,
+            jobs: std::mem::take(&mut pending.merged),
             ..LightResult::default()
         };
-        state.apply(first, table, &mut result.lit);
-        for job in jobs.try_iter() {
-            state.apply(job, table, &mut result.lit);
-            result.jobs += 1;
+        let mut done = 0;
+        while done < BATCH_JOBS && start.elapsed() < BATCH_TIME {
+            let Some(job) = pending.pop() else {
+                break;
+            };
+            if stop.load(Ordering::Relaxed) {
+                return None;
+            }
+            self.apply(job, table, &mut result.lit);
+            done += 1;
         }
-        result.sections = state.changed_sections();
-        if results.send(result).is_err() {
-            return;
-        }
+        result.jobs += done;
+        result.sections = self.changed_sections();
+        Some(result)
     }
-}
 
-impl LightState {
     fn apply(&mut self, job: LightJob, table: &LightTable, lit: &mut Vec<ColumnPos>) {
         match job {
             LightJob::Insert(column) => {
                 let pos = column.pos;
                 self.blocks.insert(pos, column);
+                // New blocks for a lit column (sent again by the server): lit again.
+                self.lighting.remove_column(pos);
                 for near in around(pos) {
                     if !self.lighting.is_lit(near)
                         && self.is_complete(near)
@@ -178,60 +303,4 @@ fn around(pos: ColumnPos) -> impl Iterator<Item = ColumnPos> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::{Duration, Instant};
-    use strata_core::content::Block;
-    use strata_core::light::PackedLight;
-
-    fn table() -> LightTable {
-        let torch = Block {
-            light_emission: 14,
-            ..Block::air()
-        };
-        LightTable::new([Block::air(), torch].iter())
-    }
-
-    fn wait(worker: &mut LightWorker) -> (Vec<ColumnPos>, Vec<(ColumnPos, usize, SectionLight)>) {
-        let start = Instant::now();
-        let (mut lit, mut sections) = (Vec::new(), Vec::new());
-        while start.elapsed() < Duration::from_secs(10) {
-            for result in worker.finished() {
-                lit.extend(result.lit);
-                sections.extend(result.sections);
-            }
-            if worker.is_idle() {
-                break;
-            }
-            thread::sleep(Duration::from_millis(5));
-        }
-        (lit, sections)
-    }
-
-    #[test]
-    fn columns_are_lit_once_their_neighbours_arrive_and_torches_update_them() {
-        let mut worker = LightWorker::spawn(table()).unwrap();
-        let mut columns = std::collections::HashMap::new();
-        for pos in around(ColumnPos { x: 0, z: 0 }) {
-            let column = Arc::new(Column::empty(pos));
-            columns.insert(pos, Arc::clone(&column));
-            worker.insert(column);
-        }
-        let origin = ColumnPos { x: 0, z: 0 };
-        let (lit, sections) = wait(&mut worker);
-        assert_eq!(lit, vec![origin], "only the column with its 8 neighbours");
-        assert_eq!(sections.len(), 32);
-        assert!(sections.iter().all(|(pos, _, _)| *pos == origin));
-        let mut column = Arc::clone(&columns[&origin]);
-        Arc::make_mut(&mut column).set(4, 100, 4, BlockId(1));
-        worker.changed(column, vec![(BlockPos::new(4, 100, 4), BlockId::AIR)]);
-        let (lit, changed) = wait(&mut worker);
-        assert!(lit.is_empty());
-        let section = changed
-            .iter()
-            .find(|(pos, index, _)| *pos == origin && *index == 6)
-            .map(|(_, _, light)| light.clone());
-        let cell = strata_core::light::section_index(4, 100 - 96, 4);
-        assert_eq!(section.map(|s| s.get(cell)), Some(PackedLight::new(15, 14)));
-    }
-}
+mod tests;

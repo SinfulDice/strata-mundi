@@ -278,3 +278,17 @@ fn rock_and_sky_sections_take_no_memory() {
     });
     assert_eq!(mixed, 1, "only the section holding the surface");
 }
+
+#[test]
+fn an_edit_beside_an_unlit_neighbour_then_lighting_it_matches_a_fresh_computation() {
+    let mut world = ground();
+    cave(&mut world);
+    let east = ColumnPos { x: 1, z: 0 };
+    let others: Vec<_> = all_columns().into_iter().filter(|p| *p != east).collect();
+    let mut lighting = lit(&world, &others);
+    change(&mut lighting, &mut world, BlockPos::new(15, 42, 7), TORCH);
+    change(&mut lighting, &mut world, BlockPos::new(15, 38, 7), AIR);
+    change(&mut lighting, &mut world, BlockPos::new(15, 44, 3), STONE);
+    assert!(lighting.light_column(&world, &table(), east));
+    assert_eq!(snapshot(&lighting), snapshot(&lit_all(&world)));
+}
