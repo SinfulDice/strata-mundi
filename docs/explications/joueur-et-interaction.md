@@ -16,6 +16,8 @@ La physique du joueur (`step`) est écrite **une fois**, dans `core`, et tourne 
 - **Accroupi** : on ne tombe pas du bord d'un bloc.
 - **Montée automatique d'un demi-bloc** (dalles, escaliers à venir) et **saut automatique** quand on marche contre une marche d'**un** bloc (jamais contre un mur, jamais accroupi) : les deux se règlent (`ControlSettings`).
 - **Vol créatif** : deux appuis rapides sur saut (moins de 0,3 s) ; Espace monte, Maj descend ; se poser coupe le vol.
+- **Nage** : dans un liquide, la même fonction partagée ralentit, fait couler doucement et pousse hors de l'eau contre une berge (voir [Fluides](fluides.md)).
+- **Assis dans un bateau** : le joueur ne prédit plus son corps ; ses entrées pilotent le bateau côté serveur (voir [Bateaux et entités](bateaux-et-entites.md)).
 - Les colonnes pas encore chargées comptent comme pleines : personne ne tombe dans un monde qui n'est pas arrivé.
 
 ### Prédiction et réconciliation
@@ -44,6 +46,7 @@ sequenceDiagram
 - **Casser** (clic gauche) : instantané en créatif. Le client envoie `BreakBlock` ; le serveur vérifie la position (dans la bordure et la hauteur du monde), la portée (6 blocs, un peu plus que le client pour les arrondis), la dureté (hors créatif, le socle est incassable) et le rythme (10 actions par seconde au plus), puis renvoie `BlockChanged` ; seulement alors le bloc disparaît chez le client.
 - **Poser** (clic droit) : `PlaceBlock { contre, face, bloc }`. Le serveur vérifie : bloc posable, support solide, case libre, dans la hauteur du monde, à portée, et pas dans le corps d'un joueur.
 - **Orientation** : les bûches se posent **couchées dans l'axe de la face cliquée**. Dans le pack, il suffit d'écrire `placement: Axis` : au chargement, le jeu crée tout seul les variantes couchées `…__x` et `…__z`, sans objet ni nom propre (elles s'appellent comme la bûche debout). Le maillage tourne la texture d'écorce pour que les fibres suivent la bûche.
+- **Seau et bateau** : clic droit avec l'objet en main envoie `UseItem` ; le serveur pose ou retire une source, ou crée un bateau. Clic droit sur un bateau : y monter (la visée teste aussi les boîtes des entités).
 - **Maintenir le bouton** répète l'action toutes les 0,25 s.
 - **Prise de bloc** (clic molette) : met l'objet du bloc visé dans la barre.
 - **Nom du bloc visé** en haut de l'écran (façon mod Jade), désactivable (`show_block_name`). L'outil requis s'y ajoutera avec la survie (v0.3).
@@ -69,7 +72,7 @@ sequenceDiagram
 
 <details><summary>Côté Rust</summary>
 
-- **`impl Fn(i32, i32, i32) -> bool`** : la physique ne sait rien des chunks ; on lui passe une *fonction* qui répond « ce bloc est-il solide ? ». Le serveur lui donne ses colonnes, le client les siennes, les tests un simple sol plat. C'est ce qui permet d'écrire la physique une seule fois.
+- **`impl Fn(i32, i32, i32) -> bool`** (et le trait `Terrain` qui y ajoute la lecture des liquides et la glissance) : la physique ne sait rien des chunks ; on lui passe une *fonction* qui répond « ce bloc est-il solide ? ». Le serveur lui donne ses colonnes, le client les siennes, les tests un simple sol plat. C'est ce qui permet d'écrire la physique une seule fois.
 - **`VecDeque`** : une file où l'on ajoute à la fin et retire au début en temps constant, idéale pour les entrées en attente.
 - **`wrapping_add` / `wrapping_sub`** : les numéros d'entrée sont des `u32` qui repartent à zéro après 4 milliards ; ces opérations le font sans plantage, et la comparaison `(a - b) as i32 <= 0` reste juste au passage.
 - **`f64` pour les positions** : à 10 millions de blocs de l'origine, un `f32` n'a plus que ~1 bloc de précision ; un `f64` reste précis au micromètre.

@@ -26,6 +26,8 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 17. [Réglages](reglages.md) : fichier unique, préréglages, application à chaud, accessibilité, packs de ressources.
 18. [Console, débogage et cinématiques](console-et-debug.md) : commandes, F3, F5, rapports de plantage, mises à jour, caméra scriptée.
 19. [Le wiki](wiki.md) : génération depuis les packs, textes, images, publication.
+20. [Fluides](fluides.md) : eau et lave qui coulent, file de blocs actifs, nage, seau.
+21. [Bateaux et entités](bateaux-et-entites.md) : types d'entité en pack, physique du bateau, modèles en boîtes.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 
@@ -48,7 +50,7 @@ graph TD
 
 | Crate | Rôle | Dépend de |
 |---|---|---|
-| `core` | Types purs du jeu : coordonnées, blocs, chunks, registres, packs. Aucune fenêtre ni carte graphique : testable partout. | — |
+| `core` | Types purs du jeu : coordonnées, blocs, chunks, registres, packs, physique (joueur, nage, bateau) et mises à jour de blocs (fluides). Aucune fenêtre ni carte graphique : testable partout. | — |
 | `worldgen` | Fabrique le terrain à partir d'une graine (seed) : climat, relief, biomes, grottes, arbres, plantes, carte vue du ciel. Même graine = même monde. | `core` |
 | `protocol` | Les messages échangés entre client et serveur. | `core` |
 | `server` | Le « maître du jeu » : simule le monde 20 fois par seconde, décide de tout, sauvegarde. | `core`, `worldgen`, `protocol` |

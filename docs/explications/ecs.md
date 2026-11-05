@@ -9,9 +9,12 @@ Le serveur doit simuler des choses très différentes : le joueur aujourd'hui, p
 - **Entité** : un simple identifiant (`Entity`), fait d'un **indice** et d'une **génération**. Quand une entité disparaît, son indice est réutilisé avec une génération +1 : un vieil identifiant gardé quelque part ne peut donc pas désigner par erreur la nouvelle entité.
 - **Composant** : une donnée accrochée à une entité. Aujourd'hui :
   - `Body` : position, vitesse, au sol ou non, en vol ou non (le corps physique) ;
-  - `PlayerControl` : les entrées reçues du client du joueur, pas encore appliquées.
+  - `PlayerControl` : les entrées reçues du client du joueur, pas encore appliquées ;
+  - `HotbarState` : la barre d'objets ;
+  - `Boat` : un bateau (type, corps, commandes du pilote, pilote) ;
+  - `mounts` : pour un joueur, l'entité dans laquelle il est assis (voir [Bateaux et entités](bateaux-et-entites.md)).
 - **Stockage** (`Storage<T>`) : un par sorte de composant. Les composants sont rangés **serrés** dans un tableau (rapide à parcourir), avec une table « entité → case » pour les retrouver (*sparse set*).
-- **Système** : une fonction appelée à chaque tick qui parcourt un ou plusieurs stockages. Exemple : `player_movement` prend chaque `PlayerControl`, retrouve le `Body` de la même entité et applique les entrées avec la physique.
+- **Système** : une fonction appelée à chaque tick qui parcourt un ou plusieurs stockages. Exemple : `player_movement` prend chaque `PlayerControl`, retrouve le `Body` de la même entité et applique les entrées avec la physique (ou les transmet au bateau si le joueur est assis) ; `boat_movement` fait avancer les bateaux.
 
 ```mermaid
 graph LR
@@ -21,7 +24,7 @@ graph LR
     S -->|modifie| B
 ```
 
-Ajouter une sorte de composant = ajouter un champ `Storage<…>` dans `Ecs`. Ajouter un comportement = écrire un système. Les mobs (v0.4) réutiliseront `Body` et la même physique.
+Un bateau est donc une entité avec un composant `Boat`, sans `Body` : il a son propre corps physique. Ajouter une sorte de composant = ajouter un champ `Storage<…>` dans `Ecs`. Ajouter un comportement = écrire un système. Les mobs (v0.4) réutiliseront `Body` et la même physique.
 
 ## Où c'est dans le code
 
@@ -29,7 +32,7 @@ Ajouter une sorte de composant = ajouter un champ `Storage<…>` dans `Ecs`. Ajo
 |---|---|
 | Entités à génération | `crates/server/src/ecs/entity.rs` (`Entities`, `Entity`) |
 | Stockage par composant | `crates/server/src/ecs/storage.rs` (`Storage`) |
-| Liste des stockages | `crates/server/src/ecs/mod.rs` (`Ecs`, `PlayerControl`) |
+| Liste des stockages | `crates/server/src/ecs/mod.rs` (`Ecs`, `PlayerControl`, `Boat`) |
 | Systèmes | `crates/server/src/systems.rs` |
 | Qui appelle quoi à chaque tick | `crates/server/src/game.rs` (`Game::tick`) |
 
