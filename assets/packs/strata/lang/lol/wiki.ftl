@@ -46,6 +46,7 @@ wiki-render-opaque = NO SEE THRU
 wiki-render-cutout = HOLEY
 wiki-render-translucent = SEE THRU
 wiki-render-invisible = INVIZIBL
+wiki-render-cross = CRIS-CROS PLANT
 wiki-depth = { $depth } BLOKZ
 wiki-generation = WER IT SPAWNZ
 wiki-gen-stone = FILLZ TEH UNDRGROUND.

@@ -2,6 +2,7 @@ use crate::defs::{
     BiomeDef, CavesDef, Climate, Crown, DimensionDef, FeatureDef, Relief, TerrainDef,
 };
 use crate::deposits::Deposit;
+use crate::fnv1a;
 use std::collections::BTreeMap;
 use std::path::Path;
 use strata_core::content::{Block, BlockId, Registry};
@@ -92,6 +93,7 @@ pub enum Feature {
         height: (u32, u32),
         on: Vec<BlockId>,
     },
+    Plants(Plants),
     Ore {
         block: BlockId,
         deep_block: Option<BlockId>,
@@ -101,6 +103,29 @@ pub enum Feature {
         max_y: i32,
     },
     Deposit(Deposit),
+}
+
+#[derive(Debug, Clone)]
+pub struct Plants {
+    /// `(block, weight)`, weights above zero.
+    pub blocks: Vec<(BlockId, u32)>,
+    pub on: Vec<BlockId>,
+    pub radius: u32,
+    pub count: (u32, u32),
+    /// Hash of the feature's identifier: patches do not move when other features change.
+    pub salt: u64,
+}
+
+impl Feature {
+    /// Blocks it adds above the ground (trees, cactus, plants).
+    pub fn surface_blocks(&self) -> Vec<BlockId> {
+        match self {
+            Self::Tree { log, leaves, .. } => vec![*log, *leaves],
+            Self::Pillar { block, .. } => vec![*block],
+            Self::Plants(plants) => plants.blocks.iter().map(|(block, _)| *block).collect(),
+            Self::Ore { .. } | Self::Deposit(_) => Vec::new(),
+        }
+    }
 }
 
 /// Looks up identifiers, recording an error (with the file) for each unknown one.
@@ -242,6 +267,22 @@ fn load_features(
                     height: bounded(height, MAX_TREE_HEIGHT),
                     on: r.blocks(&on),
                 },
+                FeatureDef::Plants {
+                    blocks,
+                    on,
+                    radius,
+                    count,
+                } => Feature::Plants(Plants {
+                    blocks: blocks
+                        .iter()
+                        .filter(|(_, weight)| *weight > 0)
+                        .map(|(block, weight)| (r.block(block), *weight))
+                        .collect(),
+                    on: r.blocks(&on),
+                    radius: radius.min(MAX_PATCH_RADIUS),
+                    count: bounded(count, MAX_PATCH_PLANTS),
+                    salt: fnv1a(id.to_string().as_bytes()),
+                }),
                 FeatureDef::Ore {
                     block,
                     deep_block,
@@ -381,6 +422,9 @@ fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, 
 /// from its root would be cut, so sizes are bounded.
 pub const MAX_CROWN: u32 = 8;
 const MAX_TREE_HEIGHT: u32 = 32;
+/// Patches are written from the 3×3 neighbouring columns too.
+pub const MAX_PATCH_RADIUS: u32 = MAX_CROWN;
+const MAX_PATCH_PLANTS: u32 = 64;
 
 fn bounded((a, b): (u32, u32), max: u32) -> (u32, u32) {
     (a.min(b).min(max), a.max(b).min(max))

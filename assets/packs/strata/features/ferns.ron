@@ -1,0 +1,6 @@
+Plants(
+    blocks: [("strata:fern", 3), ("strata:tall_grass", 1)],
+    on: ["strata:grass_block", "strata:snowy_grass_block"],
+    radius: 3,
+    count: (3, 8),
+)

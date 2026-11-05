@@ -14,6 +14,9 @@ pub enum RenderKind {
     Cutout,
     /// Blended, drawn after everything else (water, glass).
     Translucent,
+    /// Two crossed diagonal planes with cutout texture, seen from both sides (plants).
+    /// Hides nothing and is never hidden; its texture is the north face's.
+    Cross,
 }
 
 /// Faces of a cube. North is -Z, east is +X.
@@ -257,4 +260,32 @@ impl Block {
     pub fn is_opaque(&self) -> bool {
         self.render == RenderKind::Opaque
     }
+
+    /// Where the player's aim stops on this block: solid cubes and plants, not liquids.
+    pub fn hit_box(&self) -> Option<HitBox> {
+        match self.render {
+            RenderKind::Cross => Some(HitBox::PLANT),
+            _ if self.solid => Some(HitBox::FULL),
+            _ => None,
+        }
+    }
+}
+
+/// Box inside a block, in fractions of the block (0 to 1 on each axis).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HitBox {
+    pub min: [f64; 3],
+    pub max: [f64; 3],
+}
+
+impl HitBox {
+    pub const FULL: Self = Self {
+        min: [0.0; 3],
+        max: [1.0; 3],
+    };
+    /// Narrower and lower than a cube, so the aim slips past plants at their edges.
+    pub const PLANT: Self = Self {
+        min: [0.125, 0.0, 0.125],
+        max: [0.875, 0.8125, 0.875],
+    };
 }

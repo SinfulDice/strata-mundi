@@ -1,0 +1,9 @@
+Block(
+    textures: All("strata:dandelion"),
+    render: Cross,
+    solid: false,
+    light_opacity: 0,
+    hardness: 0.0,
+    sound: Some("strata:grass"),
+    category: Some("strata:plants"),
+)

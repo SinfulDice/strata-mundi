@@ -5,5 +5,8 @@ Biome(
     subsurface: "strata:dirt",
     underwater: "strata:gravel",
     frozen: true,
-    features: [(feature: "strata:fir_tree", per_column: 0.4)],
+    features: [
+        (feature: "strata:fir_tree", per_column: 0.4),
+        (feature: "strata:ferns", per_column: 0.3),
+    ],
 )

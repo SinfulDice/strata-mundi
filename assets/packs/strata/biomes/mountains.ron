@@ -5,5 +5,8 @@ Biome(
     subsurface: "strata:dirt",
     underwater: "strata:gravel",
     peaks: [(200, "strata:stone"), (265, "strata:snow_block")],
-    features: [(feature: "strata:fir_tree", per_column: 1.5)],
+    features: [
+        (feature: "strata:fir_tree", per_column: 1.5),
+        (feature: "strata:tall_grass", per_column: 0.8),
+    ],
 )

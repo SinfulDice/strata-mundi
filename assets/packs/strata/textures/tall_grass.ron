@@ -1,0 +1,26 @@
+Sprite(
+    colors: {
+        'G': ("grass", 1),
+        'H': ("grass", 3),
+        'g': ("grass", 0),
+        'h': ("grass", 2),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        ".......H........",
+        "..H....h....H...",
+        "..h...Hh...h....",
+        "...h..hG..hG..H.",
+        "...hG.hG..G..hG.",
+        "H..GG.GG.hG..G..",
+        "hG.GG.GG.GG.hG..",
+        ".hGg.Gg.GGg.Gg.H",
+        ".hGg.Gg.Gg..Gg.h",
+        "..Gg.GgGGg.GgGhG",
+        "..gGgGg.Gg.Gg.hG",
+        ".gGggGgggggGgGGg",
+        "gggggggggggggggg",
+    ],
+)

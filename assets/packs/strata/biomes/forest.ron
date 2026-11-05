@@ -5,5 +5,11 @@ Biome(
     subsurface: "strata:dirt",
     underwater: "strata:gravel",
     spawn: true,
-    features: [(feature: "strata:oak_tree", per_column: 7.0)],
+    features: [
+        (feature: "strata:oak_tree", per_column: 7.0),
+        (feature: "strata:tall_grass", per_column: 3.0),
+        (feature: "strata:ferns", per_column: 1.5),
+        (feature: "strata:mushrooms", per_column: 0.6),
+        (feature: "strata:bushes", per_column: 0.8),
+    ],
 )

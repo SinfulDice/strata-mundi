@@ -92,11 +92,7 @@ fn feature_blocks(ctx: &Ctx<'_>, biome: &Biome) -> Vec<BlockId> {
         .features
         .iter()
         .filter_map(|&(index, _)| ctx.data.worldgen.features.get(index))
-        .flat_map(|feature| match feature {
-            Feature::Tree { log, leaves, .. } => vec![*log, *leaves],
-            Feature::Pillar { block, .. } => vec![*block],
-            Feature::Ore { .. } | Feature::Deposit(_) => Vec::new(),
-        })
+        .flat_map(Feature::surface_blocks)
         .collect()
 }
 

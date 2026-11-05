@@ -196,7 +196,8 @@ pub struct BiomeDef {
 #[serde(deny_unknown_fields)]
 pub struct Placement {
     pub feature: Identifier,
-    /// Average number of attempts per column (16×16 blocks).
+    /// Average number of attempts per column (16×16 blocks); for plants, patches per
+    /// column, at most 8.
     pub per_column: f64,
 }
 
@@ -215,6 +216,15 @@ pub enum FeatureDef {
         block: Identifier,
         height: (u32, u32),
         on: Vec<Identifier>,
+    },
+    /// Patches of small plants on the ground: `count` plants within `radius` blocks of
+    /// the patch center, each picked from `blocks` by weight, only on `on` and in the open
+    /// air (never under water). A biome's `per_column` counts patches.
+    Plants {
+        blocks: Vec<(Identifier, u32)>,
+        on: Vec<Identifier>,
+        radius: u32,
+        count: (u32, u32),
     },
     /// Small ore veins inside stone; `deep_block` replaces deep stone.
     Ore {

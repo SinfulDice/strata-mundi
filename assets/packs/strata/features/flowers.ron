@@ -1,0 +1,12 @@
+Plants(
+    blocks: [
+        ("strata:dandelion", 3),
+        ("strata:poppy", 3),
+        ("strata:daisy", 2),
+        ("strata:cornflower", 2),
+        ("strata:lavender", 1),
+    ],
+    on: ["strata:grass_block"],
+    radius: 3,
+    count: (3, 7),
+)

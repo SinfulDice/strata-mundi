@@ -80,7 +80,11 @@ fn place_rooted_in(generator: &Generator, source: ColumnPos, column: &mut Column
         if sample.height < content.terrain.sea_level {
             continue;
         }
-        let Some(&(feature, _)) = biome.features.iter().find(|&&(_, per_column)| {
+        let mut rooted = biome
+            .features
+            .iter()
+            .filter(|&&(f, _)| !matches!(content.features[f], Feature::Plants(_)));
+        let Some(&(feature, _)) = rooted.find(|&&(_, per_column)| {
             roll -= per_column;
             roll < 0.0
         }) else {

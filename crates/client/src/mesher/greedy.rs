@@ -1,6 +1,7 @@
 //! Section mesher: face culling, greedy merging of identical neighbouring faces, and
 //! per-vertex ambient occlusion. Pure CPU code, run on worker threads.
 
+use super::cross::mesh_crosses;
 use super::neighborhood::{BlockTable, Neighborhood, SIZE};
 use super::vertex::{MeshData, PackedVertex};
 use strata_core::content::{Axis, Face, RenderKind};
@@ -120,6 +121,7 @@ pub fn mesh_section(
             });
         }
     }
+    mesh_crosses(blocks, table, &mut mesh.opaque);
     mesh
 }
 
@@ -148,7 +150,7 @@ fn face_key(
 ) -> Option<FaceKey> {
     let id = blocks.get(pos[0], pos[1], pos[2]);
     let block = table.get(id);
-    if block.render == RenderKind::Invisible {
+    if matches!(block.render, RenderKind::Invisible | RenderKind::Cross) {
         return None;
     }
     let front = add(pos, frame.normal);

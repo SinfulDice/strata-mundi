@@ -1,5 +1,8 @@
 use bytemuck::{Pod, Zeroable};
 
+/// Value of the face field for plant planes, after the six cube faces.
+pub const CROSS_FACE: usize = 6;
+
 /// 8-byte vertex: position inside the section (0..=16), face, ambient occlusion, texture
 /// repeat (0..=16) and texture layer, decoded by the shader.
 #[repr(C)]
@@ -19,7 +22,7 @@ impl PackedVertex {
     };
 
     pub fn new(position: [u32; 3], face: usize, ao: u8, uv: [u32; 2], layer: u16) -> Self {
-        debug_assert!(position.iter().chain(&uv).all(|&c| c <= 16) && ao < 4 && face < 6);
+        debug_assert!(position.iter().chain(&uv).all(|&c| c <= 16) && ao < 4 && face <= CROSS_FACE);
         let geometry = position[0]
             | (position[1] << 5)
             | (position[2] << 10)

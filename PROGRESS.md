@@ -4,10 +4,10 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 4 — Biomes supplémentaires
-  - [ ] Végétation en croix : `RenderKind::Cross` (mailleur, shader, icône, raycast, pas de collision), feature de végétation éparse du pack ; herbes hautes, fougère, buisson mort, buisson, fleurs (≥ 5), petits champignons ; ajoutée aux biomes existants
+  - [x] Végétation en croix : `RenderKind::Cross` (mailleur, shader, icône, raycast, pas de collision), feature de végétation éparse du pack ; herbes hautes, fougère, buisson mort, buisson, fleurs (≥ 5), petits champignons ; ajoutée aux biomes existants
   - [ ] Nouveaux arbres et bois : bouleau, jungle (grand), acacia (tronc penché, couronne plate), chêne des marais, champignons géants (chapeaux et pied) ; nouvelles formes de couronne dans le pack
   - [ ] 12 nouveaux biomes (marais, jungle, savane, forêt de bouleaux, taïga, plage, pics enneigés, prairie fleurie, badlands à strates, océan profond, champignons géants ; rivière déjà faite) avec leurs blocs de surface, placement climatique, carte, traductions, wiki ; tests (tous atteignables, déterminisme), captures
-- **Dernière session** : 04/11/2026
+- **Dernière session** : 05/11/2026
 
 ## Fait
 

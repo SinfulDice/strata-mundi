@@ -1,7 +1,7 @@
 //! Which block the player is looking at: voxel traversal (Amanatides & Woo) that visits
 //! every block crossed by the ray, in order, so it never skips a corner.
 
-use crate::content::Face;
+use crate::content::{Face, HitBox};
 use crate::coords::BlockPos;
 use glam::DVec3;
 
@@ -12,12 +12,12 @@ pub struct RayHit {
     pub face: Face,
 }
 
-/// First block within `reach` for which `solid` is true.
+/// First block within `reach` whose hit box (given by `hit_box`) the ray crosses.
 pub fn raycast(
     origin: DVec3,
     direction: DVec3,
     reach: f64,
-    mut solid: impl FnMut(BlockPos) -> bool,
+    mut hit_box: impl FnMut(BlockPos) -> Option<HitBox>,
 ) -> Option<RayHit> {
     if !origin.is_finite() || !reach.is_finite() {
         return None;
@@ -52,9 +52,16 @@ pub fn raycast(
     loop {
         let pos = BlockPos::new(cell.x, cell.y, cell.z);
         if let Some(face) = face
-            && solid(pos)
+            && let Some(shape) = hit_box(pos)
         {
-            return Some(RayHit { block: pos, face });
+            let face = if shape == HitBox::FULL {
+                Some(face)
+            } else {
+                box_entry(origin, direction, pos, shape, reach)
+            };
+            if let Some(face) = face {
+                return Some(RayHit { block: pos, face });
+            }
         }
         let axis = (0..3)
             .min_by(|&a, &b| t_max[a].total_cmp(&t_max[b]))
@@ -66,6 +73,40 @@ pub fn raycast(
         t_max[axis] += t_delta[axis];
         face = Some(entered_face(axis, step[axis]));
     }
+}
+
+/// Slab test: the face through which the ray enters `shape` placed in `block`, if it
+/// does within `reach`.
+fn box_entry(
+    origin: DVec3,
+    direction: DVec3,
+    block: BlockPos,
+    shape: HitBox,
+    reach: f64,
+) -> Option<Face> {
+    let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
+    let (min, max) = (
+        corner + DVec3::from(shape.min),
+        corner + DVec3::from(shape.max),
+    );
+    let (mut near, mut far, mut axis) = (f64::NEG_INFINITY, f64::INFINITY, 0);
+    for i in 0..3 {
+        let d = direction[i];
+        if d == 0.0 {
+            if origin[i] < min[i] || origin[i] > max[i] {
+                return None;
+            }
+            continue;
+        }
+        let (a, b) = ((min[i] - origin[i]) / d, (max[i] - origin[i]) / d);
+        let (enter, exit) = (a.min(b), a.max(b));
+        if enter > near {
+            (near, axis) = (enter, i);
+        }
+        far = far.min(exit);
+    }
+    (near <= far && near >= 0.0 && near <= reach)
+        .then(|| entered_face(axis, direction[axis].signum() as i32))
 }
 
 /// Moving +X enters the next block through its west face, and so on.
@@ -106,7 +147,42 @@ mod tests {
     use super::*;
 
     fn hit(origin: DVec3, direction: DVec3, target: BlockPos) -> Option<RayHit> {
-        raycast(origin, direction, 6.0, |pos| pos == target)
+        raycast(origin, direction, 6.0, |pos| {
+            (pos == target).then_some(HitBox::FULL)
+        })
+    }
+
+    fn plant_at(target: BlockPos) -> impl FnMut(BlockPos) -> Option<HitBox> {
+        move |pos| (pos == target).then_some(HitBox::PLANT)
+    }
+
+    #[test]
+    fn plants_are_hit_through_their_smaller_box() {
+        let plant = BlockPos::new(3, 0, 0);
+        let result = raycast(DVec3::new(0.5, 0.5, 0.5), DVec3::X, 6.0, plant_at(plant));
+        assert_eq!(
+            result,
+            Some(RayHit {
+                block: plant,
+                face: Face::West
+            })
+        );
+        let from_above = raycast(
+            DVec3::new(3.5, 2.5, 0.5),
+            DVec3::NEG_Y,
+            6.0,
+            plant_at(plant),
+        );
+        assert_eq!(from_above.map(|r| r.face), Some(Face::Up));
+    }
+
+    #[test]
+    fn rays_slip_past_the_edges_and_top_of_plants() {
+        let plant = BlockPos::new(3, 0, 0);
+        let edge = raycast(DVec3::new(0.5, 0.5, 0.05), DVec3::X, 6.0, plant_at(plant));
+        assert_eq!(edge, None, "close to the block's side, outside the plant");
+        let top = raycast(DVec3::new(0.5, 0.9, 0.5), DVec3::X, 6.0, plant_at(plant));
+        assert_eq!(top, None, "above the plant's top");
     }
 
     #[test]

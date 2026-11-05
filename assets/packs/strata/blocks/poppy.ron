@@ -1,0 +1,9 @@
+Block(
+    textures: All("strata:poppy"),
+    render: Cross,
+    solid: false,
+    light_opacity: 0,
+    hardness: 0.0,
+    sound: Some("strata:grass"),
+    category: Some("strata:plants"),
+)

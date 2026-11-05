@@ -1,5 +1,6 @@
 //! Turns sections of blocks into GPU-ready meshes.
 
+mod cross;
 mod greedy;
 mod neighborhood;
 mod vertex;
@@ -13,7 +14,7 @@ pub use workers::{MeshJob, MeshResult, MeshWorkers, SectionKey};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use strata_core::content::{Block, BlockId, RenderKind, TextureId};
+    use strata_core::content::{Block, BlockId, Face, RenderKind, TextureId};
 
     fn block(render: RenderKind, layer: u16) -> Block {
         Block {
@@ -23,7 +24,7 @@ mod tests {
         }
     }
 
-    /// Ids: 0 air, 1 stone, 2 glass (cutout), 3 water (translucent), 4 dirt.
+    /// Ids: 0 air, 1 stone, 2 glass (cutout), 3 water (translucent), 4 dirt, 5 grass (cross).
     fn table() -> BlockTable {
         let blocks = [
             Block::air(),
@@ -31,6 +32,7 @@ mod tests {
             block(RenderKind::Cutout, 2),
             block(RenderKind::Translucent, 3),
             block(RenderKind::Opaque, 4),
+            block(RenderKind::Cross, 5),
         ];
         BlockTable::new(blocks.iter())
     }
@@ -87,6 +89,68 @@ mod tests {
             6 + 5,
             "stone keeps its side facing the glass"
         );
+    }
+
+    fn winding(quad: &[PackedVertex; 4]) -> [i32; 3] {
+        let p = quad.map(|v| v.position().map(|c| c as i32));
+        let e1 = [0, 1, 2].map(|i| p[1][i] - p[0][i]);
+        let e2 = [0, 1, 2].map(|i| p[3][i] - p[0][i]);
+        [
+            e1[1] * e2[2] - e1[2] * e2[1],
+            e1[2] * e2[0] - e1[0] * e2[2],
+            e1[0] * e2[1] - e1[1] * e2[0],
+        ]
+    }
+
+    #[test]
+    fn a_cross_is_two_diagonals_seen_from_both_sides() {
+        let mesh = mesh(&[([5, 5, 5], 5)]);
+        assert!(mesh.translucent.is_empty());
+        let quads: Vec<_> = quads(&mesh.opaque).collect();
+        assert_eq!(quads.len(), 4);
+        for pair in quads.chunks(2) {
+            let (front, back) = (winding(&pair[0]), winding(&pair[1]));
+            assert_eq!(
+                front,
+                back.map(|c| -c),
+                "the same plane, facing the other way"
+            );
+            assert_eq!(front[1], 0, "upright plane");
+            assert!(front[0] != 0 && front[2] != 0, "diagonal plane");
+            for vertex in pair[0] {
+                let [x, y, z] = vertex.position();
+                assert!((5..=6).contains(&x) && (5..=6).contains(&y) && (5..=6).contains(&z));
+                assert_eq!((vertex.geometry >> 15) & 7, vertex::CROSS_FACE as u32);
+                assert_eq!(vertex.texture, 5);
+            }
+        }
+        assert_ne!(
+            winding(&quads[0]),
+            winding(&quads[2]),
+            "two different diagonals"
+        );
+    }
+
+    #[test]
+    fn crosses_hide_nothing_and_are_never_hidden() {
+        let beside = mesh(&[([5, 5, 5], 1), ([6, 5, 5], 5)]);
+        assert_eq!(
+            beside.opaque.quad_count(),
+            6 + 4,
+            "stone keeps all its faces"
+        );
+        let walled: Vec<_> = Face::ALL
+            .iter()
+            .map(|face| {
+                let (dx, dy, dz) = face.offset();
+                ([5 + dx, 5 + dy, 5 + dz], 1)
+            })
+            .chain([([5, 5, 5], 5)])
+            .collect();
+        let crosses = quads(&mesh(&walled).opaque)
+            .filter(|q| (q[0].geometry >> 15) & 7 == vertex::CROSS_FACE as u32)
+            .count();
+        assert_eq!(crosses, 4, "a plant shut in by stone is still meshed");
     }
 
     #[test]

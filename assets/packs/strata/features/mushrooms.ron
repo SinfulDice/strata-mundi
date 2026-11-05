@@ -1,0 +1,6 @@
+Plants(
+    blocks: [("strata:brown_mushroom", 2), ("strata:red_mushroom", 1)],
+    on: ["strata:grass_block", "strata:dirt"],
+    radius: 2,
+    count: (1, 3),
+)

@@ -46,6 +46,7 @@ wiki-render-opaque = opaque
 wiki-render-cutout = see-through gaps
 wiki-render-translucent = translucent
 wiki-render-invisible = invisible
+wiki-render-cross = crossed plant
 wiki-depth = { $depth } blocks
 wiki-generation = Generation
 wiki-gen-stone = Fills the underground of the world.

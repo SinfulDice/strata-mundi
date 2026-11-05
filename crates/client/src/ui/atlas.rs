@@ -1,5 +1,5 @@
 use super::rect::Rect;
-use strata_core::content::{Content, Face, ItemKind};
+use strata_core::content::{Content, Face, ItemKind, RenderKind};
 use strata_core::font::Font;
 use strata_core::texture::{Rgba, RgbaImage, block_icon, upscale};
 
@@ -84,13 +84,16 @@ impl UiAtlas {
     }
 }
 
-/// Icon of an item: blocks drawn in three-quarter view, other items flat.
+/// Icon of an item: blocks drawn in three-quarter view, plants and other items flat.
 pub fn item_icon(content: &Content, kind: ItemKind, size: u32) -> Option<RgbaImage> {
     let image = |layer| content.textures.images.get(layer);
     match kind {
         ItemKind::Block(block) => {
             let block = content.blocks.get(block)?;
             let face = |f: Face| image(block.texture(f));
+            if block.render == RenderKind::Cross {
+                return Some(upscale(face(Face::North)?, size));
+            }
             Some(block_icon(
                 face(Face::Up)?,
                 face(Face::South)?,

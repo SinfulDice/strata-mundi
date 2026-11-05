@@ -6,7 +6,9 @@ mod png_file;
 mod registry;
 mod textures;
 
-pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
+pub use block::{
+    Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
+};
 pub use item::{Item, ItemDef, ItemKind};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, ItemId, Registry, RegistryId, TextureId};

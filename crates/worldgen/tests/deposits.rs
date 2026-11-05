@@ -102,13 +102,15 @@ fn deposits_do_not_depend_on_generation_order() {
     assert!(count(&alone, &[deposit(&generator, &vein).filler]) > 0);
 }
 
-/// Every block a deposit changed was stone or deep stone, or is a sign on open ground.
+/// Every block a deposit changed was stone or deep stone, or is a sign on open ground
+/// (where no plant grows).
 #[test]
 fn deposits_only_replace_stone_and_leave_signs_on_open_ground() {
     for seed in SEEDS {
         let with = common::generator(seed);
         let without = generator_without_deposits(seed);
         let terrain = &with.content().terrain;
+        let grown = common::feature_blocks(with.content());
         let mut changed = 0;
         for vein in veins(&with).iter().take(4) {
             let d = deposit(&with, vein);
@@ -126,8 +128,11 @@ fn deposits_only_replace_stone_and_leave_signs_on_open_ground() {
                     let sign = Some(now) == d.sign
                         && d.sign_on.contains(&before)
                         && a.get(x, y + 1, z) == BlockId::AIR;
+                    let unplanted = now == BlockId::AIR
+                        && grown.contains(&before)
+                        && d.sign.is_some_and(|s| a.get(x, y - 1, z) == s);
                     assert!(
-                        (rock && parts.contains(&now)) || sign,
+                        (rock && parts.contains(&now)) || sign || unplanted,
                         "seed {seed}: {before:?} became {now:?} at ({x}, {y}, {z}) of {pos:?}"
                     );
                 }

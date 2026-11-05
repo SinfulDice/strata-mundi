@@ -82,6 +82,7 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, block: &Block, key: &str) -> Vec<(Strin
         RenderKind::Opaque => "wiki-render-opaque",
         RenderKind::Cutout => "wiki-render-cutout",
         RenderKind::Translucent => "wiki-render-translucent",
+        RenderKind::Cross => "wiki-render-cross",
         RenderKind::Invisible => "wiki-render-invisible",
     });
     // A negative hardness means the block cannot be broken (outside creative).
@@ -252,11 +253,7 @@ fn biome_roles(ctx: &Ctx<'_>, from: &str, block: BlockId) -> BTreeMap<&'static s
 }
 
 fn feature_uses(feature: &Feature, block: BlockId) -> bool {
-    match feature {
-        Feature::Tree { log, leaves, .. } => *log == block || *leaves == block,
-        Feature::Pillar { block: pillar, .. } => *pillar == block,
-        Feature::Ore { .. } | Feature::Deposit(_) => false,
-    }
+    feature.surface_blocks().contains(&block)
 }
 
 /// Every block, grouped by category, with icons.

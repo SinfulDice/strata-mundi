@@ -4,6 +4,7 @@ use crate::climate::{ClimateMaps, Sample};
 use crate::content::{Biome, WorldgenContent};
 use crate::deposits::{Deposits, Vein};
 use crate::features::{place_ores, place_surface_features};
+use crate::plants::place_plants;
 use crate::surface::{Ground, Heights, SurfaceRules};
 use crate::terrain::{Grid, Overhangs};
 use std::ops::RangeInclusive;
@@ -121,6 +122,7 @@ impl Generator {
         self.deposits
             .place(self.seed, &self.content, &mut column, &tops);
         place_surface_features(self, &mut column);
+        place_plants(self, &mut column, &tops);
         column
     }
 

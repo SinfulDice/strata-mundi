@@ -10,6 +10,7 @@ mod features;
 mod generator;
 pub mod map;
 mod noise;
+mod plants;
 mod rng;
 mod spawn;
 mod spline;
@@ -17,7 +18,7 @@ mod surface;
 mod terrain;
 
 pub use climate::Sample;
-pub use content::{Biome, Feature, Terrain, WorldgenContent};
+pub use content::{Biome, Feature, Plants, Terrain, WorldgenContent};
 pub use deposits::{Deposit, Vein};
 pub use generator::Generator;
 pub use spline::Spline;

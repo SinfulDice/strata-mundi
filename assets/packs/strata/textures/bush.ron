@@ -1,0 +1,28 @@
+Sprite(
+    colors: {
+        'L': ("oak_leaves", 1),
+        'M': ("oak_leaves", 3),
+        'T': ("stick", 1),
+        'l': ("oak_leaves", 0),
+        'm': ("oak_leaves", 2),
+        't': ("stick", 0),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "......MmM.......",
+        "....MmLmmLmM....",
+        "...mMLmMmLLmM...",
+        "..MmLLmLmmLmmM..",
+        "..mLlLLmLLlLLm..",
+        ".MmLlmLLlLmLlmM.",
+        ".mLlLLlLLlLLlLm.",
+        ".LlLlLlLlLlLlLl.",
+        "..lLlllLllLlll..",
+        "..llLlllllLlll..",
+        "...lll.Tt.lll...",
+        ".......Tt.......",
+        ".......Tt.......",
+    ],
+)

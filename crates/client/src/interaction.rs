@@ -6,7 +6,7 @@ use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
 use crate::world::ClientWorld;
 use std::sync::Arc;
-use strata_core::content::{BlockId, Content, ItemId, ItemKind};
+use strata_core::content::{BlockId, Content, HitBox, ItemId, ItemKind};
 use strata_core::raycast::{RayHit, raycast};
 use strata_protocol::ClientMessage;
 
@@ -19,12 +19,18 @@ const REPEAT_DELAY: f32 = 0.25;
 pub struct BlockInfo {
     pub content: Arc<Content>,
     solid: Vec<bool>,
+    hit_boxes: Vec<Option<HitBox>>,
     items: Vec<Option<ItemId>>,
 }
 
 impl BlockInfo {
     pub fn new(content: Arc<Content>) -> Self {
         let solid = content.solidity();
+        let hit_boxes = content
+            .blocks
+            .iter()
+            .map(|(_, _, block)| block.hit_box())
+            .collect();
         let items = content
             .blocks
             .iter()
@@ -33,6 +39,7 @@ impl BlockInfo {
         Self {
             content,
             solid,
+            hit_boxes,
             items,
         }
     }
@@ -42,6 +49,10 @@ impl BlockInfo {
             .get(usize::from(block.0))
             .copied()
             .unwrap_or(false)
+    }
+
+    pub fn hit_box(&self, block: BlockId) -> Option<HitBox> {
+        self.hit_boxes.get(usize::from(block.0)).copied().flatten()
     }
 
     pub fn item_of(&self, block: BlockId) -> Option<ItemId> {
@@ -105,7 +116,6 @@ impl Interaction {
 fn aim(camera: &Camera, world: &ClientWorld, info: &BlockInfo) -> Option<RayHit> {
     let direction = camera.forward().as_dvec3();
     raycast(camera.position, direction, REACH, |pos| {
-        let block = world.block_at(pos);
-        block != BlockId::AIR && info.is_solid(block)
+        info.hit_box(world.block_at(pos))
     })
 }

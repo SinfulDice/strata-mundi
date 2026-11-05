@@ -22,9 +22,10 @@ struct VertexOutput {
     @location(3) relative: vec3<f32>,
 };
 
-// Per face (up, down, north, south, east, west), lit from above like Minecraft.
+// Per face (up, down, north, south, east, west), lit from above like Minecraft; 6 is the
+// flat, even light of plant planes.
 fn face_shade(face: u32) -> f32 {
-    var shades = array<f32, 6>(1.0, 0.5, 0.8, 0.8, 0.6, 0.6);
+    var shades = array<f32, 8>(1.0, 0.5, 0.8, 0.8, 0.6, 0.6, 0.9, 0.9);
     return shades[face];
 }
 

@@ -33,4 +33,12 @@
     "stick": ["#4a3420", "#6b4c2c", "#8c6a40"],
     "wool": ["#b9b4ad", "#d3cec7", "#e8e4de", "#f7f4ef"],
     "sheep_skin": ["#6d4f3f", "#9b7660", "#b8927b"],
+    "poppy": ["#6e1010", "#a81c1c", "#d63426", "#f2643e"],
+    "dandelion": ["#b07c08", "#e0aa16", "#f6d030", "#fff27a"],
+    "cornflower": ["#1d3488", "#2c52bc", "#4676dc", "#7ea4f2"],
+    "lavender": ["#4a2c74", "#6a429c", "#8c60c0", "#b08ade"],
+    "red_mushroom": ["#741210", "#b0221a", "#d8402c"],
+    "brown_mushroom": ["#553722", "#765032", "#956848", "#b48462"],
+    "mushroom_stem": ["#b4a68c", "#d2c6ae", "#ece2cc"],
+    "dead_bush": ["#5a3c1c", "#7c5628", "#a07638"],
 }
