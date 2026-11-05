@@ -7,7 +7,7 @@ use crate::settings::{
     VERTICAL_DISTANCE,
 };
 use crate::settings::{
-    AUTO_THREADS, ColorFilter, FontChoice, Lighting, Preset, Settings, Vegetation,
+    AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, Preset, Settings, Vegetation,
     default_worker_threads,
 };
 
@@ -27,6 +27,7 @@ pub enum Setting {
     Fog,
     LiquidAnimation,
     Stars,
+    Clouds,
     Mipmaps,
     Anisotropy,
     Vegetation,
@@ -68,6 +69,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Fog,
     Setting::LiquidAnimation,
     Setting::Stars,
+    Setting::Clouds,
     Setting::Mipmaps,
     Setting::Anisotropy,
     Setting::Vegetation,
@@ -169,6 +171,7 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::Fog => (on_off(shared, g.fog), None),
         Setting::LiquidAnimation => (on_off(shared, g.liquid_animation), None),
         Setting::Stars => (on_off(shared, g.stars), None),
+        Setting::Clouds => (shared.tr(&format!("clouds-{}", g.clouds.id())), None),
         Setting::Mipmaps => (on_off(shared, g.mipmaps), None),
         Setting::Anisotropy if g.anisotropy <= 1 => (shared.tr("ui-off"), None),
         Setting::Anisotropy => (format!("{}x", g.anisotropy), None),
@@ -262,6 +265,7 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Fog => g.fog = !g.fog,
         Setting::LiquidAnimation => g.liquid_animation = !g.liquid_animation,
         Setting::Stars => g.stars = !g.stars,
+        Setting::Clouds => g.clouds = cycle(&CloudMode::ALL, g.clouds, step),
         Setting::Mipmaps => g.mipmaps = !g.mipmaps,
         Setting::Anisotropy => g.anisotropy = cycle(&ANISOTROPY, g.anisotropy, step),
         Setting::Vegetation => g.vegetation = cycle(&Vegetation::ALL, g.vegetation, step),
@@ -340,5 +344,21 @@ mod tests {
             settings.graphics.brightness, 60,
             "and every preset keeps it"
         );
+    }
+
+    #[test]
+    fn clouds_cycle_through_their_modes() {
+        let mut settings = Settings::default();
+        settings.apply_preset(crate::settings::Preset::Ds);
+        assert_eq!(settings.graphics.clouds, CloudMode::Flat);
+        step_setting(Setting::Clouds, &mut settings, 1);
+        assert_eq!(
+            (settings.graphics.clouds, settings.preset),
+            (CloudMode::Full, None)
+        );
+        step_setting(Setting::Clouds, &mut settings, 1);
+        assert_eq!(settings.graphics.clouds, CloudMode::Off);
+        step_setting(Setting::Clouds, &mut settings, -1);
+        assert_eq!(settings.graphics.clouds, CloudMode::Full);
     }
 }

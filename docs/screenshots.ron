@@ -25,4 +25,7 @@
     (name: "sky-night", seed: "42", pos: (0.0, 175.0, 0.0), look: (90.0, 10.0), time: 14000),
     (name: "sky-moon-phase", seed: "42", pos: (0.0, 175.0, 0.0), look: (90.0, 10.0), time: 62000),
     (name: "sky-cave-night", scene: "light", pos: (-9.5, 6.5, 0.5), look: (90.0, -12.0), time: 15000),
+    (name: "clouds-day", seed: "42", pos: (0.0, 175.0, 0.0), look: (30.0, 12.0), time: 6000),
+    (name: "clouds-sunset", seed: "42", pos: (0.0, 175.0, 0.0), look: (-90.0, 8.0), time: 11700),
+    (name: "clouds-night", seed: "42", pos: (0.0, 175.0, 0.0), look: (30.0, 15.0), time: 18000),
 ]

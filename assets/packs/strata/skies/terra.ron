@@ -1,5 +1,8 @@
 // The sky of Terra. Colors are blended through the day; `twilight` is the sky at sunrise
 // and sunset, its horizon glowing on the sun's side. Sizes and tilt are in degrees.
+// Clouds float above the hills but below the great peaks; `coverage` (0 to 1) is the
+// share of the sky they hide, `speed` in blocks per second, `direction` in degrees
+// (0 toward east, 90 toward south).
 Sky(
     day: (zenith: "#4f86e8", horizon: "#a9c8f5"),
     night: (zenith: "#03050f", horizon: "#121a36"),
@@ -10,4 +13,16 @@ Sky(
     moon_size: 5.0,
     path_tilt: 20.0,
     stars: (density: 0.006, brightness: 0.9, twinkle: 0.35),
+    clouds: (
+        height: 300.0,
+        thickness: 4.0,
+        cell_size: 12.0,
+        coverage: 0.45,
+        opacity: 0.9,
+        speed: 1.0,
+        direction: 20.0,
+        day: "#ffffff",
+        twilight: "#f6b8b0",
+        night: "#2a2f40",
+    ),
 )

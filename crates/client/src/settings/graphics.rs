@@ -86,6 +86,30 @@ impl Vegetation {
     }
 }
 
+/// How the clouds are drawn.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CloudMode {
+    Off,
+    /// One flat layer: a single face per cloud cell.
+    Flat,
+    /// Volumes with sides, top and underside.
+    #[default]
+    Full,
+}
+
+impl CloudMode {
+    pub const ALL: [CloudMode; 3] = [Self::Off, Self::Flat, Self::Full];
+
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Off => "off",
+            Self::Flat => "flat",
+            Self::Full => "full",
+        }
+    }
+}
+
 /// How light is computed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -135,6 +159,7 @@ pub struct GraphicsSettings {
     pub liquid_animation: bool,
     /// Twinkling stars in the night sky.
     pub stars: bool,
+    pub clouds: CloudMode,
     /// Smaller copies of textures for distant blocks (less shimmering).
     pub mipmaps: bool,
     /// Anisotropic filtering: 1 (off), 2, 4, 8 or 16.
@@ -181,6 +206,11 @@ impl GraphicsSettings {
             fog: true,
             liquid_animation: preset != Preset::VeryLow,
             stars: preset != Preset::VeryLow,
+            clouds: match preset {
+                Preset::VeryLow => CloudMode::Off,
+                Preset::Low | Preset::Ds => CloudMode::Flat,
+                _ => CloudMode::Full,
+            },
             mipmaps: !matches!(preset, Preset::VeryLow | Preset::Ds),
             // Off in every preset: it smooths the pixel art up close (left to taste).
             anisotropy: 1,
@@ -255,6 +285,7 @@ fn resolve_threads(chosen: usize) -> usize {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 
@@ -272,6 +303,18 @@ mod tests {
         assert_eq!((ds.fps_limit, ds.meshing_threads()), (30, 1));
         assert!(ds.render_distance < GraphicsSettings::for_preset(Preset::Ultra).render_distance);
         assert_eq!(ds.vegetation, Vegetation::Reduced);
+        assert_eq!(ds.clouds, CloudMode::Flat);
+    }
+
+    #[test]
+    fn cloud_presets_go_from_none_to_volumes() {
+        let clouds = |preset| GraphicsSettings::for_preset(preset).clouds;
+        assert_eq!(clouds(Preset::VeryLow), CloudMode::Off);
+        assert_eq!(clouds(Preset::Low), CloudMode::Flat);
+        assert_eq!(clouds(Preset::High), CloudMode::Full);
+        assert_eq!(clouds(Preset::Ultra), CloudMode::Full);
+        let file: GraphicsSettings = toml::from_str("clouds = \"flat\"").unwrap();
+        assert_eq!(file.clouds, CloudMode::Flat);
     }
 
     #[test]

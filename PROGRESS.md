@@ -5,7 +5,7 @@
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 7 — Jour, nuit et ciel
   - [x] Cycle jour/nuit et ciel : journée de 20 min (10 de jour, 10 de nuit, base réglable dans le pack ; paramètre de répartition jour/nuit prévu pour les saisons de la v0.5), heure diffusée par le serveur et interpolée, `/time set|add` (jour, nuit, midi, minuit, valeurs), facteur de lumière du ciel selon l'heure (uniforme, sans remailler), dégradé du ciel, couleurs de lever et coucher, soleil, lune avec phases, étoiles ; `--time <tick>` pour les captures ; cycle complet sans saccade (test du facteur continu)
-  - [ ] Nuages en couches pixel art (vitesse, hauteur, densité du pack), réglage nuages (désactivés / simples / complets), préréglages (DS : simples ou désactivés) ; captures nuit, lever de soleil, nuages
+  - [x] Nuages en couches pixel art (vitesse, hauteur, densité du pack), réglage nuages (désactivés / simples / complets), préréglages (DS : simples ou désactivés) ; captures nuit, lever de soleil, nuages
 - **Dernière session** : 05/11/2026
 
 ## Fait
@@ -85,7 +85,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 - Nom du bloc visé sans « outil requis » : les outils arrivent en v0.3.
 - Bateaux : retirés seulement en créatif (clic gauche), sans objet rendu ; hors créatif un bateau posé n'est pas récupérable tant que la survie (v0.3) n'existe pas. Seaux réservés au créatif pour la même raison.
 - Horodatage GPU indisponible sur lavapipe (« n/d » dans les rapports cloud).
-- Réglages sans système en v0.1, ajoutés avec leur système : nuages, particules, distance de simulation (pas encore d'entités simulées), son.
+- Réglages sans système en v0.1, ajoutés avec leur système : particules, distance de simulation (pas encore d'entités simulées), son.
 - Console : pas de saisie à la manette (règle du projet : « console exceptée ») ; `/gamemode survival` répond que la survie arrive en v0.3.
 - Wiki : images en PNG (pas de WebP sans dépendance C) ; la vue du biome montagnes montre une flèche de pierre très haute, fidèle à la génération actuelle (à revoir en fin de version).
 - Lumière (à mesurer) : un bloc changé copie la colonne entière (`Arc::make_mut`, 1 fois par colonne et par image) pour le thread de lumière ; la courbe de lumière est calculée par fragment dans le shader (une table serait moins chère). Une colonne renvoyée laisse chez ses voisines la lumière de ses anciens blocs.

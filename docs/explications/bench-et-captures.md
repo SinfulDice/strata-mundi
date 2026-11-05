@@ -14,6 +14,7 @@ strata --bench-scene flyover --preset ds
 ```
 
 - `--pos x,y,z` : position de la caméra ; `--look lacet,tangage` en degrés (0,0 regarde vers le nord, −Z ; 90 regarde vers l'est, +X ; un tangage positif regarde vers le haut).
+- `--time <tick>` : heure du monde pour la capture, en ticks depuis le premier lever (24 000 par jour : 0 lever, 6 000 midi, 12 000 coucher, 18 000 minuit ; midi si absent). La position des nuages en découle aussi : deux captures à la même heure sont identiques. Avec `--seed`, c'est aussi l'heure de départ du monde temporaire. Ex. : `strata --screenshot screenshots/coucher.png --seed 42 --pos 0,175,0 --look=-90,8 --time 11700`.
 - Une **scène de bench** est un fichier `assets/bench-scenes/<nom>.ron` : temps de chauffe (non mesuré), durée mesurée, et **images clés** (temps, position, orientation) entre lesquelles la caméra est interpolée.
 - Pendant la mesure : synchronisation verticale coupée, temps de chaque image, temps CPU (préparer et soumettre l'image), temps GPU (requêtes d'horodatage, si la carte les supporte, lues quelques images plus tard pour ne rien ralentir), pic de mémoire du processus, ticks serveur par seconde.
 - Le rapport `perf-reports/<date>-<machine>-<profil>.md` donne le FPS moyen, le **1 % low** (moyenne des 1 % d'images les plus lentes, converti en FPS : c'est ce qui se ressent comme des saccades), le 0,1 % low, et le contexte (système, processeur, carte graphique, résolution).

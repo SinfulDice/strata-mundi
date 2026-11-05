@@ -2,9 +2,13 @@
 //! and its look (`skies/<name>.ron`: colors, sun, moon and stars, which resource packs may
 //! restyle).
 
+mod clouds;
 mod cycle;
 
+pub use clouds::{Clouds, CloudsDef};
 pub use cycle::{DayCycle, DayCycleDef, MOON_PHASES, Moment};
+
+use clouds::bounded;
 
 use crate::content::{TextureId, TextureLibrary};
 use crate::id::Identifier;
@@ -56,6 +60,9 @@ pub struct SkyDef {
     /// How far the path of the sun and moon leans south, in degrees.
     pub path_tilt: f32,
     pub stars: StarsDef,
+    /// No cloud layer when absent.
+    #[serde(default)]
+    pub clouds: Option<CloudsDef>,
 }
 
 /// A sky ready to draw: colors in sRGB, textures resolved.
@@ -71,6 +78,7 @@ pub struct Sky {
     pub moon_size: f32,
     pub path_tilt: f32,
     pub stars: StarsDef,
+    pub clouds: Option<Clouds>,
 }
 
 impl Sky {
@@ -91,6 +99,7 @@ impl Sky {
                 brightness: 0.0,
                 twinkle: 0.0,
             },
+            clouds: None,
         }
     }
 
@@ -112,15 +121,8 @@ impl Sky {
                 brightness: bounded(def.stars.brightness, 0.0, 1.0),
                 twinkle: bounded(def.stars.twinkle, 0.0, 1.0),
             },
+            clouds: def.clouds.as_ref().map(Clouds::resolve),
         }
-    }
-}
-
-fn bounded(value: f32, min: f32, max: f32) -> f32 {
-    if value.is_finite() {
-        value.clamp(min, max)
-    } else {
-        min
     }
 }
 

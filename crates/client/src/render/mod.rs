@@ -1,6 +1,7 @@
 //! wgpu (Vulkan) rendering. Draws into any texture view: a window frame or an off-screen image.
 
 mod block_pipeline;
+mod cloud_pipeline;
 mod depth;
 mod frustum;
 mod gpu;
@@ -28,6 +29,7 @@ use crate::camera::Camera;
 use crate::mesher::{SectionKey, SectionMesh};
 use crate::sky::SkyFrame;
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
+use cloud_pipeline::{CloudDraw, CloudPipeline};
 use depth::DepthBuffer;
 use frustum::Frustum;
 pub use frustum::in_vertical_range;
@@ -72,6 +74,7 @@ pub struct Renderer {
     /// shader, so the night falls without meshing again.
     pub sky: SkyFrame,
     sky_pipeline: SkyPipeline,
+    clouds: CloudPipeline,
     /// Entity models and those to draw this frame.
     pub models: ModelPipeline,
 }
@@ -103,6 +106,12 @@ impl Renderer {
             &blocks.camera_layout,
             &blocks.texture_layout,
         );
+        let clouds = CloudPipeline::new(
+            &gpu.device,
+            color_format,
+            &blocks.camera_layout,
+            &blocks.texture_layout,
+        );
         Ok(Self {
             outline_pipeline: OutlinePipeline::new(
                 &gpu.device,
@@ -120,6 +129,7 @@ impl Renderer {
             time: 0.0,
             sky: SkyFrame::default(),
             sky_pipeline,
+            clouds,
             models,
         })
     }
@@ -226,9 +236,13 @@ impl Renderer {
         self.blocks.write_camera(&gpu.queue, &uniform);
         self.models.prepare(gpu, camera, &frustum);
         let draw_sky = self.immersion.is_none();
+        let clouds = self.cloud_draw(camera).filter(|_| draw_sky);
         if draw_sky {
             self.sky_pipeline
                 .write(&gpu.queue, &self.sky, view_projection);
+        }
+        if let Some(clouds) = &clouds {
+            self.clouds.write(&gpu.queue, clouds);
         }
         let [r, g, b, _] = uniform.sky.map(f64::from);
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -272,7 +286,18 @@ impl Renderer {
             self.outline_pipeline
                 .draw(&gpu.queue, &mut pass, camera.relative(corner));
         }
+        if let Some(clouds) = &clouds {
+            self.blocks.set_groups(&mut pass);
+            self.clouds.draw(&mut pass, clouds);
+        }
         self.draw_translucent(&mut pass, camera, &frustum);
+    }
+
+    /// The cloud layer of the sky, unless the setting or the sky has none.
+    fn cloud_draw(&self, camera: &Camera) -> Option<CloudDraw> {
+        let clouds = self.sky.clouds?;
+        let fog = (self.sky.fog, self.options.fog_end);
+        CloudDraw::new(&clouds, self.options.clouds, camera.position, fog)
     }
 
     /// Within the vertical distance and inside the view frustum.

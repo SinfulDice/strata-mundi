@@ -9,8 +9,9 @@ macro_rules! shader {
     };
 }
 
-const BUILT_IN: [(&str, &str); 7] = [
+const BUILT_IN: [(&str, &str); 8] = [
     shader!("block.wgsl"),
+    shader!("clouds.wgsl"),
     shader!("light.wgsl"),
     shader!("model.wgsl"),
     shader!("outline.wgsl"),
@@ -57,6 +58,7 @@ mod tests {
     fn every_shader_is_built_in() {
         for name in [
             "block.wgsl",
+            "clouds.wgsl",
             "light.wgsl",
             "model.wgsl",
             "outline.wgsl",

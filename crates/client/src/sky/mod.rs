@@ -6,8 +6,8 @@ mod clock;
 pub use clock::DayClock;
 
 use crate::render::srgb_to_linear;
-use glam::Vec3;
-use strata_core::sky::{DayCycle, Sky};
+use glam::{DVec2, Vec3};
+use strata_core::sky::{Clouds, DayCycle, Sky};
 use strata_core::texture::Rgba;
 
 /// Share of the twilight color taken by the whole sky (the glow itself is on the
@@ -15,6 +15,40 @@ use strata_core::texture::Rgba;
 const TWILIGHT_ZENITH: f32 = 0.6;
 /// How much the fog takes of the glow, since it lies all around the horizon.
 const TWILIGHT_FOG: f32 = 0.35;
+
+/// How much the clouds take of the twilight color at sunrise and sunset.
+const TWILIGHT_CLOUDS: f32 = 0.8;
+
+/// The cloud layer at one moment. Colors are linear.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CloudFrame {
+    pub color: Vec3,
+    pub opacity: f32,
+    /// World height of the underside.
+    pub height: f32,
+    pub thickness: f32,
+    pub cell_size: f32,
+    pub coverage: f32,
+    /// How far the layer has drifted since time 0, in blocks.
+    pub drift: DVec2,
+}
+
+impl CloudFrame {
+    fn at(clouds: &Clouds, time: f64, daylight: f32, glow: f32) -> Self {
+        let color = linear(clouds.night)
+            .lerp(linear(clouds.day), daylight)
+            .lerp(linear(clouds.twilight), glow * TWILIGHT_CLOUDS);
+        Self {
+            color,
+            opacity: clouds.opacity,
+            height: clouds.height,
+            thickness: clouds.thickness,
+            cell_size: clouds.cell_size,
+            coverage: clouds.coverage,
+            drift: DVec2::from_array(clouds.drift(time)),
+        }
+    }
+}
 
 /// Everything the renderer needs to draw the sky and light the world. Colors are linear.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -43,6 +77,8 @@ pub struct SkyFrame {
     pub stars: f32,
     pub star_density: f32,
     pub star_twinkle: f32,
+    /// `None` in a sky without clouds.
+    pub clouds: Option<CloudFrame>,
 }
 
 impl Default for SkyFrame {
@@ -66,6 +102,7 @@ impl Default for SkyFrame {
             stars: 0.0,
             star_density: 0.0,
             star_twinkle: 0.0,
+            clouds: None,
         }
     }
 }
@@ -102,6 +139,9 @@ impl SkyFrame {
             stars: star_light * sky.stars.brightness,
             star_density: sky.stars.density,
             star_twinkle: sky.stars.twinkle,
+            clouds: sky
+                .clouds
+                .map(|clouds| CloudFrame::at(&clouds, time, daylight, glow_strength)),
         }
     }
 }
@@ -153,5 +193,21 @@ mod tests {
         let sunrise = SkyFrame::at(&sky, &cycle, 0.0, true);
         assert!(sunrise.sun.x > 0.99 && sunrise.glow_strength > 0.99);
         assert!(sunrise.fog.x > sunrise.horizon.x, "the fog warms up");
+    }
+
+    #[test]
+    fn clouds_are_white_by_day_rosy_at_sunset_and_dark_at_night() {
+        let (sky, cycle) = terra();
+        let clouds = |time| SkyFrame::at(&sky, &cycle, time, true).clouds.unwrap();
+        let (noon, sunrise, midnight) = (
+            clouds(cycle.moment(Moment::Noon) as f64),
+            clouds(0.0),
+            clouds(cycle.moment(Moment::Midnight) as f64),
+        );
+        assert!(noon.color.min_element() > 0.9);
+        assert!(sunrise.color.x > sunrise.color.z, "rosy");
+        assert!(midnight.color.max_element() < 0.1);
+        assert!(noon.height > 200.0 && noon.coverage > 0.0 && noon.coverage < 1.0);
+        assert_ne!(noon.drift, midnight.drift, "they drift with time");
     }
 }

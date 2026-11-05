@@ -1,7 +1,7 @@
 //! What the image looks like without a rebuild: fog, sky color, liquid tint, scale and
 //! filter.
 
-use crate::settings::{ColorFilter, DEFAULT_BRIGHTNESS, GraphicsSettings, Settings};
+use crate::settings::{CloudMode, ColorFilter, DEFAULT_BRIGHTNESS, GraphicsSettings, Settings};
 use glam::Vec3;
 use strata_core::coords::SECTION_SIZE;
 
@@ -52,6 +52,7 @@ pub struct RenderOptions {
     pub liquid_animation: bool,
     /// 0 (moody) to 1 (bright): how much dark areas are lifted.
     pub brightness: f32,
+    pub clouds: CloudMode,
 }
 
 impl Default for RenderOptions {
@@ -63,6 +64,7 @@ impl Default for RenderOptions {
             color_filter: ColorFilter::None,
             liquid_animation: true,
             brightness: DEFAULT_BRIGHTNESS as f32 / 100.0,
+            clouds: CloudMode::default(),
         }
     }
 }
@@ -85,6 +87,7 @@ impl RenderOptions {
             color_filter: ColorFilter::None,
             liquid_animation: graphics.liquid_animation,
             brightness: graphics.brightness as f32 / 100.0,
+            clouds: graphics.clouds,
         }
     }
 
