@@ -6,7 +6,7 @@ mod neighborhood;
 mod vertex;
 mod workers;
 
-pub use greedy::{SectionMesh, mesh_section};
+pub use greedy::{MeshOptions, SectionMesh, mesh_section};
 pub use neighborhood::{BlockTable, MeshBlock, Neighborhood};
 pub use vertex::{MeshData, PackedVertex};
 pub use workers::{MeshJob, MeshResult, MeshWorkers, SectionKey};
@@ -14,6 +14,7 @@ pub use workers::{MeshJob, MeshResult, MeshWorkers, SectionKey};
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::Vegetation;
     use strata_core::content::{Block, BlockId, Face, RenderKind, TextureId};
 
     fn block(render: RenderKind, layer: u16) -> Block {
@@ -44,8 +45,13 @@ mod tests {
                 .find(|(p, _)| *p == [x, y, z])
                 .map_or(BlockId::AIR, |(_, id)| BlockId(*id))
         });
-        mesh_section(&blocks, &table(), true)
+        mesh_section(&blocks, &table(), AO)
     }
+
+    const AO: MeshOptions = MeshOptions {
+        ambient_occlusion: true,
+        vegetation: Vegetation::Full,
+    };
 
     #[test]
     fn single_cube_has_six_faces() {
@@ -151,6 +157,36 @@ mod tests {
             .filter(|q| (q[0].geometry >> 15) & 7 == vertex::CROSS_FACE as u32)
             .count();
         assert_eq!(crosses, 4, "a plant shut in by stone is still meshed");
+    }
+
+    /// A meadow: a plant on every cell of layer 5, meshed with `vegetation`.
+    fn meadow(vegetation: Vegetation, origin: [i32; 3]) -> usize {
+        let blocks = Neighborhood::build(|_, y, _| BlockId(if y == 5 { 5 } else { 0 }))
+            .of_section(origin, &[BlockId(0), BlockId(5)]);
+        let options = MeshOptions { vegetation, ..AO };
+        mesh_section(&blocks, &table(), options).opaque.quad_count() / 4
+    }
+
+    #[test]
+    fn vegetation_can_be_reduced_or_turned_off() {
+        let full = meadow(Vegetation::Full, [0; 3]);
+        assert_eq!(full, 256);
+        let reduced = meadow(Vegetation::Reduced, [0; 3]);
+        assert!((50..120).contains(&reduced), "about a third: {reduced}");
+        assert_eq!(
+            reduced,
+            meadow(Vegetation::Reduced, [0; 3]),
+            "always the same plants"
+        );
+        assert_ne!(reduced, 0);
+        assert_eq!(meadow(Vegetation::Off, [0; 3]), 0);
+    }
+
+    #[test]
+    fn sections_without_plants_skip_the_cross_pass() {
+        let blocks = Neighborhood::build(|_, y, _| BlockId(if y == 5 { 5 } else { 0 }))
+            .of_section([0; 3], &[BlockId(0), BlockId(1)]);
+        assert!(mesh_section(&blocks, &table(), AO).is_empty());
     }
 
     #[test]

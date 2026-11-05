@@ -32,7 +32,7 @@ L'écran d'options modifie une **copie** des réglages. À chaque image, la sess
 | Changement | Ce qui est refait |
 |---|---|
 | Distance de rendu | message `ViewDistance` au serveur |
-| Occlusion ambiante, fils de maillage | tout le monde est re-maillé (l'ancien maillage reste affiché en attendant) |
+| Occlusion ambiante, végétation, fils de maillage | tout le monde est re-maillé (l'ancien maillage reste affiché en attendant) |
 | Mipmaps, anisotropie | le tableau de textures et son échantillonneur |
 | VSync | la surface de la fenêtre |
 | Échelle de rendu, filtre daltonien, brouillard | rien à reconstruire : des valeurs passées aux shaders |
@@ -48,6 +48,7 @@ Le fichier est écrit quand un changement est fini (pas à chaque image d'un gli
 - **Filtres daltoniens** (protanopie, deutéranopie, tritanopie) : dans la même passe finale. On simule ce que l'œil ne distingue pas, puis on reporte cet écart vers des couleurs qu'il distingue (méthode « daltonize »). Sans échelle ni filtre, la passe finale n'existe pas : coût nul.
 - **Brouillard** : dans le shader des blocs, le lointain se fond dans la couleur du ciel, ce qui cache la limite du monde chargé.
 - **Mipmaps** : des copies réduites de chaque texture pour les blocs lointains (moins de scintillement). **Anisotropie** : sols nets vus de biais, au prix de pixels adoucis de près.
+- **Végétation** (complète, réduite, désactivée) : les plantes en croix coûtent 4 quadrilatères chacune. « Réduite » n'en dessine qu'une sur trois, choisie par un hachage de sa position (toujours les mêmes, pas de scintillement) ; « désactivée » saute la passe. Préréglages : désactivée en très bas, réduite en DS, complète ailleurs. Seul l'affichage change : les plantes restent dans le monde.
 - **Limite d'images/s** et **arrière-plan** : la boucle attend avant l'image suivante (`ControlFlow::WaitUntil`) ; fenêtre inactive = 5 images/s, ce qui économise la batterie du DS.
 
 ### Accessibilité

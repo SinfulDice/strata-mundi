@@ -1,6 +1,6 @@
 ## Description
 
-Le sommet des plus hautes montagnes : neige éternelle sur les replats, roche nue sur les à-pics, et une vue à couper le souffle.
+Le sommet des plus hautes montagnes : neige éternelle sur les replats comme sur les pentes, roche nue sur les parois, et une vue à couper le souffle.
 
 ## Obtention
 
@@ -12,7 +12,7 @@ Des blocs de neige, de la pierre, et le meilleur point de vue du monde.
 
 ## Comportement
 
-- **Sol** : **neige** sur les replats (deux blocs d'épaisseur), pierre sur les pentes raides.
+- **Sol** : **neige** sur les replats et les pentes raides (deux blocs d'épaisseur sur les replats), pierre sur les parois.
 - **Eau** : gelée en surface.
 - **Végétation** : aucune.
 

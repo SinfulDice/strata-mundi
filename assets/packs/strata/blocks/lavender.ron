@@ -6,4 +6,6 @@ Block(
     hardness: 0.0,
     sound: Some("strata:grass"),
     category: Some("strata:plants"),
+    replaceable: true,
+    rooted: true,
 )

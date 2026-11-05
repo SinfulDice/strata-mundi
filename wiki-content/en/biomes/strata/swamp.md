@@ -1,6 +1,6 @@
 ## Description
 
-Low, soggy lands where shallow water winds between grassy islets and wide stretches of mud. Swamp oaks let their vines dangle, and mushrooms love the place.
+Low, soggy lands where shallow water winds between grassy islets over a muddy bottom. Swamp oaks let their vines dangle, and mushrooms love the place.
 
 ## Obtaining
 
@@ -12,14 +12,14 @@ A good supply of mud and oak wood, mushrooms to pick, and the perfect setting fo
 
 ## Behaviour
 
-- **Ground**: grass on the islets, **mud** under the water and on low banks.
+- **Ground**: grass on the islets, **mud** under the water only.
 - **Water**: shallow (a few blocks at most), in pools between the islets.
 - **Vegetation**: swamp oaks with vines, tall grass, ferns, small mushrooms.
 
 ## Tips
 
-Hop from islet to islet to keep your feet dry: the mud marks the water's edge.
+Hop from islet to islet to keep your feet dry: for mud, dig the bottom of the pools.
 
 ## Discovery in game
 
-The biome name isn't shown yet: dark mud and vine-draped oaks are enough to recognise it.
+The biome name isn't shown yet: pools, islets and vine-draped oaks are enough to recognise it.

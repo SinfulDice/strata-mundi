@@ -7,6 +7,8 @@ pub struct BlockRules {
     placeable: Vec<bool>,
     breakable: Vec<bool>,
     orientation: Vec<Option<Orientation>>,
+    replaceable: Vec<bool>,
+    rooted: Vec<bool>,
     item_count: usize,
 }
 
@@ -30,22 +32,36 @@ impl BlockRules {
                 .iter()
                 .map(|(_, _, block)| block.orientation)
                 .collect(),
+            replaceable: content
+                .blocks
+                .iter()
+                .map(|(_, _, block)| block.replaceable)
+                .collect(),
+            rooted: content
+                .blocks
+                .iter()
+                .map(|(_, _, block)| block.rooted)
+                .collect(),
         }
     }
 
     pub fn is_solid(&self, block: BlockId) -> bool {
-        self.solid
-            .get(usize::from(block.0))
-            .copied()
-            .unwrap_or(false)
+        flag(&self.solid, block)
+    }
+
+    /// Placing while aiming at it replaces it (plants).
+    pub fn is_replaceable(&self, block: BlockId) -> bool {
+        flag(&self.replaceable, block)
+    }
+
+    /// Needs a solid block beneath (ground plants).
+    pub fn is_rooted(&self, block: BlockId) -> bool {
+        flag(&self.rooted, block)
     }
 
     /// Creative mode: any block that has an item can be placed.
     pub fn is_placeable(&self, block: BlockId) -> bool {
-        self.placeable
-            .get(usize::from(block.0))
-            .copied()
-            .unwrap_or(false)
+        flag(&self.placeable, block)
     }
 
     pub fn is_item(&self, item: ItemId) -> bool {
@@ -54,10 +70,7 @@ impl BlockRules {
 
     /// Outside creative, blocks with a negative hardness (bedrock) cannot be broken.
     pub fn is_breakable(&self, block: BlockId) -> bool {
-        self.breakable
-            .get(usize::from(block.0))
-            .copied()
-            .unwrap_or(false)
+        flag(&self.breakable, block)
     }
 
     /// The variant actually set when `block` is placed against `face` (logs lie down).
@@ -67,4 +80,8 @@ impl BlockRules {
             _ => block,
         }
     }
+}
+
+fn flag(flags: &[bool], block: BlockId) -> bool {
+    flags.get(usize::from(block.0)).copied().unwrap_or(false)
 }

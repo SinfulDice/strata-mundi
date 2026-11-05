@@ -9,6 +9,10 @@ const PADDED: usize = SIZE + 2;
 #[derive(Debug, Clone)]
 pub struct Neighborhood {
     blocks: Vec<BlockId>,
+    /// World position of the section's (0, 0, 0) block.
+    origin: [i32; 3],
+    /// Every block the section may hold (a superset), when known.
+    palette: Option<Vec<BlockId>>,
 }
 
 impl Neighborhood {
@@ -22,7 +26,29 @@ impl Neighborhood {
                 }
             }
         }
-        Self { blocks }
+        Self {
+            blocks,
+            origin: [0; 3],
+            palette: None,
+        }
+    }
+
+    /// Where the section sits in the world and which blocks it may hold.
+    pub fn of_section(mut self, origin: [i32; 3], palette: &[BlockId]) -> Self {
+        self.origin = origin;
+        self.palette = Some(palette.to_vec());
+        self
+    }
+
+    pub fn origin(&self) -> [i32; 3] {
+        self.origin
+    }
+
+    /// False only when the section surely holds none of the blocks `wanted` accepts.
+    pub fn may_contain(&self, wanted: impl Fn(BlockId) -> bool) -> bool {
+        self.palette
+            .as_ref()
+            .is_none_or(|palette| palette.iter().copied().any(wanted))
     }
 
     pub fn get(&self, x: i32, y: i32, z: i32) -> BlockId {

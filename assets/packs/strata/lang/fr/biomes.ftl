@@ -16,3 +16,4 @@ biome-strata-flower_meadow = Prairie fleurie
 biome-strata-badlands = Badlands
 biome-strata-deep_ocean = Océan profond
 biome-strata-mushroom_fields = Champs de champignons
+biome-strata-warm_mountains = Montagnes chaudes

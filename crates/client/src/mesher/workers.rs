@@ -1,4 +1,4 @@
-use super::{BlockTable, Neighborhood, SectionMesh, mesh_section};
+use super::{BlockTable, MeshOptions, Neighborhood, SectionMesh, mesh_section};
 use crossbeam_channel::{Receiver, Sender, TrySendError, bounded, unbounded};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
@@ -32,7 +32,7 @@ impl MeshWorkers {
         count: usize,
         table: Arc<BlockTable>,
         queue: usize,
-        ambient_occlusion: bool,
+        options: MeshOptions,
     ) -> std::io::Result<Self> {
         let (jobs, job_receiver) = bounded::<MeshJob>(queue.max(1));
         let (result_sender, results) = unbounded();
@@ -43,7 +43,7 @@ impl MeshWorkers {
                 let table = Arc::clone(&table);
                 thread::Builder::new()
                     .name(format!("mesher-{index}"))
-                    .spawn(move || work(&jobs, &results, &table, ambient_occlusion))
+                    .spawn(move || work(&jobs, &results, &table, options))
             })
             .collect::<std::io::Result<_>>()?;
         Ok(Self {
@@ -81,11 +81,11 @@ fn work(
     jobs: &Receiver<MeshJob>,
     results: &Sender<MeshResult>,
     table: &BlockTable,
-    ambient_occlusion: bool,
+    options: MeshOptions,
 ) {
     for job in jobs {
         let _span = tracing::trace_span!("mesh_section").entered();
-        let mesh = mesh_section(&job.blocks, table, ambient_occlusion);
+        let mesh = mesh_section(&job.blocks, table, options);
         let result = MeshResult {
             key: job.key,
             version: job.version,

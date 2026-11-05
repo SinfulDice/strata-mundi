@@ -4,6 +4,7 @@
 use super::cross::mesh_crosses;
 use super::neighborhood::{BlockTable, Neighborhood, SIZE};
 use super::vertex::{MeshData, PackedVertex};
+use crate::settings::{GraphicsSettings, Vegetation};
 use strata_core::content::{Axis, Face, RenderKind};
 
 type Vec3i = [i32; 3];
@@ -94,12 +95,29 @@ struct FaceKey {
     translucent: bool,
 }
 
-/// With `ambient_occlusion` off, every corner is fully lit, which also lets more faces merge.
+/// The graphics settings that change meshes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct MeshOptions {
+    /// Off: every corner is fully lit, which also lets more faces merge.
+    pub ambient_occlusion: bool,
+    pub vegetation: Vegetation,
+}
+
+impl MeshOptions {
+    pub fn from_graphics(graphics: &GraphicsSettings) -> Self {
+        Self {
+            ambient_occlusion: graphics.ambient_occlusion,
+            vegetation: graphics.vegetation,
+        }
+    }
+}
+
 pub fn mesh_section(
     blocks: &Neighborhood,
     table: &BlockTable,
-    ambient_occlusion: bool,
+    options: MeshOptions,
 ) -> SectionMesh {
+    let ambient_occlusion = options.ambient_occlusion;
     let mut mesh = SectionMesh::default();
     for face in Face::ALL {
         let frame = frame(face);
@@ -121,7 +139,7 @@ pub fn mesh_section(
             });
         }
     }
-    mesh_crosses(blocks, table, &mut mesh.opaque);
+    mesh_crosses(blocks, table, options.vegetation, &mut mesh.opaque);
     mesh
 }
 

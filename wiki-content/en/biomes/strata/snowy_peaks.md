@@ -1,6 +1,6 @@
 ## Description
 
-The top of the highest mountains: everlasting snow on the ledges, bare rock on the cliffs, and a breathtaking view.
+The top of the highest mountains: everlasting snow on ledges and slopes alike, bare rock on the cliff walls, and a breathtaking view.
 
 ## Obtaining
 
@@ -12,7 +12,7 @@ Snow blocks, stone, and the best viewpoint in the world.
 
 ## Behaviour
 
-- **Ground**: **snow** on the ledges (two blocks thick), stone on steep slopes.
+- **Ground**: **snow** on ledges and steep slopes (two blocks thick on ledges), stone on the cliff walls.
 - **Water**: frozen on top.
 - **Vegetation**: none.
 

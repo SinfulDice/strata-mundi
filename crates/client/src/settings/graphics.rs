@@ -62,7 +62,31 @@ impl FromStr for Preset {
     }
 }
 
-/// Every graphics option of v0.1. Threads at 0 mean "automatic".
+/// How many plants (crossed planes) are drawn.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Vegetation {
+    #[default]
+    Full,
+    /// One plant in `REDUCED_SHARE`, chosen by position so it never flickers.
+    Reduced,
+    Off,
+}
+
+impl Vegetation {
+    pub const ALL: [Vegetation; 3] = [Self::Full, Self::Reduced, Self::Off];
+    pub const REDUCED_SHARE: u32 = 3;
+
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Full => "full",
+            Self::Reduced => "reduced",
+            Self::Off => "off",
+        }
+    }
+}
+
+/// Every graphics option. Threads at 0 mean "automatic".
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GraphicsSettings {
@@ -84,6 +108,7 @@ pub struct GraphicsSettings {
     pub mipmaps: bool,
     /// Anisotropic filtering: 1 (off), 2, 4, 8 or 16.
     pub anisotropy: u32,
+    pub vegetation: Vegetation,
     /// Background threads for meshing.
     pub worker_threads: usize,
     /// Background threads for world generation (integrated server).
@@ -123,6 +148,11 @@ impl GraphicsSettings {
             mipmaps: !matches!(preset, Preset::VeryLow | Preset::Ds),
             // Off in every preset: it smooths the pixel art up close (left to taste).
             anisotropy: 1,
+            vegetation: match preset {
+                Preset::VeryLow => Vegetation::Off,
+                Preset::Ds => Vegetation::Reduced,
+                _ => Vegetation::Full,
+            },
             worker_threads: threads,
             generation_threads: threads,
         }
@@ -196,5 +226,6 @@ mod tests {
         let ds = GraphicsSettings::for_preset(Preset::Ds);
         assert_eq!((ds.fps_limit, ds.meshing_threads()), (30, 1));
         assert!(ds.render_distance < GraphicsSettings::for_preset(Preset::Ultra).render_distance);
+        assert_eq!(ds.vegetation, Vegetation::Reduced);
     }
 }

@@ -45,6 +45,11 @@ option-mipmaps = Mipmaps
 option-mipmaps-help = Textures lointaines plus calmes. Un peu de mémoire.
 option-anisotropy = Filtrage anisotrope
 option-anisotropy-help = Sols nets de loin, pixels adoucis. Coût moyen.
+option-vegetation = Végétation
+option-vegetation-help = Herbes et fleurs dessinées. Réduite ou désactivée soulage la carte graphique.
+vegetation-full = Complète
+vegetation-reduced = Réduite
+vegetation-off = Désactivée
 option-mesh-threads = Fils de maillage
 option-mesh-threads-help = Plus = monde affiché plus vite, plus de CPU.
 option-world-threads = Fils de génération

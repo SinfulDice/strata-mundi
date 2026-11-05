@@ -274,7 +274,7 @@ fn tab_settings(index: usize) -> Option<&'static [Setting]> {
 /// Every translation key the options screen may show, for the missing-translation test.
 #[cfg(test)]
 pub fn translation_keys() -> Vec<String> {
-    use crate::settings::Preset;
+    use crate::settings::{Preset, Vegetation};
     let settings = GRAPHICS
         .iter()
         .chain(INTERFACE)
@@ -286,6 +286,11 @@ pub fn translation_keys() -> Vec<String> {
         .chain(REBINDABLE.iter().map(|&a| action_key(a)))
         .chain(TABS.iter().map(|k| (*k).to_owned()))
         .chain(Preset::ALL.iter().map(|p| format!("preset-{}", p.id())))
+        .chain(
+            Vegetation::ALL
+                .iter()
+                .map(|v| format!("vegetation-{}", v.id())),
+        )
         .collect();
     keys.extend(
         [

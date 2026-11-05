@@ -1,6 +1,6 @@
 ## Description
 
-Des terres basses et détrempées où l'eau peu profonde serpente entre des îlots d'herbe et de grandes étendues de boue. Les chênes des marais y laissent pendre leurs lianes, et les champignons adorent l'endroit.
+Des terres basses et détrempées où l'eau peu profonde serpente entre des îlots d'herbe au fond tapissé de boue. Les chênes des marais y laissent pendre leurs lianes, et les champignons adorent l'endroit.
 
 ## Obtention
 
@@ -12,14 +12,14 @@ Une bonne réserve de boue et de bois de chêne, des champignons à ramasser, et
 
 ## Comportement
 
-- **Sol** : herbe sur les îlots, **boue** sous l'eau et sur les berges basses.
+- **Sol** : herbe sur les îlots, **boue** sous l'eau seulement.
 - **Eau** : peu profonde (quelques blocs au plus), en mares entre les îlots.
 - **Végétation** : chênes des marais à lianes, herbes hautes, fougères, petits champignons.
 
 ## Conseils
 
-Marchez sur les îlots pour garder les pieds au sec : la boue marque le bord de l'eau.
+Marchez sur les îlots pour garder les pieds au sec : pour la boue, creusez le fond des mares.
 
 ## Découverte en jeu
 
-Le nom du biome n'est pas encore affiché : la boue sombre et les chênes à lianes suffisent à le reconnaître.
+Le nom du biome n'est pas encore affiché : les mares, les îlots et les chênes à lianes suffisent à le reconnaître.

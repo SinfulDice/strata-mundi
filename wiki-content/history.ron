@@ -80,6 +80,7 @@
         "biomes/strata/snowy_peaks": [(version: "0.2.0", change: Added)],
         "biomes/strata/flower_meadow": [(version: "0.2.0", change: Added)],
         "biomes/strata/badlands": [(version: "0.2.0", change: Added)],
+        "biomes/strata/warm_mountains": [(version: "0.2.0", change: Added)],
         "biomes/strata/deep_ocean": [(version: "0.2.0", change: Added)],
         "biomes/strata/mushroom_fields": [(version: "0.2.0", change: Added)],
         "biomes/strata/desert": [(version: "0.1.0", change: Added)],

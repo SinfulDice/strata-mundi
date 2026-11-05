@@ -61,7 +61,7 @@ fn different_seeds_give_different_worlds() {
 #[test]
 fn every_biome_appears_and_is_translated() {
     let (content, worldgen) = common::load();
-    assert_eq!(worldgen.biomes().len(), 18);
+    assert_eq!(worldgen.biomes().len(), 19);
     let generator = strata_worldgen::Generator::new(strata_worldgen::Seed(7), worldgen.clone());
     let mut found = BTreeSet::new();
     for gx in -60..60 {

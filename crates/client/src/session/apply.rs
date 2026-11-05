@@ -2,6 +2,7 @@
 //! compared with the one in use, and only what differs is redone.
 
 use super::Session;
+use crate::mesher::MeshOptions;
 use crate::render::RenderOptions;
 use crate::settings::Settings;
 use crate::stage::Stage;
@@ -58,8 +59,8 @@ impl Session {
             self.renderer
                 .set_texture_filtering(&self.gpu, textures, g.mipmaps, g.anisotropy);
         }
-        let remesh = (g.ambient_occlusion, g.worker_threads)
-            != (before.ambient_occlusion, before.worker_threads);
+        let remesh = (MeshOptions::from_graphics(&g), g.worker_threads)
+            != (MeshOptions::from_graphics(before), before.worker_threads);
         if remesh && let Err(error) = self.remesh() {
             tracing::error!(%error, "could not restart meshing");
         }

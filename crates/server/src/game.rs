@@ -160,43 +160,93 @@ impl Game {
             .map_or(0, |c| c.last_sequence)
     }
 
-    /// Validated break: within reach, an actual block the player may break.
-    pub fn break_block(&mut self, loader: &mut ColumnLoader, pos: BlockPos) -> Option<BlockChange> {
+    /// Validated break: within reach, an actual block the player may break. The changes
+    /// also hold the plant that loses its ground; empty when refused.
+    pub fn break_block(&mut self, loader: &mut ColumnLoader, pos: BlockPos) -> Vec<BlockChange> {
         if !pos.is_valid(self.border) {
-            return None;
+            return Vec::new();
         }
-        let current = loader.block(pos)?;
+        let Some(current) = loader.block(pos) else {
+            return Vec::new();
+        };
         let allowed = current != BlockId::AIR
             && (self.is_creative() || self.rules.is_breakable(current))
             && self.in_reach(pos)
             && self.take_action();
-        (allowed && loader.set_block(pos, BlockId::AIR)).then_some((pos, BlockId::AIR))
+        if !(allowed && loader.set_block(pos, BlockId::AIR)) {
+            return Vec::new();
+        }
+        let mut changes = vec![(pos, BlockId::AIR)];
+        self.uproot_above(loader, pos, &mut changes);
+        changes
     }
 
-    /// Validated placement: against a solid block, into a free (non-solid) cell that no
-    /// player stands in. Turned blocks (logs) follow the clicked face.
+    /// Validated placement into a free (non-solid) cell that no player stands in: next to
+    /// a solid block, or in place of a replaceable one (plants). Turned blocks (logs)
+    /// follow the clicked face; rooted blocks need solid ground.
     pub fn place_block(
         &mut self,
         loader: &mut ColumnLoader,
         against: BlockPos,
         face: Face,
         block: BlockId,
-    ) -> Option<BlockChange> {
-        if !against.is_valid(self.border) {
-            return None;
-        }
-        let target = against.neighbour(face);
-        let support = loader.block(against)?;
-        let current = loader.block(target)?;
+    ) -> Vec<BlockChange> {
+        let Some(target) = self.placement_target(loader, against, face) else {
+            return Vec::new();
+        };
+        let grounded = !self.rules.is_rooted(block)
+            || loader
+                .block(target.neighbour(Face::Down))
+                .is_some_and(|below| self.rules.is_solid(below));
         let allowed = self.rules.is_placeable(block)
-            && self.rules.is_solid(support)
-            && !self.rules.is_solid(current)
-            && target.is_valid(self.border)
+            && grounded
             && self.in_reach(target)
             && !self.blocks_a_player(target, block)
             && self.take_action();
         let block = self.rules.placed_against(block, face);
-        (allowed && loader.set_block(target, block)).then_some((target, block))
+        if !(allowed && loader.set_block(target, block)) {
+            return Vec::new();
+        }
+        let mut changes = vec![(target, block)];
+        self.uproot_above(loader, target, &mut changes);
+        changes
+    }
+
+    /// The cell a block placed against `against` goes to, if any.
+    fn placement_target(
+        &self,
+        loader: &ColumnLoader,
+        against: BlockPos,
+        face: Face,
+    ) -> Option<BlockPos> {
+        if !against.is_valid(self.border) {
+            return None;
+        }
+        let aimed = loader.block(against)?;
+        if self.rules.is_replaceable(aimed) {
+            return Some(against);
+        }
+        let target = against.neighbour(face);
+        let current = loader.block(target)?;
+        (self.rules.is_solid(aimed)
+            && !self.rules.is_solid(current)
+            && target.is_valid(self.border))
+        .then_some(target)
+    }
+
+    /// A rooted plant standing on `pos` goes away once `pos` is no longer solid.
+    fn uproot_above(
+        &self,
+        loader: &mut ColumnLoader,
+        pos: BlockPos,
+        changes: &mut Vec<BlockChange>,
+    ) {
+        let above = pos.neighbour(Face::Up);
+        let ground_gone = loader.block(pos).is_some_and(|b| !self.rules.is_solid(b));
+        let rooted = loader.block(above).is_some_and(|b| self.rules.is_rooted(b));
+        if ground_gone && rooted && loader.set_block(above, BlockId::AIR) {
+            changes.push((above, BlockId::AIR));
+        }
     }
 
     pub fn set_mode(&mut self, mode: GameMode) {
@@ -308,19 +358,19 @@ mod tests {
     fn breaking_needs_reach_and_respects_the_rate_limit() {
         let mut w = world();
         let near = BlockPos::new(9, 63, 8);
-        assert!(w.game.break_block(&mut w.loader, near).is_some());
+        assert!(!w.game.break_block(&mut w.loader, near).is_empty());
         let next = BlockPos::new(10, 63, 8);
         assert!(
-            w.game.break_block(&mut w.loader, next).is_none(),
+            w.game.break_block(&mut w.loader, next).is_empty(),
             "too soon"
         );
         wait(&mut w, 2);
-        assert!(w.game.break_block(&mut w.loader, next).is_some());
+        assert!(!w.game.break_block(&mut w.loader, next).is_empty());
         wait(&mut w, 2);
         assert!(
             w.game
                 .break_block(&mut w.loader, BlockPos::new(8, 40, 8))
-                .is_none(),
+                .is_empty(),
             "too far"
         );
     }
@@ -333,27 +383,25 @@ mod tests {
         assert!(
             w.game
                 .place_block(&mut w.loader, under_feet, Face::Up, log)
-                .is_none()
+                .is_empty()
         );
         let beside = BlockPos::new(11, 63, 8);
-        let (pos, placed) = w
-            .game
-            .place_block(&mut w.loader, beside, Face::Up, log)
-            .unwrap();
+        let [(pos, placed)] = w.game.place_block(&mut w.loader, beside, Face::Up, log)[..] else {
+            panic!("placed beside the player");
+        };
         assert_eq!(pos, BlockPos::new(11, 64, 8));
         assert_eq!(placed, log);
         wait(&mut w, 2);
-        let (_, lying) = w
-            .game
-            .place_block(&mut w.loader, pos, Face::East, log)
-            .unwrap();
+        let [(_, lying)] = w.game.place_block(&mut w.loader, pos, Face::East, log)[..] else {
+            panic!("placed against the log");
+        };
         assert_eq!(lying, block(&w.content, "strata:oak_log__x"));
         wait(&mut w, 2);
         let variant = block(&w.content, "strata:oak_log__x");
         assert!(
             w.game
                 .place_block(&mut w.loader, beside, Face::West, variant)
-                .is_none(),
+                .is_empty(),
             "variants have no item"
         );
     }
@@ -362,11 +410,45 @@ mod tests {
     fn hostile_coordinates_are_refused_without_panicking() {
         let mut w = world();
         let far = BlockPos::new(i32::MAX, 10, i32::MIN);
-        assert!(w.game.break_block(&mut w.loader, far).is_none());
+        assert!(w.game.break_block(&mut w.loader, far).is_empty());
         assert!(
             w.game
                 .place_block(&mut w.loader, far, Face::East, BlockId(1))
-                .is_none()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn placing_while_aiming_at_grass_replaces_the_grass() {
+        let mut w = world();
+        let grass = block(&w.content, "strata:tall_grass");
+        let planks = block(&w.content, "strata:oak_planks");
+        let plant = BlockPos::new(11, 64, 8);
+        assert!(w.loader.set_block(plant, grass));
+        let changes = w
+            .game
+            .place_block(&mut w.loader, plant, Face::North, planks);
+        assert_eq!(changes, vec![(plant, planks)]);
+        assert_eq!(w.loader.block(plant), Some(planks));
+    }
+
+    #[test]
+    fn plants_go_with_their_ground_and_need_one() {
+        let mut w = world();
+        let poppy = block(&w.content, "strata:poppy");
+        let (ground, plant) = (BlockPos::new(11, 63, 8), BlockPos::new(11, 64, 8));
+        assert!(w.loader.set_block(plant, poppy));
+        let changes = w.game.break_block(&mut w.loader, ground);
+        assert_eq!(changes, vec![(ground, BlockId::AIR), (plant, BlockId::AIR)]);
+        assert_eq!(w.loader.block(plant), Some(BlockId::AIR));
+        wait(&mut w, 2);
+        assert!(w.loader.set_block(BlockPos::new(11, 62, 8), BlockId::AIR));
+        let wall = BlockPos::new(10, 63, 8);
+        assert!(
+            w.game
+                .place_block(&mut w.loader, wall, Face::East, poppy)
+                .is_empty(),
+            "no ground under the cell"
         );
     }
 }

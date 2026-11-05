@@ -50,6 +50,8 @@ Block(
     max_stack: 64,
     cull_same: true,      // cacher la face entre deux blocs identiques non opaques (eau, verre)
     placement: Fixed,     // Axis : se couche dans l'axe de la face cliquée (bûches)
+    replaceable: false,   // poser en le visant met le nouveau bloc à sa place (plantes)
+    rooted: false,        // a besoin d'un bloc solide dessous, sinon disparaît (plantes au sol)
 )
 ```
 

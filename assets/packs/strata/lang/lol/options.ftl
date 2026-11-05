@@ -45,6 +45,11 @@ option-mipmaps = MIPMAPZ
 option-mipmaps-help = CALMR FAR TEXTUREZ. BIT OF MEMORIEZ.
 option-anisotropy = ANISOTROPIK FILTR
 option-anisotropy-help = SHARP FAR FLOORZ, SOFT PIXELZ. MEDIUM COST.
+option-vegetation = GRAZ AN FLOWRZ
+option-vegetation-help = HOW MANY GRAZ IZ DRAWN. LES GRAZ = HAPPY GRAFIX CARD.
+vegetation-full = ALL TEH GRAZ
+vegetation-reduced = SUM GRAZ
+vegetation-off = NO GRAZ
 option-mesh-threads = MESH THREADZ
 option-mesh-threads-help = MOAR = WORLD SHOWZ FASTR, MOAR CPU.
 option-world-threads = WORLD THREADZ

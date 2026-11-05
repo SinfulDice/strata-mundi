@@ -16,3 +16,4 @@ biome-strata-flower_meadow = FLOWR GRAS
 biome-strata-badlands = STRIPY HILLZ
 biome-strata-deep_ocean = DEEP BIG WATUR
 biome-strata-mushroom_fields = SHROOM LANDZ
+biome-strata-warm_mountains = TOASTY MOUNTINZ

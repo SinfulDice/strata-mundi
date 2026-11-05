@@ -6,7 +6,7 @@ use crate::settings::{
     ANISOTROPY, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE, SENSITIVITY, VERTICAL_DISTANCE,
 };
 use crate::settings::{
-    AUTO_THREADS, ColorFilter, FontChoice, Preset, Settings, default_worker_threads,
+    AUTO_THREADS, ColorFilter, FontChoice, Preset, Settings, Vegetation, default_worker_threads,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,6 +22,7 @@ pub enum Setting {
     Fog,
     Mipmaps,
     Anisotropy,
+    Vegetation,
     MeshThreads,
     WorldThreads,
     Language,
@@ -57,6 +58,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Fog,
     Setting::Mipmaps,
     Setting::Anisotropy,
+    Setting::Vegetation,
     Setting::MeshThreads,
     Setting::WorldThreads,
 ];
@@ -150,6 +152,10 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::Mipmaps => (on_off(shared, g.mipmaps), None),
         Setting::Anisotropy if g.anisotropy <= 1 => (shared.tr("ui-off"), None),
         Setting::Anisotropy => (format!("{}x", g.anisotropy), None),
+        Setting::Vegetation => (
+            shared.tr(&format!("vegetation-{}", g.vegetation.id())),
+            None,
+        ),
         Setting::MeshThreads => (threads_label(shared, g.worker_threads), None),
         Setting::WorldThreads => (threads_label(shared, g.generation_threads), None),
         Setting::Language => (shared.tr("language-name"), None),
@@ -231,6 +237,7 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Fog => g.fog = !g.fog,
         Setting::Mipmaps => g.mipmaps = !g.mipmaps,
         Setting::Anisotropy => g.anisotropy = cycle(&ANISOTROPY, g.anisotropy, step),
+        Setting::Vegetation => g.vegetation = cycle(&Vegetation::ALL, g.vegetation, step),
         Setting::MeshThreads => g.worker_threads = cycle_threads(g.worker_threads, cores, step),
         Setting::WorldThreads => {
             g.generation_threads = cycle_threads(g.generation_threads, cores, step)

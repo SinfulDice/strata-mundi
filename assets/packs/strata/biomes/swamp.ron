@@ -6,6 +6,8 @@ Biome(
     surface: "strata:grass_block",
     subsurface: "strata:dirt",
     underwater: "strata:mud",
+    // Mud only under the water: the islets stay grassy.
+    shore_height: -1,
     features: [
         (feature: "strata:swamp_oak_tree", per_column: 1.5),
         (feature: "strata:tall_grass", per_column: 3.0),

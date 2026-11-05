@@ -48,7 +48,7 @@ impl SurfaceRules<'_> {
     /// Top block of the ground at height `y`: beach sand near the sea, rocky or snowy
     /// above peak heights, bare rock (or coloured layers) on steep slopes.
     pub fn top_block(&self, ground: &Ground<'_>, y: i32) -> BlockId {
-        if y <= self.content.terrain.sea_level + 1 {
+        if self.is_shore(ground.biome, y) {
             return ground.biome.underwater;
         }
         match peak(ground.biome, y) {
@@ -61,6 +61,11 @@ impl SurfaceRules<'_> {
         }
     }
 
+    /// Ground at height `y` under water or on its shore.
+    fn is_shore(&self, biome: &Biome, y: i32) -> bool {
+        y <= self.content.terrain.sea_level + biome.shore_height
+    }
+
     fn below_surface_block(&self, ground: &Ground<'_>, surface_y: i32, y: i32) -> BlockId {
         let biome = ground.biome;
         if peak(biome, surface_y).is_some() {
@@ -69,7 +74,7 @@ impl SurfaceRules<'_> {
             self.band(bands, ground.at, y)
         } else if ground.steep {
             self.content.terrain.stone
-        } else if surface_y <= self.content.terrain.sea_level + 1 {
+        } else if self.is_shore(biome, surface_y) {
             biome.underwater
         } else {
             biome.subsurface
@@ -85,7 +90,7 @@ impl SurfaceRules<'_> {
         y: i32,
     ) -> Option<BlockId> {
         let bands = ground.biome.bands.as_ref()?;
-        let dry = surface_y > self.content.terrain.sea_level + 1;
+        let dry = !self.is_shore(ground.biome, surface_y);
         (dry && depth < bands.depth).then(|| self.band(bands, ground.at, y))
     }
 

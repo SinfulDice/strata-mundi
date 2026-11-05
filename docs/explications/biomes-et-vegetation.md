@@ -14,7 +14,7 @@ Mais certaines conditions ne s'expriment pas bien en climat. Un biome peut donc 
 
 - **Plage** : continentalité côtière et `max_height: 121`, donc seulement sur les côtes basses (la mer est à 120).
 - **Océan profond** : continentalité très basse et `max_height: 100`.
-- **Montagnes** et **pics enneigés** ont le même climat ; l'altitude tranche : pics au-dessus de 230, montagnes en dessous.
+- **Montagnes** et **pics enneigés** ont le même climat ; l'altitude tranche : pics au-dessus de 230, montagnes en dessous ; les **montagnes chaudes** prennent leur place dans les régions chaudes et sèches.
 - **Badlands** : chaud, sec, érosion moyenne et `min_height: 145`, donc seulement sur les plateaux surélevés ; en dessous, c'est désert ou savane.
 - **Champignons** : placés à un point « impossible » (humidité 1,1, érosion 1,0). Il n'est choisi que là où ces deux valeurs sont extrêmes, soit environ 0,4 % du monde : de petites taches isolées.
 
@@ -43,6 +43,7 @@ graph LR
 | Marais | mares peu profondes, boue, chênes des marais à lianes |
 | Badlands | sable rouge, strates de terracotta colorées |
 | Montagnes | herbe puis roche, sapins |
+| Montagnes chaudes | herbe, sable rouge puis roche, acacias, buissons morts ; font la transition vers les badlands |
 | Pics enneigés | sommets au-dessus de 230 |
 | Océan | eau, sable et gravier |
 | Océan profond | fonds de l'océan |
@@ -52,7 +53,7 @@ graph LR
 
 ### Le marais : un terrain affaissé
 
-Le marais n'est pas qu'une couche de boue : le **relief** change. Une courbe `wetlands` (dans `dimensions/terra.ron`) rabat le terrain vers le niveau de la mer là où l'humidité et l'érosion sont fortes, avec de petites bosses de ±3 blocs. Le terrain n'est jamais relevé. On obtient des mares, des vasières de boue et des îlots d'herbe. Voir aussi [Relief](relief.md).
+Le marais n'est pas qu'une couche de boue : le **relief** change. Une courbe `wetlands` (dans `dimensions/terra.ron`) rabat le terrain vers le niveau de la mer là où l'humidité et l'érosion sont fortes, avec de petites bosses de ±3 blocs. Le terrain n'est jamais relevé. On obtient des mares au fond de boue et des îlots d'herbe : le champ de biome `shore_height` (-1 pour le marais, 1 par défaut) limite la boue au sol sous l'eau. Voir aussi [Relief](relief.md).
 
 ### Les strates des badlands
 

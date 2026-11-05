@@ -47,7 +47,7 @@ Dimension(
             wetlands: Some((
                 humidity: [(0.3, 0.0), (0.42, 1.0), (0.56, 1.0), (0.66, 0.0)],
                 erosion: [(0.58, 0.0), (0.72, 1.0)],
-                level: 0.8,
+                level: -0.5,
                 bumps: 3.0,
             )),
         ),

@@ -7,6 +7,7 @@
   - [x] Végétation en croix : `RenderKind::Cross` (mailleur, shader, icône, raycast, pas de collision), feature de végétation éparse du pack ; herbes hautes, fougère, buisson mort, buisson, fleurs (≥ 5), petits champignons ; ajoutée aux biomes existants
   - [x] Nouveaux arbres et bois : bouleau, jungle (grand), acacia (tronc penché, couronne plate), chêne des marais, champignons géants (chapeaux et pied) ; nouvelles formes de couronne dans le pack
   - [x] 12 nouveaux biomes (marais, jungle, savane, forêt de bouleaux, taïga, plage, pics enneigés, prairie fleurie, badlands à strates, océan profond, champignons géants ; rivière déjà faite) avec leurs blocs de surface, placement climatique, carte, traductions, wiki ; tests (tous atteignables, déterminisme), captures
+  - [x] Corrections de la relecture : blocs `replaceable`/`rooted` (poser sur une plante, plantes retirées avec leur sol), réglage `vegetation` (complète/réduite/désactivée, à chaud), découpe `content/` et `defs/`, biome `warm_mountains`, neige sur les pentes des pics, marais plus noyé (`shore_height`), test des plaines
 - **Dernière session** : 05/11/2026
 
 ## Fait

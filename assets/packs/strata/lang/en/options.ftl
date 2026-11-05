@@ -45,6 +45,11 @@ option-mipmaps = Mipmaps
 option-mipmaps-help = Calmer distant textures. A bit of memory.
 option-anisotropy = Anisotropic filtering
 option-anisotropy-help = Sharp distant floors, softened pixels. Medium cost.
+option-vegetation = Vegetation
+option-vegetation-help = Grass and flowers drawn. Reduced or off eases the graphics card.
+vegetation-full = Full
+vegetation-reduced = Reduced
+vegetation-off = Off
 option-mesh-threads = Meshing threads
 option-mesh-threads-help = More = world shown faster, more CPU.
 option-world-threads = Generation threads

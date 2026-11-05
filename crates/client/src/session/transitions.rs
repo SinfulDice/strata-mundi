@@ -7,6 +7,7 @@ use crate::gameplay::Gameplay;
 use crate::interaction::BlockInfo;
 use crate::launcher::RunningWorld;
 use crate::mesh_scheduler::MeshScheduler;
+use crate::mesher::MeshOptions;
 use crate::render::{OffscreenTarget, Target};
 use crate::screens::UiAction;
 use crate::sleep::{SleepEvent, SleepWatcher};
@@ -26,7 +27,7 @@ impl Session {
         MeshScheduler::new(
             Arc::clone(&self.table),
             graphics.meshing_threads(),
-            graphics.ambient_occlusion,
+            MeshOptions::from_graphics(graphics),
         )
         .map_err(ClientError::Threads)
     }

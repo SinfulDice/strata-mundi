@@ -195,6 +195,12 @@ pub struct BlockDef {
     pub cull_same: bool,
     #[serde(default)]
     pub placement: Placement,
+    /// Placing a block while aiming at this one puts the new block in its place (plants).
+    #[serde(default)]
+    pub replaceable: bool,
+    /// Needs a solid block beneath: pops off when it loses it (ground plants).
+    #[serde(default)]
+    pub rooted: bool,
 }
 
 fn default_stack() -> u16 {
@@ -228,6 +234,8 @@ pub struct Block {
     pub max_stack: u16,
     pub cull_same: bool,
     pub orientation: Option<Orientation>,
+    pub replaceable: bool,
+    pub rooted: bool,
 }
 
 impl Block {
@@ -244,6 +252,8 @@ impl Block {
             max_stack: 64,
             cull_same: true,
             orientation: None,
+            replaceable: false,
+            rooted: false,
         }
     }
 

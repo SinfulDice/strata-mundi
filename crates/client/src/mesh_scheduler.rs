@@ -1,4 +1,4 @@
-use crate::mesher::{BlockTable, MeshJob, MeshWorkers, SectionKey, SectionMesh};
+use crate::mesher::{BlockTable, MeshJob, MeshOptions, MeshWorkers, SectionKey, SectionMesh};
 use crate::render::{Gpu, Renderer, in_vertical_range};
 use crate::world::ClientWorld;
 use glam::DVec3;
@@ -31,16 +31,11 @@ impl MeshScheduler {
     pub fn new(
         table: Arc<BlockTable>,
         threads: usize,
-        ambient_occlusion: bool,
+        options: MeshOptions,
     ) -> std::io::Result<Self> {
         let max_in_flight = threads.max(1) * JOBS_PER_WORKER;
         Ok(Self {
-            workers: MeshWorkers::spawn(
-                threads,
-                Arc::clone(&table),
-                max_in_flight,
-                ambient_occlusion,
-            )?,
+            workers: MeshWorkers::spawn(threads, Arc::clone(&table), max_in_flight, options)?,
             table,
             max_in_flight,
             dirty: HashSet::new(),

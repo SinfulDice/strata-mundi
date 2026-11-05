@@ -148,18 +148,18 @@ impl IntegratedServer {
                 self.game.teleport(feet);
             }
             ClientMessage::BreakBlock { pos } => {
-                let change = self.game.break_block(&mut self.loader, pos);
-                self.broadcast_change(change);
+                let changes = self.game.break_block(&mut self.loader, pos);
+                self.broadcast_changes(changes);
             }
             ClientMessage::PlaceBlock {
                 against,
                 face,
                 block,
             } => {
-                let change = self
+                let changes = self
                     .game
                     .place_block(&mut self.loader, against, face, block);
-                self.broadcast_change(change);
+                self.broadcast_changes(changes);
             }
             ClientMessage::Hotbar(hotbar) => {
                 self.game.set_hotbar(hotbar);
@@ -197,8 +197,8 @@ impl IntegratedServer {
             .save(&self.game, &mut self.loader, &self.dimension, icon);
     }
 
-    fn broadcast_change(&self, change: Option<BlockChange>) {
-        if let Some((pos, block)) = change {
+    fn broadcast_changes(&self, changes: Vec<BlockChange>) {
+        for (pos, block) in changes {
             self.connection
                 .send(ServerMessage::BlockChanged { pos, block });
         }

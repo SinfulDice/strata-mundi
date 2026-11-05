@@ -155,6 +155,8 @@ fn load_blocks(
             max_stack: value.max_stack.max(1),
             cull_same: value.cull_same,
             orientation: None,
+            replaceable: value.replaceable,
+            rooted: value.rooted,
         };
         let inserted = match placement {
             Placement::Fixed => blocks.insert(id, block).is_some(),

@@ -1,5 +1,5 @@
 use crate::camera::Camera;
-use crate::mesher::{BlockTable, mesh_section};
+use crate::mesher::{BlockTable, MeshOptions, mesh_section};
 use crate::render::{
     Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, RenderOptions, Renderer,
     Target, TextureFiltering,
@@ -74,7 +74,11 @@ pub fn render_image(
         );
     }
     for key in world.section_keys() {
-        let mesh = mesh_section(&world.neighborhood(key), &table, ao);
+        let mesh = mesh_section(
+            &world.neighborhood(key),
+            &table,
+            MeshOptions::from_graphics(&view.graphics),
+        );
         renderer.upload_section(&gpu, key, &mesh);
     }
     let size = view.size;

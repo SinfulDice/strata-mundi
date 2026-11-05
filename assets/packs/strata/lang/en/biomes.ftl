@@ -16,3 +16,4 @@ biome-strata-flower_meadow = Flower Meadow
 biome-strata-badlands = Badlands
 biome-strata-deep_ocean = Deep Ocean
 biome-strata-mushroom_fields = Mushroom Fields
+biome-strata-warm_mountains = Warm mountains

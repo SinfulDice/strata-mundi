@@ -204,6 +204,9 @@ fn presets(ctx: &Ctx<'_>) -> String {
         }),
         line("option-ambient-occlusion", &|g| yes_no(g.ambient_occlusion)),
         line("option-mipmaps", &|g| yes_no(g.mipmaps)),
+        line("option-vegetation", &|g| {
+            ctx.tr(&format!("vegetation-{}", g.vegetation.id()))
+        }),
     ]
     .concat();
     format!(

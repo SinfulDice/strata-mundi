@@ -81,25 +81,39 @@ fn plants_grow_only_in_the_air_above_their_ground() {
     }
 }
 
+/// Columns lying entirely in the plains (sampled at their corners and centre).
+fn plains_columns(generator: &Generator) -> Vec<ColumnPos> {
+    let in_plains = |x: i32, z: i32| generator.sample(x, z).1.id.to_string() == "strata:plains";
+    (-48..48)
+        .flat_map(|x| (-48..48).map(move |z| ColumnPos { x, z }))
+        .filter(|pos| {
+            let (x, z) = (pos.x * 16, pos.z * 16);
+            [(0, 0), (15, 0), (0, 15), (15, 15), (8, 8)]
+                .iter()
+                .all(|(dx, dz)| in_plains(x + dx, z + dz))
+        })
+        .take(64)
+        .collect()
+}
+
 #[test]
 fn plains_have_grass_and_flowers() {
-    let generator = common::generator(42);
-    let features = plant_features(generator.content());
-    let flowers = features
-        .iter()
-        .find(|f| f.blocks.len() >= 5)
-        .expect("a patch of mixed flowers");
+    let (content, worldgen) = common::load();
+    let generator = Generator::new(Seed(42), worldgen);
+    let block = |id: &str| content.blocks.key(&id.parse().unwrap()).unwrap();
+    let tall_grass = block("strata:tall_grass");
+    let flowers = ["poppy", "dandelion", "cornflower", "daisy", "lavender"]
+        .map(|name| block(&format!("strata:{name}")));
+    let columns = plains_columns(&generator);
+    assert!(columns.len() >= 16, "only {} plains columns", columns.len());
     let mut kinds = std::collections::BTreeSet::new();
-    for pos in (-12..12).flat_map(|x| (-12..12).map(move |z| ColumnPos { x, z })) {
+    for pos in columns {
         let column = generator.generate(pos);
         for (x, z) in (0..16u32).flat_map(|x| (0..16u32).map(move |z| (x, z))) {
-            for y in 100..300 {
-                let block = column.get(x, y, z);
-                if flowers.blocks.iter().any(|(b, _)| *b == block) {
-                    kinds.insert(block);
-                }
-            }
+            kinds.extend((60..300).map(|y| column.get(x, y, z)));
         }
     }
-    assert!(kinds.len() >= 4, "only {} kinds of flowers", kinds.len());
+    assert!(kinds.contains(&tall_grass), "no tall grass in the plains");
+    let found = flowers.iter().filter(|f| kinds.contains(f)).count();
+    assert!(found >= 4, "only {found} kinds of flowers in the plains");
 }

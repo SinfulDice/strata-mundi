@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
-use strata_client::mesher::{BlockTable, Neighborhood, mesh_section};
+use strata_client::mesher::{BlockTable, MeshOptions, Neighborhood, mesh_section};
 use strata_core::content::{Block, BlockId, RenderKind, TextureId};
 
 fn table() -> BlockTable {
@@ -29,15 +29,20 @@ fn checkerboard(x: i32, y: i32, z: i32) -> BlockId {
     BlockId(u16::from((x + y + z).rem_euclid(2) == 0))
 }
 
+const AO: MeshOptions = MeshOptions {
+    ambient_occlusion: true,
+    vegetation: strata_client::settings::Vegetation::Full,
+};
+
 fn meshing(c: &mut Criterion) {
     let table = table();
     let surface = Neighborhood::build(terrain);
     let worst = Neighborhood::build(checkerboard);
     c.bench_function("mesh_section_terrain", |b| {
-        b.iter(|| mesh_section(black_box(&surface), &table, true))
+        b.iter(|| mesh_section(black_box(&surface), &table, AO))
     });
     c.bench_function("mesh_section_checkerboard", |b| {
-        b.iter(|| mesh_section(black_box(&worst), &table, true))
+        b.iter(|| mesh_section(black_box(&worst), &table, AO))
     });
     c.bench_function("neighborhood_build", |b| {
         b.iter(|| Neighborhood::build(terrain))

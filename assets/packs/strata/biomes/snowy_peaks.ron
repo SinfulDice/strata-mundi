@@ -7,5 +7,6 @@ Biome(
     subsurface: "strata:snow_block",
     subsurface_depth: 2,
     underwater: "strata:gravel",
+    steep: Some("strata:snow_block"),
     frozen: true,
 )

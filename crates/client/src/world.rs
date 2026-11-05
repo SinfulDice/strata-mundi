@@ -141,11 +141,16 @@ impl ClientWorld {
             })
         });
         let base_y = section as i32 * SECTION_SIZE;
-        Neighborhood::build(|x, y, z| {
+        let blocks = Neighborhood::build(|x, y, z| {
             let (dx, lx) = split(x);
             let (dz, lz) = split(z);
             near[dz][dx].map_or(BlockId::AIR, |column| column.get(lx, base_y + y, lz))
-        })
+        });
+        let palette = near[1][1]
+            .and_then(|column| column.section(section))
+            .map_or(&[][..], |s| s.palette());
+        let origin = [cx * SECTION_SIZE, base_y, cz * SECTION_SIZE];
+        blocks.of_section(origin, palette)
     }
 }
 
@@ -218,7 +223,11 @@ mod tests {
     #[test]
     fn the_cavern_floor_of_the_lowest_section_is_meshed() {
         let world = cavern_floor();
-        let mesh = crate::mesher::mesh_section(&world.neighborhood((0, 0, 0)), &table(), false);
+        let mesh = crate::mesher::mesh_section(
+            &world.neighborhood((0, 0, 0)),
+            &table(),
+            Default::default(),
+        );
         let tops = mesh
             .opaque
             .vertices
