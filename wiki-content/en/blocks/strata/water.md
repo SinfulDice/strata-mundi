@@ -12,7 +12,7 @@ Scenery, natural border, landmark near the starting point.
 
 ## Behaviour
 
-Water is **static**: it neither flows nor spreads. It isn't solid, so you pass through it like air (no swimming yet). It can't be targeted or broken; however, you can **place a block in its place**. If you break that block afterwards, it leaves a pocket of air: the water doesn't come back.
+Water **flows**: a **source** (the water of seas and lakes) runs down first, then sideways up to **7 blocks**, heading for the nearest slope and getting thinner. The world's water stays still until disturbed: breaking the wall of a lake makes it flow. A new source forms between two sources standing on the ground. Removing the source makes the flow go away. Water washes plants away and turns lava into **stone** or **obsidian**. It isn't solid (no swimming yet); it can't be targeted or broken, but you can **place a block in its place**. The flow can be turned off with the world option `fluids` (`flow: false`).
 
 ## Tips
 

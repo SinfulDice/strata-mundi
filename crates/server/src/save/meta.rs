@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use strata_core::id::Identifier;
 use strata_core::physics::Body;
+use strata_core::updates::FluidSettings;
 use strata_protocol::GameMode;
 
 /// Bumped on any incompatible change of the files of a world. No migration before v1.0:
@@ -26,6 +27,9 @@ pub struct WorldMeta {
     /// Time of day in ticks (`0..DAY_TICKS`, 0 = sunrise); the sky follows it from v0.2.
     #[serde(default)]
     pub day_time: u64,
+    /// World option: liquids flow (and how many update per tick).
+    #[serde(default)]
+    pub fluids: FluidSettings,
 }
 
 /// Only the version, readable whatever the rest of the file looks like.

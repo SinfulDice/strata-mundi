@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE};
+use strata_core::updates::BlockAccess;
 
 /// Columns sent per tick at most, so a burst never floods the client.
 const SENT_PER_TICK: usize = 48;
@@ -214,6 +215,26 @@ fn wanted(center: ColumnPos, viewer: &Viewer) -> Vec<ColumnPos> {
         .collect();
     columns.sort_by_key(|(priority, pos)| (*priority, pos.x, pos.z));
     columns.into_iter().map(|(_, pos)| pos).collect()
+}
+
+/// The loaded columns inside the border, as the block updates see them.
+pub struct Bounded<'a> {
+    pub loader: &'a mut ColumnLoader,
+    pub border: i32,
+}
+
+impl BlockAccess for Bounded<'_> {
+    fn block(&self, pos: BlockPos) -> Option<BlockId> {
+        self.loader.block(pos)
+    }
+
+    fn set_block(&mut self, pos: BlockPos, block: BlockId) -> bool {
+        pos.is_valid(self.border) && self.loader.set_block(pos, block)
+    }
+
+    fn contains(&self, pos: BlockPos) -> bool {
+        pos.is_valid(self.border)
+    }
 }
 
 #[cfg(test)]

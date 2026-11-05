@@ -1,3 +1,4 @@
+use super::fluid::{FluidDef, FluidState};
 use super::registry::{BlockId, TextureId};
 use crate::id::Identifier;
 use serde::Deserialize;
@@ -201,6 +202,12 @@ pub struct BlockDef {
     /// Needs a solid block beneath: pops off when it loses it (ground plants).
     #[serde(default)]
     pub rooted: bool,
+    /// Needs a solid block or the same block above: drops when it loses it (vines).
+    #[serde(default)]
+    pub hanging: bool,
+    /// Makes the block the source of a flowing liquid.
+    #[serde(default)]
+    pub fluid: Option<FluidDef>,
 }
 
 fn default_stack() -> u16 {
@@ -236,6 +243,8 @@ pub struct Block {
     pub orientation: Option<Orientation>,
     pub replaceable: bool,
     pub rooted: bool,
+    pub hanging: bool,
+    pub fluid: Option<FluidState>,
 }
 
 impl Block {
@@ -254,12 +263,19 @@ impl Block {
             orientation: None,
             replaceable: false,
             rooted: false,
+            hanging: false,
+            fluid: None,
         }
     }
 
-    /// The block standing for its whole family (item, name): the upright variant.
+    /// The block standing for its whole family (item, name): the upright variant, or the
+    /// source of a liquid.
     pub fn family(&self, id: BlockId) -> BlockId {
-        self.orientation.map_or(id, |o| o.along(Axis::Y))
+        match (self.orientation, self.fluid) {
+            (Some(o), _) => o.along(Axis::Y),
+            (_, Some(fluid)) => fluid.source,
+            _ => id,
+        }
     }
 
     pub fn texture(&self, face: Face) -> TextureId {

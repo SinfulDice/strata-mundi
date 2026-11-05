@@ -1,4 +1,6 @@
+use std::sync::Arc;
 use strata_core::content::{BlockId, Content, Face, ItemId, Orientation};
+use strata_core::updates::UpdateRules;
 
 /// What the server needs to know about blocks to judge collisions and player actions.
 #[derive(Debug, Clone)]
@@ -8,8 +10,8 @@ pub struct BlockRules {
     breakable: Vec<bool>,
     orientation: Vec<Option<Orientation>>,
     replaceable: Vec<bool>,
-    rooted: Vec<bool>,
     item_count: usize,
+    updates: Arc<UpdateRules>,
 }
 
 impl BlockRules {
@@ -37,11 +39,7 @@ impl BlockRules {
                 .iter()
                 .map(|(_, _, block)| block.replaceable)
                 .collect(),
-            rooted: content
-                .blocks
-                .iter()
-                .map(|(_, _, block)| block.rooted)
-                .collect(),
+            updates: Arc::new(UpdateRules::new(content)),
         }
     }
 
@@ -54,9 +52,9 @@ impl BlockRules {
         flag(&self.replaceable, block)
     }
 
-    /// Needs a solid block beneath (ground plants).
-    pub fn is_rooted(&self, block: BlockId) -> bool {
-        flag(&self.rooted, block)
+    /// Neighbour reactions and liquids.
+    pub fn updates(&self) -> &Arc<UpdateRules> {
+        &self.updates
     }
 
     /// Creative mode: any block that has an item can be placed.

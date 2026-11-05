@@ -1,0 +1,6 @@
+Block(
+    textures: All("strata:obsidian"),
+    hardness: 50.0,
+    sound: Some("strata:stone"),
+    category: Some("strata:natural"),
+)

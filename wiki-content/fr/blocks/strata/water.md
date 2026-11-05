@@ -12,7 +12,7 @@ Décor, frontière naturelle, point de repère près du lieu de départ.
 
 ## Comportement
 
-L'eau est **statique** : elle ne coule pas et ne se répand pas. Elle n'est pas solide, on la traverse donc comme de l'air (pas encore de nage). Elle ne se vise pas et ne se casse pas ; en revanche, on peut **poser un bloc à sa place**. Si on le casse ensuite, il laisse un trou d'air : l'eau ne revient pas.
+L'eau **coule** : une **source** (l'eau des mers et des lacs) s'écoule d'abord vers le bas, puis sur les côtés jusqu'à **7 blocs**, en filant vers la pente la plus proche, de plus en plus mince. L'eau du monde reste immobile tant qu'on ne la dérange pas : casser la paroi d'un lac la fait couler. Entre deux sources posées sur un sol, une nouvelle source se forme. Retirer la source fait disparaître l'écoulement. L'eau emporte les plantes et change la lave en **pierre** ou en **obsidienne**. Elle n'est pas solide (pas encore de nage) ; elle ne se vise pas et ne se casse pas, mais on peut **poser un bloc à sa place**. L'écoulement se désactive par l'option de monde `fluids` (`flow: false`).
 
 ## Conseils
 

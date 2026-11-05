@@ -1,13 +1,16 @@
 //! The authoritative game state: players (ECS entities) and the blocks around them.
 
 use crate::ecs::{Ecs, Entity, PlayerControl};
-use crate::loader::ColumnLoader;
+use crate::loader::{Bounded, ColumnLoader};
 use crate::rules::BlockRules;
 use crate::systems::player_movement;
 use glam::DVec3;
+use std::sync::Arc;
 use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings, solid_at};
+pub use strata_core::updates::BlockChange;
+use strata_core::updates::{BlockUpdates, FluidSettings, cell};
 use strata_protocol::{GameMode, HotbarState};
 
 /// Farthest a player may break or place, measured from the eyes to the block centre
@@ -18,14 +21,13 @@ const MAX_QUEUED_INPUTS: usize = 40;
 const ACTION_TICKS: u64 = 2;
 const HOTBAR_SLOTS: usize = 9;
 
-pub type BlockChange = (BlockPos, BlockId);
-
 pub struct Game {
     pub ecs: Ecs,
     pub player: Entity,
     pub rules: BlockRules,
     /// Half-width of the world, in blocks.
     pub border: i32,
+    updates: BlockUpdates,
     tick: u64,
 }
 
@@ -42,11 +44,13 @@ impl Game {
         };
         ecs.controls
             .insert(player, PlayerControl::new(movement, mode));
+        let updates = BlockUpdates::new(Arc::clone(rules.updates()), FluidSettings::default());
         Self {
             ecs,
             player,
             rules,
             border,
+            updates,
             tick: 0,
         }
     }
@@ -141,8 +145,12 @@ impl Game {
         }
     }
 
-    /// Runs one tick of player physics.
-    pub fn tick(&mut self, loader: &ColumnLoader) {
+    pub fn set_fluid_settings(&mut self, settings: FluidSettings) {
+        self.updates.set_settings(settings);
+    }
+
+    /// Runs one tick of player physics and liquids; returns the blocks changed.
+    pub fn tick(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         self.tick += 1;
         let (rules, border) = (&self.rules, self.border);
         let solid = |x: i32, y: i32, z: i32| {
@@ -151,6 +159,10 @@ impl Game {
             })
         };
         player_movement(&mut self.ecs, &solid);
+        let mut changes = Vec::new();
+        let mut world = Bounded { loader, border };
+        self.updates.tick(&mut world, &mut changes);
+        changes
     }
 
     pub fn last_sequence(&self) -> u32 {
@@ -161,7 +173,7 @@ impl Game {
     }
 
     /// Validated break: within reach, an actual block the player may break. The changes
-    /// also hold the plant that loses its ground; empty when refused.
+    /// also hold the neighbours' reactions (a plant losing its ground); empty when refused.
     pub fn break_block(&mut self, loader: &mut ColumnLoader, pos: BlockPos) -> Vec<BlockChange> {
         if !pos.is_valid(self.border) {
             return Vec::new();
@@ -173,17 +185,28 @@ impl Game {
             && (self.is_creative() || self.rules.is_breakable(current))
             && self.in_reach(pos)
             && self.take_action();
-        if !(allowed && loader.set_block(pos, BlockId::AIR)) {
-            return Vec::new();
+        let mut changes = Vec::new();
+        if allowed {
+            self.set_block(loader, pos, BlockId::AIR, &mut changes);
         }
-        let mut changes = vec![(pos, BlockId::AIR)];
-        self.uproot_above(loader, pos, &mut changes);
         changes
+    }
+
+    fn set_block(
+        &mut self,
+        loader: &mut ColumnLoader,
+        pos: BlockPos,
+        block: BlockId,
+        changes: &mut Vec<BlockChange>,
+    ) {
+        let border = self.border;
+        let mut world = Bounded { loader, border };
+        self.updates.set_block(&mut world, pos, block, changes);
     }
 
     /// Validated placement into a free (non-solid) cell that no player stands in: next to
     /// a solid block, or in place of a replaceable one (plants). Turned blocks (logs)
-    /// follow the clicked face; rooted blocks need solid ground.
+    /// follow the clicked face; plants need their support (ground, or a ceiling for vines).
     pub fn place_block(
         &mut self,
         loader: &mut ColumnLoader,
@@ -194,21 +217,25 @@ impl Game {
         let Some(target) = self.placement_target(loader, against, face) else {
             return Vec::new();
         };
-        let grounded = !self.rules.is_rooted(block)
-            || loader
-                .block(target.neighbour(Face::Down))
-                .is_some_and(|below| self.rules.is_solid(below));
+        let world = Bounded {
+            loader,
+            border: self.border,
+        };
+        let supported = self.rules.updates().is_supported(
+            block,
+            cell(&world, target.neighbour(Face::Down)),
+            cell(&world, target.neighbour(Face::Up)),
+        );
         let allowed = self.rules.is_placeable(block)
-            && grounded
+            && supported == Some(true)
             && self.in_reach(target)
             && !self.blocks_a_player(target, block)
             && self.take_action();
         let block = self.rules.placed_against(block, face);
-        if !(allowed && loader.set_block(target, block)) {
-            return Vec::new();
+        let mut changes = Vec::new();
+        if allowed {
+            self.set_block(loader, target, block, &mut changes);
         }
-        let mut changes = vec![(target, block)];
-        self.uproot_above(loader, target, &mut changes);
         changes
     }
 
@@ -232,21 +259,6 @@ impl Game {
             && !self.rules.is_solid(current)
             && target.is_valid(self.border))
         .then_some(target)
-    }
-
-    /// A rooted plant standing on `pos` goes away once `pos` is no longer solid.
-    fn uproot_above(
-        &self,
-        loader: &mut ColumnLoader,
-        pos: BlockPos,
-        changes: &mut Vec<BlockChange>,
-    ) {
-        let above = pos.neighbour(Face::Up);
-        let ground_gone = loader.block(pos).is_some_and(|b| !self.rules.is_solid(b));
-        let rooted = loader.block(above).is_some_and(|b| self.rules.is_rooted(b));
-        if ground_gone && rooted && loader.set_block(above, BlockId::AIR) {
-            changes.push((above, BlockId::AIR));
-        }
     }
 
     pub fn set_mode(&mut self, mode: GameMode) {
@@ -350,7 +362,7 @@ mod tests {
 
     fn wait(world: &mut World, ticks: u32) {
         for _ in 0..ticks {
-            world.game.tick(&world.loader);
+            world.game.tick(&mut world.loader);
         }
     }
 
@@ -450,5 +462,22 @@ mod tests {
                 .is_empty(),
             "no ground under the cell"
         );
+    }
+
+    #[test]
+    fn breaking_a_wall_lets_water_flow_and_the_changes_go_out() {
+        let mut w = world();
+        let water = block(&w.content, "strata:water");
+        let (source, wall) = (BlockPos::new(12, 63, 8), BlockPos::new(11, 63, 8));
+        assert!(w.loader.set_block(source, water));
+        assert!(
+            w.game.tick(&mut w.loader).is_empty(),
+            "still until disturbed"
+        );
+        assert!(!w.game.break_block(&mut w.loader, wall).is_empty());
+        let changes: Vec<BlockChange> = (0..10).flat_map(|_| w.game.tick(&mut w.loader)).collect();
+        let flowing = block(&w.content, "strata:water__1");
+        assert!(changes.contains(&(wall, flowing)));
+        assert_eq!(w.loader.block(wall), Some(flowing));
     }
 }

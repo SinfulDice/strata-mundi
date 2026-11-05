@@ -65,3 +65,4 @@ block-strata-red_terracotta = RED CRUNCHY CLAY
 block-strata-mud = SQUISHY DIRTZ
 block-strata-mycelium = SHROOM DIRTZ
 block-strata-podzol = NEEDLE DIRTZ
+block-strata-obsidian = SHINY DARK ROCK

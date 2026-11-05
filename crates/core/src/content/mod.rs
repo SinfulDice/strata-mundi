@@ -1,6 +1,7 @@
 //! Game content loaded from packs: blocks, items, textures, translations and cinematics.
 
 mod block;
+mod fluid;
 mod item;
 mod png_file;
 mod registry;
@@ -9,6 +10,7 @@ mod textures;
 pub use block::{
     Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
 };
+pub use fluid::{Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SPREAD};
 pub use item::{Item, ItemDef, ItemKind};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, ItemId, Registry, RegistryId, TextureId};
@@ -25,6 +27,8 @@ use std::collections::BTreeMap;
 pub struct Content {
     pub blocks: Registry<BlockId, Block>,
     pub items: Registry<ItemId, Item>,
+    /// Liquids by source block.
+    pub fluids: BTreeMap<BlockId, Fluid>,
     pub textures: TextureLibrary,
     pub translations: Translations,
     pub cinematics: BTreeMap<Identifier, Cinematic>,
@@ -43,13 +47,14 @@ impl Content {
         let mut errors = Vec::new();
         let presentation = PackSet::joined(packs, resource_packs);
         let textures = TextureLibrary::load(&presentation, &mut errors);
-        let blocks = load_blocks(packs, &textures, &mut errors);
+        let (blocks, fluids) = load_blocks(packs, &textures, &mut errors);
         let items = load_items(packs, &blocks, &textures, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
         let cinematics = cinematic::load(packs, &mut errors);
         let content = Self {
             blocks,
             items,
+            fluids,
             textures,
             translations,
             cinematics,
@@ -115,8 +120,9 @@ fn load_blocks(
     packs: &PackSet,
     textures: &TextureLibrary,
     errors: &mut Vec<PackError>,
-) -> Registry<BlockId, Block> {
+) -> (Registry<BlockId, Block>, BTreeMap<BlockId, Fluid>) {
     let mut blocks = Registry::default();
+    let mut fluids = Vec::new();
     blocks.insert(air_id(), Block::air());
     for (id, Sourced { value, source }) in packs.layered::<BlockDef>("blocks", errors) {
         if id == air_id() {
@@ -143,6 +149,7 @@ fn load_blocks(
             }),
         });
         let placement = value.placement;
+        let fluid_def = value.fluid;
         let block = Block {
             solid: value.solid,
             render: value.render,
@@ -157,19 +164,30 @@ fn load_blocks(
             orientation: None,
             replaceable: value.replaceable,
             rooted: value.rooted,
+            hanging: value.hanging,
+            fluid: None,
         };
-        let inserted = match placement {
-            Placement::Fixed => blocks.insert(id, block).is_some(),
-            Placement::Axis => insert_turned(&mut blocks, &id, block),
+        let inserted = match (fluid_def, placement) {
+            (Some(def), Placement::Fixed) => {
+                let pending = fluid::insert_fluid(&mut blocks, &id, block, def, &source, errors);
+                let inserted = pending.is_some();
+                fluids.extend(pending);
+                inserted
+            }
+            (Some(_), Placement::Axis) => false,
+            (None, Placement::Fixed) => blocks.insert(id, block).is_some(),
+            (None, Placement::Axis) => insert_turned(&mut blocks, &id, block),
         };
         if !inserted {
             errors.push(PackError::invalid(
                 &source,
-                "too many blocks (65 536 at most), or a name ending in `__x`/`__z` is taken",
+                "too many blocks (65 536 at most), a variant name (`__x`, `__1`, `__falling`…) \
+                 is taken, or a fluid has `placement: Axis`",
             ));
         }
     }
-    blocks
+    let fluids = fluid::resolve(&blocks, fluids, errors);
+    (blocks, fluids)
 }
 
 /// Registers the upright block and its two lying variants `<name>__x` and `<name>__z`,

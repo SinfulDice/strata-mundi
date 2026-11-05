@@ -65,3 +65,4 @@ block-strata-red_terracotta = Red Terracotta
 block-strata-mud = Mud
 block-strata-mycelium = Mycelium
 block-strata-podzol = Podzol
+block-strata-obsidian = Obsidian

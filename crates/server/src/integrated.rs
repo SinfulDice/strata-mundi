@@ -75,6 +75,7 @@ impl IntegratedServer {
         );
         game.set_hotbar(hotbar);
         game.set_look(look);
+        game.set_fluid_settings(meta.fluids);
         if let (Some(body), Some(movement)) = (game.player_body(), game.movement()) {
             connection.send(ServerMessage::Welcome {
                 dimension: config.dimension.clone(),
@@ -207,7 +208,8 @@ impl IntegratedServer {
     #[tracing::instrument(skip(self), level = "trace")]
     fn tick(&mut self) {
         self.tick += 1;
-        self.game.tick(&self.loader);
+        let changes = self.game.tick(&mut self.loader);
+        self.broadcast_changes(changes);
         if self.persistence.count_tick() {
             self.save(None);
         }

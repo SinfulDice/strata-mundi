@@ -65,3 +65,4 @@ block-strata-red_terracotta = Terre cuite rouge
 block-strata-mud = Boue
 block-strata-mycelium = Mycélium
 block-strata-podzol = Podzol
+block-strata-obsidian = Obsidienne

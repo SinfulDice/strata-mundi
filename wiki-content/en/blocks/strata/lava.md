@@ -12,7 +12,7 @@ Scenery of the depths and a landmark: when you see it, the bedrock is not far be
 
 ## Behaviour
 
-Lava is **static**: it neither flows nor spreads. It isn't solid, so you pass through it like air; it doesn't burn yet. It can't be targeted or broken; however, you can **place a block in its place**.
+Lava **flows**, but slowly (one block every 1.5 seconds) and not far: **3 blocks** on flat ground, downwards first. The world's lava stays still until disturbed. Touching water, a lava source turns into **obsidian** and flowing lava into **stone**. It isn't solid, so you pass through it like air; it doesn't burn yet. It can't be targeted or broken; however, you can **place a block in its place**.
 
 ## Tips
 

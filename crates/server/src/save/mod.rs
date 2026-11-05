@@ -199,6 +199,7 @@ pub fn create(
         last_played: now,
         play_ticks: 0,
         day_time: 0,
+        fluids: Default::default(),
     };
     folder.write_meta(&meta)?;
     Ok((folder, meta))

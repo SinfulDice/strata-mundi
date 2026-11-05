@@ -7,4 +7,5 @@ Block(
     sound: Some("strata:grass"),
     category: Some("strata:plants"),
     replaceable: true,
+    hanging: true,
 )
