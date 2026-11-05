@@ -8,7 +8,11 @@ command-give-done = { $item } IN UR BOX. U WELCOME.
 command-give-unknown = WUT IZ { $item }?
 command-gamemode-done = CRAYTIV MODE.
 command-gamemode-later = SURVIVL COMEZ IN V0.3.
-command-time-now = TIEM: { $ticks } (OF 24000).
+command-time-now = TIEM: { $ticks } OF { $length } (DAI { $day }).
+command-daycycle-now = DAI AN NITE: { $cycle ->
+        [on] TIEM GOEZ ON
+       *[off] TIEM IZ STUCK
+    }.
 command-seed-is = SEED: { $seed }
 command-fluids-now = WATR AN LAVA: { $flow ->
         [on] GOEZ SPLOOSH
@@ -24,11 +28,13 @@ command-give-help = PUTZ A THING IN UR BOX.
 command-gamemode-usage = /gamemode <creative|survival>
 command-gamemode-help = CHANGEZ TEH GAEM MODE.
 command-time-usage = /time <set|add|query> [value]
-command-time-help = SETZ TEH TIEM (day, noon, night, midnight OR TICKZ).
+command-time-help = SETZ TEH TIEM: set GOEZ 2 NEXT day, noon, night, midnight OR TICKZ; add SKIPZ DAT MANY TICKZ.
 command-seed-usage = /seed
 command-seed-help = SHOWZ TEH WORLD SEED.
 command-fluids-usage = /fluids [on|off|query|<budget>]
 command-fluids-help = MAEKZ WATR AN LAVA GO SPLOOSH OR STOP; A NUMBR SETZ HOW MANY UPDAETZ PER TICK.
+command-daycycle-usage = /daycycle [on|off|query]
+command-daycycle-help = MAEKZ TIEM GO OR STOP.
 command-cinematic-usage = /cinematic <id>
 command-cinematic-help = PLAYZ A MOOVEE.
 ui-console-placeholder = TYPE A COMMANDZ…

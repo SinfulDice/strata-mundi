@@ -6,6 +6,7 @@ use crate::launcher::RunningWorld;
 use crate::streaming::WorldView;
 use glam::DVec3;
 use std::thread::JoinHandle;
+use strata_core::dimension::DimensionId;
 use strata_protocol::{ClientConnection, ClientMessage};
 
 /// Turns of the panorama per minute: slow enough to read the menus over it.
@@ -23,16 +24,18 @@ pub enum Stage {
 pub struct TitleScene {
     pub view: WorldView,
     pub camera: Camera,
+    pub dimension: DimensionId,
     center: DVec3,
     angle: f32,
 }
 
 impl TitleScene {
-    pub fn new(view: WorldView, center: DVec3, fov: f32) -> Self {
+    pub fn new(view: WorldView, center: DVec3, dimension: DimensionId, fov: f32) -> Self {
         let camera = Camera::new(center, 0.0, PANORAMA_PITCH, fov);
         Self {
             view,
             camera,
+            dimension,
             center,
             angle: 0.0,
         }

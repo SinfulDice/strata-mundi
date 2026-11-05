@@ -27,6 +27,11 @@ pub struct Args {
     #[arg(long, value_name = "YAW,PITCH", value_parser = parse_vec2, allow_hyphen_values = true)]
     pub look: Option<[f32; 2]>,
 
+    /// World time of the capture, in ticks since the first sunrise (noon if omitted;
+    /// 24 000 ticks a day in Terra).
+    #[arg(long, value_name = "TICK")]
+    pub time: Option<u64>,
+
     /// Without `--seed`: the diorama `assets/scenes/<NAME>.ron` captured by `--screenshot`.
     #[arg(long, value_name = "NAME", default_value = "preview")]
     pub scene: String,

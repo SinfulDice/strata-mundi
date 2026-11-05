@@ -11,12 +11,14 @@ mod options;
 mod outline;
 mod post;
 mod shaders;
+mod sky_pipeline;
 mod surface;
 mod texture_array;
 mod ui_pipeline;
 
 pub use gpu::{Gpu, GpuError};
 pub use offscreen::{OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError};
+pub(crate) use options::srgb_to_linear;
 pub use options::{Immersion, RenderOptions};
 pub use post::PostProcess;
 pub use surface::{Acquired, WindowSurface};
@@ -24,6 +26,7 @@ pub use ui_pipeline::UiPipeline;
 
 use crate::camera::Camera;
 use crate::mesher::{SectionKey, SectionMesh};
+use crate::sky::SkyFrame;
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use depth::DepthBuffer;
 use frustum::Frustum;
@@ -31,10 +34,9 @@ pub use frustum::in_vertical_range;
 use glam::DVec3;
 use mesh::GpuMesh;
 pub use model_pipeline::ModelPipeline;
-use options::{
-    FOG_START, IMMERSED_FOG_LEAD, MIN_AMBIENT, SKY_SRGB, TIME_WRAP, linear_color, linear_rgba,
-};
+use options::{FOG_START, IMMERSED_FOG_LEAD, MIN_AMBIENT, TIME_WRAP, linear_rgb};
 use outline::OutlinePipeline;
+use sky_pipeline::SkyPipeline;
 use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
 use strata_core::coords::BlockPos;
@@ -66,9 +68,10 @@ pub struct Renderer {
     pub immersion: Option<Immersion>,
     /// Seconds since start (wrapped), for animated liquids.
     time: f32,
-    /// How much of the sky light reaches the world (1 by day, dimmer at night), applied
-    /// in the shader so the night falls without meshing again.
-    pub sky_light: f32,
+    /// The sky of this frame. Its light (1 by day, dimmer at night) is applied in the
+    /// shader, so the night falls without meshing again.
+    pub sky: SkyFrame,
+    sky_pipeline: SkyPipeline,
     /// Entity models and those to draw this frame.
     pub models: ModelPipeline,
 }
@@ -94,6 +97,12 @@ impl Renderer {
             &blocks.camera_layout,
             &blocks.texture_layout,
         );
+        let sky_pipeline = SkyPipeline::new(
+            &gpu.device,
+            color_format,
+            &blocks.camera_layout,
+            &blocks.texture_layout,
+        );
         Ok(Self {
             outline_pipeline: OutlinePipeline::new(
                 &gpu.device,
@@ -109,7 +118,8 @@ impl Renderer {
             options: RenderOptions::default(),
             immersion: None,
             time: 0.0,
-            sky_light: 1.0,
+            sky: SkyFrame::default(),
+            sky_pipeline,
             models,
         })
     }
@@ -168,7 +178,8 @@ impl Renderer {
         let (fog, color, full) = match self.immersion {
             Some(liquid) => {
                 let end = liquid.distance.max(0.5);
-                ([-end * IMMERSED_FOG_LEAD, end, 1.0], liquid.color, 1.0)
+                let color = linear_rgb(liquid.color);
+                ([-end * IMMERSED_FOG_LEAD, end, 1.0], color, 1.0)
             }
             None => (
                 [
@@ -176,14 +187,14 @@ impl Renderer {
                     self.options.fog_end,
                     f32::from(u8::from(self.options.fog)),
                 ],
-                SKY_SRGB,
+                self.sky.fog,
                 0.0,
             ),
         };
         CameraUniform {
             view_proj,
             options: [self.ambient_occlusion, fog[0], fog[1], fog[2]],
-            sky: linear_rgba(color),
+            sky: color.extend(1.0).to_array(),
             effects: [
                 self.time,
                 f32::from(u8::from(self.options.liquid_animation)),
@@ -191,7 +202,7 @@ impl Renderer {
                 0.0,
             ],
             light: [
-                self.sky_light.clamp(0.0, 1.0),
+                self.sky.light.clamp(0.0, 1.0),
                 self.options.brightness,
                 MIN_AMBIENT,
                 0.0,
@@ -214,7 +225,12 @@ impl Renderer {
         let uniform = self.camera_uniform(view_projection.to_cols_array_2d());
         self.blocks.write_camera(&gpu.queue, &uniform);
         self.models.prepare(gpu, camera, &frustum);
-        let backdrop = self.immersion.map_or(SKY_SRGB, |liquid| liquid.color);
+        let draw_sky = self.immersion.is_none();
+        if draw_sky {
+            self.sky_pipeline
+                .write(&gpu.queue, &self.sky, view_projection);
+        }
+        let [r, g, b, _] = uniform.sky.map(f64::from);
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("world"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -222,7 +238,7 @@ impl Renderer {
                 depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(linear_color(backdrop)),
+                    load: wgpu::LoadOp::Clear(wgpu::Color { r, g, b, a: 1.0 }),
                     store: wgpu::StoreOp::Store,
                 },
             })],
@@ -238,6 +254,11 @@ impl Renderer {
             occlusion_query_set: None,
             multiview_mask: None,
         });
+        if draw_sky {
+            // With the eyes in a liquid, its fog hides the sky.
+            self.blocks.set_groups(&mut pass);
+            self.sky_pipeline.draw(&mut pass);
+        }
         self.blocks.bind(&mut pass, BlockPass::Cutout);
         for section in self.visible_sections(camera, &frustum) {
             if let Some(mesh) = &section.cutout {

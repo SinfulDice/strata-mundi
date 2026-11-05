@@ -34,6 +34,10 @@ ui-new-world-fluids = WATR AN LAVA: { $flow ->
         [on] GOEZ SPLOOSH
        *[off] STUK IN PLAIS
     }
+ui-new-world-day-cycle = DAI AN NITE: { $cycle ->
+        [on] YES PLZ
+       *[off] TIEM IZ STUCK
+    }
 ui-new-world-create = MAEK IT
 
 ui-delete-question = DELEET "{ $name }"? RLY?

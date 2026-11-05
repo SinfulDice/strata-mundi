@@ -5,9 +5,11 @@ use crate::bench::BenchRun;
 use crate::camera::Camera;
 use crate::render::{Acquired, Target};
 use crate::screens::UiFrame;
+use crate::sky::SkyFrame;
 use crate::stage::Stage;
 use glam::DVec3;
 use std::time::Instant;
+use strata_core::sky::Moment;
 
 impl Session {
     pub(super) fn camera(&self) -> Camera {
@@ -16,6 +18,25 @@ impl Session {
             Stage::Playing(world) => world.game.camera.clone(),
             Stage::Empty => Camera::new(DVec3::ZERO, 0.0, 0.0, self.applied.graphics.fov as f32),
         }
+    }
+
+    /// The sky of the world being played at its time, or of the title panorama in the
+    /// morning.
+    pub(super) fn sky_frame(&self) -> SkyFrame {
+        let (dimension, time) = match &self.stage {
+            Stage::Title(title) => {
+                let cycle = self.content.day_cycle(&title.dimension);
+                (&title.dimension, cycle.moment(Moment::Day) as f64)
+            }
+            Stage::Playing(world) => match (&world.game.dimension, &world.game.day) {
+                (Some(dimension), Some(day)) => (dimension, day.time()),
+                _ => return self.renderer.sky,
+            },
+            Stage::Empty => return self.renderer.sky,
+        };
+        let sky = self.content.sky(dimension);
+        let cycle = self.content.day_cycle(dimension);
+        SkyFrame::at(&sky, &cycle, time, self.applied.graphics.stars)
     }
 
     /// Returns the CPU time spent building and submitting the frame, in seconds,

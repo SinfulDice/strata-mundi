@@ -1,0 +1,27 @@
+// The sun, drawn in the sky (not a block).
+Sprite(
+    colors: {
+        'a': ("sun", 0),
+        'b': ("sun", 1),
+        'c': ("sun", 2),
+        'd': ("sun", 3),
+    },
+    rows: [
+        "................",
+        ".....aaaaaa.....",
+        "...aabbbbbbaa...",
+        "..abbccccccbba..",
+        "..abccccccccba..",
+        ".abcccddddcccba.",
+        ".abccddddddccba.",
+        ".abccddddddccba.",
+        ".abccddddddccba.",
+        ".abccddddddccba.",
+        ".abcccddddcccba.",
+        "..abccccccccba..",
+        "..abbccccccbba..",
+        "...aabbbbbbaa...",
+        ".....aaaaaa.....",
+        "................",
+    ],
+)

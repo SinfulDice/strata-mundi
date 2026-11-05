@@ -4,7 +4,7 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 7 — Jour, nuit et ciel
-  - [ ] Cycle jour/nuit et ciel : journée de 20 min (10 de jour, 10 de nuit, base réglable dans le pack ; paramètre de répartition jour/nuit prévu pour les saisons de la v0.5), heure diffusée par le serveur et interpolée, `/time set|add` (jour, nuit, midi, minuit, valeurs), facteur de lumière du ciel selon l'heure (uniforme, sans remailler), dégradé du ciel, couleurs de lever et coucher, soleil, lune avec phases, étoiles ; `--time <tick>` pour les captures ; cycle complet sans saccade (test du facteur continu)
+  - [x] Cycle jour/nuit et ciel : journée de 20 min (10 de jour, 10 de nuit, base réglable dans le pack ; paramètre de répartition jour/nuit prévu pour les saisons de la v0.5), heure diffusée par le serveur et interpolée, `/time set|add` (jour, nuit, midi, minuit, valeurs), facteur de lumière du ciel selon l'heure (uniforme, sans remailler), dégradé du ciel, couleurs de lever et coucher, soleil, lune avec phases, étoiles ; `--time <tick>` pour les captures ; cycle complet sans saccade (test du facteur continu)
   - [ ] Nuages en couches pixel art (vitesse, hauteur, densité du pack), réglage nuages (désactivés / simples / complets), préréglages (DS : simples ou désactivés) ; captures nuit, lever de soleil, nuages
 - **Dernière session** : 05/11/2026
 

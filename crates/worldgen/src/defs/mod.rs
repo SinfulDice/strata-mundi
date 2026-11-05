@@ -14,6 +14,9 @@ use strata_core::texture::{HexColor, Rgba};
 #[serde(rename = "Dimension", deny_unknown_fields)]
 pub struct DimensionDef {
     pub terrain: TerrainDef,
+    /// The day cycle, read by `strata_core::sky`.
+    #[serde(default, rename = "day")]
+    _day: serde::de::IgnoredAny,
 }
 
 #[derive(Debug, Clone, Deserialize)]

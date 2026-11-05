@@ -69,6 +69,7 @@ impl Session {
         self.stage = Stage::Title(Box::new(TitleScene::new(
             view,
             panorama.center,
+            panorama.dimension,
             self.applied.graphics.fov as f32,
         )));
         self.screens.show_title();

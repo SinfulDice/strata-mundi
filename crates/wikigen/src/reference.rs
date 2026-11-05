@@ -212,6 +212,7 @@ fn presets(ctx: &Ctx<'_>) -> String {
         line("option-smooth-lighting", &|g| yes_no(g.smooth_lighting)),
         line("option-mipmaps", &|g| yes_no(g.mipmaps)),
         line("option-liquid-animation", &|g| yes_no(g.liquid_animation)),
+        line("option-stars", &|g| yes_no(g.stars)),
         line("option-vegetation", &|g| {
             ctx.tr(&format!("vegetation-{}", g.vegetation.id()))
         }),

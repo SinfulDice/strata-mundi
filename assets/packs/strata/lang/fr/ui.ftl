@@ -34,6 +34,10 @@ ui-new-world-fluids = Fluides : { $flow ->
         [on] ils coulent
        *[off] figés
     }
+ui-new-world-day-cycle = Cycle jour/nuit : { $cycle ->
+        [on] activé
+       *[off] heure figée
+    }
 ui-new-world-create = Créer
 
 ui-delete-question = Supprimer « { $name } » ?

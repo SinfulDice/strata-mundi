@@ -1,5 +1,14 @@
 // Terra, the world of mortals.
 Dimension(
+    // A full day and night in ticks (20 per second): 24 000 = 20 minutes. `day_share` is
+    // the part of it when the sun is up; `twilight` the part each sunrise and sunset takes;
+    // `night_light` the sky light left at night.
+    day: (
+        length: 24000,
+        day_share: 0.5,
+        twilight: 0.06,
+        night_light: 0.2,
+    ),
     terrain: (
         sea_level: 120,
         deep_level: 64,

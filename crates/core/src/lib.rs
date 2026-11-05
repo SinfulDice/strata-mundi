@@ -13,5 +13,6 @@ pub mod light;
 pub mod pack;
 pub mod physics;
 pub mod raycast;
+pub mod sky;
 pub mod texture;
 pub mod updates;

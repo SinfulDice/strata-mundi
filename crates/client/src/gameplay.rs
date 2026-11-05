@@ -10,11 +10,13 @@ use crate::look::apply_look;
 use crate::player::LocalPlayer;
 use crate::render::Renderer;
 use crate::settings::ControlSettings;
+use crate::sky::DayClock;
 use crate::streaming::WorldView;
 use crate::world::ClientWorld;
 use glam::DVec3;
 use strata_core::cinematic::Cinematic;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
+use strata_core::dimension::DimensionId;
 use strata_core::physics::{EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
 use strata_protocol::commands::Feedback;
 use strata_protocol::{ClientConnection, ClientMessage, HotbarState, ServerMessage};
@@ -36,6 +38,10 @@ pub struct Gameplay {
     pub cinematic: Option<PlayingShot>,
     /// Answers to console commands, not shown yet.
     pub feedback: Vec<Feedback>,
+    /// Where the player is, from the welcome message.
+    pub dimension: Option<DimensionId>,
+    /// The world time, once the server has given it.
+    pub day: Option<DayClock>,
     player: Option<LocalPlayer>,
     border: i32,
     /// Last hotbar sent to the server, to send only changes.
@@ -59,6 +65,8 @@ impl Gameplay {
             camera_effects: true,
             cinematic: None,
             feedback: Vec::new(),
+            dimension: None,
+            day: None,
             player: None,
             border: DEFAULT_WORLD_BORDER,
             sent_hotbar: HotbarState::default(),
@@ -73,13 +81,14 @@ impl Gameplay {
     ) {
         match message {
             ServerMessage::Welcome {
+                dimension,
                 body,
                 mut movement,
                 border,
                 hotbar,
                 look,
-                ..
             } => {
+                self.dimension = Some(dimension);
                 self.border = border;
                 (self.camera.yaw, self.camera.pitch) = (look[0], look[1]);
                 self.hotbar.restore(&hotbar);
@@ -117,6 +126,10 @@ impl Gameplay {
                     player.riding = mount.is_some();
                 }
             }
+            ServerMessage::DayTime { time, cycle } => match &mut self.day {
+                Some(day) => day.receive(time, cycle),
+                None => self.day = Some(DayClock::at(time, cycle)),
+            },
             ServerMessage::Tick { .. } | ServerMessage::Saved => {}
         }
     }

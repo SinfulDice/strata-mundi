@@ -127,6 +127,7 @@ pub struct CreateForm {
     pub border: String,
     pub mode: GameMode,
     pub fluids: bool,
+    pub day_cycle: bool,
 }
 
 impl CreateForm {
@@ -139,6 +140,7 @@ impl CreateForm {
             border: DEFAULT_WORLD_BORDER.to_string(),
             mode: GameMode::Creative,
             fluids: true,
+            day_cycle: true,
         }
     }
 
@@ -160,6 +162,7 @@ impl CreateForm {
             mode: self.mode,
             border,
             fluids: self.fluids,
+            day_cycle: self.day_cycle,
         }
     }
 }
@@ -181,10 +184,11 @@ impl ScreenModel for CreateModel<'_> {
             )),
             "fluids" => Some(self.shared.tr_with(
                 "ui-new-world-fluids",
-                &[(
-                    "flow",
-                    if self.form.fluids { "on" } else { "off" }.to_owned(),
-                )],
+                &[("flow", on_off(self.form.fluids).to_owned())],
+            )),
+            "day_cycle" => Some(self.shared.tr_with(
+                "ui-new-world-day-cycle",
+                &[("cycle", on_off(self.form.day_cycle).to_owned())],
             )),
             _ => None,
         }
@@ -209,12 +213,20 @@ impl ScreenModel for CreateModel<'_> {
                 self.form.fluids = !self.form.fluids;
                 return;
             }
+            "day_cycle" => {
+                self.form.day_cycle = !self.form.day_cycle;
+                return;
+            }
             "create" => Effect::Action(UiAction::Create(self.form.world())),
             "back" => Effect::Pop,
             _ => return,
         };
         self.shared.effects.push(effect);
     }
+}
+
+fn on_off(on: bool) -> &'static str {
+    if on { "on" } else { "off" }
 }
 
 pub struct ConfirmModel<'a> {

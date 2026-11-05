@@ -1,7 +1,6 @@
 //! Saving a running world: modified columns, the player and the world description.
 //! Errors are logged, never fatal: the game goes on and the next save tries again.
 
-use crate::clock::DAY_TICKS;
 use crate::game::Game;
 use crate::loader::ColumnLoader;
 use crate::save::{EntitiesData, PlayerData, SavedBoat, WorldFolder, WorldMeta, back_up};
@@ -126,7 +125,9 @@ impl Persistence {
     /// Counts a played tick; `true` when an autosave is due.
     pub fn count_tick(&mut self) -> bool {
         self.meta.play_ticks += 1;
-        self.meta.day_time = (self.meta.day_time % DAY_TICKS + 1) % DAY_TICKS;
+        if self.meta.day_cycle {
+            self.meta.day_time = self.meta.day_time.saturating_add(1);
+        }
         self.since_save += 1;
         self.autosave_ticks > 0 && self.since_save >= self.autosave_ticks
     }
@@ -246,6 +247,7 @@ mod tests {
             mode: GameMode::Creative,
             border: 5_000,
             fluids: true,
+            day_cycle: true,
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {
@@ -275,6 +277,7 @@ mod tests {
         assert_eq!(start.hotbar, hotbar);
         assert_eq!(start.boat, None);
         assert_eq!(reopened.meta.play_ticks, 1);
+        assert_eq!(reopened.meta.day_time, 1, "the time of day is saved");
         assert!(reopened.meta.last_played > 100);
         std::fs::remove_dir_all(saves).unwrap();
     }
@@ -289,6 +292,7 @@ mod tests {
             mode: GameMode::Creative,
             border: 5_000,
             fluids: true,
+            day_cycle: true,
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {

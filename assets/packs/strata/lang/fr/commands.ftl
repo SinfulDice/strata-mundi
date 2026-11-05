@@ -8,7 +8,11 @@ command-give-done = { $item } dans la case choisie.
 command-give-unknown = Objet inconnu : { $item }
 command-gamemode-done = Mode créatif.
 command-gamemode-later = Le mode survie arrive en v0.3.
-command-time-now = Heure : { $ticks } (sur 24000).
+command-time-now = Heure : { $ticks } sur { $length } (jour { $day }).
+command-daycycle-now = Cycle jour/nuit : { $cycle ->
+        [on] l'heure avance
+       *[off] l'heure est figée
+    }.
 command-seed-is = Graine : { $seed }
 command-fluids-now = Fluides : { $flow ->
         [on] ils coulent
@@ -24,11 +28,13 @@ command-give-help = Met un objet dans la case choisie.
 command-gamemode-usage = /gamemode <creative|survival>
 command-gamemode-help = Change le mode de jeu.
 command-time-usage = /time <set|add|query> [valeur]
-command-time-help = Règle l'heure (day, noon, night, midnight ou ticks).
+command-time-help = Règle l'heure : set va jusqu'au prochain day, noon, night, midnight ou nombre de ticks ; add avance de ce nombre de ticks.
 command-seed-usage = /seed
 command-seed-help = Affiche la graine du monde.
 command-fluids-usage = /fluids [on|off|query|<budget>]
 command-fluids-help = Fait couler ou fige l'eau et la lave ; un nombre règle les mises à jour de fluides par tick.
+command-daycycle-usage = /daycycle [on|off|query]
+command-daycycle-help = Fait avancer l'heure ou la fige.
 command-cinematic-usage = /cinematic <id>
 command-cinematic-help = Joue une cinématique des packs.
 ui-console-placeholder = Tapez une commande…

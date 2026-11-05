@@ -2,15 +2,13 @@
 //! filter.
 
 use crate::settings::{ColorFilter, DEFAULT_BRIGHTNESS, GraphicsSettings, Settings};
+use glam::Vec3;
 use strata_core::coords::SECTION_SIZE;
-
-/// Clear color (sRGB) until the sky arrives in v0.2.
-pub(super) const SKY_SRGB: [u8; 3] = [0x78, 0xa7, 0xff];
 
 /// Fog starts at this fraction of the render distance.
 pub(super) const FOG_START: f32 = 0.6;
 
-fn srgb_to_linear(c: u8) -> f64 {
+pub(crate) fn srgb_to_linear(c: u8) -> f64 {
     let c = f64::from(c) / 255.0;
     if c <= 0.04045 {
         c / 12.92
@@ -19,19 +17,8 @@ fn srgb_to_linear(c: u8) -> f64 {
     }
 }
 
-/// Render targets are sRGB: the clear color must be given in linear space.
-pub(super) fn linear_color([r, g, b]: [u8; 3]) -> wgpu::Color {
-    wgpu::Color {
-        r: srgb_to_linear(r),
-        g: srgb_to_linear(g),
-        b: srgb_to_linear(b),
-        a: 1.0,
-    }
-}
-
-pub(super) fn linear_rgba([r, g, b]: [u8; 3]) -> [f32; 4] {
-    let [r, g, b] = [r, g, b].map(|c| srgb_to_linear(c) as f32);
-    [r, g, b, 1.0]
+pub(super) fn linear_rgb([r, g, b]: [u8; 3]) -> Vec3 {
+    Vec3::from_array([r, g, b].map(|c| srgb_to_linear(c) as f32))
 }
 
 /// The eyes are inside a liquid: a thick fog of its color hides everything farther.

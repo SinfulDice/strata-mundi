@@ -2,6 +2,7 @@
 // Fields mirror the command line: `strata --screenshot screenshots/<name>-<preset>.png ...`
 // Without `pos`, the camera starts at the spawn point of the seed. Without `seed`, the
 // diorama `scene` (`assets/scenes/<scene>.ron`, `preview` by default) is captured.
+// `time` is the world time in ticks (`--time`; noon if omitted, 24000 a day).
 [
     (name: "preview", pos: (-12.0, 15.5, 14.0), look: (41.0, -28.0)),
     (name: "spawn-42", seed: "42", look: (30.0, -20.0)),
@@ -19,4 +20,9 @@
     (name: "light-tunnel", scene: "light", pos: (-9.0, 5.6, 4.5), look: (180.0, -5.0)),
     (name: "light-surface", scene: "light", pos: (-13.0, 24.0, 13.0), look: (45.0, -30.0)),
     (name: "caves-42", seed: "42", pos: (-376.0, 60.0, -376.0), look: (45.0, -10.0)),
+    (name: "sky-sunrise", seed: "42", pos: (0.0, 175.0, 0.0), look: (90.0, 0.0), time: 300),
+    (name: "sky-day", seed: "42", look: (30.0, -10.0), time: 6000),
+    (name: "sky-night", seed: "42", pos: (0.0, 175.0, 0.0), look: (90.0, 10.0), time: 14000),
+    (name: "sky-moon-phase", seed: "42", pos: (0.0, 175.0, 0.0), look: (90.0, 10.0), time: 62000),
+    (name: "sky-cave-night", scene: "light", pos: (-9.5, 6.5, 0.5), look: (90.0, -12.0), time: 15000),
 ]

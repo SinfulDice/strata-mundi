@@ -20,6 +20,8 @@ pub struct NewWorld {
     pub border: i32,
     /// Liquids flow (they can be frozen later with `/fluids`).
     pub fluids: bool,
+    /// The time of day goes on (it can be stopped later with `/daycycle`).
+    pub day_cycle: bool,
 }
 
 /// Whether a saved world can be opened by this version of the game.

@@ -251,6 +251,9 @@ impl Session {
             }
             Stage::Playing(world) => {
                 world.set_paused(pause);
+                if let Some(day) = &mut world.game.day {
+                    day.advance(frame_seconds);
+                }
                 let wanted = settled_columns(self.applied.graphics.render_distance);
                 let settled = world.game.view.is_settled(wanted);
                 let dt = frame_seconds.min(MAX_FRAME_SECONDS);
@@ -285,6 +288,7 @@ impl Session {
             camera,
             self.applied.graphics.vertical_distance,
         );
+        self.renderer.sky = self.sky_frame();
     }
 
     fn handle_system_actions(&mut self) -> Result<(), ClientError> {

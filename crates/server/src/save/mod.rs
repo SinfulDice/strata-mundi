@@ -203,6 +203,7 @@ pub fn create(
         last_played: now,
         play_ticks: 0,
         day_time: 0,
+        day_cycle: new.day_cycle,
         fluids: FluidSettings {
             flow: new.fluids,
             ..FluidSettings::default()
@@ -287,6 +288,7 @@ mod tests {
             mode: GameMode::Creative,
             border: 1000,
             fluids: true,
+            day_cycle: true,
         }
     }
 

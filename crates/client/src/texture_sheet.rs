@@ -4,6 +4,7 @@
 use crate::camera::Camera;
 use crate::screenshot::{ScreenshotError, View, render_image, write_png};
 use crate::settings::{GraphicsSettings, Preset};
+use crate::sky::SkyFrame;
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::path::Path;
@@ -39,6 +40,7 @@ pub fn write_texture_sheet(
         camera: diorama_camera(),
         size: SCENE_SIZE,
         graphics: GraphicsSettings::for_preset(Preset::Ultra),
+        sky: SkyFrame::default(),
     };
     let scene = render_image(content, preview, &view)?;
     sheet.draw(&scene, GAP, GAP + rows * (TILE + GAP));

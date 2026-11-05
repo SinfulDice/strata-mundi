@@ -54,7 +54,8 @@ impl GameLauncher {
             created: 0,
             last_played: 0,
             play_ticks: 0,
-            day_time: 0,
+            day_time: self.args.time.unwrap_or(0),
+            day_cycle: true,
             fluids: Default::default(),
         };
         self.start(meta, None)
@@ -179,6 +180,7 @@ impl Launcher for GameLauncher {
         Panorama {
             world: offline::generate_around(&generator, center.x, center.z, PANORAMA_RADIUS),
             center,
+            dimension: self.dimension.clone(),
         }
     }
 }

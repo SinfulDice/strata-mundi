@@ -6,12 +6,15 @@ use crate::render::{
     Target, TextureFiltering,
 };
 use crate::settings::{GraphicsSettings, Lighting};
+use crate::sky::SkyFrame;
 use crate::world::ClientWorld;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use strata_core::content::Content;
+use strata_core::dimension::DimensionId;
 use strata_core::light::LightTable;
+use strata_core::sky::Moment;
 use strata_core::texture::RgbaImage;
 use thiserror::Error;
 
@@ -38,6 +41,19 @@ pub struct View {
     pub camera: Camera,
     pub size: (u32, u32),
     pub graphics: GraphicsSettings,
+    pub sky: SkyFrame,
+}
+
+/// The sky of `dimension` at world time `time` (ticks; noon if `None`).
+pub fn capture_sky(
+    content: &Content,
+    dimension: &DimensionId,
+    time: Option<u64>,
+    graphics: &GraphicsSettings,
+) -> SkyFrame {
+    let cycle = content.day_cycle(dimension);
+    let time = time.unwrap_or_else(|| cycle.moment(Moment::Noon));
+    SkyFrame::at(&content.sky(dimension), &cycle, time as f64, graphics.stars)
 }
 
 /// Renders one frame without any window (works headless with Mesa lavapipe) and saves it as PNG.
@@ -73,6 +89,7 @@ pub fn render_image(
     renderer.ambient_occlusion = f32::from(u8::from(ao));
     renderer.vertical_distance = view.graphics.vertical_distance;
     renderer.options = RenderOptions::for_capture(&view.graphics);
+    renderer.sky = view.sky;
     renderer.models.library = ModelLibrary::from_content(content);
     renderer.models.entities = world.entity_models().collect();
     let table = BlockTable::from_content(content);

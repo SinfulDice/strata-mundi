@@ -24,12 +24,19 @@ pub struct WorldMeta {
     pub created: i64,
     pub last_played: i64,
     pub play_ticks: u64,
-    /// Time of day in ticks (`0..DAY_TICKS`, 0 = sunrise); the sky follows it from v0.2.
+    /// World time in ticks since the first sunrise: the days go on counting (moon phases).
     #[serde(default)]
     pub day_time: u64,
+    /// World option: the time of day goes on (otherwise it stays where `/time` put it).
+    #[serde(default = "yes")]
+    pub day_cycle: bool,
     /// World option: liquids flow (and how many update per tick).
     #[serde(default)]
     pub fluids: FluidSettings,
+}
+
+fn yes() -> bool {
+    true
 }
 
 /// Only the version, readable whatever the rest of the file looks like.

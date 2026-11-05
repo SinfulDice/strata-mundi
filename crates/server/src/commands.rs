@@ -1,11 +1,11 @@
 //! Console commands that touch the world. The server alone runs them; answers are
 //! translation keys so the client shows them in the player's language.
 
-use crate::clock::DAY_TICKS;
 use crate::game::Game;
 use crate::save::WorldMeta;
 use strata_core::content::Content;
 use strata_core::id::Identifier;
+use strata_core::sky::{DayCycle, Moment};
 use strata_protocol::commands::{Feedback, TIME_PRESETS, find, words};
 use strata_protocol::{GameMode, HotbarState};
 
@@ -16,6 +16,7 @@ pub struct Console<'a> {
     pub game: &'a mut Game,
     pub meta: &'a mut WorldMeta,
     pub content: &'a Content,
+    pub cycle: DayCycle,
 }
 
 /// What a command did: the answer, and the new hotbar if it changed.
@@ -54,6 +55,7 @@ impl Console<'_> {
             "time" => self.time(args),
             "seed" => Some(self.seed()),
             "fluids" => self.fluids(args),
+            "daycycle" => self.day_cycle(args),
             _ => None,
         };
         ran.unwrap_or_else(usage).into()
@@ -118,21 +120,43 @@ impl Console<'_> {
         }
     }
 
+    /// `set` moves forward to the next moment asked for: time never goes back, so the
+    /// moon keeps changing once a night.
     fn time(&mut self, args: &[&str]) -> Option<Feedback> {
+        let cycle = self.cycle;
         let time = &mut self.meta.day_time;
         match args {
-            ["query"] => {}
+            [] | ["query"] => {}
             ["set", value] => {
-                *time = preset_time(value).or_else(|| value.parse().ok())? % DAY_TICKS
+                let target = match preset_time(value) {
+                    Some(moment) => cycle.moment(moment),
+                    None => value.parse::<u64>().ok()? % cycle.length(),
+                };
+                *time = next_time_of_day(&cycle, *time, target);
             }
-            ["add", value] => {
-                *time = (*time % DAY_TICKS + value.parse::<u64>().ok()? % DAY_TICKS) % DAY_TICKS
-            }
+            ["add", value] => *time = time.saturating_add(value.parse().ok()?),
             _ => return None,
         }
+        let args = [
+            ("ticks", cycle.time_of_day(*time).to_string()),
+            ("length", cycle.length().to_string()),
+            ("day", (cycle.day(*time) + 1).to_string()),
+        ];
+        Some(Feedback::ok("command-time-now", &args))
+    }
+
+    /// `on`, `off` or `query`: whether the time of day goes on; saved with the world.
+    fn day_cycle(&mut self, args: &[&str]) -> Option<Feedback> {
+        match args {
+            [] | ["query"] => {}
+            ["on"] => self.meta.day_cycle = true,
+            ["off"] => self.meta.day_cycle = false,
+            _ => return None,
+        }
+        let cycle = if self.meta.day_cycle { "on" } else { "off" };
         Some(Feedback::ok(
-            "command-time-now",
-            &[("ticks", time.to_string())],
+            "command-daycycle-now",
+            &[("cycle", cycle.to_owned())],
         ))
     }
 
@@ -191,10 +215,22 @@ fn identifier(text: &str) -> Option<Identifier> {
     }
 }
 
-/// Sunrise, noon, sunset and midnight, a quarter of a day apart.
-fn preset_time(name: &str) -> Option<u64> {
+fn preset_time(name: &str) -> Option<Moment> {
     let index = TIME_PRESETS.iter().position(|preset| *preset == name)?;
-    Some(index as u64 * DAY_TICKS / 4)
+    [Moment::Day, Moment::Noon, Moment::Night, Moment::Midnight]
+        .get(index)
+        .copied()
+}
+
+/// The first time from `now` on whose time of day is `target`.
+fn next_time_of_day(cycle: &DayCycle, now: u64, target: u64) -> u64 {
+    let start = now - cycle.time_of_day(now);
+    let today = start.saturating_add(target);
+    if today >= now {
+        today
+    } else {
+        today.saturating_add(cycle.length())
+    }
 }
 
 #[cfg(test)]
@@ -230,21 +266,19 @@ mod tests {
             game: &mut game,
             meta: &mut meta,
             content: &content,
+            cycle: DayCycle::default(),
         };
         assert_eq!(console.run("/tp ~ ~10 5").feedback.key, "command-tp-done");
         let given = console.run("give stone");
         assert!(given.hotbar.is_some() && !given.feedback.error);
         assert!(console.run("give strata:unobtainium").feedback.error);
-        assert_eq!(
-            console.run("time set noon").feedback.args[0].1,
-            (DAY_TICKS / 4).to_string()
-        );
+        assert_eq!(console.run("time set noon").feedback.args[0].1, "6000");
         assert_eq!(console.run("seed").feedback.args[0].1, "7");
         assert_eq!(console.run("tp 1 2").feedback.key, "command-usage");
         assert_eq!(console.run("dance").feedback.key, "command-unknown");
         let feet = game.player_body().unwrap().position;
         assert_eq!((feet.y, feet.z), (90.0, 5.0));
-        assert_eq!(meta.day_time, DAY_TICKS / 4);
+        assert_eq!(meta.day_time, 6_000);
     }
 
     #[test]
@@ -254,6 +288,7 @@ mod tests {
             game: &mut game,
             meta: &mut meta,
             content: &content,
+            cycle: DayCycle::default(),
         };
         let off = console.run("fluids off").feedback;
         assert_eq!(
@@ -274,6 +309,52 @@ mod tests {
     }
 
     #[test]
+    fn time_moves_forward_to_what_is_asked_and_counts_days() {
+        let (mut game, mut meta, content) = setup();
+        let mut console = Console {
+            game: &mut game,
+            meta: &mut meta,
+            content: &content,
+            cycle: DayCycle::default(),
+        };
+        let now = |console: &mut Console<'_>, line: &str| {
+            let feedback = console.run(line).feedback;
+            assert_eq!(feedback.key, "command-time-now", "{line}");
+            (feedback.args[0].1.clone(), feedback.args[2].1.clone())
+        };
+        assert_eq!(
+            now(&mut console, "time set midnight"),
+            ("18000".into(), "1".into())
+        );
+        assert_eq!(
+            now(&mut console, "time set noon"),
+            ("6000".into(), "2".into())
+        );
+        assert_eq!(
+            now(&mut console, "time set 7000"),
+            ("7000".into(), "2".into())
+        );
+        assert_eq!(
+            now(&mut console, "time add 24000"),
+            ("7000".into(), "3".into())
+        );
+        assert_eq!(
+            now(&mut console, "time set 31000"),
+            ("7000".into(), "3".into())
+        );
+        assert_eq!(now(&mut console, "time"), ("7000".into(), "3".into()));
+        assert_eq!(console.run("time add -5").feedback.key, "command-usage");
+        assert_eq!(
+            console.run("time set teatime").feedback.key,
+            "command-usage"
+        );
+        let stopped = console.run("daycycle off").feedback;
+        assert_eq!(stopped.args[0].1, "off");
+        assert_eq!(meta.day_time, 2 * 24_000 + 7_000);
+        assert!(!meta.day_cycle);
+    }
+
+    #[test]
     fn coordinates_may_be_relative() {
         assert_eq!(coordinate("~", 10.0), Some(10.0));
         assert_eq!(coordinate("~-2.5", 10.0), Some(7.5));
@@ -288,7 +369,7 @@ mod tests {
             identifier("stone").map(|i| i.to_string()).as_deref(),
             Some("strata:stone")
         );
-        assert_eq!(preset_time("noon"), Some(DAY_TICKS / 4));
+        assert_eq!(preset_time("noon"), Some(Moment::Noon));
         assert_eq!(preset_time("teatime"), None);
     }
 }

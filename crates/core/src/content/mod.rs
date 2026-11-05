@@ -23,10 +23,12 @@ pub use registry::{BlockId, EntityTypeId, ItemId, Registry, RegistryId, TextureI
 pub use textures::{TextureLibrary, missing_id};
 
 use crate::cinematic::{self, Cinematic};
+use crate::dimension::DimensionId;
 use crate::id::Identifier;
 use crate::lang::Translations;
 use crate::pack::{PackError, PackSet, Sourced};
 use crate::physics::LiquidCell;
+use crate::sky::{self, DayCycle, Sky};
 use std::collections::BTreeMap;
 
 /// Everything the game knows about, built once from the active packs.
@@ -40,6 +42,9 @@ pub struct Content {
     pub textures: TextureLibrary,
     pub translations: Translations,
     pub cinematics: BTreeMap<Identifier, Cinematic>,
+    /// Day cycles and skies by dimension.
+    pub days: BTreeMap<Identifier, DayCycle>,
+    pub skies: BTreeMap<Identifier, Sky>,
 }
 
 /// Identifier of the empty block, always `BlockId::AIR`.
@@ -64,6 +69,8 @@ impl Content {
         let items = load_items(packs, &known, &textures, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
         let cinematics = cinematic::load(packs, &mut errors);
+        let days = sky::load_days(packs, &mut errors);
+        let skies = sky::load_skies(&presentation, &textures, &mut errors);
         let content = Self {
             blocks,
             items,
@@ -72,8 +79,22 @@ impl Content {
             textures,
             translations,
             cinematics,
+            days,
+            skies,
         };
         (content, errors)
+    }
+
+    /// The day cycle of `dimension` (the default one if its pack defines none).
+    pub fn day_cycle(&self, dimension: &DimensionId) -> DayCycle {
+        self.days.get(&dimension.0).copied().unwrap_or_default()
+    }
+
+    pub fn sky(&self, dimension: &DimensionId) -> Sky {
+        self.skies
+            .get(&dimension.0)
+            .cloned()
+            .unwrap_or_else(Sky::fallback)
     }
 
     /// Whether each block (by `BlockId`) stops movement, for fast collision lookups.

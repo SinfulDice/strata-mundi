@@ -12,8 +12,10 @@ use std::thread::{self, JoinHandle};
 use std::time::Instant;
 use strata_core::content::Content;
 use strata_core::dimension::DimensionId;
+use strata_core::sky::DayCycle;
 use strata_protocol::{
-    ClientMessage, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE, ServerConnection, ServerMessage,
+    ClientMessage, DAY_TIME_PERIOD, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE, ServerConnection,
+    ServerMessage,
 };
 use strata_worldgen::Generator;
 
@@ -39,6 +41,7 @@ pub struct IntegratedServer {
     /// Capture sent with `Disconnect`, written by the final save.
     leaving_icon: Option<Vec<u8>>,
     content: Arc<Content>,
+    cycle: DayCycle,
 }
 
 impl IntegratedServer {
@@ -96,7 +99,8 @@ impl IntegratedServer {
             None => RegionStore::in_memory(names),
         };
         let workers = GenerationWorkers::spawn(config.generation_threads, config.generator)?;
-        Ok(Self {
+        let cycle = config.content.day_cycle(&config.dimension);
+        let server = Self {
             connection,
             loader: ColumnLoader::new(workers, store),
             game,
@@ -106,8 +110,11 @@ impl IntegratedServer {
             paused: false,
             tick: 0,
             leaving_icon: None,
+            cycle,
             content: config.content,
-        })
+        };
+        server.send_day_time();
+        Ok(server)
     }
 
     fn run(mut self) {
@@ -204,6 +211,7 @@ impl IntegratedServer {
             game: &mut self.game,
             meta: &mut self.persistence.meta,
             content: &self.content,
+            cycle: self.cycle,
         };
         let ran = console.run(line);
         tracing::info!(line, answer = %ran.feedback.key, "command");
@@ -211,6 +219,15 @@ impl IntegratedServer {
             self.connection.send(ServerMessage::Hotbar(hotbar));
         }
         self.connection.send(ServerMessage::Feedback(ran.feedback));
+        self.send_day_time();
+    }
+
+    fn send_day_time(&self) {
+        let meta = &self.persistence.meta;
+        self.connection.send(ServerMessage::DayTime {
+            time: meta.day_time,
+            cycle: meta.day_cycle,
+        });
     }
 
     fn save(&mut self, icon: Option<&[u8]>) {
@@ -239,6 +256,9 @@ impl IntegratedServer {
         self.send_entity_messages();
         if self.persistence.count_tick() {
             self.save(None);
+        }
+        if self.tick.is_multiple_of(DAY_TIME_PERIOD) {
+            self.send_day_time();
         }
         if let Some(body) = self.game.player_body() {
             self.connection.send(ServerMessage::PlayerState {

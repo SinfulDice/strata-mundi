@@ -1,0 +1,27 @@
+// The full moon, drawn in the sky (not a block); the game shades its phases.
+Sprite(
+    colors: {
+        'a': ("moon", 0),
+        'b': ("moon", 1),
+        'c': ("moon", 2),
+        'd': ("moon", 3),
+    },
+    rows: [
+        "................",
+        ".....bbbbbb.....",
+        "...bbccccccbb...",
+        "..bccdddcccccb..",
+        "..bcddddddbbcb..",
+        ".bcdddddddbacdb.",
+        ".bcddbbdddddddb.",
+        ".bcdbaadddddddb.",
+        ".bcddbbddddcddb.",
+        ".bccdddddddccdb.",
+        ".bcccdddbbdddcb.",
+        "..bccddbaabddb..",
+        "..bbccddbbddcb..",
+        "...bbccccccbb...",
+        ".....bbbbbb.....",
+        "................",
+    ],
+)

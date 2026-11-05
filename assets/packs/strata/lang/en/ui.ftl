@@ -34,6 +34,10 @@ ui-new-world-fluids = Liquids: { $flow ->
         [on] flowing
        *[off] frozen
     }
+ui-new-world-day-cycle = Day and night: { $cycle ->
+        [on] on
+       *[off] time stands still
+    }
 ui-new-world-create = Create
 
 ui-delete-question = Delete "{ $name }"?

@@ -7,6 +7,7 @@ use crate::world::ClientWorld;
 use glam::DVec3;
 use std::thread::JoinHandle;
 use strata_core::content::Content;
+use strata_core::dimension::DimensionId;
 use strata_protocol::{ClientConnection, NewWorld, WorldSummary};
 
 /// A world being played: the connection to its server and the server's thread.
@@ -37,6 +38,7 @@ impl LaunchError {
 pub struct Panorama {
     pub world: ClientWorld,
     pub center: DVec3,
+    pub dimension: DimensionId,
 }
 
 pub trait Launcher {

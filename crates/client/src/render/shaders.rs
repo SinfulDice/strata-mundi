@@ -9,12 +9,13 @@ macro_rules! shader {
     };
 }
 
-const BUILT_IN: [(&str, &str); 6] = [
+const BUILT_IN: [(&str, &str); 7] = [
     shader!("block.wgsl"),
     shader!("light.wgsl"),
     shader!("model.wgsl"),
     shader!("outline.wgsl"),
     shader!("post.wgsl"),
+    shader!("sky.wgsl"),
     shader!("ui.wgsl"),
 ];
 
@@ -60,6 +61,7 @@ mod tests {
             "model.wgsl",
             "outline.wgsl",
             "post.wgsl",
+            "sky.wgsl",
             "ui.wgsl",
         ] {
             assert!(!super::source(name).is_empty(), "{name}");

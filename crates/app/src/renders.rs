@@ -7,9 +7,10 @@ use std::path::Path;
 use std::sync::Arc;
 use strata_client::camera::Camera;
 use strata_client::catalog::item_icon;
-use strata_client::screenshot::{View, capture, write_png};
+use strata_client::screenshot::{View, capture, capture_sky, write_png};
 use strata_client::settings::GraphicsSettings;
 use strata_core::content::Content;
+use strata_core::dimension::DimensionId;
 use strata_core::id::Identifier;
 use strata_core::texture::{Rgba, RgbaImage};
 use strata_worldgen::map::{self, MapArea};
@@ -46,8 +47,10 @@ pub fn render_biomes(
     content: &Content,
     worldgen: &Arc<WorldgenContent>,
     graphics: GraphicsSettings,
+    dimension: &DimensionId,
     dir: &Path,
 ) -> anyhow::Result<()> {
+    let sky = capture_sky(content, dimension, None, &graphics);
     let generator = Arc::new(Generator::new(
         Seed::from_text(BIOME_SEED),
         Arc::clone(worldgen),
@@ -82,6 +85,7 @@ pub fn render_biomes(
                 render_distance: VIEW_RADIUS,
                 ..graphics.clone()
             },
+            sky,
         };
         let path = image_path(dir, &biome.id);
         capture(content, &mut world, &view, &path)

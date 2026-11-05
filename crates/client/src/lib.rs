@@ -24,6 +24,7 @@ mod screens;
 pub mod screenshot;
 mod session;
 pub mod settings;
+pub mod sky;
 mod sleep;
 mod stage;
 mod streaming;

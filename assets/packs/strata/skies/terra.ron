@@ -1,0 +1,13 @@
+// The sky of Terra. Colors are blended through the day; `twilight` is the sky at sunrise
+// and sunset, its horizon glowing on the sun's side. Sizes and tilt are in degrees.
+Sky(
+    day: (zenith: "#4f86e8", horizon: "#a9c8f5"),
+    night: (zenith: "#03050f", horizon: "#121a36"),
+    twilight: (zenith: "#34478a", horizon: "#f2944e"),
+    sun: "strata:sun",
+    moon: "strata:moon",
+    sun_size: 6.0,
+    moon_size: 5.0,
+    path_tilt: 20.0,
+    stars: (density: 0.006, brightness: 0.9, twinkle: 0.35),
+)

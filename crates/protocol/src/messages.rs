@@ -6,6 +6,9 @@ use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
 use strata_core::physics::{Body, MoveInput, MovementSettings};
 
+/// Ticks between two `ServerMessage::DayTime` while the time goes on.
+pub const DAY_TIME_PERIOD: u64 = 20;
+
 /// Intents sent by the client. The server validates and decides.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ClientMessage {
@@ -101,6 +104,12 @@ pub enum ServerMessage {
     /// Sent once per tick so the client can interpolate between ticks.
     Tick {
         tick: u64,
+    },
+    /// World time in ticks since the first sunrise, and whether it goes on. Sent on
+    /// arrival, every `DAY_TIME_PERIOD` ticks and after `/time`; the client interpolates.
+    DayTime {
+        time: u64,
+        cycle: bool,
     },
     /// Authoritative state of the player after applying input `sequence`.
     PlayerState {

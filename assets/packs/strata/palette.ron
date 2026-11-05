@@ -29,6 +29,8 @@
     "lava": ["#a8280a", "#d4520e", "#f08a1c", "#ffc84a"],
     "water": ["#2b4ea8b8", "#3460c0b8", "#3d70d0b8", "#4a80dcb8"],
     "glass": ["#8fb8c8", "#b4d6e2", "#d8eef5", "#ffffff"],
+    "sun": ["#ff9a2e", "#ffc94a", "#ffe98a", "#fffbe0"],
+    "moon": ["#7d8aa6", "#a5b0c8", "#cdd5e4", "#eef2f8"],
     "snow": ["#dfe8ee", "#eaf1f5", "#f3f8fa", "#ffffff"],
     "cactus": ["#1f5a22", "#2b7330", "#378a3c", "#4ea152"],
     "stick": ["#4a3420", "#6b4c2c", "#8c6a40"],

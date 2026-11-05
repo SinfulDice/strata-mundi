@@ -18,7 +18,7 @@ use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
 use strata_client::launcher::Launcher;
-use strata_client::screenshot::{View, capture};
+use strata_client::screenshot::{View, capture, capture_sky};
 use strata_client::settings::{GraphicsSettings, Preset, Settings};
 use strata_client::texture_sheet::write_texture_sheet;
 use strata_client::{ClientConfig, DEFAULT_FOV, run};
@@ -54,7 +54,8 @@ fn main() -> anyhow::Result<()> {
     }
     if let Some(dir) = &args.render_biomes {
         let ultra = GraphicsSettings::for_preset(Preset::Ultra);
-        return renders::render_biomes(&loaded.content, &loaded.worldgen, ultra, dir);
+        let dimension = DimensionId(args.dimension.clone());
+        return renders::render_biomes(&loaded.content, &loaded.worldgen, ultra, &dimension, dir);
     }
     if let Some(path) = &args.texture_sheet {
         return Ok(write_texture_sheet(
@@ -158,9 +159,11 @@ fn screenshot(
             args.pos.unwrap_or([-12.0, 15.5, 14.0]),
         )
     };
+    let dimension = DimensionId(args.dimension.clone());
     let view = View {
         camera: camera(position, args),
         size: args.size,
+        sky: capture_sky(&loaded.content, &dimension, args.time, &graphics),
         graphics,
     };
     Ok(capture(&loaded.content, &mut world, &view, path)?)

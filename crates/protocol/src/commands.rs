@@ -48,7 +48,7 @@ impl CommandSpec {
 
 pub const TIME_PRESETS: [&str; 4] = ["day", "noon", "night", "midnight"];
 
-pub const COMMANDS: [CommandSpec; 8] = [
+pub const COMMANDS: [CommandSpec; 9] = [
     CommandSpec {
         name: "help",
         args: &[Arg::Command],
@@ -87,6 +87,12 @@ pub const COMMANDS: [CommandSpec; 8] = [
     },
     CommandSpec {
         name: "fluids",
+        args: &[Arg::Choice(&["on", "off", "query"])],
+        runs: Runs::Server,
+        cheat: true,
+    },
+    CommandSpec {
+        name: "daycycle",
         args: &[Arg::Choice(&["on", "off", "query"])],
         runs: Runs::Server,
         cheat: true,
