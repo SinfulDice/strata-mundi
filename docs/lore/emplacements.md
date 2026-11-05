@@ -25,6 +25,7 @@ Le lore de Strata s'écrit **avec l'utilisateur**, en séances dédiées. Claude
 | Réactions aux déicides (dieux, peuples, PNJ) | v0.12 | Mort de chaque dieu | 1-3 phrases | Sanatrix déçue, Somnifer ravi | À écrire |
 | Révélation finale d'Arbiter | v0.12 | Victoire sur Arbiter | Court | Fin ouverte : les dieux aussi sont l'objet d'un pari | À écrire |
 | Wiki, page d'accueil : section « Le monde » (`wiki-content/{fr,en,lol}/pages/home.md`) | v0.1 | Lecture du wiki (hors jeu) | 2-4 phrases | Présentation de Terra pour un nouveau joueur, sans rien dévoiler (dieux = légendes, pas de dragon ni de révélation) ; ton chaleureux ; trois langues | À écrire |
+| Wiki, page « Jour et nuit » : ce que les gens de Terra disent du soleil et de la lune (`wiki-content/{fr,en,lol}/mechanics/day-night.md`) | v0.2 | Lecture du wiki (hors jeu) | 1-2 phrases | Ton chaleureux, sans dévoiler le lore ; trois langues | À écrire |
 
 ## Décisions validées
 - [Fondations](fondations.md) — séance 1 : le joueur, les dieux, le pari, le dragon, la révélation, la fin ouverte.

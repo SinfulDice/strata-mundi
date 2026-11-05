@@ -120,6 +120,7 @@
         ],
         "commands/tp": [(version: "0.1.0", change: Added)],
         "mechanics/boats": [(version: "0.2.0", change: Added)],
+        "mechanics/day-night": [(version: "0.2.0", change: Added)],
         "mechanics/fluids": [(version: "0.2.0", change: Added)],
         "mechanics/game-modes": [(version: "0.1.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
