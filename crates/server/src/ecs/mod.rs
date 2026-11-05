@@ -34,6 +34,8 @@ pub struct Boat {
     pub pilot: Option<Entity>,
     /// Position and yaw last sent to clients, to send only changes.
     pub sent: (glam::DVec3, f32),
+    /// Ticks spent without a pilot and without moving; past a limit the boat sleeps.
+    pub still_ticks: u32,
 }
 
 impl Boat {
@@ -44,6 +46,7 @@ impl Boat {
             controls: BoatControls::default(),
             pilot: None,
             sent: (body.position, body.yaw),
+            still_ticks: 0,
         }
     }
 }

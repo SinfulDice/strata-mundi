@@ -28,7 +28,7 @@ graph LR
 - Le liquide cherche le **trou le plus proche** (jusqu'à 4 blocs pour l'eau) et coule dans cette direction plutôt qu'au hasard.
 - Deux sources voisines au-dessus d'un sol créent une nouvelle source : un étang se remplit tout seul (« renouvelable »).
 - Lave et eau qui se touchent : la source de lave devient de l'**obsidienne**, la lave qui coule devient de la **pierre**.
-- Un budget (2048 blocs par tick) borne le travail ; le reste attend le tick suivant. Le réglage de monde `fluids: (flow, updates_per_tick)` permet de figer les liquides (`flow: false`).
+- Un budget (2048 blocs par tick) borne le travail ; le reste attend le tick suivant. Le réglage de monde `fluids: (flow, updates_per_tick)` permet de figer les liquides (`flow: false`) ; il se choisit à la création du monde (bouton « Fluides ») et se change en jeu avec `/fluids on`, `/fluids off` ou `/fluids <budget>`.
 - Une colonne pas encore chargée n'est jamais devinée : le liquide réessaie 20 ticks plus tard.
 
 ### Mises à jour de voisinage

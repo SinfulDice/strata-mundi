@@ -30,6 +30,10 @@ ui-new-world-seed = Seed
 ui-new-world-seed-random = (empty: random)
 ui-new-world-border = World border (blocks from the centre)
 ui-new-world-mode = Game mode: { $mode }
+ui-new-world-fluids = Liquids: { $flow ->
+        [on] flowing
+       *[off] frozen
+    }
 ui-new-world-create = Create
 
 ui-delete-question = Delete "{ $name }"?

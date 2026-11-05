@@ -9,6 +9,9 @@ use strata_core::id::Identifier;
 use strata_protocol::commands::{Feedback, TIME_PRESETS, find, words};
 use strata_protocol::{GameMode, HotbarState};
 
+/// More liquid updates than this per tick would not hold 20 ticks per second.
+const MAX_FLUID_BUDGET: u32 = 65_536;
+
 pub struct Console<'a> {
     pub game: &'a mut Game,
     pub meta: &'a mut WorldMeta,
@@ -50,6 +53,7 @@ impl Console<'_> {
             "gamemode" => self.gamemode(args),
             "time" => self.time(args),
             "seed" => Some(self.seed()),
+            "fluids" => self.fluids(args),
             _ => None,
         };
         ran.unwrap_or_else(usage).into()
@@ -132,6 +136,32 @@ impl Console<'_> {
         ))
     }
 
+    /// `on`, `off`, a budget of liquid updates per tick, or `query`; saved with the world.
+    fn fluids(&mut self, args: &[&str]) -> Option<Feedback> {
+        let fluids = &mut self.meta.fluids;
+        match args {
+            [] | ["query"] => {}
+            ["on"] => fluids.flow = true,
+            ["off"] => fluids.flow = false,
+            [budget] => {
+                let budget = budget.parse::<u32>().ok()?;
+                if !(1..=MAX_FLUID_BUDGET).contains(&budget) {
+                    let max = MAX_FLUID_BUDGET.to_string();
+                    return Some(Feedback::error("command-fluids-budget", &[("max", max)]));
+                }
+                fluids.updates_per_tick = budget;
+            }
+            _ => return None,
+        }
+        self.game.set_fluid_settings(*fluids);
+        let flow = if fluids.flow { "on" } else { "off" };
+        let args = [
+            ("flow", flow.to_owned()),
+            ("budget", fluids.updates_per_tick.to_string()),
+        ];
+        Some(Feedback::ok("command-fluids-now", &args))
+    }
+
     fn seed(&self) -> Feedback {
         let shown = if self.meta.seed_text.is_empty() {
             (self.meta.seed as i64).to_string()
@@ -176,6 +206,7 @@ mod tests {
     use strata_core::coords::DEFAULT_WORLD_BORDER;
     use strata_core::pack::PackSet;
     use strata_core::physics::Body;
+    use strata_core::updates::FluidSettings;
 
     fn setup() -> (Game, WorldMeta, Content) {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
@@ -214,6 +245,32 @@ mod tests {
         let feet = game.player_body().unwrap().position;
         assert_eq!((feet.y, feet.z), (90.0, 5.0));
         assert_eq!(meta.day_time, DAY_TICKS / 4);
+    }
+
+    #[test]
+    fn fluids_turn_off_and_take_a_budget_saved_with_the_world() {
+        let (mut game, mut meta, content) = setup();
+        let mut console = Console {
+            game: &mut game,
+            meta: &mut meta,
+            content: &content,
+        };
+        let off = console.run("fluids off").feedback;
+        assert_eq!(
+            (off.key.as_str(), off.args[0].1.as_str()),
+            ("command-fluids-now", "off")
+        );
+        assert_eq!(console.run("fluids 512").feedback.args[1].1, "512");
+        assert!(console.run("fluids 0").feedback.error);
+        assert_eq!(console.run("fluids lots").feedback.key, "command-usage");
+        console.run("fluids on");
+        assert_eq!(
+            meta.fluids,
+            FluidSettings {
+                flow: true,
+                updates_per_tick: 512
+            }
+        );
     }
 
     #[test]

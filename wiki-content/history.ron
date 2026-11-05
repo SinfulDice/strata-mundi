@@ -106,6 +106,7 @@
         "biomes/strata/snowy_tundra": [(version: "0.1.0", change: Added)],
         "commands/cinematic": [(version: "0.1.0", change: Added)],
         "commands/gamemode": [(version: "0.1.0", change: Added)],
+        "commands/fluids": [(version: "0.2.0", change: Added)],
         "commands/give": [(version: "0.1.0", change: Added)],
         "commands/help": [(version: "0.1.0", change: Added)],
         "commands/seed": [(version: "0.1.0", change: Added)],

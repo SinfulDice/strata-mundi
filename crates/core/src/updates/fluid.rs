@@ -3,19 +3,58 @@
 
 use super::rules::{Cell, UpdateRules};
 use super::{BlockAccess, BlockChange, BlockUpdates, WAIT_TICKS, cell};
+use crate::content::MAX_SLOPE_SEARCH;
 use crate::content::{BlockId, Face, Fluid, FluidLevel};
 use crate::coords::BlockPos;
-use std::collections::VecDeque;
-use std::sync::Arc;
 
 const SIDES: [Face; 4] = [Face::North, Face::South, Face::East, Face::West];
+/// Width of the square a slope search can cover around its start.
+const SEARCH_WIDTH: usize = 2 * MAX_SLOPE_SEARCH as usize + 1;
 
 /// What a liquid block does this step.
 enum Step {
     /// A neighbour is not loaded: try again later.
     Wait,
     Become(BlockId),
-    Flow(Vec<(BlockPos, BlockId)>),
+    Flow(Targets),
+}
+
+/// Up to four blocks to write, without allocating.
+struct Targets {
+    items: [(BlockPos, BlockId); 4],
+    len: usize,
+}
+
+impl Default for Targets {
+    fn default() -> Self {
+        Self {
+            items: [(BlockPos::new(0, 0, 0), BlockId::AIR); 4],
+            len: 0,
+        }
+    }
+}
+
+impl Targets {
+    fn one(pos: BlockPos, block: BlockId) -> Self {
+        let mut targets = Self::default();
+        targets.push(pos, block);
+        targets
+    }
+
+    fn push(&mut self, pos: BlockPos, block: BlockId) {
+        if let Some(slot) = self.items.get_mut(self.len) {
+            *slot = (pos, block);
+            self.len += 1;
+        }
+    }
+
+    fn clear(&mut self) {
+        self.len = 0;
+    }
+
+    fn as_slice(&self) -> &[(BlockPos, BlockId)] {
+        &self.items[..self.len]
+    }
 }
 
 impl BlockUpdates {
@@ -25,32 +64,33 @@ impl BlockUpdates {
         pos: BlockPos,
         changes: &mut Vec<BlockChange>,
     ) {
-        let rules = Arc::clone(&self.rules);
-        let Cell::Block(block) = cell(world, pos) else {
+        let Some(step) = self.step(world, pos) else {
             return;
         };
-        let Some(state) = rules.fluid_state(block) else {
-            return;
-        };
-        let Some(fluid) = rules.fluid(state.source) else {
-            return;
-        };
-        let view = View {
-            rules: &rules,
-            fluid,
-            world: &*world,
-        };
-        match view.step(pos, state.level) {
+        match step {
             Step::Wait => self.plan(pos, self.now + WAIT_TICKS),
             Step::Become(next) => {
                 self.set_block(world, pos, next, changes);
             }
             Step::Flow(targets) => {
-                for (target, next) in targets {
+                for &(target, next) in targets.as_slice() {
                     self.set_block(world, target, next, changes);
                 }
             }
         }
+    }
+
+    fn step(&self, world: &impl BlockAccess, pos: BlockPos) -> Option<Step> {
+        let Cell::Block(block) = cell(world, pos) else {
+            return None;
+        };
+        let state = self.rules.fluid_state(block)?;
+        let view = View {
+            rules: &self.rules,
+            fluid: self.rules.fluid(state.source)?,
+            world,
+        };
+        Some(view.step(pos, state.level))
     }
 }
 
@@ -148,10 +188,10 @@ impl<W: BlockAccess> View<'_, W> {
         if let Some(hardens) = self.fluid.hardens
             && self.rules.level_of(below, hardens.touching).is_some()
         {
-            return Step::Flow(vec![(down, hardens.flowing)]);
+            return Step::Flow(Targets::one(down, hardens.flowing));
         }
         if self.can_enter(below, FluidLevel::Falling) {
-            return Step::Flow(vec![(down, self.fluid.falling)]);
+            return Step::Flow(Targets::one(down, self.fluid.falling));
         }
         let next = match level {
             FluidLevel::Source | FluidLevel::Falling => 1,
@@ -159,20 +199,20 @@ impl<W: BlockAccess> View<'_, W> {
         };
         let lands_in_itself = self.level(below).is_some();
         if (level != FluidLevel::Source && lands_in_itself) || next > self.fluid.spread {
-            return Step::Flow(Vec::new());
+            return Step::Flow(Targets::default());
         }
         let Some(block) = self.fluid.block(FluidLevel::Flowing(next)) else {
-            return Step::Flow(Vec::new());
+            return Step::Flow(Targets::default());
         };
-        match self.downhill_sides(pos, FluidLevel::Flowing(next)) {
+        match self.downhill_sides(pos, FluidLevel::Flowing(next), block) {
             None => Step::Wait,
-            Some(sides) => Step::Flow(sides.into_iter().map(|side| (side, block)).collect()),
+            Some(sides) => Step::Flow(sides),
         }
     }
 
-    fn downhill_sides(&self, pos: BlockPos, level: FluidLevel) -> Option<Vec<BlockPos>> {
+    fn downhill_sides(&self, pos: BlockPos, level: FluidLevel, block: BlockId) -> Option<Targets> {
         let mut nearest = u8::MAX;
-        let mut sides = Vec::with_capacity(4);
+        let mut sides = Targets::default();
         for face in SIDES {
             let side = pos.neighbour(face);
             let target = self.cell(side);
@@ -188,7 +228,7 @@ impl<W: BlockAccess> View<'_, W> {
                 sides.clear();
             }
             if distance == nearest {
-                sides.push(side);
+                sides.push(side, block);
             }
         }
         Some(sides)
@@ -196,10 +236,17 @@ impl<W: BlockAccess> View<'_, W> {
 
     /// Steps from `start` to the nearest place where the liquid could fall, searching
     /// `slope_search` blocks at most; `u8::MAX` when there is none.
+    /// Breadth-first on fixed arrays: every block is queued once, so the queue never
+    /// holds more than the square around `start`.
     fn slope_distance(&self, from: BlockPos, start: BlockPos) -> u8 {
-        let mut seen = vec![from, start];
-        let mut frontier = VecDeque::from([(start, 0u8)]);
-        while let Some((pos, distance)) = frontier.pop_front() {
+        let mut seen = [[false; SEARCH_WIDTH]; SEARCH_WIDTH];
+        let mut queue = [(start, 0u8); SEARCH_WIDTH * SEARCH_WIDTH];
+        let (mut head, mut tail) = (0, 1);
+        mark(&mut seen, start, from);
+        mark(&mut seen, start, start);
+        while head < tail {
+            let (pos, distance) = queue[head];
+            head += 1;
             if self.is_hole(pos) {
                 return distance;
             }
@@ -208,9 +255,9 @@ impl<W: BlockAccess> View<'_, W> {
             }
             for face in SIDES {
                 let next = pos.neighbour(face);
-                if !seen.contains(&next) && self.is_passable(self.cell(next)) {
-                    seen.push(next);
-                    frontier.push_back((next, distance + 1));
+                if self.is_passable(self.cell(next)) && mark(&mut seen, start, next) {
+                    queue[tail] = (next, distance + 1);
+                    tail += 1;
                 }
             }
         }
@@ -237,5 +284,22 @@ impl<W: BlockAccess> View<'_, W> {
             (Some(FluidLevel::Flowing(old)), FluidLevel::Flowing(new)) => old > new,
             _ => false,
         }
+    }
+}
+
+/// Marks `pos` as seen in the square centred on `start`; `false` if it already was (or
+/// lies outside the square, which a search bounded by `MAX_SLOPE_SEARCH` never reaches).
+fn mark(seen: &mut [[bool; SEARCH_WIDTH]; SEARCH_WIDTH], start: BlockPos, pos: BlockPos) -> bool {
+    let centre = i32::from(MAX_SLOPE_SEARCH);
+    let index = |a: i32, b: i32| usize::try_from(a - b + centre).ok();
+    let cell = index(pos.x, start.x)
+        .zip(index(pos.z, start.z))
+        .and_then(|(x, z)| seen.get_mut(x)?.get_mut(z));
+    match cell {
+        Some(cell) if !*cell => {
+            *cell = true;
+            true
+        }
+        _ => false,
     }
 }

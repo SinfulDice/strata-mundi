@@ -10,6 +10,11 @@ command-gamemode-done = CRAYTIV MODE.
 command-gamemode-later = SURVIVL COMEZ IN V0.3.
 command-time-now = TIEM: { $ticks } (OF 24000).
 command-seed-is = SEED: { $seed }
+command-fluids-now = WATR AN LAVA: { $flow ->
+        [on] GOEZ SPLOOSH
+       *[off] STUK IN PLAIS
+    }, { $budget } UPDAETZ PER TICK MAX.
+command-fluids-budget = BUDGIT IZ 1 TO { $max } UPDAETZ PER TICK.
 command-help-usage = /help [command]
 command-help-help = LISTZ ALL TEH COMMANDZ.
 command-tp-usage = /tp <x> <y> <z>  (~ = WER U R)
@@ -22,6 +27,8 @@ command-time-usage = /time <set|add|query> [value]
 command-time-help = SETZ TEH TIEM (day, noon, night, midnight OR TICKZ).
 command-seed-usage = /seed
 command-seed-help = SHOWZ TEH WORLD SEED.
+command-fluids-usage = /fluids [on|off|query|<budget>]
+command-fluids-help = MAEKZ WATR AN LAVA GO SPLOOSH OR STOP; A NUMBR SETZ HOW MANY UPDAETZ PER TICK.
 command-cinematic-usage = /cinematic <id>
 command-cinematic-help = PLAYZ A MOOVEE.
 ui-console-placeholder = TYPE A COMMANDZ…

@@ -10,6 +10,11 @@ command-gamemode-done = Creative mode.
 command-gamemode-later = Survival mode arrives in v0.3.
 command-time-now = Time: { $ticks } (out of 24000).
 command-seed-is = Seed: { $seed }
+command-fluids-now = Liquids: { $flow ->
+        [on] flowing
+       *[off] frozen
+    }, { $budget } updates per tick at most.
+command-fluids-budget = The budget goes from 1 to { $max } updates per tick.
 command-help-usage = /help [command]
 command-help-help = Lists the commands, or details one.
 command-tp-usage = /tp <x> <y> <z>  (~ = your position)
@@ -22,6 +27,8 @@ command-time-usage = /time <set|add|query> [value]
 command-time-help = Sets the time (day, noon, night, midnight or ticks).
 command-seed-usage = /seed
 command-seed-help = Shows the world seed.
+command-fluids-usage = /fluids [on|off|query|<budget>]
+command-fluids-help = Lets water and lava flow or freezes them; a number sets the liquid updates per tick.
 command-cinematic-usage = /cinematic <id>
 command-cinematic-help = Plays a cinematic from the packs.
 ui-console-placeholder = Type a command…

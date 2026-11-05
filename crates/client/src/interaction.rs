@@ -1,5 +1,5 @@
-//! Aiming at blocks and entities, breaking, placing and picking blocks, getting into boats. The client only sends intents;
-//! the world changes when the server answers with `BlockChanged`.
+//! Aiming, breaking, placing and picking blocks, getting into boats. The client only
+//! sends intents; the world changes when the server answers.
 
 use crate::camera::Camera;
 use crate::hotbar::Hotbar;

@@ -11,8 +11,22 @@ pub struct Neighborhood {
     blocks: Vec<BlockId>,
     /// World position of the section's (0, 0, 0) block.
     origin: [i32; 3],
-    /// Every block the section may hold (a superset), when known.
-    palette: Option<Vec<BlockId>>,
+    contents: Contents,
+}
+
+/// Kinds of block a section may hold that need their own meshing pass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Contents {
+    pub liquid: bool,
+    pub cross: bool,
+}
+
+impl Contents {
+    /// Nothing known: every pass runs.
+    const ANY: Self = Self {
+        liquid: true,
+        cross: true,
+    };
 }
 
 impl Neighborhood {
@@ -29,14 +43,20 @@ impl Neighborhood {
         Self {
             blocks,
             origin: [0; 3],
-            palette: None,
+            contents: Contents::ANY,
         }
     }
 
-    /// Where the section sits in the world and which blocks it may hold.
-    pub fn of_section(mut self, origin: [i32; 3], palette: &[BlockId]) -> Self {
+    /// Where the section sits in the world, and what it may hold given its palette (every
+    /// block it may contain, a superset).
+    pub fn of_section(mut self, origin: [i32; 3], palette: &[BlockId], table: &BlockTable) -> Self {
         self.origin = origin;
-        self.palette = Some(palette.to_vec());
+        self.contents = Contents {
+            liquid: palette.iter().any(|&id| table.family(id).is_some()),
+            cross: palette
+                .iter()
+                .any(|&id| table.get(id).render == RenderKind::Cross),
+        };
         self
     }
 
@@ -44,11 +64,9 @@ impl Neighborhood {
         self.origin
     }
 
-    /// False only when the section surely holds none of the blocks `wanted` accepts.
-    pub fn may_contain(&self, wanted: impl Fn(BlockId) -> bool) -> bool {
-        self.palette
-            .as_ref()
-            .is_none_or(|palette| palette.iter().copied().any(wanted))
+    /// False only for the kinds the section surely does not hold.
+    pub fn contents(&self) -> Contents {
+        self.contents
     }
 
     pub fn get(&self, x: i32, y: i32, z: i32) -> BlockId {

@@ -276,12 +276,14 @@ impl Session {
             }
         };
         view.world.entities.advance(f64::from(frame_seconds));
-        self.renderer.models.entities = view
-            .world
-            .entities
-            .iter()
-            .map(|(_, kind, pose)| (kind, pose))
-            .collect();
+        let entities = &mut self.renderer.models.entities;
+        entities.clear();
+        entities.extend(
+            view.world
+                .entities
+                .iter()
+                .map(|(_, kind, pose)| (kind, pose)),
+        );
         view.update(
             &self.gpu,
             &mut self.renderer,

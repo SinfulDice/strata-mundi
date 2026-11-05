@@ -7,6 +7,7 @@
   - [x] Simulation des fluides (core + serveur) : niveaux 1-7 générés depuis une définition `fluid` du pack, sources, chute prioritaire puis écoulement vers la pente la plus proche, file de blocs actifs (aucun balayage), vitesses eau/lave, eau + lave = pierre ou obsidienne, mises à jour de voisinage générales (plantes, liquides), eau générée inerte jusqu'à perturbation ; tests obligatoires (source dans un trou fermé se stabilise ; aucune propagation infinie)
   - [x] Rendu et physique des fluides : surface inclinée selon les niveaux, transparence, légère animation, brouillard sous l'eau ; nager, couler, ralentissement (physique partagée) ; seau créatif (prendre/poser une source)
   - [x] Bateaux : entité pilotable sur l'eau (ECS serveur, messages, rendu d'un modèle simple côté client), plusieurs essences de bois, glisse sur la glace, monter/descendre, objet bateau créatif ; types d'entité et modèles en boîtes en pack, physique partagée `core::physics::boat`, glissance de bloc, interpolation client, sauvegarde `entities/…`, D044
+  - [x] Corrections de la relecture : seau dans la case choisie et créatif seul, option « Fluides » à la création du monde et `/fluids`, fluides sans allocation par mise à jour, veille des bateaux immobiles, test de stabilisation réel, banc `fluids/large_flow_settles`, `game.rs` et `render/mod.rs` découpés
 - **Dernière session** : 05/11/2026
 
 ## Fait
@@ -60,6 +61,8 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 05/11/2026 (v0.2 j4, 18 biomes) | Génération d'une colonne (plaine / montagne / caverne / gisement) | 1,61 / 2,49 / 1,25 / 2,49 ms | `generation/*` |
 | 05/11/2026 (v0.2 j4, arbres) | Génération d'une colonne (plaine / montagne / caverne / gisement) | 1,56 / 2,37 / 1,18 / 2,70 ms | `generation/*` |
 | 04/11/2026 (v0.2 j1) | Génération d'une colonne (relief 3D) | 1,80 ms | `generation/generate_column` |
+| 05/11/2026 (v0.2 j5) | Grand écoulement (lac par une brèche de 32 blocs, jusqu'à stabilisation) | 5,93 ms | `fluids/large_flow_settles` |
+| 05/11/2026 (v0.2 j5, relecture) | Maillage surface / damier / eau qui coule / voisinage | 0,19 / 1,00 / 0,25 / 0,045 ms | `meshing/*` |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
@@ -77,6 +80,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 - Capture d'un monde prise seulement en le quittant (pas aux sauvegardes automatiques).
 - Pas de conversion des sauvegardes avant la v1.0 (règle du projet) : la « copie avant migration » arrivera avec la première migration.
 - Nom du bloc visé sans « outil requis » : les outils arrivent en v0.3.
+- Bateaux : retirés seulement en créatif (clic gauche), sans objet rendu ; hors créatif un bateau posé n'est pas récupérable tant que la survie (v0.3) n'existe pas. Seaux réservés au créatif pour la même raison.
 - Horodatage GPU indisponible sur lavapipe (« n/d » dans les rapports cloud).
 - Réglages sans système en v0.1, ajoutés avec leur système : nuages, particules, distance de simulation (pas encore d'entités simulées), son.
 - Console : pas de saisie à la manette (règle du projet : « console exceptée ») ; `/gamemode survival` répond que la survie arrive en v0.3.

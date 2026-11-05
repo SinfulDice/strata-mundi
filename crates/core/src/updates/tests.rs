@@ -5,7 +5,6 @@ use crate::content::{Content, FluidLevel};
 use crate::pack::PackSet;
 use std::path::Path;
 use std::sync::OnceLock;
-use std::time::Instant;
 
 const GROUND: i32 = 64;
 
@@ -144,8 +143,12 @@ fn a_source_in_a_closed_hole_settles() {
             .iter()
             .all(|p| (0..5).contains(&p.x) && (62..64).contains(&p.y))
     );
-    let (_, more) = settle(&mut sim, &mut world, 10);
-    assert!(more.is_empty());
+    let mut more = Vec::new();
+    for _ in 0..200 {
+        sim.tick(&mut world, &mut more);
+    }
+    assert!(more.is_empty(), "nothing moves once settled");
+    assert_eq!(world.fluid_cells(), cells);
 }
 
 #[test]
@@ -404,9 +407,10 @@ fn water_washes_plants_away() {
     );
 }
 
-/// Timed: a lake pours through a breach 32 blocks wide down a cliff into a pit.
+/// A lake pours through a breach 32 blocks wide down a cliff into a pit (timed by the
+/// `fluids` benchmark).
 #[test]
-fn a_large_flow_stays_cheap() {
+fn a_large_flow_settles() {
     let mut world = Plane::new();
     let water = id("strata:water");
     for (x, z) in (0..32).flat_map(|x| (0..32).map(move |z| (x, z))) {
@@ -423,20 +427,6 @@ fn a_large_flow_stays_cheap() {
         world.put(at(-1, GROUND, z), world.stone);
         sim.set_block(&mut world, at(-1, GROUND, z), BlockId::AIR, &mut changes);
     }
-    let (mut ticks, mut worst) = (0u32, std::time::Duration::ZERO);
-    let start = Instant::now();
-    while sim.active() > 0 && ticks < 5000 {
-        let tick = Instant::now();
-        sim.tick(&mut world, &mut changes);
-        worst = worst.max(tick.elapsed());
-        ticks += 1;
-    }
-    let total = start.elapsed();
-    println!(
-        "large flow: {} changes in {ticks} ticks, {:?} total, worst tick {worst:?}",
-        changes.len(),
-        total
-    );
-    assert_eq!(sim.active(), 0);
-    assert!(changes.len() > 1000);
+    let (_, flowed) = settle(&mut sim, &mut world, 5000);
+    assert!(changes.len() + flowed.len() > 1000);
 }

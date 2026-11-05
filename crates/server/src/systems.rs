@@ -4,6 +4,7 @@ use crate::ecs::{Ecs, Entity};
 use crate::rules::BlockRules;
 use glam::DVec3;
 use strata_core::physics::{BoatControls, MoveInput, Terrain, step, step_boat};
+use strata_core::updates::BlockChange;
 
 /// Inputs a client may bank to catch up after a stall (one more is earned each tick).
 const MAX_INPUT_BUDGET: u8 = 3;
@@ -12,6 +13,8 @@ const MAX_INPUT_BUDGET: u8 = 3;
 const IDLE_TICKS: u32 = 10;
 /// Boats closer than this to their last sent position and yaw are not sent again.
 const MOVE_EPSILON: f64 = 1e-4;
+/// An empty boat this many ticks still (one second) stops being simulated.
+pub const SLEEP_TICKS: u32 = 20;
 
 /// Applies each player's queued inputs with the shared physics, at the pace of the clock,
 /// and records the last input sequence applied. A riding player's inputs steer the boat
@@ -66,8 +69,8 @@ fn steering(input: &MoveInput) -> BoatControls {
     }
 }
 
-/// Moves every boat one tick, then sits the riders in them. Returns the boats that moved
-/// enough to be sent again.
+/// Moves every awake boat one tick, then sits the riders in them. Returns the boats that
+/// moved enough to be sent again.
 pub fn boat_movement(ecs: &mut Ecs, rules: &BlockRules, terrain: &impl Terrain) -> Vec<Entity> {
     let mut moved = Vec::new();
     for (entity, boat) in ecs.boats.iter_mut() {
@@ -77,7 +80,17 @@ pub fn boat_movement(ecs: &mut Ecs, rules: &BlockRules, terrain: &impl Terrain) 
         let Some(handling) = kind.boat else {
             continue;
         };
+        if boat.pilot.is_none() && boat.still_ticks >= SLEEP_TICKS {
+            continue;
+        }
+        let before = boat.body.position;
         step_boat(&mut boat.body, boat.controls, &handling, kind.size, terrain);
+        let still = boat.body.position.distance(before) < MOVE_EPSILON
+            && boat.body.velocity.length() < MOVE_EPSILON;
+        boat.still_ticks = match (still, boat.pilot) {
+            (true, None) => boat.still_ticks + 1,
+            _ => 0,
+        };
         let (position, yaw) = boat.sent;
         let turned = f64::from((boat.body.yaw - yaw).abs());
         if boat.body.position.distance(position) > MOVE_EPSILON || turned > MOVE_EPSILON {
@@ -92,4 +105,29 @@ pub fn boat_movement(ecs: &mut Ecs, rules: &BlockRules, terrain: &impl Terrain) 
         }
     }
     moved
+}
+
+/// Wakes the sleeping boats next to a changed block: the water may have left, or the
+/// ground under them.
+pub fn wake_boats(ecs: &mut Ecs, rules: &BlockRules, changed: &[BlockChange]) {
+    if changed.is_empty() {
+        return;
+    }
+    for (_, boat) in ecs.boats.iter_mut() {
+        if boat.still_ticks < SLEEP_TICKS {
+            continue;
+        }
+        let Some(kind) = rules.entity(boat.kind) else {
+            continue;
+        };
+        let reach = boat.body.aabb(kind.size);
+        let (min, max) = (reach.min - DVec3::ONE, reach.max + DVec3::ONE);
+        let near = changed.iter().any(|(pos, _)| {
+            let cell = DVec3::new(f64::from(pos.x), f64::from(pos.y), f64::from(pos.z));
+            (cell + DVec3::ONE).cmpge(min).all() && cell.cmple(max).all()
+        });
+        if near {
+            boat.still_ticks = 0;
+        }
+    }
 }

@@ -82,7 +82,7 @@ pub fn render_image(
     }
     for key in world.section_keys() {
         let mesh = mesh_section(
-            &world.neighborhood(key),
+            &world.neighborhood(key, &table),
             &table,
             MeshOptions::from_graphics(&view.graphics),
         );

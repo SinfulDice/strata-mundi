@@ -3098,6 +3098,7 @@ dependencies = [
 name = "strata-core"
 version = "0.1.0"
 dependencies = [
+ "criterion",
  "fluent-bundle",
  "fluent-syntax",
  "fontdue",

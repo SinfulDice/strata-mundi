@@ -245,6 +245,7 @@ mod tests {
             seed: String::new(),
             mode: GameMode::Creative,
             border: 5_000,
+            fluids: true,
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {
@@ -287,6 +288,7 @@ mod tests {
             seed: String::new(),
             mode: GameMode::Creative,
             border: 5_000,
+            fluids: true,
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {

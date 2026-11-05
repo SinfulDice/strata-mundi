@@ -30,6 +30,10 @@ ui-new-world-seed = SEED
 ui-new-world-seed-random = (NUTHIN: RANDUM)
 ui-new-world-border = WURLD EDGE (BLOKZ FROM MIDDL)
 ui-new-world-mode = GAEM MOAD: { $mode }
+ui-new-world-fluids = WATR AN LAVA: { $flow ->
+        [on] GOEZ SPLOOSH
+       *[off] STUK IN PLAIS
+    }
 ui-new-world-create = MAEK IT
 
 ui-delete-question = DELEET "{ $name }"? RLY?

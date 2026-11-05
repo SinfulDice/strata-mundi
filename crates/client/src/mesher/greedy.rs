@@ -176,7 +176,7 @@ pub fn mesh_section(
 ) -> SectionMesh {
     let mut mesh = SectionMesh::default();
     // Liquid cells need their own checks; sections without any skip them entirely.
-    if blocks.may_contain(|id| table.family(id).is_some()) {
+    if blocks.contents().liquid {
         mesh_faces::<true>(blocks, table, options.ambient_occlusion, &mut mesh);
     } else {
         mesh_faces::<false>(blocks, table, options.ambient_occlusion, &mut mesh);

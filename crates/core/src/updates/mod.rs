@@ -58,6 +58,8 @@ pub struct BlockUpdates {
     planned: HashMap<BlockPos, (u64, u64)>,
     next_order: u64,
     now: u64,
+    /// Changes still to propagate, kept to reuse its memory.
+    pending: Vec<BlockChange>,
 }
 
 impl BlockUpdates {
@@ -69,6 +71,7 @@ impl BlockUpdates {
             planned: HashMap::new(),
             next_order: 0,
             now: 0,
+            pending: Vec::new(),
         }
     }
 
@@ -102,7 +105,8 @@ impl BlockUpdates {
         if !world.set_block(pos, block) {
             return false;
         }
-        let mut pending = vec![(pos, block)];
+        let mut pending = std::mem::take(&mut self.pending);
+        pending.push((pos, block));
         while let Some((pos, block)) = pending.pop() {
             changes.push((pos, block));
             self.plan_fluid(pos, block);
@@ -113,6 +117,7 @@ impl BlockUpdates {
                 }
             }
         }
+        self.pending = pending;
         true
     }
 

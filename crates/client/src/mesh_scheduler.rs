@@ -124,7 +124,7 @@ impl MeshScheduler {
             let job = MeshJob {
                 key,
                 version: self.versions.get(&key).copied().unwrap_or_default(),
-                blocks: world.neighborhood(key),
+                blocks: world.neighborhood(key, &self.table),
             };
             if self.workers.submit(job).is_err() {
                 self.dirty.insert(key);

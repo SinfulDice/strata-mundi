@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 /// Farthest a liquid flows on flat ground: flowing levels are 1 to 7, as in Minecraft.
 pub const MAX_SPREAD: u8 = 7;
-const MAX_SLOPE_SEARCH: u8 = 8;
+pub const MAX_SLOPE_SEARCH: u8 = 8;
 
 /// The `fluid` field of a block: makes it the source of a flowing liquid.
 #[derive(Debug, Clone, Deserialize)]

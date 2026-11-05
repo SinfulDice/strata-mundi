@@ -64,9 +64,9 @@ fn meshing(c: &mut Criterion) {
     // Real sections know their palette, which lets the mesher skip the liquid checks.
     let land: Vec<BlockId> = (0..WATER).map(BlockId).collect();
     let flooded: Vec<BlockId> = (0..WATER + 8).map(BlockId).collect();
-    let surface = Neighborhood::build(terrain).of_section([0; 3], &land);
-    let worst = Neighborhood::build(checkerboard).of_section([0; 3], &land);
-    let water = Neighborhood::build(flowing_water).of_section([0; 3], &flooded);
+    let surface = Neighborhood::build(terrain).of_section([0; 3], &land, &table);
+    let worst = Neighborhood::build(checkerboard).of_section([0; 3], &land, &table);
+    let water = Neighborhood::build(flowing_water).of_section([0; 3], &flooded, &table);
     c.bench_function("mesh_section_terrain", |b| {
         b.iter(|| mesh_section(black_box(&surface), &table, AO))
     });

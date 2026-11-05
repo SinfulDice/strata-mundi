@@ -18,6 +18,8 @@ pub struct NewWorld {
     pub mode: GameMode,
     /// Half-width of the playable square, in blocks.
     pub border: i32,
+    /// Liquids flow (they can be frozen later with `/fluids`).
+    pub fluids: bool,
 }
 
 /// Whether a saved world can be opened by this version of the game.

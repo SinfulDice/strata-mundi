@@ -30,6 +30,10 @@ ui-new-world-seed = Graine
 ui-new-world-seed-random = (vide : au hasard)
 ui-new-world-border = Bordure du monde (blocs depuis le centre)
 ui-new-world-mode = Mode de jeu : { $mode }
+ui-new-world-fluids = Fluides : { $flow ->
+        [on] ils coulent
+       *[off] figés
+    }
 ui-new-world-create = Créer
 
 ui-delete-question = Supprimer « { $name } » ?

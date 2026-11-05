@@ -15,8 +15,7 @@ pub fn mesh_crosses(
     vegetation: Vegetation,
     target: &mut MeshData,
 ) {
-    let is_cross = |id| table.get(id).render == RenderKind::Cross;
-    if vegetation == Vegetation::Off || !blocks.may_contain(is_cross) {
+    if vegetation == Vegetation::Off || !blocks.contents().cross {
         return;
     }
     let origin = blocks.origin();

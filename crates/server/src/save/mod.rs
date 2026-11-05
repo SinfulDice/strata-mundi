@@ -23,6 +23,7 @@ pub use strata_core::files::write_atomic;
 use meta::FormatOnly;
 use std::path::{Path, PathBuf};
 use strata_core::dimension::DimensionId;
+use strata_core::updates::FluidSettings;
 use strata_protocol::{NewWorld, WorldStatus, WorldSummary};
 use thiserror::Error;
 
@@ -202,7 +203,10 @@ pub fn create(
         last_played: now,
         play_ticks: 0,
         day_time: 0,
-        fluids: Default::default(),
+        fluids: FluidSettings {
+            flow: new.fluids,
+            ..FluidSettings::default()
+        },
     };
     folder.write_meta(&meta)?;
     Ok((folder, meta))
@@ -282,6 +286,7 @@ mod tests {
             seed: "42".to_owned(),
             mode: GameMode::Creative,
             border: 1000,
+            fluids: true,
         }
     }
 

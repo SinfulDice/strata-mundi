@@ -126,6 +126,7 @@ pub struct CreateForm {
     pub seed: String,
     pub border: String,
     pub mode: GameMode,
+    pub fluids: bool,
 }
 
 impl CreateForm {
@@ -137,6 +138,7 @@ impl CreateForm {
             seed: String::new(),
             border: DEFAULT_WORLD_BORDER.to_string(),
             mode: GameMode::Creative,
+            fluids: true,
         }
     }
 
@@ -157,6 +159,7 @@ impl CreateForm {
             seed: self.seed.trim().to_owned(),
             mode: self.mode,
             border,
+            fluids: self.fluids,
         }
     }
 }
@@ -175,6 +178,13 @@ impl ScreenModel for CreateModel<'_> {
             "mode" => Some(self.shared.tr_with(
                 "ui-new-world-mode",
                 &[("mode", self.shared.tr(mode_key(self.form.mode)))],
+            )),
+            "fluids" => Some(self.shared.tr_with(
+                "ui-new-world-fluids",
+                &[(
+                    "flow",
+                    if self.form.fluids { "on" } else { "off" }.to_owned(),
+                )],
             )),
             _ => None,
         }
@@ -195,6 +205,10 @@ impl ScreenModel for CreateModel<'_> {
         let effect = match id {
             // Survival arrives in v0.3: creative is the only mode for now.
             "mode" => return,
+            "fluids" => {
+                self.form.fluids = !self.form.fluids;
+                return;
+            }
             "create" => Effect::Action(UiAction::Create(self.form.world())),
             "back" => Effect::Pop,
             _ => return,

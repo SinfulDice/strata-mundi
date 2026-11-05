@@ -162,8 +162,11 @@ mod tests {
 
     /// A meadow: a plant on every cell of layer 5, meshed with `vegetation`.
     fn meadow(vegetation: Vegetation, origin: [i32; 3]) -> usize {
-        let blocks = Neighborhood::build(|_, y, _| BlockId(if y == 5 { 5 } else { 0 }))
-            .of_section(origin, &[BlockId(0), BlockId(5)]);
+        let blocks = Neighborhood::build(|_, y, _| BlockId(if y == 5 { 5 } else { 0 })).of_section(
+            origin,
+            &[BlockId(0), BlockId(5)],
+            &table(),
+        );
         let options = MeshOptions { vegetation, ..AO };
         mesh_section(&blocks, &table(), options).opaque.quad_count() / 4
     }
@@ -185,8 +188,11 @@ mod tests {
 
     #[test]
     fn sections_without_plants_skip_the_cross_pass() {
-        let blocks = Neighborhood::build(|_, y, _| BlockId(if y == 5 { 5 } else { 0 }))
-            .of_section([0; 3], &[BlockId(0), BlockId(1)]);
+        let blocks = Neighborhood::build(|_, y, _| BlockId(if y == 5 { 5 } else { 0 })).of_section(
+            [0; 3],
+            &[BlockId(0), BlockId(1)],
+            &table(),
+        );
         assert!(mesh_section(&blocks, &table(), AO).is_empty());
     }
 

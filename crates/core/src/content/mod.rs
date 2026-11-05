@@ -13,7 +13,9 @@ pub use block::{
     Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
 };
 pub use entity::{EntityDef, EntityType, ModelBox};
-pub use fluid::{Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SPREAD};
+pub use fluid::{
+    Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SLOPE_SEARCH, MAX_SPREAD,
+};
 pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};

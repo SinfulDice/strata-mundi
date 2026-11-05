@@ -35,6 +35,8 @@ sequenceDiagram
 
 Le joueur assis n'a plus de déplacement propre : ses entrées deviennent des commandes du bateau (avancer/reculer, tourner), et son corps est posé au siège à chaque tick. Au moment de descendre, le serveur cherche une rive libre à côté ; sinon on reste sur le bateau. Clic gauche en créatif : le bateau est retiré.
 
+Un bateau vide qui ne bouge plus depuis une seconde **se met en veille** : le serveur ne le simule plus. Il se réveille si un bloc tout près change (l'eau qui le portait s'en va, on casse le sol) ou si quelqu'un monte dedans.
+
 ### Côté client
 
 Le client ne prédit pas le bateau (un tick de latence en solo, invisible). Il garde les deux dernières positions reçues et **interpole** entre elles pour un mouvement fluide, en prenant le plus court chemin pour le cap. Il ne choisit jamais lui-même un identifiant : il désigne les entités par un `NetEntity`, construit à partir de l'indice et de la génération (voir [ECS](ecs.md)) et qui n'est jamais réutilisé.
@@ -55,7 +57,7 @@ Les bateaux sont écrits dans `entities/<espace>/<dimension>.ron` (type par iden
 | Physique du bateau | `crates/core/src/physics/boat.rs` (`BoatBody`, `BoatControls`, `step_boat`, `liquid_surface`) |
 | Composants `boats` et `mounts` | `crates/server/src/ecs/mod.rs` (`Boat`) |
 | Pose, montée, descente, retrait, sauvegarde | `crates/server/src/game/boat.rs` |
-| Système des bateaux et des joueurs assis | `crates/server/src/systems.rs` (`boat_movement`, `player_movement`) |
+| Système des bateaux et des joueurs assis | `crates/server/src/systems.rs` (`boat_movement`, `player_movement`, `wake_boats`) |
 | Fichier de sauvegarde des entités | `crates/server/src/save/entities.rs` |
 | Messages | `crates/protocol/src/messages.rs` (`EntitySpawned`, `EntityMoved`, `EntityRemoved`, `Mounted`, `InteractEntity`, `AttackEntity`) |
 | Entités côté client, interpolation | `crates/client/src/entities.rs` (`ClientEntities`) |

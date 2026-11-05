@@ -159,7 +159,7 @@ impl ClientWorld {
     }
 
     /// Section `key` plus a one-block border, with the 3×3 neighbouring columns looked up once.
-    pub fn neighborhood(&self, key: SectionKey) -> Neighborhood {
+    pub fn neighborhood(&self, key: SectionKey, table: &BlockTable) -> Neighborhood {
         let (cx, cz, section) = key;
         let near: [[Option<&Column>; 3]; 3] = std::array::from_fn(|dz| {
             std::array::from_fn(|dx| {
@@ -179,7 +179,7 @@ impl ClientWorld {
             .and_then(|column| column.section(section))
             .map_or(&[][..], |s| s.palette());
         let origin = [cx * SECTION_SIZE, base_y, cz * SECTION_SIZE];
-        blocks.of_section(origin, palette)
+        blocks.of_section(origin, palette, table)
     }
 }
 
@@ -221,7 +221,7 @@ mod tests {
         let mut world = ClientWorld::default();
         world.set_block(-1, 20, 0, BlockId(3));
         world.set_block(16, 16, 15, BlockId(4));
-        let blocks = world.neighborhood((0, 0, 1));
+        let blocks = world.neighborhood((0, 0, 1), &table());
         assert_eq!(blocks.get(-1, 4, 0), BlockId(3));
         assert_eq!(blocks.get(16, 0, 15), BlockId(4));
         assert_eq!(blocks.get(0, 0, 0), BlockId::AIR);
@@ -253,7 +253,7 @@ mod tests {
     fn the_cavern_floor_of_the_lowest_section_is_meshed() {
         let world = cavern_floor();
         let mesh = crate::mesher::mesh_section(
-            &world.neighborhood((0, 0, 0)),
+            &world.neighborhood((0, 0, 0), &table()),
             &table(),
             Default::default(),
         );
