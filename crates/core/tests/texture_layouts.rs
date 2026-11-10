@@ -162,3 +162,22 @@ fn natural_blocks_have_random_variants() {
         );
     }
 }
+
+#[test]
+fn the_grass_side_marks_the_dirt_that_keeps_its_colour() {
+    let content = game();
+    let alphas = |name: &str| {
+        let layer = texture(&content, name);
+        let image = content.textures.layers().nth(usize::from(layer.0)).unwrap();
+        let mut alphas: Vec<u8> = (0..image.height())
+            .flat_map(|y| (0..image.width()).map(move |x| (x, y)))
+            .map(|(x, y)| image.get(x, y).0[3])
+            .collect();
+        alphas.sort_unstable();
+        alphas.dedup();
+        alphas
+    };
+    assert_eq!(alphas("strata:grass_block_side"), [254, 255]);
+    assert_eq!(alphas("strata:grass_block_top"), [255]);
+    assert_eq!(alphas("strata:dirt"), [255]);
+}

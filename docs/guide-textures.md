@@ -79,6 +79,12 @@ Motifs (`pattern`) : `Noise(cells: (x, y), octaves)` (grain ; `(8, 2)` donne des
 
 Règles de style : lumière unique venant d'**en haut à gauche** ; contour des objets et des mobs dans un ton **plus foncé de leur propre couleur** ; couleurs prises dans la palette globale pour garder un ensemble harmonieux.
 
+## Couleurs des biomes
+
+L'herbe, les feuilles (sauf bouleau et sapin), les plantes et l'eau prennent la couleur du biome : le bloc porte `tint: (kind: Grass)` (ou `Foliage`, `Water`), et chaque biome donne dans `colors` un **facteur** par canal (rouge, vert, bleu) : `(1.0, 1.0, 1.0)` garde la couleur peinte, `(1.4, 1.05, 0.6)` la jaunit (savane), 2 au plus. Peins donc ces textures dans la couleur des plaines.
+
+Pour le côté du bloc d'herbe (`faces: TopFringe`), seule la frange prend la couleur : les pixels qui doivent garder leur couleur (la terre) ont une transparence de **254** au lieu de 255 (invisible à l'œil). La recette `Overlay` le fait d'elle-même ; dans un PNG, mets l'alpha de ces pixels à 254.
+
 ## Textures vivantes : animées, connectées, variantes
 
 Une texture peut avoir **plusieurs images**. Le bloc la nomme comme d'habitude (`textures: All("strata:water")`) ; le jeu se charge de choisir l'image.
