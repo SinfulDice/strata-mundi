@@ -18,10 +18,11 @@ use std::sync::Arc;
 use strata_client::bench::{BenchConfig, BenchScene};
 use strata_client::camera::Camera;
 use strata_client::launcher::Launcher;
-use strata_client::screenshot::{View, capture, capture_sky};
+use strata_client::screenshot::{ParticleShot, View, capture, capture_sky};
 use strata_client::settings::{GraphicsSettings, Preset, Settings};
 use strata_client::texture_sheet::write_texture_sheet;
 use strata_client::{ClientConfig, DEFAULT_FOV, run};
+use strata_core::coords::BlockPos;
 use strata_core::dimension::DimensionId;
 use strata_core::physics::EYE_HEIGHT;
 use strata_worldgen::{Generator, Seed};
@@ -165,6 +166,10 @@ fn screenshot(
         size: args.size,
         sky: capture_sky(&loaded.content, &dimension, args.time, &graphics),
         graphics,
+        particles: ParticleShot {
+            broken: args.break_block.map(|[x, y, z]| BlockPos::new(x, y, z)),
+            seconds: args.particles.unwrap_or(0.0),
+        },
     };
     Ok(capture(&loaded.content, &mut world, &view, path)?)
 }

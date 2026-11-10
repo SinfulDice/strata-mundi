@@ -1,6 +1,6 @@
 Particle(
     lifetime: (5.0, 6.0),
-    size: (0.08, 0.08),
+    size: (0.1, 0.1),
     gravity: 12.0,
     hang: 2.0,
     glows: true,

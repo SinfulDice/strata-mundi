@@ -163,7 +163,8 @@ impl ParticleSystem {
             let remaining = (particle.lifetime - particle.age) / (0.25 * particle.lifetime);
             let size = particle.size * remaining.clamp(0.0, 1.0);
             let centre = particle.position + DVec3::Y * f64::from(size * 0.5);
-            let light = world.light_at(cell_of(centre));
+            // The bottom: a drop under a ceiling has its top in the rock.
+            let light = world.light_at(cell_of(particle.position));
             let block_light = if def.glows {
                 1.0
             } else {

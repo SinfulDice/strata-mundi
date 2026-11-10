@@ -1,17 +1,19 @@
 use crate::camera::Camera;
 use crate::mesher::{BlockTable, MeshOptions, mesh_section};
 use crate::models::ModelLibrary;
+use crate::particles::{ParticleSystem, ParticleTable};
 use crate::render::{
     Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, RenderOptions, Renderer,
     Target, TextureFiltering,
 };
-use crate::settings::{GraphicsSettings, Lighting};
+use crate::settings::{GraphicsSettings, Lighting, ParticleMode};
 use crate::sky::SkyFrame;
 use crate::world::ClientWorld;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
-use strata_core::content::Content;
+use strata_core::content::{BlockId, Content};
+use strata_core::coords::BlockPos;
 use strata_core::dimension::DimensionId;
 use strata_core::light::LightTable;
 use strata_core::sky::Moment;
@@ -42,6 +44,42 @@ pub struct View {
     pub size: (u32, u32),
     pub graphics: GraphicsSettings,
     pub sky: SkyFrame,
+    pub particles: ParticleShot,
+}
+
+/// Particles frozen at one moment: a block broken at the start, then `seconds` of
+/// simulation (drips need a few to appear).
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ParticleShot {
+    pub broken: Option<BlockPos>,
+    pub seconds: f32,
+}
+
+/// Simulation step of the particles of a capture.
+const PARTICLE_STEP: f32 = 1.0 / 60.0;
+
+impl ParticleShot {
+    /// Breaks the block (it leaves the world before light and meshing) and returns the
+    /// particles thrown.
+    fn start(
+        &self,
+        content: &Content,
+        world: &mut ClientWorld,
+        mode: ParticleMode,
+    ) -> ParticleSystem {
+        let mut particles = ParticleSystem::new(ParticleTable::from_content(content), mode);
+        if let Some(pos) = self.broken {
+            particles.block_changed(pos, world.block_at(pos), BlockId::AIR, world);
+            world.set_block(pos.x, pos.y, pos.z, BlockId::AIR);
+        }
+        particles
+    }
+
+    fn run(&self, particles: &mut ParticleSystem, world: &ClientWorld, camera: &Camera) {
+        for _ in 0..(self.seconds / PARTICLE_STEP).round() as u32 {
+            particles.update(PARTICLE_STEP, camera.position, world);
+        }
+    }
 }
 
 /// The sky of `dimension` at world time `time` (ticks; noon if `None`).
@@ -75,6 +113,9 @@ pub fn render_image(
     world: &mut ClientWorld,
     view: &View,
 ) -> Result<RgbaImage, ScreenshotError> {
+    let mut particles = view
+        .particles
+        .start(content, world, view.graphics.particles);
     match view.graphics.lighting {
         Lighting::Full => world.compute_light(&LightTable::from_content(content)),
         Lighting::Flat => world.light_flat(),
@@ -111,6 +152,8 @@ pub fn render_image(
     }
     let size = view.size;
     let camera = &view.camera;
+    view.particles.run(&mut particles, world, camera);
+    particles.write_instances(camera.position, world, &mut renderer.particles.instances);
     renderer.immersion = world.immersion(camera.position, content);
     let target = OffscreenTarget::new(&gpu, size);
     let mut encoder = gpu.device.create_command_encoder(&Default::default());

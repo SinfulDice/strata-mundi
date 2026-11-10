@@ -3,6 +3,8 @@
 // Without `pos`, the camera starts at the spawn point of the seed. Without `seed`, the
 // diorama `scene` (`assets/scenes/<scene>.ron`, `preview` by default) is captured.
 // `time` is the world time in ticks (`--time`; noon if omitted, 24000 a day).
+// `break` (`--break x,y,z`) breaks a block just before the capture; `particles`
+// (`--particles <seconds>`) simulates particles that long first.
 [
     (name: "preview", pos: (-12.0, 15.5, 14.0), look: (41.0, -28.0)),
     (name: "spawn-42", seed: "42", look: (30.0, -20.0)),
@@ -40,4 +42,6 @@
     (name: "atmosphere-savanna", seed: "42", pos: (-174.0, 159.0, 582.0), look: (45.0, -20.0)),
     (name: "atmosphere-taiga", seed: "42", pos: (770.0, 160.0, -258.0), look: (45.0, -20.0)),
     (name: "atmosphere-border", seed: "42", pos: (188.0, 185.0, 330.0), look: (0.0, -40.0)),
+    (name: "particles-break", scene: "particles", pos: (3.5, 8.4, 11.0), look: (0.0, -22.0), break: (3, 7, 8), particles: 0.12),
+    (name: "particles-drips", scene: "particles", pos: (0.5, 7.2, 4.0), look: (0.0, 8.0), particles: 10.0),
 ]

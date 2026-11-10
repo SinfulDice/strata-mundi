@@ -32,6 +32,14 @@ pub struct Args {
     #[arg(long, value_name = "TICK")]
     pub time: Option<u64>,
 
+    /// Screenshot: the block broken just before the capture, `x,y,z` (its fragments fly).
+    #[arg(long = "break", value_name = "X,Y,Z", value_parser = parse_block, allow_hyphen_values = true)]
+    pub break_block: Option<[i32; 3]>,
+
+    /// Screenshot: seconds of particles simulated before the capture (drips, fragments).
+    #[arg(long, value_name = "SECONDS")]
+    pub particles: Option<f32>,
+
     /// Without `--seed`: the diorama `assets/scenes/<NAME>.ron` captured by `--screenshot`.
     #[arg(long, value_name = "NAME", default_value = "preview")]
     pub scene: String,
@@ -106,6 +114,10 @@ fn parse_numbers<T: std::str::FromStr, const N: usize>(text: &str) -> Result<[T;
 }
 
 fn parse_vec3(text: &str) -> Result<[f64; 3], String> {
+    parse_numbers(text)
+}
+
+fn parse_block(text: &str) -> Result<[i32; 3], String> {
     parse_numbers(text)
 }
 

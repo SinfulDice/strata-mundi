@@ -1,0 +1,21 @@
+// Particles for captures (`--scene particles`): a stone overhang open to the south,
+// with a pond of water and a pool of lava on its roof (drips below them), a torch under
+// it, and a small pile of blocks in the sun to break.
+(
+    fills: [
+        (from: (-14, 0, -14), to: (14, 0, 14), block: "strata:bedrock"),
+        (from: (-14, 1, -14), to: (14, 4, 14), block: "strata:stone"),
+        (from: (-14, 5, -14), to: (14, 5, 14), block: "strata:grass_block"),
+        (from: (-10, 6, -12), to: (10, 11, -9), block: "strata:stone"),
+        (from: (-10, 6, -8), to: (-9, 11, 1), block: "strata:stone"),
+        (from: (9, 6, -8), to: (10, 11, 1), block: "strata:stone"),
+        (from: (-8, 10, -8), to: (8, 10, 1), block: "strata:stone"),
+        (from: (-10, 11, -8), to: (10, 11, 2), block: "strata:stone"),
+        (from: (-7, 11, -7), to: (-1, 11, 0), block: "strata:water"),
+        (from: (1, 11, -7), to: (7, 11, 0), block: "strata:lava"),
+        (from: (0, 6, -6), to: (0, 6, -6), block: "strata:torch"),
+        (from: (2, 6, 7), to: (4, 6, 8), block: "strata:dirt"),
+        (from: (3, 7, 8), to: (3, 7, 8), block: "strata:oak_leaves"),
+        (from: (2, 6, 9), to: (2, 6, 9), block: "strata:stone"),
+    ],
+)

@@ -86,6 +86,7 @@ pub fn render_biomes(
                 ..graphics.clone()
             },
             sky,
+            particles: Default::default(),
         };
         let path = image_path(dir, &biome.id);
         capture(content, &mut world, &view, &path)
