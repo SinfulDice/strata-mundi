@@ -164,3 +164,7 @@ option-music-volume = Musique
 option-music-volume-help = Volume de la musique.
 option-subtitles = Sous-titres
 option-subtitles-help = Écrit en bas à droite chaque son entendu, avec une flèche vers sa direction.
+option-spatial-audio = Audio spatial
+option-spatial-audio-help = Avancé : écho selon le lieu (grotte, maison, plein air) et sons étouffés derrière les murs. Stéréo simple : distance et gauche/droite seulement, moins de calcul (préréglage DS).
+spatial-advanced = Avancé
+spatial-simple = Stéréo simple

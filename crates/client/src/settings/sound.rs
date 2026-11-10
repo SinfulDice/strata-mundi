@@ -1,5 +1,7 @@
-//! Sound settings: volumes by category and subtitles. Presets never touch them.
+//! Sound settings: volumes by category, subtitles and spatial audio (the only one the
+//! presets set: plain stereo on the DS and the very low preset).
 
+use super::Preset;
 use serde::{Deserialize, Serialize};
 use strata_core::audio::SoundCategory;
 
@@ -15,6 +17,40 @@ pub struct SoundSettings {
     pub music: u32,
     /// Text at the bottom right for every sound heard, with its direction.
     pub subtitles: bool,
+    pub spatial: SpatialAudio,
+}
+
+/// How sounds are placed in space.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum SpatialAudio {
+    /// Reverberation of the place and sounds muffled behind walls.
+    #[default]
+    Advanced,
+    /// Distance and left/right only: less work for the processor.
+    Simple,
+}
+
+impl SpatialAudio {
+    pub const ALL: [SpatialAudio; 2] = [Self::Advanced, Self::Simple];
+
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Advanced => "advanced",
+            Self::Simple => "simple",
+        }
+    }
+
+    pub fn for_preset(preset: Preset) -> Self {
+        match preset {
+            Preset::VeryLow | Preset::Ds => Self::Simple,
+            Preset::Low | Preset::Medium | Preset::High | Preset::Ultra => Self::Advanced,
+        }
+    }
+
+    pub fn is_advanced(self) -> bool {
+        self == Self::Advanced
+    }
 }
 
 impl Default for SoundSettings {
@@ -25,6 +61,7 @@ impl Default for SoundSettings {
             ambient: 100,
             music: 70,
             subtitles: false,
+            spatial: SpatialAudio::Advanced,
         }
     }
 }

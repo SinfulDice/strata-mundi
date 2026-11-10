@@ -4,7 +4,7 @@
 use crate::world::ClientWorld;
 use glam::DVec3;
 use strata_core::audio::{Rng, SoundSet};
-use strata_core::content::{BlockId, Content, SoundId};
+use strata_core::content::{Block, BlockId, Content, RenderKind, SoundId};
 use strata_core::coords::BlockPos;
 use strata_core::physics::Body;
 
@@ -23,6 +23,8 @@ pub struct BlockSounds {
     pub liquid: bool,
     /// Gives way to what is put in its place (air, plants, fire, liquids).
     pub yields: bool,
+    /// How much it muffles sound through it: 0 (air, plants) to 1 (full solid block).
+    pub density: f32,
 }
 
 /// Sounds of each block, by `BlockId`.
@@ -45,6 +47,7 @@ impl SoundTable {
                     .unwrap_or_default(),
                 liquid: block.fluid.is_some(),
                 yields: id == BlockId::AIR || block.replaceable || block.fluid.is_some(),
+                density: density(block),
             })
             .collect();
         Self { blocks }
@@ -78,11 +81,21 @@ impl SoundTable {
     }
 }
 
-fn centre(pos: BlockPos) -> DVec3 {
+fn density(block: &Block) -> f32 {
+    match block.render {
+        _ if block.fluid.is_some() => 0.4,
+        RenderKind::Opaque if block.solid => 1.0,
+        RenderKind::Opaque | RenderKind::Translucent => 0.6,
+        RenderKind::Cutout => 0.2,
+        RenderKind::Cross | RenderKind::Invisible => 0.0,
+    }
+}
+
+pub(super) fn centre(pos: BlockPos) -> DVec3 {
     DVec3::new(pos.x as f64, pos.y as f64, pos.z as f64) + 0.5
 }
 
-fn cell(position: DVec3) -> BlockPos {
+pub(super) fn cell(position: DVec3) -> BlockPos {
     BlockPos::new(
         position.x.floor() as i32,
         position.y.floor() as i32,

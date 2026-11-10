@@ -8,7 +8,7 @@ use crate::settings::{
 };
 use crate::settings::{
     AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, ParticleMode, Preset, Settings,
-    Vegetation, default_worker_threads,
+    SpatialAudio, Vegetation, default_worker_threads,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,6 +41,7 @@ pub enum Setting {
     AmbientVolume,
     MusicVolume,
     Subtitles,
+    SpatialAudio,
     Language,
     Scale,
     Font,
@@ -93,6 +94,7 @@ pub const SOUND: &[Setting] = &[
     Setting::AmbientVolume,
     Setting::MusicVolume,
     Setting::Subtitles,
+    Setting::SpatialAudio,
 ];
 pub const INTERFACE: &[Setting] = &[
     Setting::Language,
@@ -217,6 +219,10 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
             (format!("{volume} %"), gauge(volume, VOLUME))
         }
         Setting::Subtitles => (on_off(shared, s.sound.subtitles), None),
+        Setting::SpatialAudio => (
+            shared.tr(&format!("spatial-{}", s.sound.spatial.id())),
+            None,
+        ),
         Setting::Language => (shared.tr("language-name"), None),
         Setting::Scale if i.scale == 0 => (shared.tr("ui-scale-auto"), None),
         Setting::Scale => (
@@ -317,6 +323,10 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         | Setting::AmbientVolume
         | Setting::MusicVolume => range(volume_of(setting, s), VOLUME, 10, step),
         Setting::Subtitles => s.sound.subtitles = !s.sound.subtitles,
+        Setting::SpatialAudio => {
+            s.sound.spatial = cycle(&SpatialAudio::ALL, s.sound.spatial, step);
+            s.preset = None;
+        }
         Setting::Language => i.cycle_language(),
         Setting::Scale => range(&mut i.scale, (0, MAX_SCALE), 1, step),
         Setting::Font => {

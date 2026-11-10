@@ -62,8 +62,18 @@ fn volumes_step_by_ten_and_keep_the_preset() {
     );
     assert!(
         settings.preset.is_some(),
-        "sound is not part of the presets"
+        "volumes are not part of the presets"
     );
     settings.apply_preset(Preset::Ds);
-    assert_eq!(settings.sound.master, 90, "and no preset changes it");
+    assert_eq!(settings.sound.master, 90, "and no preset changes them");
+    assert_eq!(
+        settings.sound.spatial,
+        SpatialAudio::Simple,
+        "but the DS is plain stereo"
+    );
+    step_setting(Setting::SpatialAudio, &mut settings, 1);
+    assert_eq!(
+        (settings.sound.spatial, settings.preset),
+        (SpatialAudio::Advanced, None)
+    );
 }

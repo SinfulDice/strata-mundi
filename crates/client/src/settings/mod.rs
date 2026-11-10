@@ -15,7 +15,7 @@ pub use graphics::{
     VERTICAL_DISTANCE, Vegetation, default_worker_threads,
 };
 pub use interface::{ColorFilter, FontChoice, InterfaceSettings, MAX_SCALE};
-pub use sound::{SoundSettings, VOLUME};
+pub use sound::{SoundSettings, SpatialAudio, VOLUME};
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -78,6 +78,7 @@ impl Settings {
             brightness,
             ..GraphicsSettings::for_preset(preset)
         };
+        self.sound.spatial = SpatialAudio::for_preset(preset);
     }
 }
 

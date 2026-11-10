@@ -5,7 +5,7 @@ mod reload;
 mod transitions;
 
 use crate::app::{ClientConfig, ClientError};
-use crate::audio::{Audio, listener_at};
+use crate::audio::{Audio, Hearing, listener_at};
 use crate::bench::BenchRun;
 use crate::debug_overlay::DebugOverlay;
 use crate::input::{Action, Binding, Gamepads, InputState};
@@ -245,7 +245,7 @@ impl Session {
         let pause = self.screens.wants_pause() || self.suspended;
         self.renderer.advance_time(frame_seconds);
         self.renderer.immersion = None;
-        let (view, camera, yaw, body) = match &mut self.stage {
+        let (view, camera, yaw, body, biomes, daylight) = match &mut self.stage {
             Stage::Empty => return,
             Stage::Title(title) => {
                 title.update(frame_seconds);
@@ -257,6 +257,8 @@ impl Session {
                     title.camera.position,
                     title.camera.yaw,
                     None,
+                    &[][..],
+                    1.0,
                 )
             }
             Stage::Playing(world) => {
@@ -288,8 +290,17 @@ impl Session {
                     .world
                     .immersion(world.game.camera.position, &self.content);
                 let body = world.game.player_body();
-                let camera = &world.game.camera;
-                (&mut world.game.view, camera.position, camera.yaw, body)
+                let daylight = world.game.daylight();
+                let game = &mut world.game;
+                let camera = &game.camera;
+                (
+                    &mut game.view,
+                    camera.position,
+                    camera.yaw,
+                    body,
+                    &game.biomes[..],
+                    daylight,
+                )
             }
         };
         view.world.entities.advance(f64::from(frame_seconds));
@@ -305,9 +316,14 @@ impl Session {
         for (pos, old, new) in view.block_changes.drain(..) {
             self.audio.block_changed(pos, old, new);
         }
-        let listener = listener_at(camera, yaw);
-        self.audio
-            .update(particle_seconds, listener, body.as_ref(), &view.world);
+        let hearing = Hearing {
+            listener: listener_at(camera, yaw),
+            player: body.as_ref(),
+            world: &view.world,
+            biomes,
+            daylight,
+        };
+        self.audio.update(particle_seconds, &hearing);
         view.particles
             .write_instances(camera, &view.world, &mut self.renderer.particles.instances);
         view.update(

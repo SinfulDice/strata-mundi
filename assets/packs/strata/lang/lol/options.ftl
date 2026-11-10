@@ -164,3 +164,7 @@ option-music-volume = MUZIK
 option-music-volume-help = HOW LOUD IZ TEH MUZIK.
 option-subtitles = SOUNDZ WRITTED
 option-subtitles-help = WRITEZ EVRY SOUND AT TEH BOTTOM RITE, WIF ARROW TO IT.
+option-spatial-audio = SOUNDZ IN SPAEC
+option-spatial-audio-help = FANCY: ECHOEZ IN CAVEZ AN HOUSEZ, SOUNDZ GO MUFFLD BEHIND WALLZ. SIMPL: ONLY FAR AN LEFT/RITE, LES THINKIN (DS PRESET).
+spatial-advanced = FANCY
+spatial-simple = SIMPL STEREO

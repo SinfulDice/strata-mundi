@@ -219,6 +219,14 @@ impl Gameplay {
         Some(pose.position + DVec3::Y * (seat + EYE_HEIGHT))
     }
 
+    /// 0 at night, 1 by day (by day until the server gave the time).
+    pub fn daylight(&self) -> f32 {
+        match (&self.day_cycle, &self.day) {
+            (Some(cycle), Some(day)) => cycle.daylight(day.time()),
+            _ => 1.0,
+        }
+    }
+
     /// The biome under the camera, as the server named it.
     pub fn biome_at_camera(&self) -> Option<&BiomeInfo> {
         let position = self.camera.position;

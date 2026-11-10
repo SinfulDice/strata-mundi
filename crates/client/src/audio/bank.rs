@@ -49,32 +49,41 @@ impl SoundBank {
     /// A buffer and a pitch for one play; never the same variant twice in a row.
     pub fn pick(&mut self, id: SoundId, rng: &mut Rng) -> Option<Pick> {
         let sound = self.sounds.get(id)?;
-        let entry = self.entries.get_mut(id.index())?;
         let pitch = rng.range(sound.def.pitch);
-        if let Some(path) = &sound.ogg {
-            let recording = entry.recording.get_or_insert_with(|| decode(path));
-            if let Some(buffer) = recording {
-                return Some(Pick {
-                    buffer: Arc::clone(buffer),
-                    pitch,
-                });
-            }
-        }
+        let entry = self.entries.get(id.index())?;
         let count = entry.variants.len();
         let mut index = (rng.next_u64() % count.max(1) as u64) as usize;
         if count > 1 && entry.last_variant == Some(index) {
             index = (index + 1) % count;
         }
-        entry.last_variant = Some(index);
+        let buffer = self.buffer(id, index)?;
+        if let Some(entry) = self.entries.get_mut(id.index()) {
+            entry.last_variant = Some(index);
+        }
+        Some(Pick { buffer, pitch })
+    }
+
+    /// The buffer of a looping bed (its first variant, or its recording).
+    pub fn bed(&mut self, id: SoundId) -> Option<Arc<[f32]>> {
+        self.buffer(id, 0)
+    }
+
+    /// The pack's recording if it has a readable one, else variant `index` of the recipe.
+    fn buffer(&mut self, id: SoundId, index: usize) -> Option<Arc<[f32]>> {
+        let sound = self.sounds.get(id)?;
+        let entry = self.entries.get_mut(id.index())?;
+        if let Some(path) = &sound.ogg {
+            let recording = entry.recording.get_or_insert_with(|| decode(path));
+            if let Some(buffer) = recording {
+                return Some(Arc::clone(buffer));
+            }
+        }
         let slot = entry.variants.get_mut(index)?;
         let buffer = slot.get_or_insert_with(|| {
             let seed = audio::variant_seed(sound, index as u8);
             audio::render(&sound.def, seed).into()
         });
-        Some(Pick {
-            buffer: Arc::clone(buffer),
-            pitch,
-        })
+        Some(Arc::clone(buffer))
     }
 
     /// Samples kept in memory.

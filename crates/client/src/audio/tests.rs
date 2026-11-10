@@ -30,12 +30,28 @@ fn block(name: &str) -> BlockId {
 
 fn voice(category: SoundCategory, at: Option<DVec3>) -> Voice {
     Voice {
+        id: 0,
         buffer: vec![0.5; 4410].into(),
         category,
         gain: 1.0,
         pitch: 1.0,
         at,
         range: 16.0,
+        muffle: 0.0,
+    }
+}
+
+fn hearing<'a>(
+    listener: Listener,
+    player: Option<&'a Body>,
+    world: &'a ClientWorld,
+) -> Hearing<'a> {
+    Hearing {
+        listener,
+        player,
+        world,
+        biomes: &[],
+        daylight: 1.0,
     }
 }
 
@@ -270,15 +286,16 @@ fn without_a_device_nothing_panics() {
         let world = ClientWorld::default();
         let ears = listener_at(DVec3::new(0.0, 70.0, 0.0), 1.0);
         audio.block_changed(BlockPos::new(2, 70, 0), block("stone"), BlockId::AIR);
-        audio.update(0.05, ears, Some(&Body::at(DVec3::ZERO)), &world);
+        let body = Body::at(DVec3::ZERO);
+        audio.update(0.05, &hearing(ears, Some(&body), &world));
         audio.apply_settings(&crate::settings::SoundSettings::default());
-        audio.update(0.05, ears, None, &world);
+        audio.update(0.05, &hearing(ears, None, &world));
         audio.set_content(content());
     }
     let mut audio = Audio::silent(content(), &settings);
     audio.block_changed(BlockPos::new(-3, 70, 0), block("stone"), BlockId::AIR);
     let ears = listener_at(DVec3::new(0.5, 70.5, 0.5), 0.0);
-    audio.update(0.05, ears, None, &ClientWorld::default());
+    audio.update(0.05, &hearing(ears, None, &ClientWorld::default()));
     let line = &audio.subtitles()[0];
     assert_eq!(
         (line.key.as_str(), line.direction),

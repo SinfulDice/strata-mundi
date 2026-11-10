@@ -164,3 +164,7 @@ option-music-volume = Music
 option-music-volume-help = Volume of the music.
 option-subtitles = Subtitles
 option-subtitles-help = Writes every sound heard at the bottom right, with an arrow towards it.
+option-spatial-audio = Spatial audio
+option-spatial-audio-help = Advanced: echo of the place (cave, house, open air) and sounds muffled behind walls. Simple stereo: distance and left/right only, less work (DS preset).
+spatial-advanced = Advanced
+spatial-simple = Simple stereo
