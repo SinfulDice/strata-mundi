@@ -33,13 +33,13 @@ graph LR
 
 ### Mises à jour de voisinage
 
-Le même mécanisme sert à d'autres blocs : quand un bloc change, ses 6 voisins sont prévenus. Une fleur dont le sol disparaît est retirée, une liane sans plafond aussi, et ainsi de suite en cascade. Tous les changements sont envoyés aux clients comme un `BlockChanged` ordinaire.
+Le même mécanisme (et le même budget par tick) sert au **feu** (voir [Feu](feu.md)) : `fluids.flow: false` ne fige que les liquides. Il sert aussi à d'autres blocs : quand un bloc change, ses 6 voisins sont prévenus. Une fleur dont le sol disparaît est retirée, une liane sans plafond aussi, et ainsi de suite en cascade. Tous les changements sont envoyés aux clients comme un `BlockChanged` ordinaire.
 
 ### Affichage
 
 - **Surface inclinée** : une case de source est à 14/16 de hauteur, un écoulement descend jusqu'à 2/16, une chute fait 16/16. Chaque coin prend la moyenne des cases voisines de la même famille : l'eau forme des pentes douces, et les cascades sont continues. Le mailleur et la physique utilisent **la même fonction** de hauteur.
 - Les faces entre deux blocs du même liquide ne sont pas dessinées ; les surfaces plates des océans sont fusionnées, les surfaces inclinées non.
-- **Animation** : le temps est envoyé au shader, qui fait défiler la texture (lente pour la lave). Le réglage graphique « Textures animées » (`animated_textures`) la coupe sans remailler.
+- **Animation** : le temps est envoyé au shader, qui fait défiler la texture (lente pour la lave) et choisit l'image d'ondulation (voir [Textures vivantes](textures-vivantes.md)). Le réglage graphique « Textures animées » (`animated_textures`, ancien `liquid_animation`) coupe les deux sans remailler. Un liquide `puts_out_fire: true` (l'eau) éteint le feu.
 - **Sous la surface** : l'écran se teinte (brouillard de la couleur du liquide : 12 blocs de visibilité dans l'eau, 2,5 dans la lave).
 
 ### Nager

@@ -31,7 +31,7 @@ graph TD
 - **Retirer** : `remove.ron` du pack `gemmes` : `{ "blocks": ["strata:sand"] }`.
 - **Registres** : chaque bloc reçoit un numéro compact (`BlockId`, 16 bits) pour les chunks et le rendu ; l'air est toujours le numéro 0. Les numéros ne servent qu'en mémoire : les sauvegardes stockent les identifiants texte, donc ajouter un pack ne casse pas un monde.
 - **Erreurs** : un fichier cassé ne fait jamais planter le jeu. Chaque problème est signalé avec le fichier, la ligne et la colonne (`blocks/typo.ron:3:5: unexpected field hardnes`), l'entrée fautive est ignorée, une texture manquante est remplacée par un damier magenta.
-- **Textures** : voir [`docs/guide-textures.md`](../guide-textures.md). Les minerais et franges sont peints sur un calque transparent puis posés sur leur base, même si celle-ci est un PNG en 32 ou 64 px. Les paramètres des recettes sont bornés (6 octaves, 64 amas…) pour qu'un pack ne puisse pas figer le jeu. Les textures sont dessinées par le processeur au chargement (déterministe : même résultat partout), puis rangées dans le tableau de textures du GPU, une couche par texture.
+- **Textures** : voir [`docs/guide-textures.md`](../guide-textures.md). Les minerais et franges sont peints sur un calque transparent puis posés sur leur base, même si celle-ci est un PNG en 32 ou 64 px. Les paramètres des recettes sont bornés (6 octaves, 64 amas…) pour qu'un pack ne puisse pas figer le jeu. Les textures sont dessinées par le processeur au chargement (déterministe : même résultat partout), puis rangées dans le tableau de textures du GPU : une couche par texture, plus des couches supplémentaires pour les images d'animation, de variantes ou de raccords (voir [Textures vivantes](textures-vivantes.md)). Le jeu de base doit tenir dans 256 couches.
 - **Traductions** : fichiers **Fluent** `.ftl` (`block-strata-stone = Pierre`). Les clés suivent l'identifiant : `block-<namespace>-<nom>`, `item-…`, `category-…`. Un test échoue si une clé manque dans l'une des trois langues (fr, en, lol). Le glossaire LOLcat est dans `lang/lol-glossary.ron`.
 - **Packs de ressources** (`resourcepacks/<nom>/`) : même format, mais ils ne peuvent que changer l'apparence (textures, palette, traductions), jamais les règles du jeu.
 
@@ -52,6 +52,8 @@ Block(
     placement: Fixed,     // Axis : se couche dans l'axe de la face cliquée (bûches)
     replaceable: false,   // poser en le visant met le nouveau bloc à sa place (plantes)
     rooted: false,        // a besoin d'un bloc solide dessous, sinon disparaît (plantes au sol)
+    flammability: Some((catch: 5, burn: 5)),  // inflammable (bûches) ; voir Feu
+    fire: (tick_rate: 30, max_age: 15),       // fait du bloc un feu (strata:fire)
 )
 ```
 

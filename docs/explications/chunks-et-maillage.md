@@ -38,11 +38,12 @@ graph LR
 4. **Occlusion ambiante** : chaque coin de face regarde ses trois voisins devant lui ; plus il y a de blocs, plus le coin est sombre (4 niveaux). C'est ce qui assombrit doucement le pied d'un arbre ou le fond d'un couloir. La diagonale de chaque carré est choisie pour éviter un dégradé de travers. Réglable (0 = désactivée). La **lumière lissée** suit le même principe : chaque coin moyenne la lumière des cases autour (voir [Lumière](lumiere.md)) ; réglage `smooth_lighting`.
 5. **Plantes en croix** : les blocs `Cross` (herbes, fleurs) sont mis de côté avant la fusion : deux plans diagonaux, chacun émis dans les deux sens (8 sommets), sans occlusion ni masquage de voisines. Voir [Biomes et végétation](biomes-et-vegetation.md).
 6. **Liquides** : la hauteur de chaque coin suit les cases voisines de la même famille (pentes, cascades) ; les faces inclinées ne sont jamais fusionnées, les océans plats si. Pas d'occlusion sur les liquides. Voir [Fluides](fluides.md).
-7. **Deux maillages** : opaque et « découpé » (feuilles, verre : pixels gardés ou jetés) d'un côté, **translucide** (eau, glace : mélangée) de l'autre. Le translucide est dessiné après, des sections lointaines aux proches, sans écrire la profondeur.
+7. **Variantes et raccords** : pour une texture aléatoire ou connectée, le mailleur remplace la couche du bloc par celle de la bonne variante (hachage de la position, ou voisins identiques) *avant* la fusion : seules des faces de même image fusionnent. Voir [Textures vivantes](textures-vivantes.md). Les textures animées, elles, sont choisies par le shader et ne coûtent aucun remaillage.
+8. **Deux maillages** : opaque et « découpé » (feuilles, verre : pixels gardés ou jetés) d'un côté, **translucide** (eau, glace : mélangée) de l'autre. Le translucide est dessiné après, des sections lointaines aux proches, sans écrire la profondeur.
 
 ### Format des sommets
 
-Chaque sommet tient en **8 octets** : position dans la section (0 à 16), face (0 à 5, ou 6 pour une plante en croix, éclairée à plat), occlusion, répétition de texture, numéro de couche de texture, abaissement du sommet (liquides), animation, puis la lumière : 4 bits de ciel et 4 bits de blocs, gardés séparés pour que la nuit n'assombrisse que le ciel. Le shader décode ces bits. La position de la section est envoyée à part (relative à la caméra). C'est 3,5 fois moins qu'un sommet « classique » : moins de mémoire GPU, important pour le DS.
+Chaque sommet tient en **8 octets** : position dans la section (0 à 16), face (0 à 5, ou 6 pour une plante en croix, éclairée à plat), occlusion, répétition de texture, numéro de couche de texture (16 bits ; le format n'a pas changé avec les textures vivantes), abaissement du sommet (liquides), animation (code de défilement des liquides), puis la lumière : 4 bits de ciel et 4 bits de blocs, gardés séparés pour que la nuit n'assombrisse que le ciel. Le shader décode ces bits. La position de la section est envoyée à part (relative à la caméra). C'est 3,5 fois moins qu'un sommet « classique » : moins de mémoire GPU, important pour le DS.
 
 ### Threads
 
@@ -59,6 +60,7 @@ Mesures (`cargo bench -p strata-client`, machine cloud) : ~0,21 ms par section d
 | Mailleur | `crates/client/src/mesher/` (`greedy.rs`, `cross.rs`, `neighborhood.rs`, `vertex.rs`) |
 | Threads de maillage | `crates/client/src/mesher/workers.rs`, `crates/client/src/mesh_scheduler.rs` |
 | Rendu des sections | `crates/client/src/render/mod.rs`, `block_pipeline.rs`, `shaders/block.wgsl` |
+| Variantes et raccords de textures | `crates/client/src/mesher/variants.rs` |
 | Lumière lissée | `crates/client/src/mesher/shading.rs` |
 | Benchmarks | `crates/client/benches/meshing.rs` |
 

@@ -30,6 +30,8 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 21. [Bateaux et entités](bateaux-et-entites.md) : types d'entité en pack, physique du bateau, modèles en boîtes.
 22. [Lumière](lumiere.md) : ciel et blocs 0-15, propagation, thread dédié, lissage par sommet, shader.
 23. [Jour, nuit et ciel](jour-nuit-et-ciel.md) : cycle du soleil, lune, étoiles, nuages, heure envoyée au client.
+24. [Feu](feu.md) : âge, propagation, options `/fire`, briquet.
+25. [Textures vivantes](textures-vivantes.md) : animations dans le shader, variantes et raccords au maillage.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 
@@ -52,7 +54,7 @@ graph TD
 
 | Crate | Rôle | Dépend de |
 |---|---|---|
-| `core` | Types purs du jeu : coordonnées, blocs, chunks, registres, packs, physique (joueur, nage, bateau) , mises à jour de blocs (fluides), moteur de lumière et cycle jour/nuit (`sky`). Aucune fenêtre ni carte graphique : testable partout. | — |
+| `core` | Types purs du jeu : coordonnées, blocs, chunks, registres, packs, physique (joueur, nage, bateau) , mises à jour de blocs (fluides, feu), textures à images multiples, moteur de lumière et cycle jour/nuit (`sky`). Aucune fenêtre ni carte graphique : testable partout. | — |
 | `worldgen` | Fabrique le terrain à partir d'une graine (seed) : climat, relief, biomes, grottes, arbres, plantes, carte vue du ciel. Même graine = même monde. | `core` |
 | `protocol` | Les messages échangés entre client et serveur. | `core` |
 | `server` | Le « maître du jeu » : simule le monde 20 fois par seconde, décide de tout, sauvegarde. | `core`, `worldgen`, `protocol` |
