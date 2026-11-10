@@ -10,8 +10,8 @@ pub use controls::{ControlSettings, DEAD_ZONE, SENSITIVITY};
 pub use game::GameSettings;
 pub use graphics::{
     ANISOTROPY, AUTO_THREADS, BIOME_BLEND, BRIGHTNESS, CloudMode, DEFAULT_BRIGHTNESS, FOV,
-    GraphicsSettings, Lighting, Preset, RENDER_DISTANCE, RENDER_SCALE, VERTICAL_DISTANCE,
-    Vegetation, default_worker_threads,
+    GraphicsSettings, Lighting, ParticleMode, Preset, RENDER_DISTANCE, RENDER_SCALE,
+    VERTICAL_DISTANCE, Vegetation, default_worker_threads,
 };
 pub use interface::{ColorFilter, FontChoice, InterfaceSettings, MAX_SCALE};
 

@@ -71,6 +71,11 @@ option-vegetation-help = HOW MANY GRAZ IZ DRAWN. LES GRAZ = HAPPY GRAFIX CARD.
 vegetation-full = ALL TEH GRAZ
 vegetation-reduced = SUM GRAZ
 vegetation-off = NO GRAZ
+option-particles = SPARKLEZ
+option-particles-help = BITZ OV BROKEN BLOKZ, DRIPPY DROPZ, BUBBLZ. SUM: LES BITZ. NONE: NO BITZ, NO WURK.
+particles-off = NO SPARKLEZ
+particles-reduced = SUM SPARKLEZ
+particles-full = ALL TEH SPARKLEZ
 option-mesh-threads = MESH THREADZ
 option-mesh-threads-help = MOAR = WORLD SHOWZ FASTR, MOAR CPU.
 option-world-threads = WORLD THREADZ

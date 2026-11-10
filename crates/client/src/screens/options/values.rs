@@ -7,8 +7,8 @@ use crate::settings::{
     SENSITIVITY, VERTICAL_DISTANCE,
 };
 use crate::settings::{
-    AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, Preset, Settings, Vegetation,
-    default_worker_threads,
+    AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, ParticleMode, Preset, Settings,
+    Vegetation, default_worker_threads,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,6 +33,7 @@ pub enum Setting {
     Mipmaps,
     Anisotropy,
     Vegetation,
+    Particles,
     MeshThreads,
     WorldThreads,
     Language,
@@ -77,6 +78,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Mipmaps,
     Setting::Anisotropy,
     Setting::Vegetation,
+    Setting::Particles,
     Setting::MeshThreads,
     Setting::WorldThreads,
 ];
@@ -186,6 +188,7 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
             shared.tr(&format!("vegetation-{}", g.vegetation.id())),
             None,
         ),
+        Setting::Particles => (shared.tr(&format!("particles-{}", g.particles.id())), None),
         Setting::MeshThreads => (threads_label(shared, g.worker_threads), None),
         Setting::WorldThreads => (threads_label(shared, g.generation_threads), None),
         Setting::Language => (shared.tr("language-name"), None),
@@ -278,6 +281,7 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Mipmaps => g.mipmaps = !g.mipmaps,
         Setting::Anisotropy => g.anisotropy = cycle(&ANISOTROPY, g.anisotropy, step),
         Setting::Vegetation => g.vegetation = cycle(&Vegetation::ALL, g.vegetation, step),
+        Setting::Particles => g.particles = cycle(&ParticleMode::ALL, g.particles, step),
         Setting::MeshThreads => g.worker_threads = cycle_threads(g.worker_threads, cores, step),
         Setting::WorldThreads => {
             g.generation_threads = cycle_threads(g.generation_threads, cores, step)
@@ -369,5 +373,19 @@ mod tests {
         assert_eq!(settings.graphics.clouds, CloudMode::Off);
         step_setting(Setting::Clouds, &mut settings, -1);
         assert_eq!(settings.graphics.clouds, CloudMode::Full);
+    }
+
+    #[test]
+    fn particles_cycle_off_reduced_full() {
+        let mut settings = Settings::default();
+        settings.apply_preset(crate::settings::Preset::Ds);
+        assert_eq!(settings.graphics.particles, ParticleMode::Reduced);
+        step_setting(Setting::Particles, &mut settings, 1);
+        assert_eq!(
+            (settings.graphics.particles, settings.preset),
+            (ParticleMode::Full, None)
+        );
+        step_setting(Setting::Particles, &mut settings, 1);
+        assert_eq!(settings.graphics.particles, ParticleMode::Off);
     }
 }

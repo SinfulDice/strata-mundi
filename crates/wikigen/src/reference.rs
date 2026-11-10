@@ -223,6 +223,9 @@ fn presets(ctx: &Ctx<'_>) -> String {
         line("option-vegetation", &|g| {
             ctx.tr(&format!("vegetation-{}", g.vegetation.id()))
         }),
+        line("option-particles", &|g| {
+            ctx.tr(&format!("particles-{}", g.particles.id()))
+        }),
     ]
     .concat();
     format!(

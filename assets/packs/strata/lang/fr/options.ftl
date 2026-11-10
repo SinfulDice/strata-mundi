@@ -71,6 +71,11 @@ option-vegetation-help = Herbes et fleurs dessinées. Réduite ou désactivée s
 vegetation-full = Complète
 vegetation-reduced = Réduite
 vegetation-off = Désactivée
+option-particles = Particules
+option-particles-help = Éclats des blocs cassés, gouttes sous les plafonds, bulles. Réduites : moins nombreuses ; désactivées : aucun calcul ni dessin.
+particles-off = Désactivées
+particles-reduced = Réduites
+particles-full = Complètes
 option-mesh-threads = Fils de maillage
 option-mesh-threads-help = Plus = monde affiché plus vite, plus de CPU.
 option-world-threads = Fils de génération

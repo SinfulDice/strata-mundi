@@ -71,6 +71,11 @@ option-vegetation-help = Grass and flowers drawn. Reduced or off eases the graph
 vegetation-full = Full
 vegetation-reduced = Reduced
 vegetation-off = Off
+option-particles = Particles
+option-particles-help = Fragments of broken blocks, drips under ceilings, bubbles. Reduced: fewer of them; off: nothing computed or drawn.
+particles-off = Off
+particles-reduced = Reduced
+particles-full = Full
 option-mesh-threads = Meshing threads
 option-mesh-threads-help = More = world shown faster, more CPU.
 option-world-threads = Generation threads
