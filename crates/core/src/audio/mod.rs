@@ -4,6 +4,7 @@
 mod ambience;
 mod dsp;
 mod load;
+pub mod music;
 mod recipe;
 mod synth;
 #[cfg(test)]
@@ -19,7 +20,7 @@ pub use recipe::{
     Band, Envelope, Filter, Layer, MAX_GRAINS, MAX_LAYERS, Mode, SoundCategory, SoundDef, Wobble,
 };
 pub use synth::{render, seamless};
-pub use wav::{wav_bytes, write_wav};
+pub use wav::{WAV_HEADER, wav_bytes, wav_header, write_wav};
 
 /// Samples per second of every rendered buffer.
 pub const SAMPLE_RATE: u32 = 44_100;

@@ -2,6 +2,7 @@
 //! pack gives one) and sound sets (`sound_sets/<name>.ron`, what a block sounds like).
 
 use super::ambience::{Ambience, load_ambiences};
+use super::music::{Theme, load_themes};
 use super::recipe::{SoundDef, bound};
 use crate::content::{Registry, SoundId};
 use crate::id::Identifier;
@@ -65,6 +66,7 @@ pub struct Sounds {
     pub registry: Registry<SoundId, Sound>,
     pub sets: BTreeMap<Identifier, SoundSet>,
     pub ambiences: Vec<Ambience>,
+    pub themes: Vec<Theme>,
 }
 
 impl Sounds {
@@ -124,6 +126,7 @@ pub fn load_sounds(packs: &PackSet, errors: &mut Vec<PackError>) -> Sounds {
         registry,
         sets,
         ambiences,
+        themes: load_themes(packs, errors),
     }
 }
 
@@ -175,7 +178,7 @@ fn resolve_set(
 }
 
 /// FNV-1a of the identifier.
-fn seed_of(id: &Identifier) -> u64 {
+pub(super) fn seed_of(id: &Identifier) -> u64 {
     id.to_string()
         .bytes()
         .fold(0xCBF2_9CE4_8422_2325, |hash, byte| {
