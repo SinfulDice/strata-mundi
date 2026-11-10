@@ -215,6 +215,7 @@ fn presets(ctx: &Ctx<'_>) -> String {
         line("option-mipmaps", &|g| yes_no(g.mipmaps)),
         line("option-animated-textures", &|g| yes_no(g.animated_textures)),
         line("option-texture-variants", &|g| yes_no(g.texture_variants)),
+        line("option-biome-blend", &|g| g.biome_blend.to_string()),
         line("option-stars", &|g| yes_no(g.stars)),
         line("option-clouds", &|g| {
             ctx.tr(&format!("clouds-{}", g.clouds.id()))

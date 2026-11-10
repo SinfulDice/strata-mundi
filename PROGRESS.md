@@ -4,7 +4,7 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 9 — Atmosphère
-  - [ ] Couleurs par biome : teinte de l'herbe, des feuilles, des plantes et de l'eau définie dans chaque biome du pack, mélangée aux frontières (pas de cassure), calculée au maillage ; brouillard de distance qui masque la limite de chargement, teinté selon le biome et l'heure ; vérifier la luminosité de nuit (herbe loin des feux trop claire sur `fire-night`) ; réglage du mélange (rayon) et préréglage DS ; captures de plusieurs biomes
+  - [x] Couleurs par biome : teinte de l'herbe, des feuilles, des plantes et de l'eau définie dans chaque biome du pack, mélangée aux frontières (pas de cassure), calculée au maillage ; brouillard de distance qui masque la limite de chargement, teinté selon le biome et l'heure ; vérifier la luminosité de nuit (herbe loin des feux trop claire sur `fire-night`) ; réglage du mélange (rayon) et préréglage DS ; captures de plusieurs biomes
   - [ ] Particules simples : casse de bloc (fragments de la texture), gouttes d'eau et de lave sous les plafonds, éclaboussures/bulles si simple ; système léger côté client (aucune donnée de monde), réglage particules (désactivées / réduites / complètes), préréglages ; tests et captures
 - **Dernière session** : 10/11/2026
 

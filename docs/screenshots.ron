@@ -33,4 +33,11 @@
     (name: "textures-connected", scene: "textures", pos: (-2.5, 19.5, 3.0), look: (0.0, -12.0)),
     (name: "textures-variants", scene: "textures", pos: (-2.0, 19.5, 14.0), look: (0.0, -35.0)),
     (name: "textures-animated", scene: "textures", pos: (8.0, 20.0, 1.0), look: (20.0, -15.0), time: 15000),
+    (name: "atmosphere-plains", seed: "42", pos: (866.0, 193.0, 158.0), look: (45.0, -20.0)),
+    (name: "atmosphere-forest", seed: "42", pos: (-510.0, 157.0, 150.0), look: (45.0, -20.0)),
+    (name: "atmosphere-swamp", seed: "42", pos: (-174.0, 135.0, 846.0), look: (45.0, -20.0)),
+    (name: "atmosphere-jungle", seed: "42", pos: (2370.0, 159.0, -802.0), look: (45.0, -20.0)),
+    (name: "atmosphere-savanna", seed: "42", pos: (-174.0, 159.0, 582.0), look: (45.0, -20.0)),
+    (name: "atmosphere-taiga", seed: "42", pos: (770.0, 160.0, -258.0), look: (45.0, -20.0)),
+    (name: "atmosphere-border", seed: "42", pos: (188.0, 185.0, 330.0), look: (0.0, -40.0)),
 ]
