@@ -8,8 +8,9 @@ use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::SectionKey;
 use crate::render::{Gpu, Renderer};
 use crate::settings::Lighting;
+use crate::sky::BiomeFog;
 use crate::world::ClientWorld;
-use glam::DVec3;
+use glam::{DVec3, Vec3};
 use std::collections::HashMap;
 use std::sync::Arc;
 use strata_core::chunk::{BiomeMap, Column};
@@ -26,6 +27,7 @@ pub struct WorldView {
     /// Block changes of this frame, by column, with the previous block: sent to the
     /// lighting thread together, so a column is copied at most once per frame.
     light_changes: HashMap<ColumnPos, Vec<(BlockPos, BlockId)>>,
+    biome_fog: BiomeFog,
 }
 
 impl WorldView {
@@ -42,6 +44,7 @@ impl WorldView {
             lighting: None,
             light_table,
             light_changes: HashMap::new(),
+            biome_fog: BiomeFog::default(),
         };
         match mode {
             Lighting::Full => view.start_lighting()?,
@@ -102,6 +105,12 @@ impl WorldView {
                 self.meshing.mark_dirty(key);
             }
         }
+    }
+
+    /// Colour factor of the fog around `camera`, eased over the frames.
+    pub fn follow_biome_fog(&mut self, camera: DVec3, seconds: f32) -> Vec3 {
+        let target = self.world.fog_tint_at(camera.x, camera.z);
+        self.biome_fog.follow(target, seconds)
     }
 
     pub fn insert(&mut self, column: Column, biomes: BiomeMap) {

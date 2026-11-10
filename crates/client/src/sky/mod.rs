@@ -1,8 +1,10 @@
 //! The sky at one moment: colors, sun, moon and stars worked out from the dimension's
 //! sky and day cycle, ready for the renderer. Also the world time the client shows.
 
+mod biome_fog;
 mod clock;
 
+pub use biome_fog::BiomeFog;
 pub use clock::DayClock;
 
 use crate::render::linear_rgb;
@@ -129,6 +131,18 @@ impl SkyFrame {
             clouds: sky
                 .clouds
                 .map(|clouds| CloudFrame::at(&clouds, time, daylight, glow_strength)),
+        }
+    }
+}
+
+impl SkyFrame {
+    /// The horizon and the fog multiplied by the biome's colour (linear factors), so the
+    /// fogged terrain and the sky behind it stay one colour.
+    pub fn with_fog_tint(self, tint: Vec3) -> Self {
+        Self {
+            horizon: self.horizon * tint,
+            fog: self.fog * tint,
+            ..self
         }
     }
 }

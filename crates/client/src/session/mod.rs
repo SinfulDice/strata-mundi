@@ -288,7 +288,8 @@ impl Session {
             camera,
             self.applied.graphics.vertical_distance,
         );
-        self.renderer.sky = self.sky_frame();
+        let fog_tint = view.follow_biome_fog(camera, frame_seconds);
+        self.renderer.sky = self.sky_frame().with_fog_tint(fog_tint);
     }
 
     fn handle_system_actions(&mut self) -> Result<(), ClientError> {

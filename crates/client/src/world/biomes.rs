@@ -2,6 +2,7 @@
 
 use super::{ClientWorld, around, column_of, local};
 use crate::mesher::ColumnTints;
+use glam::Vec3;
 use std::collections::HashMap;
 use std::sync::Arc;
 use strata_core::chunk::BiomeId;
@@ -14,6 +15,10 @@ pub(super) struct TintCache {
     radius: u32,
     columns: HashMap<ColumnPos, Arc<ColumnTints>>,
 }
+
+/// Blocks around the camera whose biomes colour the fog, and the sampling step.
+const FOG_REACH: i32 = 24;
+const FOG_STEP: i32 = 8;
 
 impl TintCache {
     pub(super) fn forget(&mut self, pos: ColumnPos) {
@@ -71,6 +76,26 @@ impl ClientWorld {
         let columns = &mut self.tints.borrow_mut().columns;
         columns.insert(pos, Arc::clone(&tints));
         Some(tints)
+    }
+
+    /// Mean fog colour (linear factors) of the biomes within `FOG_REACH` blocks of
+    /// `(x, z)`, sampled every `FOG_STEP`; `None` where nothing is loaded.
+    pub fn fog_tint_at(&self, x: f64, z: f64) -> Option<Vec3> {
+        let (x, z) = (x.floor() as i32, z.floor() as i32);
+        let steps = -FOG_REACH / FOG_STEP..=FOG_REACH / FOG_STEP;
+        let (mut sum, mut count) = (Vec3::ZERO, 0.0);
+        for dz in steps.clone() {
+            for dx in steps.clone() {
+                let Some(biome) = self.biome_at(x + dx * FOG_STEP, z + dz * FOG_STEP) else {
+                    continue;
+                };
+                let tint = self.biome_tints.get(usize::from(biome.0)).copied();
+                let factors = Vec3::from_array(tint.unwrap_or_default().fog.factors());
+                sum += factors.powf(2.2);
+                count += 1.0;
+            }
+        }
+        (count > 0.0).then(|| sum / count)
     }
 
     /// `None` where nothing is loaded.

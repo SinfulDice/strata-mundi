@@ -85,7 +85,7 @@ impl RenderOptions {
     pub fn for_capture(graphics: &GraphicsSettings) -> Self {
         Self {
             fog: graphics.fog,
-            fog_end: (graphics.render_distance as f32 - 0.5) * SECTION_SIZE as f32,
+            fog_end: fog_end(graphics.render_distance),
             render_scale: 1.0,
             color_filter: ColorFilter::None,
             animated_textures: graphics.animated_textures,
@@ -98,5 +98,31 @@ impl RenderOptions {
     /// Whether the image goes through the final pass (scaling, colour filter).
     pub fn needs_post(&self) -> bool {
         (self.render_scale - 1.0).abs() > f32::EPSILON || self.color_filter != ColorFilter::None
+    }
+}
+
+/// Columns at the edge of the loaded disc that are never drawn: a section is meshed only
+/// once the 5 × 5 columns around it are loaded and lit (D046).
+const UNMESHED_RING: f32 = 2.0;
+
+/// Where the fog is complete: the nearest the drawn world can end, whatever the camera's
+/// place in its column.
+fn fog_end(render_distance: u32) -> f32 {
+    (render_distance as f32 - UNMESHED_RING).max(1.0) * SECTION_SIZE as f32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_fog_ends_before_the_first_undrawn_column() {
+        for distance in [2, 6, 12, 32] {
+            let end = fog_end(distance);
+            let drawn = (distance as f32 - UNMESHED_RING) * SECTION_SIZE as f32;
+            assert!(end <= drawn.max(SECTION_SIZE as f32), "{distance}: {end}");
+            assert!(end > 0.0);
+        }
+        assert_eq!(fog_end(12), 160.0);
     }
 }

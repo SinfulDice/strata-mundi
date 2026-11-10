@@ -89,7 +89,9 @@ pub fn render_image(
     renderer.ambient_occlusion = f32::from(u8::from(ao));
     renderer.vertical_distance = view.graphics.vertical_distance;
     renderer.options = RenderOptions::for_capture(&view.graphics);
-    renderer.sky = view.sky;
+    let position = view.camera.position;
+    let fog_tint = world.fog_tint_at(position.x, position.z);
+    renderer.sky = view.sky.with_fog_tint(fog_tint.unwrap_or(glam::Vec3::ONE));
     renderer.models.library = ModelLibrary::from_content(content);
     renderer.models.entities = world.entity_models().collect();
     let table = BlockTable::from_content(content);
