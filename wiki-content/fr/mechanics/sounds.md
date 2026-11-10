@@ -12,9 +12,26 @@ Tous les sons du jeu sont **fabriqués par le jeu lui-même** à partir de recet
 
 Les sons viennent **de leur position** : plus faibles au loin, à gauche ou à droite selon l'endroit où l'on regarde, un peu étouffés quand ils viennent de derrière.
 
+## Ambiances
+
+Chaque lieu a son fond sonore, qui se mêle doucement au suivant quand on change de biome :
+
+- **Plaines et prairies** : le vent, plus fort en hauteur, avec une rafale de temps en temps.
+- **Forêts** : les feuilles qui bruissent.
+- **Jungle** : feuilles et insectes, plus bruyants la nuit.
+- **Marais** : la nuit, insectes et grenouilles.
+- **Montagnes et neige** : un vent fort, très fort près des sommets.
+- **Mer, océan et plages** : les vagues, qu'on entend déjà depuis la terre proche.
+- **Désert et badlands** : un vent sec et du sable soulevé.
+- **Sous terre** : un grondement sourd et des gouttes qui tombent au loin.
+
+## Écho et murs
+
+Avec l'**audio spatial avancé**, le lieu s'entend : rien en plein air, un léger écho dans une maison, plus dans une petite grotte, une longue résonance dans une grande caverne. Un son caché derrière des blocs pleins arrive **étouffé** et plus faible ; feuilles, verre et eau l'étouffent moins.
+
 ## Réglages
 
-Onglet **Son** des options : volume général, puis volumes des **blocs**, de l'**ambiance** et de la **musique**. Les préréglages graphiques n'y touchent pas. Sans carte son, le jeu tourne normalement, en silence.
+Onglet **Son** des options : volume général, puis volumes des **blocs**, de l'**ambiance** et de la **musique**, que les préréglages ne changent pas. **Audio spatial** : *avancé* (écho et sons étouffés) ou *stéréo simple* (distance et gauche/droite seulement, un peu moins de calcul) ; les préréglages **DS** et **très bas** passent en stéréo simple. Sans carte son, le jeu tourne normalement, en silence.
 
 ## Sous-titres
 

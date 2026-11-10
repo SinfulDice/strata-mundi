@@ -12,9 +12,26 @@ Every sound in the game is **made by the game itself** from recipes: filtered no
 
 Sounds come **from where they happen**: quieter far away, left or right depending on where you look, a little duller from behind.
 
+## Ambiences
+
+Each place has its own background, which slowly blends into the next one as you change biome:
+
+- **Plains and meadows**: the wind, stronger up high, with a gust now and then.
+- **Forests**: rustling leaves.
+- **Jungle**: leaves and insects, louder at night.
+- **Swamp**: at night, insects and frogs.
+- **Mountains and snow**: a strong wind, very strong near the summits.
+- **Sea, ocean and beaches**: the waves, already heard from the land nearby.
+- **Desert and badlands**: a dry wind and blowing sand.
+- **Underground**: a deep rumble and drops of water falling far away.
+
+## Echo and walls
+
+With **advanced spatial audio**, you can hear the place: nothing in the open air, a slight echo in a house, more in a small cave, a long ring in a large cavern. A sound hidden behind solid blocks arrives **muffled** and quieter; leaves, glass and water muffle it less.
+
 ## Settings
 
-**Sound** tab of the options: master volume, then **blocks**, **ambience** and **music** volumes. Graphics presets never change them. Without a sound card the game runs normally, silently.
+**Sound** tab of the options: master volume, then **blocks**, **ambience** and **music** volumes, which presets never change. **Spatial audio**: *advanced* (echo and muffled sounds) or *simple stereo* (distance and left/right only, a little less work); the **DS** and **very low** presets switch to simple stereo. Without a sound card the game runs normally, silently.
 
 ## Subtitles
 

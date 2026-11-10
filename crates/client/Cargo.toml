@@ -42,3 +42,7 @@ harness = false
 [[bench]]
 name = "particles"
 harness = false
+
+[[bench]]
+name = "audio"
+harness = false
