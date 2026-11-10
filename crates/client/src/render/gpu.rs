@@ -47,8 +47,10 @@ impl Gpu {
                 label: Some("strata device"),
                 required_features: wgpu::Features::IMMEDIATES
                     | (adapter.features() & optional_features),
+                // Every Vulkan device has at least 256 layers; packs may use more where possible.
                 required_limits: wgpu::Limits {
                     max_immediate_size: SECTION_OFFSET_SIZE,
+                    max_texture_array_layers: adapter.limits().max_texture_array_layers,
                     ..Default::default()
                 }
                 .using_resolution(adapter.limits()),

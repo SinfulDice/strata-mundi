@@ -64,6 +64,7 @@ const AO: MeshOptions = MeshOptions {
     ambient_occlusion: true,
     smooth_lighting: true,
     vegetation: strata_client::settings::Vegetation::Full,
+    texture_variants: true,
 };
 
 fn meshing(c: &mut Criterion) {

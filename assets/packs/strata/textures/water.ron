@@ -1,1 +1,1 @@
-Material(ramp: "water", pattern: Noise(cells: (4, 8), octaves: 2))
+Animated(frames: Sway(base: "strata:water_base", count: 8, amplitude: 1), frame_time: 4)

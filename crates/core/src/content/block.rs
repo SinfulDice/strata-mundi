@@ -324,11 +324,13 @@ impl Block {
         self.render == RenderKind::Opaque
     }
 
-    /// Where the player's aim stops on this block: solid cubes and plants, not liquids.
+    /// Where the player's aim stops on this block: cubes (even without collision, like
+    /// portals) and plants, not air or liquids.
     pub fn hit_box(&self) -> Option<HitBox> {
         match self.render {
             RenderKind::Cross => Some(HitBox::PLANT),
-            _ if self.solid => Some(HitBox::FULL),
+            RenderKind::Invisible => None,
+            _ if self.solid || self.fluid.is_none() => Some(HitBox::FULL),
             _ => None,
         }
     }

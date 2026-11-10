@@ -5,7 +5,7 @@ struct Camera {
     options: vec4<f32>,
     // Sky color (linear), which the fog fades to (the liquid's color with the eyes in it).
     sky: vec4<f32>,
-    // x: seconds, wrapped; y: liquid animation strength (0 = still); z: 1 when the fog
+    // x: seconds, wrapped; y: 1 with animated textures, 0 without; z: 1 when the fog
     // counts the full distance (eyes in a liquid), 0 for the horizontal distance only.
     effects: vec4<f32>,
     // x: sky light factor (1 by day); y: brightness (0-1); z: light of the darkest places.
@@ -15,6 +15,8 @@ struct Camera {
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var block_textures: texture_2d_array<f32>;
 @group(1) @binding(1) var block_sampler: sampler;
+// Per layer: first_extra:16 frames:8 frame_time:8 (ticks); 0 for still layers.
+@group(1) @binding(2) var<storage, read> animations: array<u32>;
 
 // Section origin relative to the camera (camera-relative rendering), set per draw.
 var<immediate> section_offset: vec4<f32>;
@@ -49,6 +51,22 @@ fn surface_speed(animation: u32) -> f32 {
     return speeds[animation] * camera.effects.y;
 }
 
+// Layer showing now: image `(ticks / frame_time) % frames`, image 0 being the texture's
+// own layer and the others following `first_extra` (as `TextureLayout::frame_at`).
+fn animated_layer(layer: u32) -> u32 {
+    let entry = animations[min(layer, arrayLength(&animations) - 1u)];
+    let frames = (entry >> 16u) & 0xffu;
+    if frames < 2u || camera.effects.y == 0.0 {
+        return layer;
+    }
+    let ticks = u32(camera.effects.x * 20.0);
+    let frame = (ticks / max(entry >> 24u, 1u)) % frames;
+    if frame == 0u {
+        return layer;
+    }
+    return (entry & 0xffffu) + frame - 1u;
+}
+
 @vertex
 fn vs_main(@location(0) geometry: u32, @location(1) texture: u32) -> VertexOutput {
     // Liquid surfaces are lowered by `drop` sixteenths; sides keep their texture scale.
@@ -72,7 +90,7 @@ fn vs_main(@location(0) geometry: u32, @location(1) texture: u32) -> VertexOutpu
     out.relative = position + section_offset.xyz;
     out.clip = camera.view_proj * vec4<f32>(out.relative, 1.0);
     out.uv = uv;
-    out.layer = texture & 0xffffu;
+    out.layer = animated_layer(texture & 0xffffu);
     out.shade = face_shade(face) * ao_light(ao);
     out.wave = speed;
     out.light = vec2<f32>(f32(texture >> 28u), f32((texture >> 24u) & 15u)) / 15.0;

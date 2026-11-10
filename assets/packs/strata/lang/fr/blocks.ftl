@@ -70,3 +70,5 @@ block-strata-torch = Torche
 block-strata-lantern = Lanterne
 block-strata-glowstone = Pierre lumineuse
 block-strata-fire = Feu
+block-strata-portal = Portail d'essai
+block-strata-bookshelf = Bibliothèque

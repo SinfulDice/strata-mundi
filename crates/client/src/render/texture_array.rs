@@ -1,5 +1,7 @@
 use super::GpuError;
-use strata_core::texture::{Rgba, RgbaImage};
+use strata_core::content::TextureLibrary;
+use strata_core::texture::{Layout, Rgba, RgbaImage};
+use wgpu::util::DeviceExt;
 
 /// How block textures are sampled (graphics settings).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -20,10 +22,13 @@ impl Default for TextureFiltering {
     }
 }
 
-/// All block textures in one GPU texture array: one layer per texture.
+/// All block textures in one GPU texture array (one layer per image), and the animation
+/// of each layer.
 pub struct TextureArray {
     pub view: wgpu::TextureView,
     pub sampler: wgpu::Sampler,
+    /// One `u32` per layer, see `animation_entry`.
+    pub animations: wgpu::Buffer,
 }
 
 impl TextureArray {
@@ -31,9 +36,10 @@ impl TextureArray {
     pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        layers: &[&RgbaImage],
+        library: &TextureLibrary,
         filtering: TextureFiltering,
     ) -> Result<Self, GpuError> {
+        let layers: Vec<&RgbaImage> = library.layers().collect();
         let max = device.limits().max_texture_array_layers;
         if layers.len() > max as usize {
             return Err(GpuError::TooManyTextures {
@@ -75,8 +81,34 @@ impl TextureArray {
             ..Default::default()
         });
         let sampler = device.create_sampler(&sampler_for(filtering));
-        Ok(Self { view, sampler })
+        let animations = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("texture animations"),
+            contents: bytemuck::cast_slice(&animation_table(library)),
+            usage: wgpu::BufferUsages::STORAGE,
+        });
+        Ok(Self {
+            view,
+            sampler,
+            animations,
+        })
     }
+}
+
+/// Per layer: `first_extra:16 frames:8 frame_time:8`, 0 for layers that do not move.
+/// The shader picks image `(ticks / frame_time) % frames`, like `TextureLayout::frame_at`.
+fn animation_table(library: &TextureLibrary) -> Vec<u32> {
+    let mut table = vec![0; library.layer_count().max(1)];
+    for (texture, _, _) in library.images.iter() {
+        let layout = library.layout(texture);
+        if let Layout::Animated { frame_time } = layout.layout
+            && layout.images > 1
+        {
+            let first = u32::from(library.image_layer(texture, 1).0);
+            table[usize::from(texture.0)] =
+                first | ((layout.images & 0xff) << 16) | ((frame_time & 0xff) << 24);
+        }
+    }
+    table
 }
 
 fn sampler_for(filtering: TextureFiltering) -> wgpu::SamplerDescriptor<'static> {

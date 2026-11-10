@@ -1,1 +1,1 @@
-Material(ramp: "lava", pattern: Noise(cells: (4, 4), octaves: 3))
+Animated(frames: Sway(base: "strata:lava_base", count: 8, amplitude: 1), frame_time: 6)

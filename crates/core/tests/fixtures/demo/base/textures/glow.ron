@@ -1,0 +1,1 @@
+Animated(frames: Sway(base: "base:rock", count: 4), frame_time: 5)

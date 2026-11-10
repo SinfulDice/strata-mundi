@@ -70,3 +70,5 @@ block-strata-torch = FIRE STIK
 block-strata-lantern = GLOWY BOX
 block-strata-glowstone = GLOWY ROCK
 block-strata-fire = HOT FIRE
+block-strata-portal = PRETEND DOOR 2 NOWHERE
+block-strata-bookshelf = BUKSHELF

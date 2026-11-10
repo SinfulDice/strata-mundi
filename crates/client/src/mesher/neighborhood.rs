@@ -1,4 +1,5 @@
 use super::greedy::texture_turned;
+use super::variants::TextureVariants;
 use strata_core::content::{Block, BlockId, Content, Face, RenderKind, surface_sixteenths};
 use strata_core::light::{PackedLight, SectionLight, section_index};
 
@@ -166,12 +167,14 @@ const UNKNOWN: MeshBlock = MeshBlock {
     fluid: None,
     solid_cube: false,
     lamp: false,
+    varied: false,
 };
 
 /// What the mesher needs to know about each block, indexed by `BlockId`.
 #[derive(Debug, Clone)]
 pub struct BlockTable {
     entries: Vec<MeshBlock>,
+    variants: TextureVariants,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -186,6 +189,8 @@ pub struct MeshBlock {
     pub solid_cube: bool,
     /// Gives off light: a plane-shaped lamp (torch) is not vegetation, never thinned out.
     pub lamp: bool,
+    /// Some face has random variants or connects to its neighbours.
+    pub varied: bool,
 }
 
 /// A liquid cell: its family (source block), surface height and animation code.
@@ -211,6 +216,7 @@ impl BlockTable {
                 }),
                 solid_cube: block.render == RenderKind::Opaque && block.fluid.is_none(),
                 lamp: block.light_emission > 0,
+                varied: false,
                 fluid: block.fluid.map(|state| MeshFluid {
                     family: state.source,
                     height: surface_sixteenths(state.level),
@@ -218,12 +224,26 @@ impl BlockTable {
                 }),
             })
             .collect();
-        Self { entries }
+        Self {
+            entries,
+            variants: TextureVariants::default(),
+        }
+    }
+
+    /// Adds the random and connected textures of the faces.
+    pub fn with_variants(mut self, variants: TextureVariants) -> Self {
+        for entry in &mut self.entries {
+            entry.varied = entry.render != RenderKind::Cross
+                && entry.faces.iter().any(|&layer| variants.varies(layer));
+        }
+        self.variants = variants;
+        self
     }
 
     /// Every block of the content, liquids with their surface animation.
     pub fn from_content(content: &Content) -> Self {
-        let mut table = Self::new(content.blocks.iter().map(|(_, _, block)| block));
+        let mut table = Self::new(content.blocks.iter().map(|(_, _, block)| block))
+            .with_variants(TextureVariants::from_library(&content.textures));
         for entry in &mut table.entries {
             if let Some(fluid) = &mut entry.fluid
                 && let Some(def) = content.fluids.get(&fluid.family)
@@ -232,6 +252,10 @@ impl BlockTable {
             }
         }
         table
+    }
+
+    pub fn variants(&self) -> &TextureVariants {
+        &self.variants
     }
 
     #[inline]

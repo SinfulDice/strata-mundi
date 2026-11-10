@@ -214,6 +214,7 @@ mod tests {
             ambient_occlusion: true,
             smooth_lighting: true,
             vegetation: Vegetation::Full,
+            texture_variants: true,
         };
         mesh_section(&blocks, &table(), options)
     }

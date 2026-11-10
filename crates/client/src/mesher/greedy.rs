@@ -31,8 +31,8 @@ pub(super) struct FaceFrame {
     pub(super) normal: Vec3i,
     pub(super) a: Vec3i,
     pub(super) b: Vec3i,
-    right: Vec3i,
-    down: Vec3i,
+    pub(super) right: Vec3i,
+    pub(super) down: Vec3i,
 }
 
 fn frame(face: Face) -> FaceFrame {
@@ -171,6 +171,8 @@ pub struct MeshOptions {
     /// Off: a face takes the light of the cell in front of it, with hard steps.
     pub smooth_lighting: bool,
     pub vegetation: Vegetation,
+    /// Off: every face shows the first image of its texture (fewer, larger merged faces).
+    pub texture_variants: bool,
 }
 
 impl MeshOptions {
@@ -179,6 +181,7 @@ impl MeshOptions {
             ambient_occlusion: graphics.ambient_occlusion,
             smooth_lighting: graphics.smooth_lighting,
             vegetation: graphics.vegetation,
+            texture_variants: graphics.texture_variants,
         }
     }
 
@@ -198,9 +201,9 @@ pub fn mesh_section(
     let mut mesh = SectionMesh::default();
     // Liquid cells need their own checks; sections without any skip them entirely.
     if blocks.contents().liquid {
-        mesh_faces::<true>(blocks, table, options.shading(), &mut mesh);
+        mesh_faces::<true>(blocks, table, options, &mut mesh);
     } else {
-        mesh_faces::<false>(blocks, table, options.shading(), &mut mesh);
+        mesh_faces::<false>(blocks, table, options, &mut mesh);
     }
     mesh_crosses(blocks, table, options.vegetation, &mut mesh.opaque);
     mesh
@@ -209,7 +212,7 @@ pub fn mesh_section(
 fn mesh_faces<const LIQUIDS: bool>(
     blocks: &Neighborhood,
     table: &BlockTable,
-    shading: Shading,
+    options: MeshOptions,
     mesh: &mut SectionMesh,
 ) {
     for face in Face::ALL {
@@ -219,7 +222,7 @@ fn mesh_faces<const LIQUIDS: bool>(
             for (b, row) in mask.iter_mut().enumerate() {
                 for (a, cell) in row.iter_mut().enumerate() {
                     let pos = cell_position(&frame, depth, a as i32, b as i32);
-                    *cell = face_key::<LIQUIDS>(blocks, table, face, &frame, pos, shading);
+                    *cell = face_key::<LIQUIDS>(blocks, table, face, &frame, pos, options);
                 }
             }
             merge_slice(&mut mask, |rect, key| {
@@ -251,8 +254,9 @@ fn face_key<const LIQUIDS: bool>(
     face: Face,
     frame: &FaceFrame,
     pos: Vec3i,
-    shading: Shading,
+    options: MeshOptions,
 ) -> Option<FaceKey> {
+    let shading = options.shading();
     let id = blocks.get(pos[0], pos[1], pos[2]);
     let block = table.get(id);
     if matches!(block.render, RenderKind::Invisible | RenderKind::Cross) {
@@ -266,8 +270,12 @@ fn face_key<const LIQUIDS: bool>(
     if hides(blocks, table, (front, neighbour), face) || (neighbour == id && block.cull_same) {
         return None;
     }
+    let mut layer = block.faces[face.index()];
+    if block.varied && options.texture_variants {
+        layer = table.variants().face_layer(blocks, (frame, pos), id, layer);
+    }
     Some(FaceKey::new(
-        block.faces[face.index()],
+        layer,
         block.turned[face.index()],
         shade_face(blocks, table, frame, front, shading),
         block.render == RenderKind::Translucent,

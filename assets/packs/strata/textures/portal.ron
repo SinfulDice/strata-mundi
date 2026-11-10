@@ -1,0 +1,1 @@
+Animated(frames: Scroll(base: "strata:portal_base", count: 16, step: (1, 1)), frame_time: 2)

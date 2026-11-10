@@ -11,8 +11,8 @@ pub struct CameraUniform {
     pub options: [f32; 4],
     /// Sky color, linear (the fog color).
     pub sky: [f32; 4],
-    /// x: seconds (wrapped); y: liquid animation strength; z: 1 = fog over the full
-    /// distance (eyes in a liquid).
+    /// x: seconds (wrapped); y: 1 with animated textures, 0 without; z: 1 = fog over the
+    /// full distance (eyes in a liquid).
     pub effects: [f32; 4],
     /// x: sky light factor (1 = day, lower at night); y: brightness (0-1); z: light of
     /// the darkest places.
@@ -204,6 +204,16 @@ fn texture_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
                 ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                 count: None,
             },
+            wgpu::BindGroupLayoutEntry {
+                binding: 2,
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
         ],
     })
 }
@@ -224,6 +234,10 @@ fn texture_group(
             wgpu::BindGroupEntry {
                 binding: 1,
                 resource: wgpu::BindingResource::Sampler(&textures.sampler),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: textures.animations.as_entire_binding(),
             },
         ],
     })

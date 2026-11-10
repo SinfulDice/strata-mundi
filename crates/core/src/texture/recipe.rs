@@ -1,4 +1,5 @@
 use super::color::{HexColor, Palette, Ramp};
+use super::multi::{Connection, Frames, MAX_FRAME_TIME, MAX_IMAGES};
 use super::{Rgba, RgbaImage, patterns, sprite};
 use crate::id::Identifier;
 use serde::Deserialize;
@@ -38,6 +39,25 @@ pub enum TextureRecipe {
         base: Identifier,
         swap: BTreeMap<String, String>,
     },
+    /// Images played in a loop, `frame_time` ticks (1/20 s) each.
+    Animated {
+        frames: Frames,
+        #[serde(default = "default_frame_time")]
+        frame_time: u32,
+    },
+    /// One image picked per block from its position; `weights` default to all equal.
+    Random {
+        variants: Frames,
+        #[serde(default)]
+        weights: Vec<u32>,
+    },
+    /// `base` losing its border on the sides where the same block continues.
+    Connected {
+        base: Identifier,
+        connect: Connection,
+        #[serde(default = "default_border")]
+        border: u32,
+    },
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -68,6 +88,14 @@ pub enum ColorRef {
 
 fn default_clusters() -> u32 {
     4
+}
+
+fn default_frame_time() -> u32 {
+    super::multi::DEFAULT_FRAME_TIME
+}
+
+fn default_border() -> u32 {
+    1
 }
 
 /// What a recipe needs to draw itself.
@@ -103,14 +131,21 @@ impl TextureRecipe {
     pub fn base(&self) -> Option<&Identifier> {
         match self {
             Self::Overlay { base, .. } | Self::Ore { base, .. } => Some(base),
-            Self::Material { .. } | Self::Sprite { .. } | Self::Recolor { .. } => None,
+            _ => None,
         }
+    }
+
+    /// Animations, variants and connected textures: drawn by `generate` as several images.
+    pub fn is_multi(&self) -> bool {
+        matches!(
+            self,
+            Self::Animated { .. } | Self::Random { .. } | Self::Connected { .. }
+        )
     }
 
     /// Paints this recipe's own pixels on a transparent `BASE_SIZE` canvas; the caller
     /// composes it over the base texture, whatever the base resolution.
     pub fn paint_layer(&self, painter: &Painter<'_>) -> Result<RgbaImage, String> {
-        self.validate()?;
         let blank = RgbaImage::new(BASE_SIZE, BASE_SIZE, Rgba([0; 4]));
         match self {
             Self::Material { ramp, pattern } | Self::Overlay { ramp, pattern, .. } => {
@@ -123,12 +158,12 @@ impl TextureRecipe {
                 painter.seed,
             )),
             Self::Sprite { colors, rows } => sprite::draw(colors, rows, painter),
-            Self::Recolor { .. } => Err("recolors are resolved by `generate`".into()),
+            _ => Err("recolors and multi-image textures are resolved by `generate`".into()),
         }
     }
 
     /// Pack data must never freeze or crash the game: parameters are bounded.
-    fn validate(&self) -> Result<(), String> {
+    pub fn validate(&self) -> Result<(), String> {
         match self {
             Self::Ore { clusters, .. } => at_most("clusters", *clusters, MAX_CLUSTERS),
             Self::Material { pattern, .. } | Self::Overlay { pattern, .. } => match pattern {
@@ -144,9 +179,31 @@ impl TextureRecipe {
                 }
                 Pattern::Leaves { .. } | Pattern::Rings { .. } | Pattern::Frame => Ok(()),
             },
+            Self::Animated { frames, frame_time } => {
+                frames.validate()?;
+                if *frame_time == 0 {
+                    return Err("`frame_time` must be at least 1".into());
+                }
+                at_most("frame_time", *frame_time, MAX_FRAME_TIME)
+            }
+            Self::Random { variants, weights } => {
+                variants.validate()?;
+                validate_weights(weights, variants.count())
+            }
+            Self::Connected { border, .. } => at_most("border", *border, BASE_SIZE / 4),
             Self::Sprite { .. } | Self::Recolor { .. } => Ok(()),
         }
     }
+}
+
+fn validate_weights(weights: &[u32], count: u32) -> Result<(), String> {
+    if !weights.is_empty() && weights.len() != count as usize {
+        return Err(format!("{} weights for {count} variants", weights.len()));
+    }
+    if weights.iter().any(|&w| w == 0 || w > MAX_IMAGES) {
+        return Err(format!("weights must be between 1 and {MAX_IMAGES}"));
+    }
+    Ok(())
 }
 
 fn at_most(name: &str, value: u32, max: u32) -> Result<(), String> {

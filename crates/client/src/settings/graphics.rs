@@ -155,8 +155,12 @@ pub struct GraphicsSettings {
     pub brightness: u32,
     /// Fades the far terrain into the sky, hiding where the world stops.
     pub fog: bool,
-    /// Ripples on water and lava (a few shader operations).
-    pub liquid_animation: bool,
+    /// Moving textures (water, lava, fire, portals) and liquid ripples, in the shader.
+    #[serde(alias = "liquid_animation")]
+    pub animated_textures: bool,
+    /// Random variants by position and connected textures (glass): more faces to draw,
+    /// since only identical neighbouring faces merge.
+    pub texture_variants: bool,
     /// Twinkling stars in the night sky.
     pub stars: bool,
     pub clouds: CloudMode,
@@ -204,7 +208,8 @@ impl GraphicsSettings {
             smooth_lighting: preset != Preset::VeryLow,
             brightness: DEFAULT_BRIGHTNESS,
             fog: true,
-            liquid_animation: preset != Preset::VeryLow,
+            animated_textures: preset != Preset::VeryLow,
+            texture_variants: preset != Preset::VeryLow,
             stars: preset != Preset::VeryLow,
             clouds: match preset {
                 Preset::VeryLow => CloudMode::Off,

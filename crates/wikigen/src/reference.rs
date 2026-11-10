@@ -213,7 +213,8 @@ fn presets(ctx: &Ctx<'_>) -> String {
         line("option-ambient-occlusion", &|g| yes_no(g.ambient_occlusion)),
         line("option-smooth-lighting", &|g| yes_no(g.smooth_lighting)),
         line("option-mipmaps", &|g| yes_no(g.mipmaps)),
-        line("option-liquid-animation", &|g| yes_no(g.liquid_animation)),
+        line("option-animated-textures", &|g| yes_no(g.animated_textures)),
+        line("option-texture-variants", &|g| yes_no(g.texture_variants)),
         line("option-stars", &|g| yes_no(g.stars)),
         line("option-clouds", &|g| {
             ctx.tr(&format!("clouds-{}", g.clouds.id()))

@@ -1,4 +1,7 @@
 use super::color::Palette;
+use super::multi::{
+    DEFAULT_FRAME_TIME, Frames, Layout, MAX_IMAGES, connected, scrolled, split_strip, swayed,
+};
 use super::recipe::{Painter, TextureRecipe};
 use super::{Rgba, RgbaImage};
 use crate::id::Identifier;
@@ -13,44 +16,196 @@ pub enum Source<'a> {
 /// Deeper chains are certainly a reference loop (`a` drawn on `b` drawn on `a`).
 const MAX_DEPTH: u32 = 8;
 
-/// Draws texture `id`, following its bases and recolors.
+/// The images of one texture, first image first, and how they are used.
+#[derive(Debug, Clone)]
+pub struct Generated {
+    pub images: Vec<RgbaImage>,
+    pub layout: Layout,
+}
+
+impl Generated {
+    fn still(image: RgbaImage) -> Self {
+        Self {
+            images: vec![image],
+            layout: Layout::Still,
+        }
+    }
+
+    fn first(mut self) -> RgbaImage {
+        self.images.swap_remove(0)
+    }
+}
+
+struct Context<'a, 'b> {
+    lookup: &'b dyn Fn(&Identifier) -> Option<Source<'a>>,
+    palette: &'b Palette,
+}
+
+/// Draws texture `id`, following its bases and recolors. Bases always use the first image
+/// of the texture they name.
 pub fn generate<'a>(
     id: &Identifier,
     lookup: &dyn Fn(&Identifier) -> Option<Source<'a>>,
     palette: &Palette,
-) -> Result<RgbaImage, String> {
-    generate_inner(id, lookup, palette, &BTreeMap::new(), 0)
+) -> Result<Generated, String> {
+    let context = Context { lookup, palette };
+    let generated = context.texture(id, &BTreeMap::new(), 0)?;
+    if generated.images.len() > MAX_IMAGES as usize {
+        return Err(format!(
+            "{} images; a texture has {MAX_IMAGES} at most",
+            generated.images.len()
+        ));
+    }
+    Ok(generated)
 }
 
-fn generate_inner<'a>(
-    id: &Identifier,
-    lookup: &dyn Fn(&Identifier) -> Option<Source<'a>>,
-    palette: &Palette,
-    swap: &BTreeMap<String, String>,
-    depth: u32,
-) -> Result<RgbaImage, String> {
-    if depth > MAX_DEPTH {
-        return Err(format!("texture `{id}` is part of a reference loop"));
+impl Context<'_, '_> {
+    fn texture(
+        &self,
+        id: &Identifier,
+        swap: &BTreeMap<String, String>,
+        depth: u32,
+    ) -> Result<Generated, String> {
+        if depth > MAX_DEPTH {
+            return Err(format!("texture `{id}` is part of a reference loop"));
+        }
+        match (self.lookup)(id).ok_or_else(|| format!("unknown texture `{id}`"))? {
+            Source::Image(image) => Ok(from_image(image)),
+            Source::Recipe(recipe) => self.recipe(recipe, seed_of(id), swap, depth),
+        }
     }
-    let recipe = match lookup(id).ok_or_else(|| format!("unknown texture `{id}`"))? {
-        Source::Image(image) => return Ok(image.clone()),
-        Source::Recipe(recipe) => recipe,
-    };
-    if let TextureRecipe::Recolor { base, swap: inner } = recipe {
-        return generate_inner(base, lookup, palette, &compose(inner, swap), depth + 1);
+
+    fn base(
+        &self,
+        id: &Identifier,
+        swap: &BTreeMap<String, String>,
+        depth: u32,
+    ) -> Result<RgbaImage, String> {
+        Ok(self.texture(id, swap, depth + 1)?.first())
     }
-    let painter = Painter {
-        palette,
-        swap,
-        seed: seed_of(id),
-    };
-    let layer = recipe.paint_layer(&painter)?;
-    let Some(base) = recipe.base() else {
-        return Ok(layer);
-    };
-    let mut image = generate_inner(base, lookup, palette, swap, depth + 1)?;
-    image.draw(&upscale(&layer, image.width()), 0, 0);
-    Ok(image)
+
+    fn recipe(
+        &self,
+        recipe: &TextureRecipe,
+        seed: u64,
+        swap: &BTreeMap<String, String>,
+        depth: u32,
+    ) -> Result<Generated, String> {
+        recipe.validate()?;
+        match recipe {
+            TextureRecipe::Recolor { base, swap: inner } => {
+                self.texture(base, &compose(inner, swap), depth + 1)
+            }
+            TextureRecipe::Animated { frames, frame_time } => Ok(Generated {
+                images: self.frames(frames, seed, swap, depth)?,
+                layout: Layout::Animated {
+                    frame_time: *frame_time,
+                },
+            }),
+            TextureRecipe::Random { variants, weights } => {
+                let images = self.frames(variants, seed, swap, depth)?;
+                let weights = if weights.is_empty() {
+                    vec![1; images.len()]
+                } else {
+                    weights.clone()
+                };
+                if weights.len() != images.len() {
+                    return Err(format!(
+                        "{} weights for {} variants",
+                        weights.len(),
+                        images.len()
+                    ));
+                }
+                Ok(Generated {
+                    images,
+                    layout: Layout::Random { weights },
+                })
+            }
+            TextureRecipe::Connected {
+                base,
+                connect,
+                border,
+            } => Ok(Generated {
+                images: connected(&self.base(base, swap, depth)?, *connect, *border),
+                layout: Layout::Connected(*connect),
+            }),
+            _ => self.paint(recipe, seed, swap, depth).map(Generated::still),
+        }
+    }
+
+    fn paint(
+        &self,
+        recipe: &TextureRecipe,
+        seed: u64,
+        swap: &BTreeMap<String, String>,
+        depth: u32,
+    ) -> Result<RgbaImage, String> {
+        let painter = Painter {
+            palette: self.palette,
+            swap,
+            seed,
+        };
+        let layer = recipe.paint_layer(&painter)?;
+        let Some(base) = recipe.base() else {
+            return Ok(layer);
+        };
+        let mut image = self.base(base, swap, depth)?;
+        image.draw(&upscale(&layer, image.width()), 0, 0);
+        Ok(image)
+    }
+
+    fn frames(
+        &self,
+        frames: &Frames,
+        seed: u64,
+        swap: &BTreeMap<String, String>,
+        depth: u32,
+    ) -> Result<Vec<RgbaImage>, String> {
+        Ok(match frames {
+            Frames::List(ids) => {
+                let mut images = Vec::new();
+                for id in ids {
+                    images.extend(self.texture(id, swap, depth + 1)?.images);
+                }
+                images
+            }
+            Frames::Reseed { recipe, count } => (0..*count)
+                .map(|k| {
+                    let seed = seed.wrapping_add(u64::from(k).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+                    Ok(self.recipe(recipe, seed, swap, depth + 1)?.first())
+                })
+                .collect::<Result<_, String>>()?,
+            Frames::Scroll { base, count, step } => {
+                let base = self.base(base, swap, depth)?;
+                (0..*count as i32)
+                    .map(|k| scrolled(&base, (step.0 * k, step.1 * k)))
+                    .collect()
+            }
+            Frames::Sway {
+                base,
+                count,
+                amplitude,
+            } => {
+                let base = self.base(base, swap, depth)?;
+                (0..*count)
+                    .map(|k| swayed(&base, k, *count, *amplitude))
+                    .collect()
+            }
+        })
+    }
+}
+
+/// A square PNG, or a vertical strip of square frames played as an animation.
+fn from_image(image: &RgbaImage) -> Generated {
+    if image.height() == image.width() {
+        return Generated::still(image.clone());
+    }
+    Generated {
+        images: split_strip(image),
+        layout: Layout::Animated {
+            frame_time: DEFAULT_FRAME_TIME,
+        },
+    }
 }
 
 /// Nearest-neighbour upscale to `size` (a multiple of the image size), keeping pixel art crisp.

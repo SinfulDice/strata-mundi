@@ -22,7 +22,7 @@ pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, EntityTypeId, ItemId, Registry, RegistryId, TextureId};
-pub use textures::{TextureLibrary, missing_id};
+pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
 
 use crate::cinematic::{self, Cinematic};
 use crate::dimension::DimensionId;

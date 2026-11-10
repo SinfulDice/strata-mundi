@@ -39,7 +39,7 @@ Le même mécanisme sert à d'autres blocs : quand un bloc change, ses 6 voisins
 
 - **Surface inclinée** : une case de source est à 14/16 de hauteur, un écoulement descend jusqu'à 2/16, une chute fait 16/16. Chaque coin prend la moyenne des cases voisines de la même famille : l'eau forme des pentes douces, et les cascades sont continues. Le mailleur et la physique utilisent **la même fonction** de hauteur.
 - Les faces entre deux blocs du même liquide ne sont pas dessinées ; les surfaces plates des océans sont fusionnées, les surfaces inclinées non.
-- **Animation** : le temps est envoyé au shader, qui fait défiler la texture (lente pour la lave). Le réglage graphique `liquid_animation` la coupe sans remailler.
+- **Animation** : le temps est envoyé au shader, qui fait défiler la texture (lente pour la lave). Le réglage graphique « Textures animées » (`animated_textures`) la coupe sans remailler.
 - **Sous la surface** : l'écran se teinte (brouillard de la couleur du liquide : 12 blocs de visibilité dans l'eau, 2,5 dans la lave).
 
 ### Nager

@@ -7,11 +7,13 @@ mod neighborhood;
 mod shading;
 #[cfg(test)]
 mod shading_tests;
+mod variants;
 mod vertex;
 mod workers;
 
 pub use greedy::{MeshOptions, SectionMesh, mesh_section};
 pub use neighborhood::{BlockTable, LightSections, MeshBlock, Neighborhood};
+pub use variants::TextureVariants;
 pub use vertex::{MeshData, PackedVertex};
 pub use workers::{MeshJob, MeshResult, MeshWorkers, SectionKey};
 
@@ -56,6 +58,7 @@ mod tests {
         ambient_occlusion: true,
         smooth_lighting: true,
         vegetation: Vegetation::Full,
+        texture_variants: true,
     };
 
     #[test]

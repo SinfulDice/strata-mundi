@@ -212,7 +212,7 @@ impl Renderer {
             sky: color.extend(1.0).to_array(),
             effects: [
                 self.time,
-                f32::from(u8::from(self.options.liquid_animation)),
+                f32::from(u8::from(self.options.animated_textures)),
                 full,
                 0.0,
             ],
@@ -376,6 +376,5 @@ fn texture_array(
     textures: &TextureLibrary,
     filtering: TextureFiltering,
 ) -> Result<TextureArray, GpuError> {
-    let layers: Vec<_> = textures.images.iter().map(|(_, _, image)| image).collect();
-    TextureArray::new(&gpu.device, &gpu.queue, &layers, filtering)
+    TextureArray::new(&gpu.device, &gpu.queue, textures, filtering)
 }

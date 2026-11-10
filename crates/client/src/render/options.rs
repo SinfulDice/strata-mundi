@@ -49,7 +49,7 @@ pub struct RenderOptions {
     /// 3D resolution, as a fraction of the window.
     pub render_scale: f32,
     pub color_filter: ColorFilter,
-    pub liquid_animation: bool,
+    pub animated_textures: bool,
     /// 0 (moody) to 1 (bright): how much dark areas are lifted.
     pub brightness: f32,
     pub clouds: CloudMode,
@@ -62,7 +62,7 @@ impl Default for RenderOptions {
             fog_end: f32::MAX,
             render_scale: 1.0,
             color_filter: ColorFilter::None,
-            liquid_animation: true,
+            animated_textures: true,
             brightness: DEFAULT_BRIGHTNESS as f32 / 100.0,
             clouds: CloudMode::default(),
         }
@@ -85,7 +85,7 @@ impl RenderOptions {
             fog_end: (graphics.render_distance as f32 - 0.5) * SECTION_SIZE as f32,
             render_scale: 1.0,
             color_filter: ColorFilter::None,
-            liquid_animation: graphics.liquid_animation,
+            animated_textures: graphics.animated_textures,
             brightness: graphics.brightness as f32 / 100.0,
             clouds: graphics.clouds,
         }

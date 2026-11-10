@@ -1,0 +1,11 @@
+// Test portal: decorative only (the real portals come in v0.10).
+Block(
+    textures: All("strata:portal"),
+    render: Translucent,
+    solid: false,
+    light_opacity: 0,
+    light_emission: 11,
+    hardness: 0.0,
+    sound: Some("strata:glass"),
+    category: Some("strata:building"),
+)
