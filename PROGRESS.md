@@ -4,7 +4,7 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 10 — Audio
-  - [ ] Moteur audio et sons synthétisés : crate de lecture (décision D053), sortie absente gérée (cloud sans carte son), sons positionnels 3D, volumes par catégorie (maître, blocs, ambiance, musique) dans les options, sons définis dans le pack par recettes de synthèse avec variations aléatoires (pas selon le matériau, casse, pose, eau, lave, feu, vent), déclenchés par le client depuis les événements reçus ; **sous-titres** activables ; remplacement possible par `.ogg` dans un pack de ressources ; tests sur les tampons synthétisés
+  - [x] Moteur audio et sons synthétisés : crate de lecture (décision D053), sortie absente gérée (cloud sans carte son), sons positionnels 3D, volumes par catégorie (maître, blocs, ambiance, musique) dans les options, sons définis dans le pack par recettes de synthèse avec variations aléatoires (pas selon le matériau, casse, pose, eau, lave, feu, vent), déclenchés par le client depuis les événements reçus ; **sous-titres** activables ; remplacement possible par `.ogg` dans un pack de ressources ; tests sur les tampons synthétisés
   - [ ] Ambiances et espace : ambiances par biome et sous terre (fondus), réverbération selon le lieu (grotte, intérieur, plein air) et occlusion derrière les murs, désactivables (réglage « audio spatial » : avancé / stéréo simple ; DS en stéréo simple) ; tests
   - [ ] Musique : procédurale calme et rare façon C418 (piano, nappes, beaucoup de silence), **pré-rendue et mise en cache** dans un fichier, thème propre à Terra, désactivable, fréquence réglable, architecture prête pour la musique adaptative (v0.4), remplaçable par `.ogg` ; tests
 - **Dernière session** : 10/11/2026
