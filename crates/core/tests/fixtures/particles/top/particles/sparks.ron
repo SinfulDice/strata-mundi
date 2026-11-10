@@ -1,0 +1,1 @@
+Particle(lifetime: (1.0, 1.0), size: (0.1, 0.1), default_for: Some(Breaking))

@@ -1,4 +1,5 @@
-// Pieces of a broken block's texture (no `texture`: the block's own), tinted like it.
+// Pieces of a broken block's texture (no `texture`: the block's own), tinted like it;
+// thrown by every block that names no `breaking` particle.
 Particle(
     lifetime: (0.5, 1.1),
     size: (0.08, 0.15),
@@ -6,4 +7,5 @@ Particle(
     speed: 3.0,
     drag: 0.6,
     burst: 32,
+    default_for: Some(Breaking),
 )

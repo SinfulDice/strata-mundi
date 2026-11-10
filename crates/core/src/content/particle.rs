@@ -7,6 +7,7 @@ use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced};
 use crate::texture::HexColor;
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 /// A particle as written in `particles/<name>.ron`.
@@ -53,6 +54,26 @@ pub struct ParticleDef {
     /// Particles thrown where it lands or falls into a liquid; it ends there.
     #[serde(default)]
     pub impact: Option<ImpactDef>,
+    /// Used by every block that names none for this role (one per role; the pack loaded
+    /// last wins).
+    #[serde(default)]
+    pub default_for: Option<ParticleRole>,
+}
+
+/// What a default particle stands for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub enum ParticleRole {
+    Breaking,
+}
+
+/// The `breaking` particle of a block.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub enum BreakingDef {
+    /// The particle declared `default_for: Some(Breaking)`, if any.
+    #[default]
+    Default,
+    None,
+    Some(Identifier),
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -87,9 +108,9 @@ pub struct Particle {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ParticleTriggersDef {
-    /// Thrown when the block is broken (fragments of its texture by default).
-    #[serde(default = "default_breaking")]
-    pub breaking: Option<Identifier>,
+    /// Thrown when the block is broken (the default breaking particle if absent).
+    #[serde(default)]
+    pub breaking: BreakingDef,
     /// Falls from under the full block beneath it (a liquid seeping through a ceiling).
     #[serde(default)]
     pub drip: Option<Identifier>,
@@ -101,11 +122,18 @@ pub struct ParticleTriggersDef {
 impl Default for ParticleTriggersDef {
     fn default() -> Self {
         Self {
-            breaking: default_breaking(),
+            breaking: BreakingDef::Default,
             drip: None,
             ambient: None,
         }
     }
+}
+
+/// Every particle, and the defaults blocks fall back on.
+#[derive(Debug, Clone, Default)]
+pub struct Particles {
+    pub registry: Registry<ParticleId, Particle>,
+    pub default_breaking: Option<ParticleId>,
 }
 
 /// Particles of a loaded block.
@@ -114,12 +142,6 @@ pub struct BlockParticles {
     pub breaking: Option<ParticleId>,
     pub drip: Option<ParticleId>,
     pub ambient: Option<ParticleId>,
-}
-
-/// Fragments every block throws unless it says otherwise; a pack without this particle
-/// simply has none.
-pub fn default_breaking() -> Option<Identifier> {
-    Some(Identifier::builtin("strata", "block_fragments"))
 }
 
 fn white() -> HexColor {
@@ -145,7 +167,7 @@ pub(super) fn load_particles(
     packs: &PackSet,
     textures: &TextureLibrary,
     errors: &mut Vec<PackError>,
-) -> Registry<ParticleId, Particle> {
+) -> Particles {
     let defs = packs.layered::<ParticleDef>("particles", errors);
     let mut particles = Registry::default();
     for (id, Sourced { value, source }) in &defs {
@@ -163,7 +185,44 @@ pub(super) fn load_particles(
             particle.impact = target.map(|target| (target, impact.count.min(MAX_BURST)));
         }
     }
-    particles
+    let default_breaking =
+        default_for(ParticleRole::Breaking, packs, &defs, errors).and_then(|id| particles.key(id));
+    Particles {
+        registry: particles,
+        default_breaking,
+    }
+}
+
+/// The particle declared default for `role` by the highest-priority pack; two in the
+/// same pack are an error (the first by name is kept).
+fn default_for<'a>(
+    role: ParticleRole,
+    packs: &PackSet,
+    defs: &'a BTreeMap<Identifier, Sourced<ParticleDef>>,
+    errors: &mut Vec<PackError>,
+) -> Option<&'a Identifier> {
+    let layer = |source: &Path| {
+        packs
+            .packs()
+            .iter()
+            .rposition(|pack| source.starts_with(&pack.root))
+    };
+    let mut chosen: Option<(Option<usize>, &Identifier)> = None;
+    for (id, Sourced { value, source }) in defs {
+        if value.default_for != Some(role) {
+            continue;
+        }
+        let here = layer(source);
+        match chosen {
+            Some((best, _)) if best > here => {}
+            Some((best, other)) if best == here => errors.push(PackError::invalid(
+                source,
+                format!("`{other}` is already the default {role:?} particle of this pack"),
+            )),
+            _ => chosen = Some((here, id)),
+        }
+    }
+    chosen.map(|(_, id)| id)
 }
 
 fn resolve(
@@ -203,23 +262,28 @@ fn resolve(
     }
 }
 
-/// The particles a block names; unknown ones are reported, except the default fragments.
+/// The particles a block names; unknown ones are reported.
 pub(super) fn block_particles(
     def: &ParticleTriggersDef,
-    particles: &Registry<ParticleId, Particle>,
+    particles: &Particles,
     source: &Path,
     errors: &mut Vec<PackError>,
 ) -> BlockParticles {
     let mut find = |id: &Option<Identifier>| {
         let id = id.as_ref()?;
-        let key = particles.key(id);
-        if key.is_none() && Some(id) != default_breaking().as_ref() {
+        let key = particles.registry.key(id);
+        if key.is_none() {
             errors.push(unknown(source, id));
         }
         key
     };
+    let breaking = match &def.breaking {
+        BreakingDef::Default => particles.default_breaking,
+        BreakingDef::None => None,
+        BreakingDef::Some(id) => find(&Some(id.clone())),
+    };
     BlockParticles {
-        breaking: find(&def.breaking),
+        breaking,
         drip: find(&def.drip),
         ambient: find(&def.ambient),
     }

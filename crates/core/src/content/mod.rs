@@ -23,8 +23,8 @@ pub use fluid::{
 pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
 pub use particle::{
-    BlockParticles, ImpactDef, MAX_BURST, Particle, ParticleDef, ParticleTriggersDef,
-    default_breaking,
+    BlockParticles, BreakingDef, ImpactDef, MAX_BURST, Particle, ParticleDef, ParticleRole,
+    ParticleTriggersDef, Particles,
 };
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, EntityTypeId, ItemId, ParticleId, Registry, RegistryId, TextureId};
@@ -92,7 +92,7 @@ impl Content {
             cinematics,
             days,
             skies,
-            particles,
+            particles: particles.registry,
         };
         (content, errors)
     }
@@ -181,7 +181,7 @@ impl Content {
 fn load_blocks(
     packs: &PackSet,
     textures: &TextureLibrary,
-    particles: &Registry<ParticleId, Particle>,
+    particles: &Particles,
     errors: &mut Vec<PackError>,
 ) -> (Registry<BlockId, Block>, BTreeMap<BlockId, Fluid>) {
     let mut blocks = Registry::default();

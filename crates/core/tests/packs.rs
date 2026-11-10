@@ -84,6 +84,20 @@ fn base_game_pack_loads_cleanly() {
 }
 
 #[test]
+fn the_default_breaking_particle_comes_from_the_last_pack() {
+    let (content, errors) = load(&fixtures("particles"));
+    assert_eq!(errors.len(), 1, "two defaults in one pack: {errors:#?}");
+    let particle = |name: &str| content.particles.key(&id(name));
+    let breaking = |name: &str| {
+        let block = content.blocks.by_identifier(&id(name)).unwrap();
+        block.particles.breaking
+    };
+    assert_eq!(breaking("base:plain"), particle("top:sparks"));
+    assert_eq!(breaking("base:none"), None);
+    assert_eq!(breaking("base:named"), particle("base:dust"));
+}
+
+#[test]
 fn blocks_name_their_particles() {
     let (content, _) = load(&game_packs());
     let particle = |name: &str| content.particles.key(&id(name));

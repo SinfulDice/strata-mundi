@@ -170,6 +170,6 @@ Particle(
 )
 ```
 
-Sans `texture`, la particule montre un morceau de 4 × 4 pixels de la texture du bloc qui l'émet (avec la couleur du biome) ; avec `texture: Some("strata:bubble")`, l'image entière. Autres champs : `color` (multiplie la texture), `speed`, `drag`, `collides`, `glows` (brille dans le noir), `in_liquid` (ne vit que dans un liquide), `burst` (nombre d'éclats à la casse, réglage « complètes »).
+Sans `texture`, la particule montre un morceau de 4 × 4 pixels de la texture du bloc qui l'émet (avec la couleur du biome) ; avec `texture: Some("strata:bubble")`, l'image entière. Autres champs : `color` (multiplie la texture), `speed`, `drag`, `collides`, `glows` (brille dans le noir), `in_liquid` (ne vit que dans un liquide), `burst` (nombre d'éclats à la casse, réglage « complètes »), `default_for` (particule par défaut d'un rôle).
 
-Un bloc choisit ses particules : `particles: (breaking: None, drip: Some("strata:water_drip"), ambient: Some("strata:bubble"))`. Par défaut, tout bloc cassé lance `strata:block_fragments`.
+Un bloc choisit ses particules : `particles: (breaking: None, drip: Some("strata:water_drip"), ambient: Some("strata:bubble"))`. Un bloc sans `breaking` lance la particule déclarée par défaut pour la casse (`default_for: Some(Breaking)`, dans le jeu de base `strata:block_fragments`) ; un pack peut en déclarer une autre, celui de plus haute priorité l'emporte.
