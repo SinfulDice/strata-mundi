@@ -7,6 +7,7 @@
   - [x] Moteur audio et sons synthétisés : crate de lecture (décision D053), sortie absente gérée (cloud sans carte son), sons positionnels 3D, volumes par catégorie (maître, blocs, ambiance, musique) dans les options, sons définis dans le pack par recettes de synthèse avec variations aléatoires (pas selon le matériau, casse, pose, eau, lave, feu, vent), déclenchés par le client depuis les événements reçus ; **sous-titres** activables ; remplacement possible par `.ogg` dans un pack de ressources ; tests sur les tampons synthétisés
   - [x] Ambiances et espace : ambiances par biome et sous terre (fondus), réverbération selon le lieu (grotte, intérieur, plein air) et occlusion derrière les murs, désactivables (réglage « audio spatial » : avancé / stéréo simple ; DS en stéréo simple) ; tests
   - [x] Musique : procédurale calme et rare façon C418 (piano, nappes, beaucoup de silence), **pré-rendue et mise en cache** dans un fichier, thème propre à Terra, désactivable, fréquence réglable, architecture prête pour la musique adaptative (v0.4), remplaçable par `.ogg` ; tests
+  - [x] Corrections de la relecture du jalon 10 : commandes perdues redemandées et contrôles en « dernier gagnant », rien libéré dans le fil audio (poubelle, recyclage des blocs), sons préparés sur un fil `sound-bank`, un seul fil de rendu de musique et `.part` uniques, rééchantillonnage en flux, sans allocation par image, sons par image plafonnés et regroupés, salles de réverbération et densités dans le pack
 - **Dernière session** : 10/11/2026
 
 ## Fait

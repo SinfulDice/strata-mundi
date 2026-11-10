@@ -26,6 +26,7 @@ SoundSet(
     swim: "strata:swim",             // nager dedans (liquides)
     ambient: "strata:lava_bubble",   // le bloc fait du bruit tout seul (lave, feu)
     ambient_chance: 0.05,            // chance quand le bloc est tiré au sort autour du joueur
+    density: 1.0,                    // ce qu'il étouffe des sons qui le traversent, 0 à 1
 )
 ```
 
@@ -101,8 +102,17 @@ Ambience(
 
 Réglage **Audio spatial** (onglet Son) : *avancé* ou *stéréo simple* (préréglages DS et très bas).
 
-- **Réverbération** : sept rayons par image (26 directions, 48 blocs au plus) mesurent l'espace autour de la tête. Plein air (ciel à 15, ou rayons vers le haut qui s'échappent sous un peu de ciel), sinon distance moyenne aux parois : **grande caverne** au-delà de 9 blocs, **petite grotte** si l'on est sous terre, **intérieur** sinon. Chaque lieu a son écho (aucun en plein air).
-- **Étouffement** : entre un son et l'auditeur, chaque bloc traversé compte selon sa matière (bloc plein 1, verre et blocs non pleins 0,6, eau et lave 0,4, feuilles 0,2, plantes et air 0) ; le son perd des aigus et du volume (sourd et au tiers du volume derrière 3 blocs pleins). Recalculé 10 fois par seconde pour les sons en cours.
+- **Réverbération** : des rayons (26 directions, 48 blocs au plus, le jeu complet dix fois par seconde) mesurent l'espace autour de la tête. Plein air (ciel à 15, ou rayons vers le haut qui s'échappent sous un peu de ciel), sinon distance moyenne aux parois : **grande caverne** au-delà de 9 blocs, **petite grotte** si l'on est sous terre, **intérieur** sinon. Chaque lieu a son écho, réglé dans `spaces/<lieu>.ron` (`outdoors`, `interior`, `small_cave`, `large_cavern`) :
+
+```ron
+// Une grotte : parois de roche proches, écho net.
+Space(
+    feedback: 0.84, // longueur de la queue, 0 à 0,97
+    damping: 0.4,   // aigus perdus à chaque écho, 0 à 1
+    wet: 0.30,      // volume de l'écho, 0 (aucun) à 1
+)
+```
+- **Étouffement** : entre un son et l'auditeur, chaque bloc traversé compte selon le `density` de son matériau, ou à défaut sa forme (bloc plein 1, verre et blocs non pleins 0,6, eau et lave 0,4, feuilles 0,2, plantes et air 0) ; le son perd des aigus et du volume (sourd et au tiers du volume derrière 3 blocs pleins). Recalculé 10 fois par seconde pour les sons en cours.
 - En stéréo simple, rien de tout cela n'est calculé.
 
 ## Musique

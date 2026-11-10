@@ -36,11 +36,11 @@ Le jeu ne joue pas les sons un par un : une seule source stéréo infinie est co
 
 ### Réverbération : le son du lieu
 
-Une grotte résonne, un champ non. Le jeu lance 26 rayons autour de la tête (7 par image) et regarde jusqu'où ils vont avant de toucher un bloc : ciel visible ou rayons qui s'échappent = **plein air** (sec) ; sinon **intérieur**, **petite grotte** ou **grande caverne** selon la portée moyenne. La réverbération (style Freeverb : des délais bouclés qui s'amortissent, comme des échos très rapprochés) mélange alors un peu de « salle » au son. Le passage d'un lieu à l'autre est glissé, et seuls les sons positionnés la subissent (pas les fonds).
+Une grotte résonne, un champ non. Le jeu lance 26 rayons autour de la tête (le jeu complet dix fois par seconde) et regarde jusqu'où ils vont avant de toucher un bloc : ciel visible ou rayons qui s'échappent = **plein air** (sec) ; sinon **intérieur**, **petite grotte** ou **grande caverne** selon la portée moyenne. La réverbération (style Freeverb : des délais bouclés qui s'amortissent, comme des échos très rapprochés) mélange alors un peu de « salle » au son ; l'écho de chaque lieu est réglé dans le pack (`spaces/*.ron`). Le passage d'un lieu à l'autre est glissé, et seuls les sons positionnés la subissent (pas les fonds).
 
 ### Occlusion : derrière un mur
 
-Pour un son lointain, le jeu suit la ligne droite entre lui et l'oreille et additionne la « densité » des blocs traversés (pierre pleine = 1, vitre = 0,6, eau = 0,4, feuillage = 0,2, air = 0). Plus c'est dense, plus le son est assourdi : un **filtre passe-bas** (qui garde les graves) et un volume réduit. Le calcul est fait au départ du son, puis 10 fois par seconde pour ceux qui durent.
+Pour un son lointain, le jeu suit la ligne droite entre lui et l'oreille et additionne la « densité » des blocs traversés (champ `density` du matériau, sinon d'après la forme : pierre pleine = 1, vitre = 0,6, eau = 0,4, feuillage = 0,2, air = 0). Plus c'est dense, plus le son est assourdi : un **filtre passe-bas** (qui garde les graves) et un volume réduit. Le calcul est fait au départ du son, puis 10 fois par seconde pour ceux qui durent.
 
 ### Ambiances
 
@@ -50,7 +50,7 @@ Toutes les 0,25 s, le jeu échantillonne les biomes autour du joueur et mesure s
 
 1. **Composition** : à partir d'un thème (tonalité, mode, tempo, accords, petits motifs), le compositeur invente une partition déterministe : phrases variées, longs silences (47 à 68 % de silence mesuré pour Terra).
 2. **Rendu** : piano et nappe sont synthétisés, avec une réverbération propre au morceau, puis écrits **par blocs de 4 096 échantillons** directement dans un fichier WAV (jamais le morceau entier en mémoire). Un morceau de 2 minutes se rend en moins d'une seconde.
-3. **Cache** : le fichier est rangé dans `<données>/cache/music/`. Son nom contient la version de l'algorithme et une empreinte du thème : si l'un change, un nouveau fichier est fabriqué et l'ancien effacé au démarrage. Un rendu interrompu (`.part`) n'est jamais lu.
+3. **Cache** : le fichier est rangé dans `<données>/cache/music/`. Son nom contient la version de l'algorithme et une empreinte du thème : si l'un change, un nouveau fichier est fabriqué et l'ancien effacé au démarrage. Un rendu en cours s'écrit dans un `.part` qui lui est propre, jamais lu, effacé seulement s'il est vieux (un autre jeu ouvert pourrait l'écrire).
 4. **Lecture** : pendant le silence qui précède un morceau, il est rendu à l'avance ; il est ensuite lu en flux et mélangé avec fondu de 3 s.
 
 La musique est **rare** : écran titre après 2 à 5 s, puis en jeu toutes les 10 à 20 min (rare), 5 à 10 (normale) ou 2 à 5 (souvent). Volume de la musique à 0 ou pas de carte son : ni rendu, ni fichier.
@@ -59,12 +59,13 @@ La musique est **rare** : écran titre après 2 à 5 s, puis en jeu toutes les 1
 
 | Fil | Rôle |
 |---|---|
-| principal (le jeu) | décide des sons, rend les variantes, envoie des commandes |
+| principal (le jeu) | décide des sons, envoie des commandes, vide la poubelle du mixeur |
 | sortie audio (créé par `rodio`) | demande des blocs au mixeur, ne doit jamais attendre |
-| `music-render` | compose et rend un morceau à la fois, seulement quand la musique est voulue |
+| `sound-bank` | synthétise les variantes et décode les `.ogg` à la première demande |
+| `music-render` | compose et rend un morceau à la fois, un seul pour toute la session |
 | `music-read` | lit le WAV (ou un `.ogg`) et envoie des blocs de 0,5 s au mixeur |
 
-La règle d'or : **le fil audio ne bloque jamais**. Un bloc de musique en retard devient du silence plutôt qu'un craquement ; les canaux sont bornés.
+La règle d'or : **le fil audio ne bloque jamais**. Un bloc de musique en retard devient du silence plutôt qu'un craquement ; les canaux sont bornés. Il ne **libère pas de mémoire** non plus (libérer peut attendre un verrou de l'allocateur) : ce qu'il lâche part dans une « poubelle » que le fil principal vide, et les blocs de musique joués retournent au lecteur pour être remplis de nouveau. Si la file des commandes est pleine, le jeu le sait et redemande à l'image suivante ; la position de l'oreille, les volumes et la salle ne passent pas par la file : le mixeur lit simplement leur dernière valeur.
 
 ### Réglages et sous-titres
 
