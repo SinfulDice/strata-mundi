@@ -6,7 +6,7 @@
 - **Jalon en cours** : 10 — Audio
   - [x] Moteur audio et sons synthétisés : crate de lecture (décision D053), sortie absente gérée (cloud sans carte son), sons positionnels 3D, volumes par catégorie (maître, blocs, ambiance, musique) dans les options, sons définis dans le pack par recettes de synthèse avec variations aléatoires (pas selon le matériau, casse, pose, eau, lave, feu, vent), déclenchés par le client depuis les événements reçus ; **sous-titres** activables ; remplacement possible par `.ogg` dans un pack de ressources ; tests sur les tampons synthétisés
   - [x] Ambiances et espace : ambiances par biome et sous terre (fondus), réverbération selon le lieu (grotte, intérieur, plein air) et occlusion derrière les murs, désactivables (réglage « audio spatial » : avancé / stéréo simple ; DS en stéréo simple) ; tests
-  - [ ] Musique : procédurale calme et rare façon C418 (piano, nappes, beaucoup de silence), **pré-rendue et mise en cache** dans un fichier, thème propre à Terra, désactivable, fréquence réglable, architecture prête pour la musique adaptative (v0.4), remplaçable par `.ogg` ; tests
+  - [x] Musique : procédurale calme et rare façon C418 (piano, nappes, beaucoup de silence), **pré-rendue et mise en cache** dans un fichier, thème propre à Terra, désactivable, fréquence réglable, architecture prête pour la musique adaptative (v0.4), remplaçable par `.ogg` ; tests
 - **Dernière session** : 10/11/2026
 
 ## Fait
@@ -75,6 +75,7 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 10/11/2026 (v0.2 j8, relecture) | Incendie de plaine (97 × 97 herbes hautes allumées tous les 3 blocs, ~5 300 feux) : 40 ticks, 6 988 pas de feu | 35,8 ms (~0,9 ms par tick, ~5,1 µs le pas) | `fire/prairie_fire_40_ticks` |
 | 10/11/2026 (v0.2 j8, relecture) | Grand écoulement, même session (3 478 pas, ~1,8 µs le pas) | 6,31 ms | `fluids/large_flow_settles` |
 | 10/11/2026 (v0.2 j9) | Une image de particules : déplacer 2 000 particules et écrire leurs instances | 0,41 ms | `particles/frame_2000` |
+| 10/11/2026 (v0.2 j10) | Rendu d'un morceau de musique (Terra, 90 à 167 s, release) ; fichier de cache | 0,14 à 0,32 s ; 8 à 15 Mo (88 Ko/s) | `strata --render-music` (D055) |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
@@ -84,6 +85,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 | 23/10/2026 | DS | Lancement → carte graphique prête | 0,2 s (cible < 5 s) | journal |
 | 23/10/2026 | DS | Chargement initial du monde (distance 6) | ≈ 4 s (cible < 10 s) | durée totale − préchauffage − mesure |
 | 10/11/2026 (v0.2 j9, relecture) | DS | Pic RSS, vol de 2 min, avant / après la marge non dessinée demandée au serveur (distance 6 → disque de 8) | 218 → 234 Mio ; monde chargé en ~7,7 → ~12,3 s | `--bench-scene flyover --preset ds` (xvfb) |
+| 10/11/2026 (v0.2 j10) | Tous | Pic RSS de `--render-music` (5 morceaux entiers en mémoire tour à tour + images) ; en jeu, rendu par blocs de 4 096 échantillons et lecture 4 × 0,5 s d'avance | 74 Mio ; < 1 Mio | `/proc/<pid>/status` (D055) |
 
 ## Limitations connues
 

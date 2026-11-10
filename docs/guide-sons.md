@@ -1,6 +1,6 @@
 # Guide des sons
 
-Tous les sons du jeu sont **synthétisés** à partir de recettes écrites dans les packs : aucun fichier audio n'est livré. Un pack de ressources peut changer une recette ou la remplacer par un enregistrement `.ogg`, sans toucher au code.
+Tous les sons et la musique du jeu sont **synthétisés** à partir de recettes et de thèmes écrits dans les packs : aucun fichier audio n'est livré. Un pack de ressources peut changer une recette ou la remplacer par un enregistrement `.ogg`, sans toucher au code.
 
 ## Où sont les sons
 
@@ -105,6 +105,51 @@ Réglage **Audio spatial** (onglet Son) : *avancé* ou *stéréo simple* (prér�
 - **Étouffement** : entre un son et l'auditeur, chaque bloc traversé compte selon sa matière (bloc plein 1, verre et blocs non pleins 0,6, eau et lave 0,4, feuilles 0,2, plantes et air 0) ; le son perd des aigus et du volume (sourd et au tiers du volume derrière 3 blocs pleins). Recalculé 10 fois par seconde pour les sons en cours.
 - En stéréo simple, rien de tout cela n'est calculé.
 
+## Musique
+
+La musique est **composée par le jeu** à partir d'un **thème** par lieu (`music/<nom>.ron`), puis **rendue une fois** dans un fichier du dossier de données (`cache/music/`) et simplement relue ensuite. Elle est **rare et calme** : un morceau de temps en temps, beaucoup de silence entre les phrases.
+
+```ron
+Theme(
+    dimensions: ["strata:terra"], // dimensions où on l'entend
+    title: true,                  // joué sur l'écran titre
+    root: 50,                     // tonique (MIDI : 60 = do central)
+    scale: Lydian,                // Major, Dorian, Phrygian, Lydian, Mixolydian, Minor,
+                                  // PentatonicMajor, PentatonicMinor, Custom([0, 2, 5, 7, 9])
+    tempo: 66,                    // battements par minute
+    pieces: 5,                    // morceaux différents (une graine chacun), 16 au plus
+    length: (75.0, 170.0),        // durée d'un morceau, en secondes (240 au plus)
+    density: 0.5,                 // 0 : quelques notes ; 1 : phrases rapprochées
+    rests: (5.0, 11.0),           // silence entre deux phrases, en secondes
+    chords: [0, 0, 1, 3, 4, 5],   // degrés sur lesquels se posent les accords
+    motifs: [                     // cellules mélodiques : degrés et durées en temps
+        Motif(degrees: [0, 2, 4], beats: [1.0, 1.0, 2.0]),
+    ],
+    piano: Piano(volume: 0.9, decay: 4.5, brightness: 0.4, octave: 1, bass: 0.6),
+    pad: Pad(volume: 0.45, attack: 3.0, release: 4.0, cutoff: 900.0, octave: 0, chance: 0.45),
+    room: (size: 0.75, wet: 0.35), // réverbération du rendu
+    volume: 0.85,
+)
+```
+
+- **Composition** : une phrase enchaîne 1 à 3 motifs (tels quels, à l'envers, renversés, ralentis ou décalés d'un degré) posés sur un accord, avec parfois une note grave (`bass`) et un accord tenu par la nappe (`chance`). Toutes les notes sont dans la gamme du thème. Après chaque phrase : la fin de la résonance, puis un silence tiré dans `rests` (plus long si `density` est faible).
+- **Instruments** : piano synthétisé (attaque de marteau, harmoniques légèrement étirées qui s'éteignent d'autant plus vite qu'elles sont aiguës, deux cordes un peu désaccordées, étouffoir au relâchement ; `decay` = secondes pour qu'un do central s'éteigne) et nappe douce (sinus désaccordés, filtre passe-bas `cutoff`, léger tremolo).
+- **Cache** : le nom du fichier contient le thème, le numéro du morceau, l'humeur, la version de l'algorithme et une empreinte des réglages du thème. Changer une valeur du thème (ou mettre à jour le jeu si l'algorithme change) refait les morceaux ; les anciens fichiers sont effacés. Un morceau fait environ **10 Mo** (WAV 16 bits mono, 88 ko par seconde).
+- **Quand** : le prochain morceau est rendu en arrière-plan pendant le silence qui précède (fil `music-render`, jamais au chargement). Sur l'écran titre, un morceau quelques secondes après l'ouverture ; dans un monde, un premier morceau après une courte attente, puis selon le réglage **Fréquence de la musique** (rare : 10 à 20 min de silence, normale : 5 à 10, souvent : 2 à 5). Fondu d'entrée et de sortie de 3 s ; en changeant de monde ou en revenant au titre, le morceau s'efface. En pause, le morceau continue mais l'attente du suivant s'arrête.
+- **Couper la musique** : volume de la musique à 0. Rien n'est alors rendu ni lu. Sans carte son non plus.
+
+Écouter les morceaux :
+
+```
+strata --render-music musique/
+```
+
+écrit `musique/<namespace>/<thème>-<n>.wav` et une image `.png` : forme d'onde en haut (fond rouge sombre = silence), notes en bas (une ligne par demi-ton, du grave en bas à l'aigu en haut).  Exemple : `docs/maquettes/musique-terra-2.png`.
+
+### Remplacer la musique par des enregistrements
+
+Un pack de ressources qui contient `music/<thème>/*.ogg` (ou `music/<namespace>/<thème>/*.ogg` pour le thème d'un autre pack) remplace les morceaux composés de ce thème : un fichier tiré au hasard à chaque fois, jamais deux fois de suite le même. Ogg Vorbis, mono ou stéréo, n'importe quelle fréquence ; lu en flux, sans limite de durée. Le thème `.ron` doit exister (il dit où la musique se joue).
+
 ## Écouter ses recettes
 
 ```
@@ -133,4 +178,4 @@ resourcepacks/
 
 ## Réglages
 
-Onglet **Son** des options : volume général, blocs, ambiance, musique (le curseur suit une courbe : 50 % sonne environ deux fois moins fort), sous-titres, audio spatial. Les préréglages ne touchent qu'à l'audio spatial (stéréo simple pour DS et très bas) ; le changer à la main passe en « personnalisé ». Sans carte son, le jeu tourne en silence (une ligne d'information dans le journal).
+Onglet **Son** des options : volume général, blocs, ambiance, musique (le curseur suit une courbe : 50 % sonne environ deux fois moins fort), fréquence de la musique, sous-titres, audio spatial. Les préréglages ne touchent qu'à l'audio spatial (stéréo simple pour DS et très bas) ; le changer à la main passe en « personnalisé ». Sans carte son, le jeu tourne en silence (une ligne d'information dans le journal).

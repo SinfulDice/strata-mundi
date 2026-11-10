@@ -57,6 +57,11 @@ pub struct Args {
     #[arg(long, value_name = "DIR")]
     pub render_sounds: Option<PathBuf>,
 
+    /// Write every piece of music of every theme (`<DIR>/<namespace>/<theme>-<n>.wav`, with
+    /// a picture of its waveform and notes in `.png`), then quit.
+    #[arg(long, value_name = "DIR")]
+    pub render_music: Option<PathBuf>,
+
     /// Write a view of every biome (`<DIR>/<namespace>/<name>.png`) for the wiki, then quit.
     #[arg(long, value_name = "DIR")]
     pub render_biomes: Option<PathBuf>,

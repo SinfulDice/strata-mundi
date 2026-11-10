@@ -136,7 +136,14 @@
         "mechanics/fluids": [(version: "0.2.0", change: Added)],
         "mechanics/game-modes": [(version: "0.1.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
-        "mechanics/sounds": [(version: "0.2.0", change: Added)],
+        "mechanics/sounds": [
+            (version: "0.2.0", change: Added),
+            (version: "0.2.0", change: Changed(
+                fr: "Musique calme et rare, composée par le jeu : thème de Terra, fréquence réglable.",
+                en: "Calm and rare music, composed by the game: Terra's theme, adjustable frequency.",
+                lol: "CALM RAER MUZIK, GAEM MAEKZ IT: TERRA THEEM, U PICK HOW OFTEN.",
+            )),
+        ],
         "mechanics/world-generation": [
             (version: "0.1.0", change: Added),
             (version: "0.2.0", change: Changed(

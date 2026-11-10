@@ -29,9 +29,13 @@ Chaque lieu a son fond sonore, qui se mêle doucement au suivant quand on change
 
 Avec l'**audio spatial avancé**, le lieu s'entend : rien en plein air, un léger écho dans une maison, plus dans une petite grotte, une longue résonance dans une grande caverne. Un son caché derrière des blocs pleins arrive **étouffé** et plus faible ; feuilles, verre et eau l'étouffent moins.
 
+## Musique
+
+De temps en temps, un **morceau calme** s'élève : du piano sur des accords doux, avec beaucoup de silence entre les phrases. Chaque monde a son **thème** ; celui de Terra joue aussi sur l'écran titre. Le jeu compose plusieurs morceaux du thème, chacun d'une à trois minutes, et les **enregistre la première fois** pour ne plus avoir à les refaire. Entre deux morceaux, plusieurs minutes de silence : la musique reste une surprise.
+
 ## Réglages
 
-Onglet **Son** des options : volume général, puis volumes des **blocs**, de l'**ambiance** et de la **musique**, que les préréglages ne changent pas. **Audio spatial** : *avancé* (écho et sons étouffés) ou *stéréo simple* (distance et gauche/droite seulement, un peu moins de calcul) ; les préréglages **DS** et **très bas** passent en stéréo simple. Sans carte son, le jeu tourne normalement, en silence.
+Onglet **Son** des options : volume général, puis volumes des **blocs**, de l'**ambiance** et de la **musique**, que les préréglages ne changent pas, et la **fréquence de la musique** (*rare*, *normale* ou *souvent*) ; un volume de musique à 0 la coupe. **Audio spatial** : *avancé* (écho et sons étouffés) ou *stéréo simple* (distance et gauche/droite seulement, un peu moins de calcul) ; les préréglages **DS** et **très bas** passent en stéréo simple. Sans carte son, le jeu tourne normalement, en silence.
 
 ## Sous-titres
 
@@ -39,4 +43,4 @@ Activés dans l'onglet **Son**, ils écrivent en bas à droite de l'écran chaqu
 
 ## Packs de ressources
 
-Un pack de ressources peut remplacer un son par un enregistrement : un fichier `sounds/<nom>.ogg` prend la place de la recette du même nom.
+Un pack de ressources peut remplacer un son par un enregistrement : un fichier `sounds/<nom>.ogg` prend la place de la recette du même nom, et des fichiers `music/<thème>/*.ogg` remplacent les morceaux composés d'un thème.

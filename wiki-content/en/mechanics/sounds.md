@@ -29,9 +29,13 @@ Each place has its own background, which slowly blends into the next one as you 
 
 With **advanced spatial audio**, you can hear the place: nothing in the open air, a slight echo in a house, more in a small cave, a long ring in a large cavern. A sound hidden behind solid blocks arrives **muffled** and quieter; leaves, glass and water muffle it less.
 
+## Music
+
+Now and then, a **calm piece** rises: piano over soft chords, with plenty of silence between the phrases. Each world has its own **theme**; Terra's also plays on the title screen. The game composes several pieces of the theme, one to three minutes each, and **saves them the first time** so it never has to make them again. Several minutes of silence pass between two pieces: the music stays a surprise.
+
 ## Settings
 
-**Sound** tab of the options: master volume, then **blocks**, **ambience** and **music** volumes, which presets never change. **Spatial audio**: *advanced* (echo and muffled sounds) or *simple stereo* (distance and left/right only, a little less work); the **DS** and **very low** presets switch to simple stereo. Without a sound card the game runs normally, silently.
+**Sound** tab of the options: master volume, then **blocks**, **ambience** and **music** volumes, which presets never change, and the **music frequency** (*rare*, *normal* or *often*); a music volume of 0 turns it off. **Spatial audio**: *advanced* (echo and muffled sounds) or *simple stereo* (distance and left/right only, a little less work); the **DS** and **very low** presets switch to simple stereo. Without a sound card the game runs normally, silently.
 
 ## Subtitles
 
@@ -39,4 +43,4 @@ Turned on in the **Sound** tab, they write every sound heard at the bottom right
 
 ## Resource packs
 
-A resource pack can replace a sound with a recording: a `sounds/<name>.ogg` file takes the place of the recipe with the same name.
+A resource pack can replace a sound with a recording: a `sounds/<name>.ogg` file takes the place of the recipe with the same name, and `music/<theme>/*.ogg` files replace the composed pieces of a theme.

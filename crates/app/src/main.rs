@@ -5,6 +5,7 @@ mod content;
 mod crash;
 mod launcher;
 mod logging;
+mod music_render;
 mod offline;
 mod paths;
 mod renders;
@@ -41,6 +42,7 @@ fn main() -> anyhow::Result<()> {
         || args.screenshot.is_some()
         || args.render_icons.is_some()
         || args.render_sounds.is_some()
+        || args.render_music.is_some()
         || args.render_biomes.is_some()
         || args.map.is_some();
     let saved_packs = if tool {
@@ -56,6 +58,9 @@ fn main() -> anyhow::Result<()> {
     }
     if let Some(dir) = &args.render_sounds {
         return renders::render_sounds(&loaded.content, dir);
+    }
+    if let Some(dir) = &args.render_music {
+        return music_render::render_music(&loaded.content, dir);
     }
     if let Some(dir) = &args.render_biomes {
         let ultra = GraphicsSettings::for_preset(Preset::Ultra);
