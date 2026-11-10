@@ -69,6 +69,8 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 05/11/2026 (v0.2 j6) | Poser puis casser une torche en plein air | 0,65 ms | `light/light_place_and_break_torch` |
 | 10/11/2026 (v0.2 j8) | Maillage d'une section de surface, 3 variantes (herbe, terre, pierre) | 0,28 ms (0,30 ms sans variantes, même session) | `meshing/mesh_section_terrain` |
 | 10/11/2026 (v0.2 j8) | Maillage pire cas (damier), avec variantes | 2,05 ms (1,90 ms sans variantes, même session) | `meshing/mesh_section_checkerboard` |
+| 10/11/2026 (v0.2 j8, relecture) | Incendie de plaine (97 × 97 herbes hautes allumées tous les 3 blocs, ~5 300 feux) : 40 ticks, 6 988 pas de feu | 35,8 ms (~0,9 ms par tick, ~5,1 µs le pas) | `fire/prairie_fire_40_ticks` |
+| 10/11/2026 (v0.2 j8, relecture) | Grand écoulement, même session (3 478 pas, ~1,8 µs le pas) | 6,31 ms | `fluids/large_flow_settles` |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 

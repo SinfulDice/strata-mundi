@@ -13,7 +13,7 @@ Le feu **vieillit, se propage aux blocs inflammables, les consume, puis s'étein
 
 ### Un pas de feu
 
-Le feu partage la **file de blocs actifs** et le budget par tick des liquides (voir [Fluides](fluides.md)). Quand son tour vient :
+Le feu partage la **file de blocs actifs** et le budget par tick des liquides (voir [Fluides](fluides.md)) ; un pas de feu y compte pour **trois** pas de liquide, car il lit toute une boîte d'air (mesuré : ~5 µs contre ~1,8 µs). Quand son tour vient :
 
 ```mermaid
 graph TD
@@ -31,15 +31,16 @@ graph TD
 - **S'éteindre** : sans combustible autour, il meurt dès l'âge 4. À l'âge maximal, il a 1 chance sur 4 de mourir à chaque pas, sauf s'il brûle sur un combustible encore destructible.
 - **Consumer** : chaque voisin inflammable prend avec une probabilité `burn / 300` (côtés) ou `burn / 250` (dessus, dessous). Il devient de l'air, ou parfois une nouvelle flamme.
 - **Allumer** : l'air dans une boîte 3 × 6 × 3 autour du feu, s'il touche un bloc inflammable, s'allume avec `(catch + 54) / (âge + 30)` chances sur 100 (moins souvent en hauteur).
+- **Toutes ces valeurs sont dans le pack** (champ `fire` de `blocks/fire.ron`, tableau dans `docs/regles/equilibrage.md`) ; celles écrites ici sont les défauts.
 - **Un feu à l'âge maximal ne propage plus.** Les âges ne font que croître le long d'une chaîne de feux : tout incendie finit donc par s'éteindre (un test brûle une forêt de 9 × 9 et vérifie qu'il ne reste rien d'actif).
 
 ### Le hasard est déterministe
 
-Les « chances » ne viennent pas d'un vrai tirage aléatoire mais d'un mélange de bits (*hachage*) de la position et du tick. Deux exécutions avec le même ordre de file brûlent **exactement pareil** : c'est ce qui permet de tester un incendie.
+Les « chances » ne viennent pas d'un vrai tirage aléatoire mais d'un mélange de bits (*hachage*) de la graine du monde, de la dimension, de la position et du tick. Deux exécutions avec le même ordre de file brûlent **exactement pareil** : c'est ce qui permet de tester un incendie.
 
 ### L'âge n'est pas dans le monde
 
-L'âge d'un feu est dans une petite table `position → âge` de `BlockUpdates`, pas dans 16 variantes de bloc comme les liquides : c'est une donnée éphémère. **Limite connue** : cette table n'est pas sauvegardée, un feu rechargé reste figé jusqu'à ce qu'un voisin change.
+L'âge d'un feu est dans une petite table `position → âge` de `BlockUpdates`, pas dans 16 variantes de bloc comme les liquides : c'est une donnée éphémère. Cette table n'est pas sauvegardée : quand une colonne est chargée (générée ou relue), ses feux sont replanifiés à l'âge 0 (seules les sections dont la palette contient un feu sont parcourues). Un feu rechargé repart donc, un peu rajeuni.
 
 ### Options, commande, briquet
 

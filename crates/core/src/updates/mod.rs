@@ -1,7 +1,8 @@
 //! Block updates: when a block changes, its six neighbours react (unsupported plants
 //! drop, liquids wake up). Liquids then flow from a queue of active blocks planned for a
 //! given tick: the world is never scanned, and still water stays still until disturbed.
-//! Fires share the queue and its budget: they age, spread and burn out.
+//! Fires share the queue and its budget (one fire step weighs three liquid steps): they
+//! age, spread and burn out.
 
 mod fire;
 #[cfg(test)]
@@ -25,6 +26,10 @@ pub type BlockChange = (BlockPos, BlockId);
 
 /// Ticks before a liquid waiting for an unloaded neighbour tries again.
 const WAIT_TICKS: u64 = 20;
+/// A fire step reads its whole box of air: measured at about three liquid steps
+/// (`fire/prairie_fire_40_ticks` against `fluids/large_flow_settles`), so it counts as
+/// three in the budget.
+const FIRE_UPDATE_COST: u32 = 3;
 
 /// The blocks a simulation reads and writes (the loaded columns, on the server).
 pub trait BlockAccess {
@@ -47,7 +52,8 @@ pub trait BlockAccess {
 #[serde(default)]
 pub struct FluidSettings {
     pub flow: bool,
-    /// Liquid blocks updated per tick at most; the rest waits for the next tick.
+    /// Liquid steps per tick at most (a fire step counts as `FIRE_UPDATE_COST`); the rest
+    /// waits for the next tick.
     pub updates_per_tick: u32,
 }
 
@@ -148,7 +154,9 @@ impl BlockUpdates {
     /// Advances one tick: runs the liquid and fire updates due, within the budget.
     pub fn tick(&mut self, world: &mut impl BlockAccess, changes: &mut Vec<BlockChange>) {
         self.now += 1;
-        for _ in 0..self.settings.updates_per_tick {
+        let mut spent = 0;
+        while spent < self.settings.updates_per_tick {
+            spent += 1;
             let Some((&(tick, order), &pos)) = self.queue.first_key_value() else {
                 break;
             };
@@ -159,6 +167,7 @@ impl BlockUpdates {
             self.planned.remove(&pos);
             match cell(world, pos) {
                 Cell::Block(block) if self.rules.fire(block).is_some() => {
+                    spent += FIRE_UPDATE_COST - 1;
                     self.update_fire(world, pos, changes);
                 }
                 Cell::Block(_) if self.settings.flow => self.update_fluid(world, pos, changes),

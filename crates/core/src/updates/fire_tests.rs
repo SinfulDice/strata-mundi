@@ -224,3 +224,24 @@ fn rain_puts_fire_out() {
     burn_out(&mut sim, &mut world, 100);
     assert_eq!(world.block(at(1, GROUND, 0)), Some(BlockId::AIR));
 }
+
+#[test]
+fn a_fire_step_weighs_three_liquid_steps_in_the_budget() {
+    let stepped = |budget| {
+        let mut world = Plane::new();
+        let mut sim = updates();
+        sim.set_settings(FluidSettings {
+            updates_per_tick: budget,
+            ..FluidSettings::default()
+        });
+        for x in 0..30 {
+            sim.set_block(&mut world, at(x * 3, GROUND, 0), fire(), &mut Vec::new());
+        }
+        for _ in 0..40 {
+            sim.tick(&mut world, &mut Vec::new());
+        }
+        sim.fire_ages.len()
+    };
+    assert_eq!(stepped(90), 30);
+    assert_eq!(stepped(3), 11, "one fire step in each of ticks 30 to 40");
+}
