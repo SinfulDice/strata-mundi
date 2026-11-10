@@ -412,6 +412,8 @@ fn the_game_follows_the_place_without_a_device() {
         world: &world,
         biomes: &infos,
         daylight: 0.0,
+        place: MusicPlace::Title,
+        paused: false,
     };
     for _ in 0..20 {
         audio.update(0.05, &hearing);

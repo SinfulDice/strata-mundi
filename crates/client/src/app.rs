@@ -39,6 +39,8 @@ pub struct ClientConfig {
     pub settings: Settings,
     /// Where setting changes are written.
     pub settings_path: PathBuf,
+    /// Where pieces of music are rendered once and kept.
+    pub music_cache: PathBuf,
     pub bench: Option<BenchConfig>,
     pub launcher: Box<dyn Launcher>,
     /// Start in this world directly (benchmarks, `--seed`) instead of the title screen.

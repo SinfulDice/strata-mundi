@@ -5,7 +5,7 @@ mod reload;
 mod transitions;
 
 use crate::app::{ClientConfig, ClientError};
-use crate::audio::{Audio, Hearing, listener_at};
+use crate::audio::{Audio, Hearing, MusicPlace, listener_at};
 use crate::bench::BenchRun;
 use crate::debug_overlay::DebugOverlay;
 use crate::input::{Action, Binding, Gamepads, InputState};
@@ -92,7 +92,7 @@ impl Session {
             config.settings_path,
         );
         let post = PostProcess::new(&gpu, surface.format());
-        let audio = Audio::start(&config.content, &applied.sound);
+        let audio = Audio::start(&config.content, &applied.sound, config.music_cache.clone());
         let mut session = Self {
             post,
             gpu,
@@ -245,7 +245,7 @@ impl Session {
         let pause = self.screens.wants_pause() || self.suspended;
         self.renderer.advance_time(frame_seconds);
         self.renderer.immersion = None;
-        let (view, camera, yaw, body, biomes, daylight) = match &mut self.stage {
+        let (view, camera, yaw, body, biomes, daylight, place) = match &mut self.stage {
             Stage::Empty => return,
             Stage::Title(title) => {
                 title.update(frame_seconds);
@@ -259,6 +259,7 @@ impl Session {
                     None,
                     &[][..],
                     1.0,
+                    MusicPlace::Title,
                 )
             }
             Stage::Playing(world) => {
@@ -291,6 +292,7 @@ impl Session {
                     .immersion(world.game.camera.position, &self.content);
                 let body = world.game.player_body();
                 let daylight = world.game.daylight();
+                let place = MusicPlace::World(world.game.dimension.clone());
                 let game = &mut world.game;
                 let camera = &game.camera;
                 (
@@ -300,6 +302,7 @@ impl Session {
                     body,
                     &game.biomes[..],
                     daylight,
+                    place,
                 )
             }
         };
@@ -322,6 +325,8 @@ impl Session {
             world: &view.world,
             biomes,
             daylight,
+            place,
+            paused: pause,
         };
         self.audio.update(particle_seconds, &hearing);
         view.particles

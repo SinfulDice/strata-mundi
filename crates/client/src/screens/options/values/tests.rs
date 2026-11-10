@@ -77,3 +77,15 @@ fn volumes_step_by_ten_and_keep_the_preset() {
         (SpatialAudio::Advanced, None)
     );
 }
+
+#[test]
+fn music_frequency_cycles_and_is_not_a_preset_setting() {
+    let mut settings = Settings::default();
+    step_setting(Setting::MusicFrequency, &mut settings, 1);
+    assert_eq!(settings.sound.music_frequency, MusicFrequency::Often);
+    step_setting(Setting::MusicFrequency, &mut settings, 1);
+    assert_eq!(settings.sound.music_frequency, MusicFrequency::Rare);
+    assert!(settings.preset.is_some());
+    settings.apply_preset(Preset::Ds);
+    assert_eq!(settings.sound.music_frequency, MusicFrequency::Rare);
+}

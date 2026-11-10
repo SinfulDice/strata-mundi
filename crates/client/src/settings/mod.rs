@@ -15,7 +15,7 @@ pub use graphics::{
     VERTICAL_DISTANCE, Vegetation, default_worker_threads,
 };
 pub use interface::{ColorFilter, FontChoice, InterfaceSettings, MAX_SCALE};
-pub use sound::{SoundSettings, SpatialAudio, VOLUME};
+pub use sound::{MusicFrequency, SoundSettings, SpatialAudio, VOLUME};
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;

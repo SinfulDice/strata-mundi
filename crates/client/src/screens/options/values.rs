@@ -7,8 +7,8 @@ use crate::settings::{
     SENSITIVITY, VERTICAL_DISTANCE, VOLUME,
 };
 use crate::settings::{
-    AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, ParticleMode, Preset, Settings,
-    SpatialAudio, Vegetation, default_worker_threads,
+    AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, MusicFrequency, ParticleMode,
+    Preset, Settings, SpatialAudio, Vegetation, default_worker_threads,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +40,7 @@ pub enum Setting {
     BlocksVolume,
     AmbientVolume,
     MusicVolume,
+    MusicFrequency,
     Subtitles,
     SpatialAudio,
     Language,
@@ -93,6 +94,7 @@ pub const SOUND: &[Setting] = &[
     Setting::BlocksVolume,
     Setting::AmbientVolume,
     Setting::MusicVolume,
+    Setting::MusicFrequency,
     Setting::Subtitles,
     Setting::SpatialAudio,
 ];
@@ -218,6 +220,10 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
             };
             (format!("{volume} %"), gauge(volume, VOLUME))
         }
+        Setting::MusicFrequency => (
+            shared.tr(&format!("music-{}", s.sound.music_frequency.id())),
+            None,
+        ),
         Setting::Subtitles => (on_off(shared, s.sound.subtitles), None),
         Setting::SpatialAudio => (
             shared.tr(&format!("spatial-{}", s.sound.spatial.id())),
@@ -322,6 +328,9 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         | Setting::BlocksVolume
         | Setting::AmbientVolume
         | Setting::MusicVolume => range(volume_of(setting, s), VOLUME, 10, step),
+        Setting::MusicFrequency => {
+            s.sound.music_frequency = cycle(&MusicFrequency::ALL, s.sound.music_frequency, step);
+        }
         Setting::Subtitles => s.sound.subtitles = !s.sound.subtitles,
         Setting::SpatialAudio => {
             s.sound.spatial = cycle(&SpatialAudio::ALL, s.sound.spatial, step);

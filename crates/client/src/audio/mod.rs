@@ -1,6 +1,7 @@
 //! Sound: synthesised (or recorded) buffers played in 3D around the listener, ambiences
-//! of the place, reverberation and muffling (advanced spatial audio), volumes by
-//! category, subtitles. Without an audio device everything runs the same, silently.
+//! of the place, reverberation and muffling (advanced spatial audio), rare music of the
+//! place, volumes by category, subtitles. Without an audio device everything runs the
+//! same, silently (and no music is rendered).
 
 mod ambience;
 mod bank;
@@ -8,12 +9,17 @@ mod beds;
 mod environment;
 mod mixer;
 mod muffles;
+mod music;
+#[cfg(test)]
+mod music_tests;
+mod music_threads;
 mod output;
 #[cfg(test)]
 mod place_tests;
 mod reverb;
 mod space;
 mod spatial;
+mod stream;
 mod subtitles;
 mod surroundings;
 #[cfg(test)]
@@ -24,9 +30,11 @@ pub use ambience::{AmbiencePlayer, AmbienceTable, FADE_SECONDS, Place, bed_targe
 pub use beds::{BedVolume, MAX_BEDS};
 pub use environment::{Environment, Moment};
 pub use mixer::{Command, MAX_VOICES, Mixer, Voice, Volumes};
+pub use music::{MusicMoment, MusicPlace, MusicPlayer, MusicSchedule, TITLE_WAIT};
 pub use reverb::{Reverb, Room};
 pub use space::{REACH, Space, SpaceProbe};
 pub use spatial::{Direction, Listener, attenuation, stereo_gains};
+pub use stream::{MUSIC_FADE, MusicCommand, MusicFeed};
 pub use subtitles::{LIFETIME, MAX_LINES, Subtitle, Subtitles};
 pub use surroundings::{Surroundings, WALL, WorldView, biomes_around, muffling, underground};
 pub use triggers::{AmbientBlocks, BlockSounds, Cue, Footsteps, SoundTable};
@@ -36,6 +44,7 @@ use crate::world::ClientWorld;
 use bank::SoundBank;
 use glam::DVec3;
 use output::Output;
+use std::path::PathBuf;
 use strata_core::audio::{Rng, SAMPLE_RATE, SoundCategory};
 use strata_core::content::{BlockId, Content};
 use strata_core::coords::BlockPos;
@@ -55,6 +64,7 @@ pub struct Audio {
     rng: Rng,
     cues: Vec<Cue>,
     next_voice: u32,
+    music: MusicPlayer,
 }
 
 /// What is heard this frame and where from.
@@ -67,20 +77,29 @@ pub struct Hearing<'a> {
     pub biomes: &'a [BiomeInfo],
     /// 0 at night, 1 by day.
     pub daylight: f32,
+    pub place: MusicPlace,
+    /// The game is paused (the music goes on, its silences are not counted).
+    pub paused: bool,
 }
 
 impl Audio {
-    /// Opens the default device; without one the game goes on in silence.
-    pub fn start(content: &Content, settings: &SoundSettings) -> Self {
-        Self::with_output(Output::open(), content, settings)
+    /// Opens the default device; without one the game goes on in silence. Music is
+    /// cached in `music_cache`.
+    pub fn start(content: &Content, settings: &SoundSettings, music_cache: PathBuf) -> Self {
+        Self::with_output(Output::open(), content, settings, music_cache)
     }
 
     /// No device at all (captures, tests).
     pub fn silent(content: &Content, settings: &SoundSettings) -> Self {
-        Self::with_output(None, content, settings)
+        Self::with_output(None, content, settings, PathBuf::new())
     }
 
-    fn with_output(output: Option<Output>, content: &Content, settings: &SoundSettings) -> Self {
+    fn with_output(
+        output: Option<Output>,
+        content: &Content,
+        settings: &SoundSettings,
+        music_cache: PathBuf,
+    ) -> Self {
         let mut audio = Self {
             output,
             bank: SoundBank::new(content.sounds.clone()),
@@ -94,6 +113,7 @@ impl Audio {
             rng: Rng::new(0x50_17D5),
             cues: Vec::new(),
             next_voice: 0,
+            music: MusicPlayer::new(music_cache, content.sounds.themes.clone()),
         };
         audio.apply_settings(settings);
         audio
@@ -108,6 +128,7 @@ impl Audio {
         self.bank = SoundBank::new(content.sounds.clone());
         self.table = SoundTable::from_content(content);
         self.environment.set_content(&content.sounds);
+        self.music.set_themes(content.sounds.themes.clone());
     }
 
     pub fn apply_settings(&mut self, settings: &SoundSettings) {
@@ -180,6 +201,7 @@ impl Audio {
             })
             .collect();
         self.send_beds();
+        self.update_music(seconds, hearing);
         self.subtitles.update(seconds);
         for (cue, muffle) in heard {
             self.play_muffled(cue, muffle);
@@ -243,6 +265,22 @@ impl Audio {
                 gain,
             }));
         }
+    }
+
+    fn update_music(&mut self, seconds: f32, hearing: &Hearing<'_>) {
+        let moment = MusicMoment {
+            seconds,
+            place: &hearing.place,
+            paused: hearing.paused,
+            enabled: self.output.is_some() && self.settings.gain(SoundCategory::Music) > 0.0,
+            frequency: self.settings.music_frequency,
+        };
+        let output = self.output.as_ref();
+        self.music.update(&moment, &mut |command| {
+            if let Some(output) = output {
+                output.send(command);
+            }
+        });
     }
 
     pub fn subtitles(&self) -> &[Subtitle] {

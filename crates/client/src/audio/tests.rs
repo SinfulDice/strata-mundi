@@ -52,6 +52,8 @@ fn hearing<'a>(
         world,
         biomes: &[],
         daylight: 1.0,
+        place: MusicPlace::Title,
+        paused: false,
     }
 }
 
@@ -281,7 +283,11 @@ fn without_a_device_nothing_panics() {
     };
     for mut audio in [
         Audio::silent(content(), &settings),
-        Audio::start(content(), &settings),
+        Audio::start(
+            content(),
+            &settings,
+            std::env::temp_dir().join("strata-music-test"),
+        ),
     ] {
         let world = ClientWorld::default();
         let ears = listener_at(DVec3::new(0.0, 70.0, 0.0), 1.0);

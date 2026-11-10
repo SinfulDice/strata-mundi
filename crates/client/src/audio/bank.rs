@@ -122,7 +122,7 @@ fn decode(path: &std::path::Path) -> Option<Arc<[f32]>> {
     }
 }
 
-fn downmix(interleaved: &[f32], channels: usize) -> Vec<f32> {
+pub fn downmix(interleaved: &[f32], channels: usize) -> Vec<f32> {
     interleaved
         .chunks(channels.max(1))
         .map(|frame| frame.iter().sum::<f32>() / frame.len() as f32)

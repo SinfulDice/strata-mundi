@@ -1,5 +1,5 @@
-//! Sound settings: volumes by category, subtitles and spatial audio (the only one the
-//! presets set: plain stereo on the DS and the very low preset).
+//! Sound settings: volumes by category, subtitles, spatial audio (the only one the
+//! presets set: plain stereo on the DS and the very low preset) and how often music comes.
 
 use super::Preset;
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,39 @@ pub struct SoundSettings {
     /// Text at the bottom right for every sound heard, with its direction.
     pub subtitles: bool,
     pub spatial: SpatialAudio,
+    /// How long the silence between two pieces of music lasts.
+    pub music_frequency: MusicFrequency,
+}
+
+/// How often a piece of music comes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MusicFrequency {
+    Rare,
+    #[default]
+    Normal,
+    Often,
+}
+
+impl MusicFrequency {
+    pub const ALL: [MusicFrequency; 3] = [Self::Rare, Self::Normal, Self::Often];
+
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Rare => "rare",
+            Self::Normal => "normal",
+            Self::Often => "often",
+        }
+    }
+
+    /// Seconds of silence between two pieces, at least and at most.
+    pub const fn wait(self) -> (f32, f32) {
+        match self {
+            Self::Rare => (600.0, 1200.0),
+            Self::Normal => (300.0, 600.0),
+            Self::Often => (120.0, 300.0),
+        }
+    }
 }
 
 /// How sounds are placed in space.
@@ -62,6 +95,7 @@ impl Default for SoundSettings {
             music: 70,
             subtitles: false,
             spatial: SpatialAudio::Advanced,
+            music_frequency: MusicFrequency::Normal,
         }
     }
 }

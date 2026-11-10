@@ -1,12 +1,14 @@
-//! The mixer: sums the playing voices and the ambience beds into stereo, each voice placed
-//! relative to the listener, muffled behind walls and sent to the reverberation of the
-//! place (advanced spatial audio), all scaled by their category volume. Pure (no device):
-//! the output thread only asks it for blocks of samples, and tests read them directly.
+//! The mixer: sums the playing voices, the ambience beds and the music into stereo, each
+//! voice placed relative to the listener, muffled behind walls and sent to the
+//! reverberation of the place (advanced spatial audio), all scaled by their category
+//! volume. Pure (no device): the output thread only asks it for blocks of samples, and
+//! tests read them directly.
 
 use super::beds::{Bed, BedVolume, MAX_BEDS};
 use super::reverb::Reverb;
 use super::space::Space;
 use super::spatial::{Listener, stereo_gains};
+use super::stream::{MusicCommand, Stream};
 use crate::settings::SoundSettings;
 use glam::DVec3;
 use std::sync::Arc;
@@ -68,6 +70,7 @@ pub enum Command {
     Space(Space),
     /// Advanced spatial audio (reverberation, muffling) or plain stereo.
     Spatial(bool),
+    Music(MusicCommand),
 }
 
 /// Cutoff of the muffling low-pass, fully open and behind thick walls.
@@ -98,6 +101,7 @@ pub struct Mixer {
     spatial: bool,
     reverb: Reverb,
     send: Vec<f32>,
+    music: Option<Stream>,
 }
 
 impl Mixer {
@@ -113,6 +117,7 @@ impl Mixer {
             spatial: true,
             reverb: Reverb::new(rate),
             send: Vec::new(),
+            music: None,
         }
     }
 
@@ -122,6 +127,10 @@ impl Mixer {
 
     pub fn beds(&self) -> usize {
         self.beds.len()
+    }
+
+    pub fn music_playing(&self) -> bool {
+        self.music.is_some()
     }
 
     pub fn apply(&mut self, command: Command) {
@@ -142,6 +151,7 @@ impl Mixer {
                     self.reverb.set_space(Space::Outdoors);
                 }
             }
+            Command::Music(music) => Stream::apply(&mut self.music, music),
         }
     }
 
@@ -217,6 +227,13 @@ impl Mixer {
             }
         }
         Bed::mix_all(&mut self.beds, &self.volumes, out, self.rate_ratio);
+        Stream::mix(
+            &mut self.music,
+            &self.volumes,
+            out,
+            self.rate_ratio,
+            self.rate,
+        );
         if self.spatial {
             self.reverb.render(&self.send, out);
         }
