@@ -26,6 +26,7 @@ pub struct Environment {
     probe: SpaceProbe,
     muffles: MuffleTracker,
     biomes: Vec<(BiomeId, f32)>,
+    place: Place,
     underground: f32,
     due: f32,
     space: Space,
@@ -82,7 +83,7 @@ impl Environment {
             self.biomes = biomes_around(world, moment.head);
             self.underground = underground(world, moment.head);
         }
-        let place = Place::new(
+        self.place.refill(
             &self.table,
             &self.biomes,
             self.underground,
@@ -90,7 +91,7 @@ impl Environment {
             moment.daylight,
         );
         self.player
-            .update(moment.seconds, &self.table, &place, rng, cues);
+            .update(moment.seconds, &self.table, &self.place, rng, cues);
         if !moment.spatial {
             self.muffles.clear();
             self.space = Space::Outdoors;

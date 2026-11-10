@@ -54,6 +54,11 @@ use strata_core::coords::BlockPos;
 use strata_core::physics::Body;
 use strata_protocol::BiomeInfo;
 
+/// Sounds started at most in one frame.
+pub const MAX_STARTS: usize = 16;
+/// The same sound started this close in one frame is heard once.
+const GROUP_BLOCKS: f64 = 4.0;
+
 pub struct Audio {
     output: Option<Output>,
     bank: SoundBank,
@@ -66,6 +71,8 @@ pub struct Audio {
     environment: Environment,
     rng: Rng,
     cues: Vec<Cue>,
+    /// The cues of this frame with their muffling (kept to reuse its memory).
+    heard: Vec<(Cue, f32)>,
     next_voice: u32,
     music: MusicPlayer,
 }
@@ -116,6 +123,7 @@ impl Audio {
             environment: Environment::new(&content.sounds),
             rng: Rng::new(0x50_17D5),
             cues: Vec::new(),
+            heard: Vec::new(),
             next_voice: 0,
             music: MusicPlayer::new(music_cache, content.sounds.themes.clone()),
         };
@@ -147,7 +155,7 @@ impl Audio {
     /// A block changed (server decision): it may have been broken or placed.
     pub fn block_changed(&mut self, pos: BlockPos, old: BlockId, new: BlockId) {
         if let Some(cue) = self.table.changed(pos, old, new) {
-            self.cues.push(cue);
+            gather(&mut self.cues, cue);
         }
     }
 
@@ -193,23 +201,24 @@ impl Audio {
             &mut self.cues,
             &mut |command| output.is_some_and(|output| output.send(command)),
         );
-        let heard: Vec<(Cue, f32)> = std::mem::take(&mut self.cues)
-            .into_iter()
-            .map(|cue| {
+        let mut heard = std::mem::take(&mut self.heard);
+        for cue in self.cues.drain(..) {
+            if !is_grouped(&heard, &cue) {
                 let muffle = if spatial {
                     muffling(&view, cue.at, listener.position)
                 } else {
                     0.0
                 };
-                (cue, muffle)
-            })
-            .collect();
+                heard.push((cue, muffle));
+            }
+        }
         self.send_beds();
         self.update_music(seconds, hearing);
         self.subtitles.update(seconds);
-        for (cue, muffle) in heard {
+        for (cue, muffle) in heard.drain(..) {
             self.play_muffled(cue, muffle);
         }
+        self.heard = heard;
     }
 
     pub fn play(&mut self, cue: Cue) {
@@ -221,11 +230,14 @@ impl Audio {
             return;
         };
         let (category, range) = (sound.def.category, sound.def.range);
-        let subtitle = sound.def.subtitle.clone();
         let heard = self.listener.position.distance(cue.at) < f64::from(range);
-        if let Some(key) = subtitle.filter(|_| self.settings.subtitles && cue.subtitled && heard) {
+        if self.settings.subtitles
+            && cue.subtitled
+            && heard
+            && let Some(key) = &sound.def.subtitle
+        {
             let direction = Direction::of(&self.listener, cue.at);
-            self.subtitles.heard(&key, direction);
+            self.subtitles.heard(key, direction);
         }
         if self.output.is_none() || self.settings.gain(category) <= 0.0 {
             return;
@@ -296,6 +308,22 @@ impl Audio {
             .as_ref()
             .is_some_and(|output| output.send(command))
     }
+}
+
+/// Keeps `cue` unless it is grouped with one already there (a `/fill` or a big break
+/// would start thousands of sounds at once).
+fn gather(cues: &mut Vec<Cue>, cue: Cue) {
+    if !cues.iter().any(|known| same_sound_near(known, &cue)) && cues.len() < MAX_STARTS {
+        cues.push(cue);
+    }
+}
+
+fn is_grouped(heard: &[(Cue, f32)], cue: &Cue) -> bool {
+    heard.len() >= MAX_STARTS || heard.iter().any(|(known, _)| same_sound_near(known, cue))
+}
+
+fn same_sound_near(a: &Cue, b: &Cue) -> bool {
+    a.sound == b.sound && a.at.distance_squared(b.at) < GROUP_BLOCKS * GROUP_BLOCKS
 }
 
 /// The ears of a camera.

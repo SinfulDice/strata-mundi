@@ -186,7 +186,7 @@ impl MusicPlayer {
             return;
         };
         if self.next.is_none() && !self.broken {
-            self.next = self.choose(&theme);
+            self.next = self.choose(theme);
         }
         if due && let Some(source) = self.ready_source() {
             self.start(source, send);
@@ -220,21 +220,20 @@ impl MusicPlayer {
         }
     }
 
-    fn theme_of(&self, place: &MusicPlace) -> Option<Theme> {
-        self.themes
-            .iter()
-            .find(|theme| match place {
-                MusicPlace::Title => theme.def.title,
-                MusicPlace::World(Some(dimension)) => theme.heard_in(&dimension.0),
-                MusicPlace::World(None) => false,
-            })
-            .cloned()
+    /// The index of the theme of `place`.
+    fn theme_of(&self, place: &MusicPlace) -> Option<usize> {
+        self.themes.iter().position(|theme| match place {
+            MusicPlace::Title => theme.def.title,
+            MusicPlace::World(Some(dimension)) => theme.heard_in(&dimension.0),
+            MusicPlace::World(None) => false,
+        })
     }
 
     /// A recording of the pack, or a piece (never the last one heard), asked to the
     /// render thread now so that it is ready when the silence ends.
-    fn choose(&mut self, theme: &Theme) -> Option<Next> {
+    fn choose(&mut self, theme: usize) -> Option<Next> {
         let roll = self.rng.next_u64();
+        let theme = self.themes.get(theme)?;
         if !theme.recordings.is_empty() {
             let count = theme.recordings.len();
             let mut index = roll as usize % count;
@@ -249,7 +248,9 @@ impl MusicPlayer {
         if pieces > 1 && self.last == Some(Next::Piece(theme.id.clone(), index)) {
             index = (index + 1) % pieces;
         }
-        if !self.is_ready(&theme.id, index) {
+        let id = theme.id.clone();
+        if !self.is_ready(&id, index) {
+            let theme = theme.clone();
             if self.worker.is_none() {
                 self.worker = RenderWorker::start(self.cache.clone(), self.themes.clone());
             }
@@ -257,9 +258,9 @@ impl MusicPlayer {
                 self.broken = true;
                 return None;
             };
-            worker.ask(theme.clone(), index);
+            worker.ask(theme, index);
         }
-        Some(Next::Piece(theme.id.clone(), index))
+        Some(Next::Piece(id, index))
     }
 
     fn is_ready(&self, theme: &Identifier, index: u8) -> bool {

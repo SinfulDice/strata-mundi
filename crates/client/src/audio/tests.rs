@@ -336,3 +336,21 @@ fn a_stream_resampled_block_by_block_matches_the_whole() {
         }
     }
 }
+
+#[test]
+fn a_huge_fill_starts_few_sounds() {
+    let settings = SoundSettings::default();
+    let mut audio = Audio::silent(content(), &settings);
+    for x in 0..100 {
+        for z in 0..100 {
+            audio.block_changed(BlockPos::new(x, 70, z), block("stone"), BlockId::AIR);
+        }
+    }
+    assert!(audio.cues.len() <= MAX_STARTS);
+    let near = audio
+        .cues
+        .iter()
+        .filter(|cue| cue.at.distance(DVec3::new(0.5, 70.5, 0.5)) < 3.0)
+        .count();
+    assert_eq!(near, 1, "neighbouring breaks are heard as one");
+}

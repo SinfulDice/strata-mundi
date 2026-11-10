@@ -36,11 +36,11 @@ impl AmbienceTable {
     }
 
     /// Follows the server's list of biomes (cheap when it did not change).
-    pub fn set_biomes<'a>(&mut self, biomes: impl ExactSizeIterator<Item = &'a Identifier>) {
-        let biomes: Vec<&Identifier> = biomes.collect();
-        if self.biomes.iter().eq(biomes.iter().copied()) {
+    pub fn set_biomes<'a>(&mut self, biomes: impl Iterator<Item = &'a Identifier> + Clone) {
+        if self.biomes.iter().eq(biomes.clone()) {
             return;
         }
+        let biomes: Vec<&Identifier> = biomes.collect();
         self.by_biome = biomes
             .iter()
             .map(|id| self.ambiences.iter().position(|a| a.biomes.contains(id)))
@@ -84,8 +84,23 @@ impl Place {
         head: DVec3,
         daylight: f32,
     ) -> Self {
+        let mut place = Self::default();
+        place.refill(table, biomes, underground, head, daylight);
+        place
+    }
+
+    /// The same as `new`, keeping the memory of the weights.
+    pub fn refill(
+        &mut self,
+        table: &AmbienceTable,
+        biomes: &[(BiomeId, f32)],
+        underground: f32,
+        head: DVec3,
+        daylight: f32,
+    ) {
         let underground = underground.clamp(0.0, 1.0);
-        let mut weights: Vec<(usize, f32)> = Vec::new();
+        let weights = &mut self.weights;
+        weights.clear();
         let mut add =
             |index: usize, weight: f32| match weights.iter_mut().find(|(known, _)| *known == index)
             {
@@ -101,17 +116,20 @@ impl Place {
             add(index, underground);
         }
         weights.retain(|(_, weight)| *weight > 0.0);
-        Self {
-            weights,
-            head,
-            daylight,
-        }
+        self.head = head;
+        self.daylight = daylight;
     }
 }
 
 /// Loudness of each bed sound wanted for `place`.
 pub fn bed_targets(table: &AmbienceTable, place: &Place) -> Vec<(SoundId, f32)> {
-    let mut targets: Vec<(SoundId, f32)> = Vec::new();
+    let mut targets = Vec::new();
+    bed_targets_into(table, place, &mut targets);
+    targets
+}
+
+fn bed_targets_into(table: &AmbienceTable, place: &Place, targets: &mut Vec<(SoundId, f32)>) {
+    targets.clear();
     for &(index, weight) in &place.weights {
         let Some(ambience) = table.get(index) else {
             continue;
@@ -127,16 +145,16 @@ pub fn bed_targets(table: &AmbienceTable, place: &Place) -> Vec<(SoundId, f32)> 
             }
         }
     }
-    for (_, gain) in &mut targets {
+    for (_, gain) in targets.iter_mut() {
         *gain = gain.clamp(0.0, MAX_BED_GAIN);
     }
-    targets
 }
 
 /// The beds' current loudness, gliding to their targets, and the events' countdowns.
 #[derive(Debug, Default)]
 pub struct AmbiencePlayer {
     levels: Vec<(SoundId, f32)>,
+    targets: Vec<(SoundId, f32)>,
     /// Seconds before each event of each ambience; `None` until first heard.
     timers: Vec<Vec<Option<f32>>>,
 }
@@ -156,9 +174,10 @@ impl AmbiencePlayer {
         rng: &mut Rng,
         cues: &mut Vec<Cue>,
     ) {
-        let targets = bed_targets(table, place);
+        bed_targets_into(table, place, &mut self.targets);
+        let targets = &self.targets;
         let step = seconds.max(0.0) / FADE_SECONDS;
-        for &(sound, _) in &targets {
+        for &(sound, _) in targets {
             if !self.levels.iter().any(|(known, _)| *known == sound) {
                 self.levels.push((sound, 0.0));
             }
