@@ -164,11 +164,22 @@ fn a_new_algorithm_or_new_settings_make_the_piece_again() {
     std::fs::write(dir.join("strata-other-calm-0-a1-0.wav"), b"other theme").unwrap();
     let cached = cached_piece(&dir, piece(&theme, 0)).unwrap();
     assert!(cached.rendered);
+    let writing = cached.path.with_extension("999-0.part");
+    std::fs::write(&writing, b"another game renders it").unwrap();
+    let names = |t: &Theme| piece(t, 0).file_name();
     let mut changed = theme.clone();
     changed.def.tempo += 1.0;
-    assert_ne!(piece(&changed, 0).file_name(), piece(&theme, 0).file_name());
+    assert_ne!(names(&changed), names(&theme));
+    let mut changed = theme.clone();
+    changed.def.motifs[0].beats[0] += 0.5;
+    assert_ne!(names(&changed), names(&theme));
+    let mut changed = theme.clone();
+    changed.def.room.wet += 0.1;
+    assert_ne!(names(&changed), names(&theme));
+    assert_eq!(names(&theme.clone()), names(&theme));
     assert_eq!(prune(&dir, std::slice::from_ref(&theme)).unwrap(), 1);
     assert!(!stale.exists() && cached.path.exists());
+    assert!(writing.exists(), "a recent unfinished render is left alone");
     assert!(dir.join("strata-other-calm-0-a1-0.wav").exists());
 }
 

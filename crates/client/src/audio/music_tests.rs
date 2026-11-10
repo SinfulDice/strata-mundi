@@ -294,3 +294,16 @@ fn the_audio_thread_frees_nothing_itself() {
         "the voice, a chunk the reader had no room for, the stream"
     );
 }
+
+#[test]
+fn a_reload_keeps_the_one_render_thread() {
+    let mut player = MusicPlayer::new(temp_dir("reload"), vec![terra_short()]);
+    player.update(&moment(0.0, &MusicPlace::Title, true), &mut |_| true);
+    assert!(player.is_rendering());
+    player.set_themes(vec![terra_short()]);
+    assert!(
+        player.is_rendering(),
+        "the same thread renders for the new packs"
+    );
+    drop(wait_for_start(&mut player, &MusicPlace::Title));
+}

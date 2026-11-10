@@ -144,10 +144,12 @@ impl MusicPlayer {
 
     /// New packs: the next piece is chosen again from the new themes.
     pub fn set_themes(&mut self, themes: Vec<Theme>) {
+        if let Some(worker) = &self.worker {
+            worker.renew(themes.clone());
+        }
         self.themes = themes;
         self.ready.clear();
         self.next = None;
-        self.worker = None;
     }
 
     pub fn is_playing(&self) -> bool {
@@ -268,7 +270,7 @@ impl MusicPlayer {
         let Some(worker) = &self.worker else {
             return;
         };
-        for (theme, index, result) in worker.results() {
+        while let Some((theme, index, result)) = worker.result() {
             match result {
                 Ok(path) => self.ready.push((theme, index, path)),
                 Err(error) => {

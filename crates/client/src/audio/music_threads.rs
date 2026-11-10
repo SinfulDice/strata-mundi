@@ -8,7 +8,7 @@ use crossbeam_channel::{Receiver, Sender};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Instant;
 use strata_core::audio::SAMPLE_RATE;
 use strata_core::audio::music::{Mood, Piece, Theme, WavStream, cached_piece, prune};
@@ -21,35 +21,61 @@ const AHEAD: usize = 4;
 /// Played chunks waiting to be filled again (more than can be in flight).
 const SPARE: usize = AHEAD + 2;
 
-type RenderResult = (Identifier, u8, io::Result<PathBuf>);
+pub type RenderResult = (Identifier, u8, io::Result<PathBuf>);
 
+enum Job {
+    /// New packs: the cache is cleaned of what they no longer use.
+    Themes(Vec<Theme>),
+    Render(Box<Theme>, u8, u64),
+}
+
+/// The one render thread of the session (kept over reloads of the packs, so two never
+/// write or clean the cache at once).
 pub struct RenderWorker {
-    jobs: Sender<(Theme, u8)>,
-    results: Receiver<RenderResult>,
+    jobs: Sender<Job>,
+    results: Receiver<(u64, RenderResult)>,
+    /// Bumped by each reload: older jobs are skipped and their results ignored.
+    generation: Arc<AtomicU64>,
 }
 
 impl RenderWorker {
-    /// The thread, after removing the cached files no current piece uses.
+    /// The thread, which first removes the cached files no current piece uses.
     pub fn start(cache: PathBuf, themes: Vec<Theme>) -> Option<Self> {
-        let (jobs, job_receiver) = crossbeam_channel::unbounded::<(Theme, u8)>();
+        let (jobs, job_receiver) = crossbeam_channel::unbounded::<Job>();
         let (result_sender, results) = crossbeam_channel::unbounded();
+        let generation = Arc::new(AtomicU64::new(0));
+        let current = Arc::clone(&generation);
         let spawned = std::thread::Builder::new()
             .name("music-render".to_owned())
             .spawn(move || {
-                match prune(&cache, &themes) {
-                    Ok(0) => {}
-                    Ok(removed) => tracing::info!(removed, "old music removed from the cache"),
-                    Err(error) => tracing::warn!(%error, "music cache could not be cleaned"),
-                }
-                for (theme, index) in job_receiver {
-                    let result = render(&cache, &theme, index);
-                    if result_sender.send((theme.id, index, result)).is_err() {
-                        break;
+                for job in job_receiver {
+                    match job {
+                        Job::Themes(themes) => clean(&cache, &themes),
+                        Job::Render(theme, index, asked) => {
+                            if asked != current.load(Ordering::Acquire) {
+                                continue;
+                            }
+                            let result = render(&cache, &theme, index);
+                            if result_sender
+                                .send((asked, (theme.id, index, result)))
+                                .is_err()
+                            {
+                                break;
+                            }
+                        }
                     }
                 }
             });
         match spawned {
-            Ok(_) => Some(Self { jobs, results }),
+            Ok(_) => {
+                let worker = Self {
+                    jobs,
+                    results,
+                    generation,
+                };
+                worker.set_themes(themes);
+                Some(worker)
+            }
             Err(error) => {
                 tracing::warn!(%error, "no music render thread: no music");
                 None
@@ -57,12 +83,37 @@ impl RenderWorker {
         }
     }
 
-    pub fn ask(&self, theme: Theme, index: u8) {
-        let _ = self.jobs.send((theme, index));
+    /// New packs: what was asked before is dropped.
+    pub fn renew(&self, themes: Vec<Theme>) {
+        self.generation.fetch_add(1, Ordering::AcqRel);
+        self.set_themes(themes);
     }
 
-    pub fn results(&self) -> Vec<RenderResult> {
-        self.results.try_iter().collect()
+    fn set_themes(&self, themes: Vec<Theme>) {
+        let _ = self.jobs.send(Job::Themes(themes));
+    }
+
+    pub fn ask(&self, theme: Theme, index: u8) {
+        let generation = self.generation.load(Ordering::Acquire);
+        let _ = self
+            .jobs
+            .send(Job::Render(Box::new(theme), index, generation));
+    }
+
+    /// The next piece rendered for the current packs.
+    pub fn result(&self) -> Option<RenderResult> {
+        let generation = self.generation.load(Ordering::Acquire);
+        self.results
+            .try_iter()
+            .find_map(|(asked, result)| (asked == generation).then_some(result))
+    }
+}
+
+fn clean(cache: &Path, themes: &[Theme]) {
+    match prune(cache, themes) {
+        Ok(0) => {}
+        Ok(removed) => tracing::info!(removed, "old music removed from the cache"),
+        Err(error) => tracing::warn!(%error, "music cache could not be cleaned"),
     }
 }
 

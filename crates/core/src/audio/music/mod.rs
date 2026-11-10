@@ -3,6 +3,7 @@
 
 mod cache;
 mod compose;
+mod fingerprint;
 mod render;
 #[cfg(test)]
 mod tests;

@@ -4,19 +4,27 @@
 //! file and the old one is pruned.
 
 use super::compose::{Mood, compose};
+use super::fingerprint::fingerprint;
 use super::render::PieceRenderer;
-use super::theme::{Theme, ThemeDef};
+use super::theme::Theme;
 use crate::audio::SAMPLE_RATE;
 use crate::audio::load::seed_of;
 use crate::audio::wav::{WAV_HEADER, pcm16, wav_header};
 use std::fs::File;
 use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::time::Duration;
 
 /// Bumped whenever composition or synthesis changes: every cached piece is made again.
 pub const ALGORITHM: u32 = 1;
 const BLOCK: usize = 4096;
 const EXTENSION: &str = "wav";
+const PART: &str = "part";
+/// An unfinished render younger than this may still be written.
+const PART_GRACE: Duration = Duration::from_secs(15 * 60);
+/// Renders started by this process, to name their `.part` files.
+static RENDERS: AtomicU32 = AtomicU32::new(0);
 
 /// One piece of a theme.
 #[derive(Debug, Clone, Copy)]
@@ -55,17 +63,8 @@ fn stem(theme: &Theme, mood: Mood, index: u8, algorithm: u32) -> String {
         "{}{}-{index}-a{algorithm}-{:016x}",
         prefix(theme),
         mood.id(),
-        settings_hash(&theme.def)
+        fingerprint(&theme.def)
     )
-}
-
-/// FNV-1a of the theme as written: any change of a value gives other pieces.
-fn settings_hash(def: &ThemeDef) -> u64 {
-    format!("{def:?}")
-        .bytes()
-        .fold(0xCBF2_9CE4_8422_2325, |hash, byte| {
-            (hash ^ u64::from(byte)).wrapping_mul(0x0100_0000_01B3)
-        })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -75,8 +74,9 @@ pub struct Cached {
     pub rendered: bool,
 }
 
-/// The cached file of `piece`, rendered first if missing. Written to a `.part` file then
-/// renamed, so a crash never leaves half a piece under the real name.
+/// The cached file of `piece`, rendered first if missing. Written to a `.part` file of
+/// its own (process and render) then renamed, so a crash never leaves half a piece under
+/// the real name and two renders never write the same file.
 pub fn cached_piece(dir: &Path, piece: Piece<'_>) -> io::Result<Cached> {
     let path = dir.join(piece.file_name());
     if path.is_file() {
@@ -86,9 +86,13 @@ pub fn cached_piece(dir: &Path, piece: Piece<'_>) -> io::Result<Cached> {
         });
     }
     std::fs::create_dir_all(dir)?;
-    let part = path.with_extension("part");
-    write_piece(&part, piece)?;
-    std::fs::rename(&part, &path)?;
+    let render = RENDERS.fetch_add(1, Ordering::Relaxed);
+    let part = path.with_extension(format!("{}-{render}.{PART}", std::process::id()));
+    let written = write_piece(&part, piece).and_then(|()| std::fs::rename(&part, &path));
+    if written.is_err() {
+        let _ = std::fs::remove_file(&part);
+    }
+    written?;
     Ok(Cached {
         path,
         rendered: true,
@@ -117,8 +121,17 @@ fn write_piece(path: &Path, piece: Piece<'_>) -> io::Result<()> {
         .sync_all()
 }
 
+/// A render may still be writing it (another game running).
+fn is_recent_part(entry: &std::fs::DirEntry, name: &str) -> bool {
+    name.ends_with(PART)
+        && entry
+            .metadata()
+            .and_then(|meta| meta.modified())
+            .is_ok_and(|time| time.elapsed().is_ok_and(|age| age < PART_GRACE))
+}
+
 /// Removes the files of `themes` that no current piece uses (older algorithm, changed
-/// settings, unfinished renders). Files of other themes are left alone.
+/// settings, renders left unfinished a while ago). Files of other themes are left alone.
 pub fn prune(dir: &Path, themes: &[Theme]) -> io::Result<usize> {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return Ok(0);
@@ -137,7 +150,7 @@ pub fn prune(dir: &Path, themes: &[Theme]) -> io::Result<usize> {
             };
             piece.file_name() == name
         });
-        if !current {
+        if !current && !is_recent_part(&entry, &name) {
             std::fs::remove_file(entry.path())?;
             removed += 1;
         }
