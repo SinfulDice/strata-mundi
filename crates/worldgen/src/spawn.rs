@@ -1,4 +1,4 @@
-use crate::content::Feature;
+use crate::content::{Biome, Feature};
 use crate::generator::Generator;
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE};
@@ -10,16 +10,20 @@ const WATER_RANGE: i32 = 96;
 /// Caves may not open this many blocks under a spawn or its neighbours.
 const CAVE_MARGIN: i32 = 4;
 
+/// Falls back to a spot without water nearby, then to any dry land (types forcing an
+/// unwelcoming biome); flat worlds take the first free spot.
 pub fn find(generator: &Generator) -> BlockPos {
-    let sea_level = generator.content().terrain.sea_level;
-    let mut fallback = None;
+    let terrain = &generator.content().terrain;
+    let sea_level = terrain.sea_level;
+    let flat = terrain.flat.is_some();
+    let (mut fallback, mut dry) = (None, None);
     for (x, z) in spiral() {
         let (sample, biome) = generator.sample(x, z);
-        let has_trees = biome
-            .features
-            .iter()
-            .any(|(index, _)| matches!(generator.content().features[*index], Feature::Tree(_)));
-        if !biome.spawn || !has_trees || sample.height <= sea_level + 1 {
+        if !flat && sample.height <= sea_level + 1 {
+            continue;
+        }
+        let welcoming = biome.spawn && has_trees(generator, biome);
+        if !welcoming && dry.is_some() {
             continue;
         }
         let height = generator.surface_height_at(&sample, x, z);
@@ -29,12 +33,36 @@ pub fn find(generator: &Generator) -> BlockPos {
         let Some(spot) = free_standing(generator, x, z, height) else {
             continue;
         };
-        if has_water_nearby(generator, x, z, sea_level) {
+        if flat {
             return spot;
         }
-        fallback.get_or_insert(spot);
+        if !welcoming {
+            dry = Some(spot);
+        } else if has_water_nearby(generator, x, z, sea_level) {
+            return spot;
+        } else {
+            fallback.get_or_insert(spot);
+        }
     }
-    fallback.unwrap_or(BlockPos::new(0, sea_level + 2, 0))
+    fallback.or(dry).unwrap_or(BlockPos::new(
+        0,
+        generator.surface_height(0, 0).max(sea_level) + 1,
+        0,
+    ))
+}
+
+fn has_trees(generator: &Generator, biome: &Biome) -> bool {
+    let content = generator.content();
+    let flat_without = content
+        .terrain
+        .flat
+        .as_ref()
+        .is_some_and(|flat| !flat.features);
+    !flat_without
+        && biome
+            .features
+            .iter()
+            .any(|(index, _)| matches!(content.features[*index], Feature::Tree(_)))
 }
 
 /// Whether a cave may open under the spot or around it, even a few blocks down.

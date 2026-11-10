@@ -1,12 +1,15 @@
 mod features;
+mod world_types;
 
 pub(crate) use features::bounded;
 pub use features::{Feature, MAX_CROWN, MAX_PATCH_RADIUS, Plants};
+pub use world_types::WorldType;
 
 use crate::defs::{
     BandsDef, BiomeColors, BiomeDef, CavesDef, Climate, DimensionDef, Relief, TerrainDef,
 };
 use features::load_features;
+use std::collections::HashMap;
 use std::path::Path;
 use strata_core::chunk::BiomeId;
 use strata_core::content::{BiomeTints, Block, BlockId, Registry, Tint};
@@ -21,6 +24,10 @@ pub struct WorldgenContent {
     pub terrain: Terrain,
     biomes: Vec<Biome>,
     pub features: Vec<Feature>,
+    /// Sorted by their `order`.
+    world_types: Vec<WorldType>,
+    /// Every block, for the layers of flat worlds.
+    pub(crate) blocks: HashMap<Identifier, BlockId>,
 }
 
 #[derive(Debug, Clone)]
@@ -35,11 +42,36 @@ pub struct Terrain {
     pub biome_scale: f64,
     /// `None` = no caves.
     pub caves: Option<Caves>,
+    /// What `caves` was resolved from (with its lava), to scale it again.
+    pub(crate) cave_def: Option<(CavesDef, BlockId)>,
     /// Indices into `WorldgenContent::features`.
     pub ores: Vec<usize>,
     /// Indices of `Feature::Deposit`s.
     pub deposits: Vec<usize>,
     pub relief: Relief,
+    /// Index of the only biome, for world types that force one.
+    pub forced_biome: Option<usize>,
+    /// Layers of flat worlds, instead of the relief.
+    pub flat: Option<Flat>,
+}
+
+/// `(block, thickness)` from the bottom of the world up.
+#[derive(Debug, Clone)]
+pub struct Flat {
+    pub layers: Vec<(BlockId, i32)>,
+    /// Trees and plants.
+    pub features: bool,
+}
+
+impl Flat {
+    /// Height of the highest block of the layers.
+    pub fn top(&self) -> i32 {
+        self.layers
+            .iter()
+            .map(|(_, thickness)| thickness)
+            .sum::<i32>()
+            - 1
+    }
 }
 
 /// Cave settings with blocks resolved, bounded, and `density` already applied.
@@ -125,6 +157,10 @@ impl WorldgenContent {
         &self.biomes
     }
 
+    pub fn world_types(&self) -> &[WorldType] {
+        &self.world_types
+    }
+
     /// `None` if the dimension does not exist or has no biome.
     pub fn load(
         packs: &PackSet,
@@ -146,10 +182,17 @@ impl WorldgenContent {
             errors.push(PackError::invalid(source, "no biome defined"));
             return None;
         }
+        let blocks_by_id = blocks
+            .iter()
+            .map(|(key, id, _)| (id.clone(), key))
+            .collect();
+        let world_types = world_types::load(packs, &blocks_by_id, &biomes, errors);
         Some(Self {
             terrain,
             biomes,
             features,
+            world_types,
+            blocks: blocks_by_id,
         })
     }
 }
@@ -180,8 +223,15 @@ fn resolve_terrain(
         source,
     };
     let water = r.block(&def.water);
-    let caves = resolve_caves(def.caves.as_ref(), def.sea_level, water, &mut r);
-    Terrain {
+    let cave_def = def
+        .caves
+        .clone()
+        .filter(|caves| caves.enabled)
+        .map(|caves| {
+            let lava = r.block(&caves.lava);
+            (caves, lava)
+        });
+    let mut terrain = Terrain {
         sea_level: def.sea_level,
         deep_level: def.deep_level,
         stone: r.block(&def.stone),
@@ -190,10 +240,25 @@ fn resolve_terrain(
         water,
         ice: r.block(&def.ice),
         biome_scale: def.biome_scale.clamp(0.25, 16.0),
-        caves,
+        caves: None,
+        cave_def,
         ores,
         deposits,
         relief: bounded_relief(&def.relief),
+        forced_biome: None,
+        flat: None,
+    };
+    terrain.scale_caves(1.0);
+    terrain
+}
+
+impl Terrain {
+    /// Resolves the caves again with their density multiplied by `factor`.
+    pub(crate) fn scale_caves(&mut self, factor: f64) {
+        self.caves = self.cave_def.as_ref().and_then(|(def, lava)| {
+            let density = def.density.clamp(0.0, 4.0) * factor;
+            bounded_caves(def, density, self.sea_level, self.water, *lava)
+        });
     }
 }
 
@@ -274,13 +339,17 @@ fn bands(def: &BandsDef, r: &mut Resolver<'_>) -> Option<Bands> {
 }
 
 /// Pack data must never make generation absurdly slow (huge overhangs scan many blocks).
-fn bounded_relief(relief: &Relief) -> Relief {
+pub(crate) fn bounded_relief(relief: &Relief) -> Relief {
     let mut relief = relief.clone();
     relief.overhang_blocks = relief.overhang_blocks.clamp(0.0, 64.0);
     relief.terrace_step = relief.terrace_step.clamp(1.0, 64.0);
     relief.plateau_lift = relief.plateau_lift.clamp(-64.0, 128.0);
     relief.overhang_scale = relief.overhang_scale.clamp(4.0, 4096.0);
     relief.weirdness_scale = relief.weirdness_scale.clamp(16.0, 65536.0);
+    relief.continent_scale = relief.continent_scale.clamp(0.05, 16.0);
+    // Overhangs rise above the plain height: the highest block stays inside the world.
+    let ceiling = f64::from(WORLD_HEIGHT - 1) - relief.overhang_blocks.ceil();
+    relief.max_height = relief.max_height.clamp(1.0, ceiling);
     relief.river_scale = relief.river_scale.clamp(16.0, 65536.0);
     relief.steep_slope = relief.steep_slope.clamp(1, 64);
     if let Some(rivers) = &mut relief.rivers {
@@ -297,16 +366,19 @@ fn bounded_relief(relief: &Relief) -> Relief {
 }
 
 /// Bounded so that pack data can't flood the world or make generation absurdly slow.
-fn resolve_caves(
-    def: Option<&CavesDef>,
+/// `None` when the density leaves no cave at all.
+fn bounded_caves(
+    def: &CavesDef,
+    density: f64,
     sea_level: i32,
     water: BlockId,
-    r: &mut Resolver<'_>,
+    lava: BlockId,
 ) -> Option<Caves> {
-    let def = def.filter(|def| def.enabled)?;
-    let density = def.density.clamp(0.0, 4.0);
+    let density = density.clamp(0.0, 16.0);
+    if density <= 0.0 {
+        return None;
+    }
     let width = |value: f64| (value * density).clamp(0.0, 0.5);
-    // Density 0 lifts the threshold out of the noise's range: no cavern at all.
     let cheese = 1.0 - (1.0 - def.cheese.clamp(-1.0, 1.0)) * density;
     let (shallow, deep) = def.ravine_depth;
     let shallow = shallow.clamp(1, 256);
@@ -324,7 +396,7 @@ fn resolve_caves(
         aquifer_depth: def.aquifer_depth.clamp(0, 256),
         lava_level: def.lava_level.clamp(-1, 64),
         water,
-        lava: r.block(&def.lava),
+        lava,
     })
 }
 

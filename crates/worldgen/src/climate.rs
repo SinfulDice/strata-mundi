@@ -18,6 +18,8 @@ pub struct ClimateMaps {
     jitter: Noise,
     sea_level: f64,
     relief: Relief,
+    /// Height of flat worlds, the same everywhere.
+    flat_top: Option<i32>,
 }
 
 /// What the terrain looks like at one horizontal position.
@@ -32,9 +34,6 @@ pub struct Sample {
     pub overhang: f64,
 }
 
-/// Highest reachable terrain, below the 512-block ceiling with room to build.
-pub const MAX_HEIGHT: f64 = 420.0;
-
 impl ClimateMaps {
     pub fn new(seed: Seed, content: &WorldgenContent) -> Self {
         let scale = content.terrain.biome_scale;
@@ -42,7 +41,7 @@ impl ClimateMaps {
         Self {
             temperature: Noise::new(seed, 1, 1.0 / (900.0 * scale), 3),
             humidity: Noise::new(seed, 2, 1.0 / (800.0 * scale), 3),
-            continentalness: Noise::new(seed, 3, 1.0 / (1100.0 * scale), 4),
+            continentalness: Noise::new(seed, 3, 1.0 / (1100.0 * scale * r.continent_scale), 4),
             erosion: Noise::new(seed, 4, 1.0 / (700.0 * scale), 3),
             weirdness: Noise::new(seed, 7, 1.0 / (r.weirdness_scale * scale), 3),
             detail: Noise::new(seed, 5, 1.0 / 64.0, 4),
@@ -50,15 +49,24 @@ impl ClimateMaps {
             jitter: Noise::new(seed, 6, 1.0 / 6.0, 1),
             sea_level: f64::from(content.terrain.sea_level),
             relief: content.terrain.relief.clone(),
+            flat_top: content.terrain.flat.as_ref().map(|flat| flat.top()),
         }
     }
 
     pub fn sample(&self, x: i32, z: i32) -> Sample {
         let (fx, fz) = (f64::from(x), f64::from(z));
+        if let Some(height) = self.flat_top {
+            return Sample {
+                climate: Climate::default(),
+                height,
+                river: 0.0,
+                overhang: 0.0,
+            };
+        }
         let climate = Climate {
             temperature: self.temperature.at(fx, fz),
             humidity: self.humidity.at(fx, fz),
-            continentalness: stretch(self.continentalness.at(fx, fz)),
+            continentalness: self.remap(stretch(self.continentalness.at(fx, fz))),
             erosion: stretch(self.erosion.at(fx, fz)),
         };
         let peaks = peaks_and_valleys(stretch(self.weirdness.at(fx, fz)));
@@ -73,10 +81,19 @@ impl ClimateMaps {
             * r.overhang_blocks;
         Sample {
             climate,
-            height: height.clamp(1.0, MAX_HEIGHT) as i32,
+            height: height.clamp(1.0, r.max_height) as i32,
             river,
             overhang,
         }
+    }
+
+    fn remap(&self, continentalness: f64) -> f64 {
+        self.relief
+            .continentalness
+            .as_ref()
+            .map_or(continentalness, |curve| {
+                curve.at(continentalness).clamp(-1.0, 1.0)
+            })
     }
 
     fn land_height(&self, climate: &Climate, peaks: f64, x: f64, z: f64) -> f64 {
@@ -154,6 +171,10 @@ impl ClimateMaps {
         z: i32,
         sample: &Sample,
     ) -> &'a Biome {
+        let biomes = content.biomes();
+        if let Some(forced) = content.terrain.forced_biome.and_then(|i| biomes.get(i)) {
+            return forced;
+        }
         let jitter = self.jitter.at(f64::from(x), f64::from(z)) * 0.025;
         let c = &sample.climate;
         let distance = |b: &Biome| {
@@ -174,7 +195,6 @@ impl ClimateMaps {
         let nearest = |list: &mut dyn Iterator<Item = &'a Biome>| {
             list.min_by(|a, b| distance(a).total_cmp(&distance(b)))
         };
-        let biomes = content.biomes();
         // `WorldgenContent::load` never returns an empty biome list.
         nearest(&mut biomes.iter().filter(fits))
             .or_else(|| nearest(&mut biomes.iter()))

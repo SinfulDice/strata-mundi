@@ -79,7 +79,12 @@ fn main() -> anyhow::Result<()> {
         .as_deref()
         .map_or_else(random_seed, Seed::from_text);
     tracing::info!(seed = seed.0 as i64, "world seed");
-    let generator = Arc::new(Generator::new(seed, Arc::clone(&loaded.worldgen)));
+    let generation = args.world_code.clone().unwrap_or_default();
+    let generator = Arc::new(Generator::with_settings(
+        seed,
+        &loaded.worldgen,
+        &generation,
+    )?);
     if let Some(path) = &args.map {
         return renders::render_map(&generator, &args, path);
     }

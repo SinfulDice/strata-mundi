@@ -1,0 +1,10 @@
+// Exaggerated relief: towering peaks, deep valleys and wide overhangs.
+WorldType(
+    order: 2,
+    relief: (
+        peaks: 2.1,
+        hills: 1.8,
+        overhang: 1.5,
+        max_height: 478.0,
+    ),
+)

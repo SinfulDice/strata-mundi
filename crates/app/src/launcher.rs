@@ -58,14 +58,16 @@ impl GameLauncher {
             day_cycle: true,
             fluids: Default::default(),
             fire: Default::default(),
+            generation: self.args.world_code.clone().unwrap_or_default(),
         };
         self.start(meta, None)
-            .context("could not start the server thread")
     }
 
-    fn start(&self, meta: WorldMeta, folder: Option<WorldFolder>) -> std::io::Result<RunningWorld> {
+    fn start(&self, meta: WorldMeta, folder: Option<WorldFolder>) -> anyhow::Result<RunningWorld> {
         tracing::info!(seed = meta.seed as i64, name = %meta.name, "starting world");
-        let generator = Arc::new(Generator::new(Seed(meta.seed), Arc::clone(&self.worldgen)));
+        let generator = Generator::with_settings(Seed(meta.seed), &self.worldgen, &meta.generation)
+            .context("the generation settings of this world do not match the packs")?;
+        let generator = Arc::new(generator);
         let (connection, server_end) = strata_protocol::local_pair();
         let config = ServerConfig {
             dimension: self.dimension.clone(),
@@ -82,7 +84,8 @@ impl GameLauncher {
                 autosave_ticks: self.autosave_ticks,
             },
         };
-        let server = IntegratedServer::spawn(server_end, config)?;
+        let server = IntegratedServer::spawn(server_end, config)
+            .context("could not start the server thread")?;
         Ok(RunningWorld { connection, server })
     }
 
@@ -92,7 +95,7 @@ impl GameLauncher {
         meta: WorldMeta,
     ) -> Result<RunningWorld, LaunchError> {
         self.start(meta, Some(folder)).map_err(|error| {
-            tracing::error!(%error, "could not start the server thread");
+            tracing::error!(error = format!("{error:#}"), "world not started");
             LaunchError::Unavailable
         })
     }

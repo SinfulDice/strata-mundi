@@ -1,0 +1,5 @@
+// One biome everywhere (chosen on the creation screen), over the usual relief.
+WorldType(
+    order: 3,
+    biome: "strata:plains",
+)

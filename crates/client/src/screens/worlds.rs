@@ -169,6 +169,7 @@ impl CreateForm {
             day_cycle: self.day_cycle,
             fire_spread: self.fire_spread,
             fire_destroy: self.fire_destroy,
+            generation: Default::default(),
         }
     }
 }

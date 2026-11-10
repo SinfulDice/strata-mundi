@@ -1,6 +1,7 @@
 //! Worlds as the menus see them: listing, creating, opening.
 
 use serde::{Deserialize, Serialize};
+use strata_core::generation::WorldgenSettings;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum GameMode {
@@ -26,6 +27,8 @@ pub struct NewWorld {
     pub fire_spread: bool,
     /// Burning blocks are consumed (`/fire destroy`).
     pub fire_destroy: bool,
+    /// World type, sliders of the generation.
+    pub generation: WorldgenSettings,
 }
 
 /// Whether a saved world can be opened by this version of the game.

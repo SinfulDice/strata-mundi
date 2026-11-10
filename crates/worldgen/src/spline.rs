@@ -23,6 +23,12 @@ impl Spline {
         }
     }
 
+    /// The same curve with its outputs multiplied.
+    pub fn scaled(&self, factor: f64) -> Self {
+        let points = self.points.iter().map(|&(x, y)| (x, y * factor)).collect();
+        Self { points }
+    }
+
     pub fn at(&self, x: f64) -> f64 {
         let Some(&(first_x, first_y)) = self.points.first() else {
             return 0.0;

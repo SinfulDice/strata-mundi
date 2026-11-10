@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 use strata_client::settings::Preset;
+use strata_core::generation::WorldgenSettings;
 use strata_core::id::Identifier;
 
 /// Strata Mundi — voxel sandbox.
@@ -14,6 +15,11 @@ pub struct Args {
     /// World seed: a number or any text. Random if omitted.
     #[arg(long, allow_hyphen_values = true)]
     pub seed: Option<String>,
+
+    /// Generation settings of `--seed` worlds, as shared on the world creation screen
+    /// (`S1-…`); the world of the pack if omitted.
+    #[arg(long, value_name = "CODE", value_parser = parse_world_code)]
+    pub world_code: Option<WorldgenSettings>,
 
     /// Dimension to play in.
     #[arg(long, default_value = "strata:terra")]
@@ -121,6 +127,10 @@ fn parse_numbers<T: std::str::FromStr, const N: usize>(text: &str) -> Result<[T;
     parts
         .try_into()
         .map_err(|_| format!("expected {N} comma-separated numbers"))
+}
+
+fn parse_world_code(text: &str) -> Result<WorldgenSettings, String> {
+    WorldgenSettings::from_code(text).map_err(|error| error.to_string())
 }
 
 fn parse_vec3(text: &str) -> Result<[f64; 3], String> {

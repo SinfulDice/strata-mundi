@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use strata_core::generation::WorldgenSettings;
 use strata_core::id::Identifier;
 use strata_core::physics::Body;
 use strata_core::updates::{FireSettings, FluidSettings};
@@ -36,6 +37,9 @@ pub struct WorldMeta {
     /// World option: fire spreads and destroys what burns.
     #[serde(default)]
     pub fire: FireSettings,
+    /// World type and generation settings; older worlds are of the pack's normal type.
+    #[serde(default)]
+    pub generation: WorldgenSettings,
 }
 
 fn yes() -> bool {

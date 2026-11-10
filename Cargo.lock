@@ -3368,6 +3368,7 @@ dependencies = [
  "fastnoise-lite",
  "serde",
  "strata-core",
+ "thiserror 2.0.21",
  "tracing",
 ]
 

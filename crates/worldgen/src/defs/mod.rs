@@ -1,8 +1,10 @@
 //! Generation content read from packs: `dimensions/`, `biomes/` and `features/`.
 
 mod features;
+mod world_types;
 
 pub use features::{Crown, FeatureDef, Trunk};
+pub use world_types::{FlatDef, ReliefChanges, WorldTypeDef};
 
 use crate::spline::Spline;
 use serde::Deserialize;
@@ -121,6 +123,16 @@ pub struct Relief {
     /// Size of the overhang noise's shapes, in blocks.
     #[serde(default = "default_overhang_scale")]
     pub overhang_scale: f64,
+    /// Continentalness noise → continentalness seen by every other curve and by biomes
+    /// (more sea, more land); `None` = unchanged.
+    #[serde(default)]
+    pub continentalness: Option<Spline>,
+    /// Multiplies the size of continents and oceans.
+    #[serde(default = "one")]
+    pub continent_scale: f64,
+    /// Highest plain terrain, overhangs excluded.
+    #[serde(default = "default_max_height")]
+    pub max_height: f64,
     /// Size of mountain ranges (peaks-and-valleys), in blocks.
     #[serde(default = "default_weirdness_scale")]
     pub weirdness_scale: f64,
@@ -167,7 +179,7 @@ pub struct Rivers {
 }
 
 /// Where a biome sits in climate space; the nearest biome wins.
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Climate {
     pub temperature: f64,
@@ -285,6 +297,10 @@ fn grey() -> HexColor {
 
 fn default_overhang_scale() -> f64 {
     44.0
+}
+
+fn default_max_height() -> f64 {
+    420.0
 }
 
 fn default_weirdness_scale() -> f64 {

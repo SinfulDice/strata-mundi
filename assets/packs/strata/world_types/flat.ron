@@ -1,0 +1,10 @@
+// Layers of blocks instead of the relief; the player may change them on the creation screen.
+WorldType(
+    order: 1,
+    biome: "strata:plains",
+    flat: (
+        layers: [("strata:bedrock", 1), ("strata:stone", 2), ("strata:dirt", 2), ("strata:grass_block", 1)],
+        caves: false,
+        features: false,
+    ),
+)

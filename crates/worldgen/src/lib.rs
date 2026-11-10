@@ -12,6 +12,7 @@ pub mod map;
 mod noise;
 mod plants;
 mod rng;
+mod settings;
 mod spawn;
 mod spline;
 mod surface;
@@ -19,9 +20,12 @@ mod terrain;
 mod trees;
 
 pub use climate::Sample;
-pub use content::{Bands, Biome, Feature, MAX_CROWN, Plants, Terrain, WorldgenContent};
+pub use content::{
+    Bands, Biome, Feature, Flat, MAX_CROWN, Plants, Terrain, WorldType, WorldgenContent,
+};
 pub use deposits::{Deposit, Vein};
 pub use generator::Generator;
+pub use settings::SettingsError;
 pub use spline::Spline;
 pub use trees::{Part, Tree};
 

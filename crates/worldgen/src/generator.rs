@@ -1,7 +1,8 @@
 use crate::Seed;
+use crate::SettingsError;
 use crate::caves::{Caves, Roofs};
 use crate::climate::{ClimateMaps, Sample};
-use crate::content::{Biome, WorldgenContent};
+use crate::content::{Biome, Flat, WorldgenContent};
 use crate::deposits::{Deposits, Vein};
 use crate::features::{place_ores, place_surface_features};
 use crate::noise::Noise;
@@ -13,6 +14,7 @@ use std::sync::Arc;
 use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE};
+use strata_core::generation::WorldgenSettings;
 
 /// Builds columns from the seed. Pure: any column can be generated at any time,
 /// on any thread, in any order, always with the same result.
@@ -48,6 +50,20 @@ impl Generator {
         }
     }
 
+    /// The generator of a world created with `settings` (the default ones keep the pack's
+    /// world exactly).
+    pub fn with_settings(
+        seed: Seed,
+        content: &Arc<WorldgenContent>,
+        settings: &WorldgenSettings,
+    ) -> Result<Self, SettingsError> {
+        if *settings == WorldgenSettings::default() {
+            return Ok(Self::new(seed, Arc::clone(content)));
+        }
+        let changed = content.with_settings(settings)?;
+        Ok(Self::new(seed, Arc::new(changed)))
+    }
+
     pub fn seed(&self) -> Seed {
         self.seed
     }
@@ -74,6 +90,9 @@ impl Generator {
 
     /// The block generated on top of the ground at `(x, height, z)`, before caves.
     pub fn ground_block(&self, x: i32, z: i32, sample: &Sample, biome: &Biome, y: i32) -> BlockId {
+        if let Some(flat) = &self.content.terrain.flat {
+            return flat.layers.last().map_or(BlockId::AIR, |(block, _)| *block);
+        }
         let slope = self.content.terrain.relief.steep_slope;
         let rise = [(-1, 0), (1, 0), (0, -1), (0, 1)]
             .iter()
@@ -112,7 +131,36 @@ impl Generator {
         });
         let biomes = BiomeMap::from_fn(|lx, lz| samples[lz as usize][lx as usize].1.index);
         let ring = self.ring(origin, &samples);
-        let grid = self.overhang_grid(origin, &samples);
+        let flat = self.content.terrain.flat.as_ref();
+        let tops = match flat {
+            Some(flat) => fill_flat(&mut column, flat),
+            None => self.fill_relief(&mut column, &samples, &ring),
+        };
+        let terrain = &self.content.terrain;
+        if let (Some(caves), Some(settings)) = (&self.caves, &terrain.caves) {
+            let roofs = self.cave_roofs(&tops, &ring.lowest);
+            let keep = [terrain.bedrock, terrain.water, terrain.ice, settings.lava];
+            caves.carve(&mut column, &roofs, &keep);
+        }
+        place_ores(self, &mut column);
+        self.deposits
+            .place(self.seed, &self.content, &mut column, &tops);
+        if flat.is_none_or(|flat| flat.features) {
+            place_surface_features(self, &mut column);
+            place_plants(self, &mut column, &tops);
+        }
+        (column, biomes)
+    }
+
+    /// Ground, water and soil of each block column; returns the height of the ground.
+    fn fill_relief(
+        &self,
+        column: &mut Column,
+        samples: &ColumnSamples<'_>,
+        ring: &Ring,
+    ) -> [[i32; 16]; 16] {
+        let origin = (column.pos.x * SECTION_SIZE, column.pos.z * SECTION_SIZE);
+        let grid = self.overhang_grid(origin, samples);
         let rules = self.rules();
         let slope = self.content.terrain.relief.steep_slope;
         let mut tops = [[0; 16]; 16];
@@ -125,21 +173,10 @@ impl Generator {
                     sloped: ring.plain.is_steep(lx as i32, lz as i32, 1),
                     at: (origin.0 + lx as i32, origin.1 + lz as i32),
                 };
-                tops[lz][lx] = rules.fill(&mut column, (lx, lz), &ground, grid.as_ref());
+                tops[lz][lx] = rules.fill(column, (lx, lz), &ground, grid.as_ref());
             }
         }
-        let terrain = &self.content.terrain;
-        if let (Some(caves), Some(settings)) = (&self.caves, &terrain.caves) {
-            let roofs = self.cave_roofs(&tops, &ring.lowest);
-            let keep = [terrain.bedrock, terrain.water, terrain.ice, settings.lava];
-            caves.carve(&mut column, &roofs, &keep);
-        }
-        place_ores(self, &mut column);
-        self.deposits
-            .place(self.seed, &self.content, &mut column, &tops);
-        place_surface_features(self, &mut column);
-        place_plants(self, &mut column, &tops);
-        (column, biomes)
+        tops
     }
 
     /// The biomes of a column without generating it (columns read from a save).
@@ -243,6 +280,19 @@ impl Generator {
     pub fn spawn_point(&self) -> BlockPos {
         crate::spawn::find(self)
     }
+}
+
+fn fill_flat(column: &mut Column, flat: &Flat) -> [[i32; 16]; 16] {
+    let mut y = 0;
+    for &(block, thickness) in &flat.layers {
+        for _ in 0..thickness {
+            for (lx, lz) in (0..16).flat_map(|lz| (0..16).map(move |lx| (lx, lz))) {
+                column.set(lx, y, lz, block);
+            }
+            y += 1;
+        }
+    }
+    [[flat.top(); 16]; 16]
 }
 
 struct Ring {

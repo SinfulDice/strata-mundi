@@ -250,6 +250,7 @@ mod tests {
             day_cycle: true,
             fire_spread: true,
             fire_destroy: true,
+            generation: Default::default(),
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {
@@ -297,6 +298,7 @@ mod tests {
             day_cycle: true,
             fire_spread: true,
             fire_destroy: true,
+            generation: Default::default(),
         };
         let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
         let settings = |meta| WorldSettings {

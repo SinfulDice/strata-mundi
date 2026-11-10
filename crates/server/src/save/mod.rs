@@ -212,6 +212,7 @@ pub fn create(
             spread: new.fire_spread,
             destroy: new.fire_destroy,
         },
+        generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;
     Ok((folder, meta))
@@ -295,6 +296,7 @@ mod tests {
             day_cycle: true,
             fire_spread: true,
             fire_destroy: true,
+            generation: Default::default(),
         }
     }
 

@@ -9,6 +9,7 @@ license.workspace = true
 [dependencies]
 strata-core.workspace = true
 fastnoise-lite.workspace = true
+thiserror.workspace = true
 serde.workspace = true
 tracing.workspace = true
 
