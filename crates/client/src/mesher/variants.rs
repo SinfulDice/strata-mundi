@@ -15,13 +15,18 @@ pub struct TextureVariants {
 
 impl TextureVariants {
     pub fn from_library(library: &TextureLibrary) -> Self {
-        let textures = library.images.iter().map(|(texture, _, _)| texture);
-        Self {
-            layouts: library.layouts.clone(),
-            second: textures
-                .map(|texture| library.image_layer(texture, 1).0)
-                .collect(),
-        }
+        Self::from_layouts(library.layouts.clone())
+    }
+
+    /// One layout per texture, in layer order: extra images start after the last one
+    /// (as in `TextureLibrary`).
+    pub fn from_layouts(layouts: Vec<TextureLayout>) -> Self {
+        let first_extra = layouts.len();
+        let second = layouts
+            .iter()
+            .map(|layout| u16::try_from(first_extra + layout.extra as usize).unwrap_or(0))
+            .collect();
+        Self { layouts, second }
     }
 
     /// Whether faces with this texture change from block to block.

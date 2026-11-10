@@ -75,6 +75,7 @@
         "blocks/strata/torch": [(version: "0.2.0", change: Added)],
         "blocks/strata/fire": [(version: "0.2.0", change: Added)],
         "blocks/strata/portal": [(version: "0.2.0", change: Added)],
+        "blocks/strata/bookshelf": [(version: "0.2.0", change: Added)],
         "blocks/strata/terracotta": [(version: "0.2.0", change: Added)],
         "blocks/strata/white_terracotta": [(version: "0.2.0", change: Added)],
         "blocks/strata/orange_terracotta": [(version: "0.2.0", change: Added)],

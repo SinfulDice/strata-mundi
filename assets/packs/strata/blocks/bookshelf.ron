@@ -1,0 +1,7 @@
+Block(
+    textures: Column(end: "strata:oak_planks", side: "strata:bookshelf"),
+    hardness: 1.5,
+    sound: Some("strata:wood"),
+    category: Some("strata:building"),
+    flammability: Some((catch: 30, burn: 20)),
+)

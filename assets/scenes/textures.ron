@@ -1,0 +1,27 @@
+// Living textures for captures (`--scene textures`): a glass wall, stacked bookshelves,
+// a test portal in obsidian, fire, water and lava, and patches of stone, sand and dirt
+// showing their random variants next to the grass.
+(
+    fills: [
+        (from: (-14, 0, -14), to: (14, 0, 14), block: "strata:bedrock"),
+        (from: (-14, 1, -14), to: (14, 12, 14), block: "strata:stone"),
+        (from: (-14, 13, -14), to: (14, 15, 14), block: "strata:dirt"),
+        (from: (-14, 16, -14), to: (14, 16, 14), block: "strata:grass_block"),
+        (from: (-11, 16, 3), to: (-6, 16, 10), block: "strata:stone"),
+        (from: (-4, 16, 3), to: (1, 16, 10), block: "strata:sand"),
+        (from: (3, 16, 3), to: (8, 16, 10), block: "strata:dirt"),
+        (from: (-10, 17, -5), to: (-5, 19, -5), block: "strata:glass"),
+        (from: (-3, 17, -5), to: (-3, 17, -5), block: "strata:glass"),
+        (from: (-1, 17, -5), to: (-1, 19, -5), block: "strata:bookshelf"),
+        (from: (0, 17, -5), to: (0, 18, -5), block: "strata:bookshelf"),
+        (from: (1, 17, -5), to: (1, 17, -5), block: "strata:bookshelf"),
+        (from: (4, 17, -5), to: (4, 20, -5), block: "strata:obsidian"),
+        (from: (7, 17, -5), to: (7, 20, -5), block: "strata:obsidian"),
+        (from: (5, 20, -5), to: (6, 20, -5), block: "strata:obsidian"),
+        (from: (5, 17, -5), to: (6, 19, -5), block: "strata:portal"),
+        (from: (10, 17, -3), to: (10, 17, -3), block: "strata:fire"),
+        (from: (11, 17, -4), to: (11, 17, -4), block: "strata:fire"),
+        (from: (-13, 16, -12), to: (-9, 16, -8), block: "strata:water"),
+        (from: (9, 16, -12), to: (12, 16, -9), block: "strata:lava"),
+    ],
+)

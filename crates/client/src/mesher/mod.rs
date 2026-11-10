@@ -8,6 +8,8 @@ mod shading;
 #[cfg(test)]
 mod shading_tests;
 mod variants;
+#[cfg(test)]
+mod variants_tests;
 mod vertex;
 mod workers;
 

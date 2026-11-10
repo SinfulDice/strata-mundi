@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use strata_core::content::{Content, TextureId, TextureLayout, position_hash};
 use strata_core::id::Identifier;
 use strata_core::pack::PackSet;
-use strata_core::texture::{Layout, Rgba};
+use strata_core::texture::{Connection, Layout, Rgba};
 
 fn game() -> Content {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
@@ -122,4 +122,17 @@ fn random_variants_follow_their_weights() {
     assert_eq!(picks, [0, 0, 0, 1]);
     assert_eq!(position_hash(5, 70, -3), position_hash(5, 70, -3));
     assert_ne!(position_hash(5, 70, -3), position_hash(5, 70, -4));
+}
+
+#[test]
+fn glass_and_bookshelves_are_connected() {
+    let content = game();
+    for (name, connect, images) in [
+        ("strata:glass", Connection::Edges, 16),
+        ("strata:bookshelf", Connection::Vertical, 4),
+    ] {
+        let layout = content.textures.layout(texture(&content, name));
+        assert_eq!(layout.layout, Layout::Connected(connect), "{name}");
+        assert_eq!(layout.images, images, "{name}");
+    }
 }

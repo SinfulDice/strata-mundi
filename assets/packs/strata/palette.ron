@@ -29,6 +29,7 @@
     "lava": ["#a8280a", "#d4520e", "#f08a1c", "#ffc84a"],
     "fire": ["#b02a08", "#e85c10", "#f8a428", "#ffe68a"],
     "portal": ["#3a136ec0", "#5a1fa0c0", "#8040d0c0", "#b47cf2c0"],
+    "book_spines": ["#7a2a22", "#2f4a7a", "#3f6a35", "#a8802e"],
     "flint": ["#1c1c22", "#2e2e36", "#45454f"],
     "water": ["#2b4ea8b8", "#3460c0b8", "#3d70d0b8", "#4a80dcb8"],
     "glass": ["#8fb8c8", "#b4d6e2", "#d8eef5", "#ffffff"],
