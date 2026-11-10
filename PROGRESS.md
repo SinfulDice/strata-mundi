@@ -81,6 +81,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 | 23/10/2026 | DS | Pic de mémoire (RSS), vol de 2 min | 201 Mio (cible ≤ 2 Go) | `--bench-scene flyover --preset ds` |
 | 23/10/2026 | DS | Lancement → carte graphique prête | 0,2 s (cible < 5 s) | journal |
 | 23/10/2026 | DS | Chargement initial du monde (distance 6) | ≈ 4 s (cible < 10 s) | durée totale − préchauffage − mesure |
+| 10/11/2026 (v0.2 j9, relecture) | DS | Pic RSS, vol de 2 min, avant / après la marge non dessinée demandée au serveur (distance 6 → disque de 8) | 218 → 234 Mio ; monde chargé en ~7,7 → ~12,3 s | `--bench-scene flyover --preset ds` (xvfb) |
 
 ## Limitations connues
 

@@ -21,7 +21,7 @@ const BUILT_IN: [(&str, &str); 9] = [
     shader!("ui.wgsl"),
 ];
 
-/// Shaders that use the light functions of `light.wgsl`.
+/// Shaders completed by `light.wgsl` (camera, block textures, light and fog).
 const LIT: [&str; 3] = ["block.wgsl", "model.wgsl", "particle.wgsl"];
 
 pub fn module(device: &wgpu::Device, name: &str) -> wgpu::ShaderModule {

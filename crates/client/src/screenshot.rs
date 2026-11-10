@@ -59,8 +59,9 @@ pub struct ParticleShot {
 const PARTICLE_STEP: f32 = 1.0 / 60.0;
 
 impl ParticleShot {
-    /// Breaks the block (it leaves the world before light and meshing) and returns the
-    /// particles thrown.
+    /// Breaks the block and returns the particles thrown. A capture runs without a
+    /// server: the block is removed from the client's world directly, before light and
+    /// meshing (in play, only the server's `BlockChanged` does that).
     fn start(
         &self,
         content: &Content,

@@ -1,21 +1,3 @@
-struct Camera {
-    view_proj: mat4x4<f32>,
-    // x: ambient occlusion strength (0 = off, 1 = full); y, z: fog start and end, in
-    // blocks from the camera; w: 1 with fog, 0 without.
-    options: vec4<f32>,
-    // Sky color (linear), which the fog fades to (the liquid's color with the eyes in it).
-    sky: vec4<f32>,
-    // x: seconds, wrapped; y: 1 with animated textures, 0 without; z: 1 when the fog
-    // counts the full distance (eyes in a liquid), 0 for the horizontal distance only;
-    // w: 1 with random texture variants, 0 without.
-    effects: vec4<f32>,
-    // x: sky light factor (1 by day); y: brightness (0-1); z: light of the darkest places.
-    light: vec4<f32>,
-};
-
-@group(0) @binding(0) var<uniform> camera: Camera;
-@group(1) @binding(0) var block_textures: texture_2d_array<f32>;
-@group(1) @binding(1) var block_sampler: sampler;
 // Per layer: first_extra:16 frames:8 frame_time:8 (ticks); 0 for still layers.
 @group(1) @binding(2) var<storage, read> animations: array<u32>;
 // Per layer: second image, then start:24 images:8 into the running totals of the weights
@@ -194,12 +176,6 @@ fn rippled(uv: vec2<f32>, wave: f32) -> vec2<f32> {
 }
 
 // Far terrain fades into the sky, hiding where the loaded world stops.
-fn fogged(color: vec3<f32>, relative: vec3<f32>) -> vec3<f32> {
-    let distance = mix(length(relative.xz), length(relative), camera.effects.z);
-    let amount = clamp((distance - camera.options.y) / max(camera.options.z - camera.options.y, 1.0), 0.0, 1.0);
-    return mix(color, camera.sky.rgb, amount * amount * camera.options.w);
-}
-
 fn lit(input: VertexOutput) -> vec3<f32> {
     return input.shade * light_color(input.light.x, input.light.y);
 }

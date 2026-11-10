@@ -21,6 +21,12 @@ pub struct FaceKey {
     tint: u32,
 }
 
+const FLAG_TURNED: u8 = 1;
+const FLAG_TRANSLUCENT: u8 = 1 << 1;
+/// Never merged with its neighbours (one quad on its own).
+const FLAG_SINGLE: u8 = 1 << 2;
+const FLAG_ANIMATION_SHIFT: u8 = 3;
+
 const TINT_MASKED: u32 = 1 << 24;
 const TINT_BY_CORNER: u32 = 1 << 25;
 const TINTED: u32 = 1 << 28;
@@ -44,10 +50,10 @@ impl FaceKey {
             }),
             layer,
             ao: pack(shading.ao, 2) as u8,
-            flags: u8::from(turned)
-                | (u8::from(translucent) << 1)
-                | (u8::from(surface.single) << 2)
-                | ((surface.animation & 3) << 3),
+            flags: if turned { FLAG_TURNED } else { 0 }
+                | if translucent { FLAG_TRANSLUCENT } else { 0 }
+                | if surface.single { FLAG_SINGLE } else { 0 }
+                | ((surface.animation & 3) << FLAG_ANIMATION_SHIFT),
             drop: pack(surface.drop, 4),
             tint: 0,
         }
@@ -64,7 +70,7 @@ impl FaceKey {
             | if uniform { 0 } else { TINT_BY_CORNER }
             | ((tint.kind().index() as u32) << 26);
         if !uniform {
-            self.flags |= 4;
+            self.flags |= FLAG_SINGLE;
         }
         self
     }
@@ -99,18 +105,18 @@ impl FaceKey {
     }
 
     pub fn turned(self) -> bool {
-        self.flags & 1 != 0
+        self.flags & FLAG_TURNED != 0
     }
 
     pub fn translucent(self) -> bool {
-        self.flags & 2 != 0
+        self.flags & FLAG_TRANSLUCENT != 0
     }
 
     pub fn single(self) -> bool {
-        self.flags & 4 != 0
+        self.flags & FLAG_SINGLE != 0
     }
 
     pub fn animation(self) -> u8 {
-        (self.flags >> 3) & 3
+        (self.flags >> FLAG_ANIMATION_SHIFT) & 3
     }
 }

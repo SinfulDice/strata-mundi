@@ -219,7 +219,6 @@ impl Gameplay {
         Some(pose.position + DVec3::Y * (seat + EYE_HEIGHT))
     }
 
-    /// Whether the player sits in a boat (the HUD tells how to get off).
     /// The biome under the camera, as the server named it.
     pub fn biome_at_camera(&self) -> Option<&BiomeInfo> {
         let position = self.camera.position;
@@ -228,6 +227,7 @@ impl Gameplay {
         self.biomes.get(usize::from(id.0))
     }
 
+    /// Whether the player sits in a boat (the HUD tells how to get off).
     pub fn is_riding(&self) -> bool {
         self.interaction.mount.is_some()
     }
