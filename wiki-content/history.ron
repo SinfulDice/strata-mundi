@@ -136,6 +136,7 @@
         "mechanics/fluids": [(version: "0.2.0", change: Added)],
         "mechanics/game-modes": [(version: "0.1.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
+        "mechanics/sounds": [(version: "0.2.0", change: Added)],
         "mechanics/world-generation": [
             (version: "0.1.0", change: Added),
             (version: "0.2.0", change: Changed(

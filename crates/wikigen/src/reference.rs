@@ -10,11 +10,12 @@ use strata_client::settings::{GraphicsSettings, Preset};
 use strata_protocol::commands::{COMMANDS, CommandSpec, Runs};
 
 /// Mechanics pages, by text key (`mechanics/<name>`).
-const MECHANICS: [&str; 7] = [
+const MECHANICS: [&str; 8] = [
     "world-generation",
     "fluids",
     "fire",
     "day-night",
+    "sounds",
     "boats",
     "saving",
     "game-modes",

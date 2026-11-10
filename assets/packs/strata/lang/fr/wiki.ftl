@@ -82,6 +82,7 @@ wiki-mechanic-world-generation = Génération du monde
 wiki-mechanic-fluids = Liquides
 wiki-mechanic-fire = Feu
 wiki-mechanic-day-night = Cycle jour et nuit
+wiki-mechanic-sounds = Sons
 wiki-mechanic-boats = Bateaux
 wiki-mechanic-saving = Sauvegarde
 wiki-mechanic-game-modes = Modes de jeu

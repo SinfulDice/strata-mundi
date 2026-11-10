@@ -82,6 +82,7 @@ wiki-mechanic-world-generation = HOW TEH WORLD IZ MADE
 wiki-mechanic-fluids = WET STUFFZ
 wiki-mechanic-fire = HOT FIRE
 wiki-mechanic-day-night = DAI AN NITE
+wiki-mechanic-sounds = NOIZEZ
 wiki-mechanic-boats = FLOATEEZ
 wiki-mechanic-saving = SAEVIN
 wiki-mechanic-game-modes = GAEM MODEZ

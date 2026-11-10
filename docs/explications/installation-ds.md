@@ -18,12 +18,13 @@ Le binaire `strata` est autonome (aucune bibliothèque Rust à installer), mais 
 | Fenêtre X11 (si pas de Wayland) | `libx11-6`, `libxcursor1`, `libxrandr2`, `libxi6`, `libxkbcommon-x11-0` | à l'exécution |
 | Manettes | `libudev1` | liée au binaire |
 | Clapet (veille) | D-Bus système + `systemd-logind` ou `elogind` | facultatif |
-| Son | rien encore : l'audio arrive avec la v0.2 (ALSA/PipeWire via `libasound2`) | — |
+| Son | `libasound2` (ALSA ; avec PipeWire ou PulseAudio, ajouter `pipewire-alsa` ou `libasound2-plugins` pour passer par eux) | liée au binaire ; sans carte son, le jeu tourne en silence |
 
 Vérifications rapides :
 
 - `vulkaninfo --summary` (paquet `vulkan-tools`) doit lister **Intel(R) Graphics (ADL-N)** avec le pilote `Intel open-source Mesa driver`. Si seul `llvmpipe` apparaît, le pilote Intel manque : le jeu tournera, mais en rendu logiciel (très lent).
 - Manette : l'utilisateur doit pouvoir lire `/dev/input/event*`. Sur un système minimal, ajouter l'utilisateur au groupe `input` (`usermod -aG input <nom>`) ou installer la règle udev de la distribution pour les manettes. `evtest` permet de vérifier que les boutons arrivent.
+- Son : `aplay -l` doit lister la carte du DS ; `speaker-test -c 2` joue un bruit à gauche puis à droite. Sans périphérique, le journal indique « no audio device: playing without sound » et le jeu continue.
 - Écran : n'importe quel compositeur Wayland (ou un serveur X) ; le jeu ouvre une fenêtre plein écran via `winit`. Sans compositeur, `cage` (kiosque Wayland) suffit : `cage -- strata`.
 
 ### Réglages conseillés pour le DS
