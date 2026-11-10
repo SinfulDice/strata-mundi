@@ -167,3 +167,15 @@ fn breaking_a_wall_lets_water_flow_and_the_changes_go_out() {
     assert!(changes.contains(&(wall, flowing)));
     assert_eq!(w.loader.block(wall), Some(flowing));
 }
+
+#[test]
+fn a_fire_read_back_with_its_column_burns_again() {
+    let mut w = world();
+    let fire = block(&w.content, "strata:fire");
+    let mut column = w.loader.column(ColumnPos { x: 0, z: 0 }).unwrap().clone();
+    let pos = BlockPos::new(11, 64, 8);
+    column.set(11, 64, 8, fire);
+    w.loader.insert(column);
+    wait(&mut w, 1_000);
+    assert_eq!(w.loader.block(pos), Some(BlockId::AIR), "no fuel: it died");
+}

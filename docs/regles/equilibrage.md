@@ -29,6 +29,25 @@ Cibles fixées avec l'utilisateur. Toutes les valeurs de jeu vivent dans les pac
 - **Finies comme Minecraft** : un minerai miné ne revient pas ; on explore plus loin.
 - **Non farmables** (aucune machine, aucune ferme ne peut les produire) : butin de boss et uniques nommés, matériaux magiques, cornes et fragments de licorne, sceaux, pièces de bâton. Tout le reste peut s'automatiser par la mécanique.
 
+## Feu (v0.2, `blocks/fire.ron`, champ `fire`)
+
+Valeurs de Minecraft (difficulté normale), toutes réglables dans le pack ; bornes dans `FireDef::clamped`.
+
+| Champ | Défaut | Bornes | Effet |
+|---|---|---|---|
+| `tick_rate` | 30 | 1-10 000 | Ticks minimum entre deux pas d'un feu |
+| `tick_jitter` | 10 | 1-1 000 | Le pas dure `tick_rate` + 0 à `tick_jitter − 1` ticks |
+| `max_age` | 15 | 1-15 | Âge maximal : le feu ne se propage plus, et peut mourir |
+| `bare_age` | 3 | 0-15 | Sans combustible voisin, meurt au-delà de cet âge |
+| `burn_out_odds` | 4 | 1-10 000 | À l'âge maximal, 1 chance sur N de mourir (sauf sur un combustible) |
+| `side_odds`, `vertical_odds` | 300, 250 | 1-100 000 | Un voisin prend avec `burn` chances sur N (côtés, dessus-dessous) |
+| `rekindle_chance`, `rekindle_base` | 5, 10 | 0-10 000, 1-10 000 | Le voisin consumé devient un feu avec 5 chances sur (âge + 10) |
+| `spread_bonus`, `spread_age_base` | 54, 30 | 0-10 000, 1-10 000 | L'air voisin s'allume avec `(catch + 54) / (âge + 30)` chances… |
+| `spread_odds` | 100 | 1-100 000 | … sur 100, et 100 de plus par bloc au-delà d'un au-dessus |
+| `spread_reach`, `spread_below`, `spread_above` | 1, 1, 4 | ≤ 3, ≤ 3, ≤ 8 | Zone d'air allumable : 3 × 6 × 3 par défaut |
+
+Inflammabilité `(catch, burn)` des blocs : bûches (5, 5), planches (5, 20), feuilles (30, 60), herbes, fougères, buissons, fleurs (60, 100), liane (15, 100).
+
 ## Outils d'équilibrage (créés en v0.3, enrichis à chaque version)
 
 - **Tableur généré** : `cargo run -p balance -- export` produit des CSV dans `docs/equilibrage/` (armes, armures, outils, recettes et coûts, mobs, boss, sorts, temps de farm) ouvrables dans LibreOffice ou Excel, avec comparaisons par palier.

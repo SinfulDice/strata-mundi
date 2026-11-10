@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[test]
-    fn flint_and_steel_lights_a_fire_that_dies_without_fuel() {
+    fn flint_and_steel_lights_a_fire_that_water_puts_out() {
         let mut w = world();
         hold(&mut w, &["strata:flint_and_steel"], 0);
         let flint = item(&w, "strata:flint_and_steel");

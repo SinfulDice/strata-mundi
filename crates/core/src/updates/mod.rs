@@ -16,6 +16,7 @@ pub use rules::{Cell, UpdateRules};
 
 use crate::content::{BlockId, Face};
 use crate::coords::BlockPos;
+use crate::dimension::DimensionId;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
@@ -63,7 +64,10 @@ pub struct BlockUpdates {
     rules: Arc<UpdateRules>,
     settings: FluidSettings,
     fire: FireSettings,
-    /// Age of each burning fire (0 to 15); lost when its column unloads.
+    /// World seed mixed with the dimension: each world and dimension burns its own way.
+    seed: u64,
+    /// Age of each burning fire (0 to 15). When its column unloads, the fire's planned
+    /// step is dropped and its age forgotten; `wake_fires` starts it again on reload.
     fire_ages: HashMap<BlockPos, u8>,
     /// Planned updates by (tick, order of planning): deterministic.
     queue: BTreeMap<(u64, u64), BlockPos>,
@@ -80,6 +84,7 @@ impl BlockUpdates {
             rules,
             settings,
             fire: FireSettings::default(),
+            seed: 0,
             fire_ages: HashMap::new(),
             queue: BTreeMap::new(),
             planned: HashMap::new(),
@@ -100,6 +105,10 @@ impl BlockUpdates {
 
     pub fn set_fire_settings(&mut self, settings: FireSettings) {
         self.fire = settings;
+    }
+
+    pub fn set_seed(&mut self, world_seed: u64, dimension: &DimensionId) {
+        self.seed = world_seed ^ stable_hash(&dimension.to_string());
     }
 
     /// Blocks waiting for an update.
@@ -212,6 +221,13 @@ impl BlockUpdates {
         self.queue.insert(key, pos);
         self.planned.insert(pos, key);
     }
+}
+
+/// FNV-1a: the same on every machine and Rust version, unlike `DefaultHasher`.
+fn stable_hash(text: &str) -> u64 {
+    text.bytes().fold(0xCBF2_9CE4_8422_2325, |hash, byte| {
+        (hash ^ u64::from(byte)).wrapping_mul(0x0100_0000_01B3)
+    })
 }
 
 /// How the simulation sees `pos` in `world`.

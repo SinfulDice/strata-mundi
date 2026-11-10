@@ -41,6 +41,8 @@ pub struct ColumnLoader {
     requested: HashSet<ColumnPos>,
     sent: HashSet<ColumnPos>,
     modified: HashSet<ColumnPos>,
+    /// Columns put in place since the last `take_arrived`.
+    arrived: Vec<ColumnPos>,
 }
 
 impl ColumnLoader {
@@ -53,6 +55,7 @@ impl ColumnLoader {
             requested: HashSet::new(),
             sent: HashSet::new(),
             modified: HashSet::new(),
+            arrived: Vec::new(),
         }
     }
 
@@ -61,6 +64,7 @@ impl ColumnLoader {
             // A result for a place left and asked again may arrive twice: the first one
             // in may already have been changed by a player.
             if self.requested.remove(&column.pos) && !self.columns.contains_key(&column.pos) {
+                self.arrived.push(column.pos);
                 self.columns.insert(column.pos, column);
             }
         }
@@ -96,7 +100,17 @@ impl ColumnLoader {
     /// Puts a ready-made column in place, as if just loaded.
     #[cfg(test)]
     pub fn insert(&mut self, column: Column) {
+        self.arrived.push(column.pos);
         self.columns.insert(column.pos, column);
+    }
+
+    /// The columns loaded (generated or read) since the last call.
+    pub fn take_arrived(&mut self) -> Vec<ColumnPos> {
+        std::mem::take(&mut self.arrived)
+    }
+
+    pub fn column(&self, pos: ColumnPos) -> Option<&Column> {
+        self.columns.get(&pos)
     }
 
     /// `None` when the column is not loaded.
@@ -146,6 +160,7 @@ impl ColumnLoader {
             .collect();
         for pos in saved {
             if let Some(column) = self.store.load(pos) {
+                self.arrived.push(pos);
                 self.columns.insert(pos, column);
             }
         }

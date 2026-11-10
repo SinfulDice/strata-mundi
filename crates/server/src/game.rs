@@ -12,6 +12,7 @@ use glam::DVec3;
 use std::sync::Arc;
 use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
+use strata_core::dimension::DimensionId;
 use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
 use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings, cell};
@@ -161,6 +162,10 @@ impl Game {
         self.updates.set_fire_settings(settings);
     }
 
+    pub fn set_world_seed(&mut self, seed: u64, dimension: &DimensionId) {
+        self.updates.set_seed(seed, dimension);
+    }
+
     /// Runs one tick of player and boat physics, liquids and fire; returns the blocks changed.
     pub fn tick(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         self.tick += 1;
@@ -181,6 +186,11 @@ impl Game {
         };
         let moved = boat_movement(&mut self.ecs, &self.rules, &terrain);
         self.report_moves(&moved);
+        for pos in loader.take_arrived() {
+            if let Some(column) = loader.column(pos) {
+                self.updates.wake_fires(column);
+            }
+        }
         let mut changes = Vec::new();
         let mut world = Bounded { loader, border };
         self.updates.tick(&mut world, &mut changes);

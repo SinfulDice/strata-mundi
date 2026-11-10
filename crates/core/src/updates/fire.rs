@@ -1,21 +1,18 @@
 //! Fire, close to Minecraft's: it ages at each step, burns its flammable neighbours away,
 //! lights the air next to flammable blocks, and dies out without fuel. Chances come from
-//! a hash of the place and tick, so a world burns the same way every time.
+//! a hash of the world, place and tick, so a world burns the same way every time. Every
+//! value comes from the pack's `FireDef`.
 
 use super::rules::Cell;
 use super::{BlockAccess, BlockChange, BlockUpdates, WAIT_TICKS, cell};
+use crate::chunk::Column;
 use crate::content::{BlockId, Face, FireDef, MAX_FIRE_AGE};
-use crate::coords::BlockPos;
+use crate::coords::{BlockPos, SECTION_SIZE};
 use serde::{Deserialize, Serialize};
 
-/// Extra ticks added to a fire's `tick_rate`, different for each place and step.
-const TICK_JITTER: u64 = 10;
-/// Odds against a fire's neighbour catching: sides, then above or below.
-const SIDE_ODDS: u32 = 300;
-const VERTICAL_ODDS: u32 = 250;
-/// Added to the `catch` of the air around a fire (Minecraft's 40 plus its normal
-/// difficulty).
-const SPREAD_BONUS: u32 = 54;
+/// Salts that keep the delay of a step apart from the chances of the step itself.
+const DELAY_SALT: u64 = 0xA076_1D64_78BD_642F;
+const STEP_SALT: u64 = 0xE703_7ED1_A0B4_28DB;
 
 /// World option: fire may spread and destroy what burns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,11 +37,13 @@ impl Default for FireSettings {
 struct Roll(u64);
 
 impl Roll {
-    fn new(pos: BlockPos, tick: u64) -> Self {
+    fn new(seed: u64, pos: BlockPos, tick: u64, salt: u64) -> Self {
         let place = (i64::from(pos.x) as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)
             ^ (i64::from(pos.y) as u64).wrapping_mul(0xC2B2_AE3D_27D4_EB4F)
             ^ (i64::from(pos.z) as u64).wrapping_mul(0x1656_67B1_9E37_79F9);
-        Self(place ^ tick.wrapping_mul(0xFF51_AFD7_ED55_8CCD))
+        let mut roll = Self(seed ^ salt ^ place ^ tick.wrapping_mul(0xFF51_AFD7_ED55_8CCD));
+        roll.0 = roll.next();
+        roll
     }
 
     /// splitmix64.
@@ -62,10 +61,40 @@ impl Roll {
     }
 }
 
+fn section_cells() -> impl Iterator<Item = (u32, u32, u32)> {
+    let size = SECTION_SIZE as u32;
+    (0..size).flat_map(move |y| (0..size).flat_map(move |z| (0..size).map(move |x| (x, y, z))))
+}
+
 impl BlockUpdates {
     pub(super) fn plan_fire(&mut self, pos: BlockPos, fire: FireDef) {
-        let jitter = Roll::new(pos, self.now).next() % TICK_JITTER;
+        let jitter = Roll::new(self.seed, pos, self.now, DELAY_SALT).next()
+            % u64::from(fire.tick_jitter.max(1));
         self.plan(pos, self.now + u64::from(fire.tick_rate) + jitter);
+    }
+
+    /// A column just loaded: its fires burn again, from age 0 (their planned steps and
+    /// ages were dropped when it unloaded). Only sections whose palette holds a fire are
+    /// read.
+    pub fn wake_fires(&mut self, column: &Column) {
+        let origin = (column.pos.x * SECTION_SIZE, column.pos.z * SECTION_SIZE);
+        for (index, section) in column.sections().iter().enumerate() {
+            let palette = section.palette();
+            if !palette
+                .iter()
+                .any(|&block| self.rules.fire(block).is_some())
+            {
+                continue;
+            }
+            let base_y = index as i32 * SECTION_SIZE;
+            for (x, y, z) in section_cells() {
+                if let Some(fire) = self.rules.fire(section.get(x, y, z)) {
+                    let pos =
+                        BlockPos::new(origin.0 + x as i32, base_y + y as i32, origin.1 + z as i32);
+                    self.plan_fire(pos, fire);
+                }
+            }
+        }
     }
 
     /// Whether a fire may burn at `pos`: on solid ground or next to something flammable,
@@ -112,7 +141,7 @@ impl BlockUpdates {
             }
             Some(true) => {}
         }
-        let mut roll = Roll::new(pos, self.now);
+        let mut roll = Roll::new(self.seed, pos, self.now, STEP_SALT);
         let old = self.fire_ages.get(&pos).copied().unwrap_or(0);
         let age = (old + (roll.below(3) / 2) as u8).min(fire.max_age);
         if self.burns_out(world, pos, age, fire, &mut roll) {
@@ -124,15 +153,15 @@ impl BlockUpdates {
         if self.fire.destroy {
             for face in Face::ALL {
                 let odds = match face {
-                    Face::Up | Face::Down => VERTICAL_ODDS,
-                    _ => SIDE_ODDS,
+                    Face::Up | Face::Down => fire.vertical_odds,
+                    _ => fire.side_odds,
                 };
                 let target = pos.neighbour(face);
-                self.burn(world, (target, block), odds, age, &mut roll, changes);
+                self.burn(world, (target, block, fire), odds, age, &mut roll, changes);
             }
         }
         if self.fire.spread && age < fire.max_age {
-            self.spread(world, (pos, block), age, &mut roll, changes);
+            self.spread(world, (pos, block, fire), age, &mut roll, changes);
         }
     }
 
@@ -154,18 +183,18 @@ impl BlockUpdates {
             let neighbour = cell(world, pos.neighbour(face));
             self.rules.flammability(neighbour).is_some()
         });
-        if !fuel_near && age > 3 {
+        if !fuel_near && age > fire.bare_age {
             return true;
         }
         let burning_forever = on_fuel && self.fire.destroy;
-        age >= fire.max_age && !burning_forever && roll.below(4) == 0
+        age >= fire.max_age && !burning_forever && roll.below(fire.burn_out_odds) == 0
     }
 
     /// A flammable neighbour may catch: it burns away, sometimes into a new fire.
     fn burn(
         &mut self,
         world: &mut impl BlockAccess,
-        (target, fire): (BlockPos, BlockId),
+        (target, block, fire): (BlockPos, BlockId, FireDef),
         odds: u32,
         age: u8,
         roll: &mut Roll,
@@ -177,40 +206,42 @@ impl BlockUpdates {
         if roll.below(odds) >= u32::from(flammability.burn) {
             return;
         }
-        let rekindles =
-            self.fire.spread && roll.below(u32::from(age) + 10) < 5 && !world.rains_on(target);
+        let rekindles = self.fire.spread
+            && roll.below(u32::from(age) + fire.rekindle_base) < fire.rekindle_chance
+            && !world.rains_on(target);
         if rekindles {
-            self.light(world, target, fire, age, roll, changes);
+            self.light(world, target, block, age, roll, changes);
         } else {
             self.set_block(world, target, BlockId::AIR, changes);
         }
     }
 
-    /// The air around (up to four blocks above) may catch from the flammable blocks it
-    /// touches, less often the higher and the older the fire. Fires at their oldest no
+    /// The air around (by default up to four blocks above) may catch from the flammable
+    /// blocks it touches, less often the higher and the older the fire. Fires at their oldest no
     /// longer do: ages only grow along a chain of fires, so every fire ends.
     fn spread(
         &mut self,
         world: &mut impl BlockAccess,
-        (pos, fire): (BlockPos, BlockId),
+        (pos, block, fire): (BlockPos, BlockId, FireDef),
         age: u8,
         roll: &mut Roll,
         changes: &mut Vec<BlockChange>,
     ) {
-        for dx in -1..=1 {
-            for dz in -1..=1 {
-                for dy in -1..=4 {
+        let reach = i32::from(fire.spread_reach);
+        for dx in -reach..=reach {
+            for dz in -reach..=reach {
+                for dy in -i32::from(fire.spread_below)..=i32::from(fire.spread_above) {
                     if (dx, dy, dz) == (0, 0, 0) {
                         continue;
                     }
                     let target = BlockPos::new(pos.x + dx, pos.y + dy, pos.z + dz);
-                    let odds = 100 + 100 * (dy - 1).max(0).unsigned_abs();
-                    let chance = self.catch_chance(world, target, age);
+                    let odds = fire.spread_odds * (1 + (dy - 1).max(0).unsigned_abs());
+                    let chance = self.catch_chance(world, target, age, fire);
                     if chance > 0
                         && roll.below(odds) <= chance
                         && self.fire_can_stay(world, target) == Some(true)
                     {
-                        self.light(world, target, fire, age, roll, changes);
+                        self.light(world, target, block, age, roll, changes);
                     }
                 }
             }
@@ -219,7 +250,7 @@ impl BlockUpdates {
 
     /// How readily the air at `pos` catches fire: 0 if it is not air or touches nothing
     /// flammable.
-    fn catch_chance(&self, world: &impl BlockAccess, pos: BlockPos, age: u8) -> u32 {
+    fn catch_chance(&self, world: &impl BlockAccess, pos: BlockPos, age: u8, fire: FireDef) -> u32 {
         if cell(world, pos) != Cell::Block(BlockId::AIR) {
             return 0;
         }
@@ -232,7 +263,7 @@ impl BlockUpdates {
         if catch == 0 {
             return 0;
         }
-        (catch + SPREAD_BONUS) / (u32::from(age) + 30)
+        (catch + fire.spread_bonus) / (u32::from(age) + fire.spread_age_base)
     }
 
     /// A new fire, a little older than the one it comes from.

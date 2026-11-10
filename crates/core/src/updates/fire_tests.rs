@@ -159,6 +159,47 @@ fn a_fire_burns_the_same_way_every_time_at_equal_budget() {
     assert_eq!(run(2), run(2));
 }
 
+fn digest(changes: &[BlockChange]) -> u64 {
+    changes
+        .iter()
+        .fold(0xCBF2_9CE4_8422_2325, |hash, (pos, block)| {
+            let value = [pos.x, pos.y, pos.z, i32::from(block.0)];
+            value.iter().fold(hash, |hash, &v| {
+                (hash ^ u64::from(v as u32)).wrapping_mul(0x0100_0000_01B3)
+            })
+        })
+}
+
+fn forest_fire(seed: u64, dimension: &str) -> Vec<BlockChange> {
+    let mut world = forest();
+    let mut sim = updates();
+    sim.set_seed(
+        seed,
+        &crate::dimension::DimensionId(dimension.parse().unwrap()),
+    );
+    let mut changes = light(&mut sim, &mut world);
+    changes.extend(burn_out(&mut sim, &mut world, 200_000));
+    changes
+}
+
+/// Pinned so that a change of the rules or the hash, which would make saved worlds
+/// burn differently, is noticed.
+#[test]
+fn a_forest_fire_matches_its_reference() {
+    let changes = forest_fire(1, "strata:terra");
+    assert_eq!(
+        (changes.len(), digest(&changes)),
+        (863, 15_585_768_166_855_774_781)
+    );
+}
+
+#[test]
+fn the_world_seed_and_dimension_change_the_fire() {
+    let reference = forest_fire(1, "strata:terra");
+    assert_ne!(reference, forest_fire(2, "strata:terra"));
+    assert_ne!(reference, forest_fire(1, "strata:other"));
+}
+
 /// Rain everywhere: the entry point of the weather (v0.5).
 struct Rainy(Plane);
 
