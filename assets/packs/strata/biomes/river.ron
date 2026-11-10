@@ -6,4 +6,10 @@ Biome(
     surface: "strata:grass_block",
     subsurface: "strata:dirt",
     underwater: "strata:sand",
+    colors: (
+        grass: (1.0, 1.0, 1.0),
+        foliage: (1.0, 1.0, 1.0),
+        water: (1.0, 1.0, 1.0),
+        fog: (1.0, 1.0, 1.0),
+    ),
 )

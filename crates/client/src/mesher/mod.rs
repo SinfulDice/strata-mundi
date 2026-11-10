@@ -1,12 +1,14 @@
 //! Turns sections of blocks into GPU-ready meshes.
 
 mod cross;
+mod face_key;
 mod fluid;
 mod greedy;
 mod neighborhood;
 mod shading;
 #[cfg(test)]
 mod shading_tests;
+mod tints;
 mod variants;
 #[cfg(test)]
 mod variants_tests;
@@ -15,6 +17,7 @@ mod workers;
 
 pub use greedy::{MeshOptions, SectionMesh, mesh_section};
 pub use neighborhood::{BlockTable, LightSections, MeshBlock, Neighborhood};
+pub use tints::{ColumnTints, MAX_BLEND_RADIUS};
 pub use variants::TextureVariants;
 pub use vertex::{MeshData, PackedVertex};
 pub use workers::{MeshJob, MeshResult, MeshWorkers, SectionKey};
@@ -61,6 +64,7 @@ mod tests {
         smooth_lighting: true,
         vegetation: Vegetation::Full,
         texture_variants: true,
+        biome_blend: 0,
     };
 
     #[test]

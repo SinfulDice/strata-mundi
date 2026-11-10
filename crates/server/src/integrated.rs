@@ -307,6 +307,7 @@ fn biome_infos(generator: &Generator) -> Vec<BiomeInfo> {
     biomes
         .map(|biome| BiomeInfo {
             id: biome.id.clone(),
+            tints: biome.tints,
         })
         .collect()
 }

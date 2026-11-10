@@ -54,6 +54,7 @@ fn options(texture_variants: bool) -> MeshOptions {
         smooth_lighting: false,
         vegetation: Vegetation::Full,
         texture_variants,
+        biome_blend: 0,
     }
 }
 

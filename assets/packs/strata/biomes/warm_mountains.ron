@@ -13,4 +13,10 @@ Biome(
         (feature: "strata:bushes", per_column: 0.3),
         (feature: "strata:dead_bushes", per_column: 0.5),
     ],
+    colors: (
+        grass: (1.2, 1.0, 0.72),
+        foliage: (1.15, 1.0, 0.75),
+        water: (1.0, 1.0, 1.0),
+        fog: (1.06, 1.0, 0.9),
+    ),
 )

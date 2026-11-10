@@ -45,6 +45,10 @@ struct VertexOutput {
     // block even on merged faces.
     @location(6) local: vec3<f32>,
     @location(7) @interpolate(flat) face: u32,
+    // Biome colour factor (linear, 1 = as painted), and 1 when pixels with alpha 254
+    // keep their colour (grass fringe on the sides).
+    @location(8) tint: vec3<f32>,
+    @location(9) @interpolate(flat) masked: u32,
 };
 
 // Per face (up, down, north, south, east, west), lit from above like Minecraft; 6 is the
@@ -133,7 +137,11 @@ fn variant_layer(input: VertexOutput) -> u32 {
 }
 
 @vertex
-fn vs_main(@location(0) geometry: u32, @location(1) texture: u32) -> VertexOutput {
+fn vs_main(
+    @location(0) geometry: u32,
+    @location(1) texture: u32,
+    @location(2) tint: u32,
+) -> VertexOutput {
     // Liquid surfaces are lowered by `drop` sixteenths; sides keep their texture scale.
     let drop = f32((texture >> 16u) & 15u) / 16.0;
     let position = vec3<f32>(
@@ -161,7 +169,20 @@ fn vs_main(@location(0) geometry: u32, @location(1) texture: u32) -> VertexOutpu
     out.light = vec2<f32>(f32(texture >> 28u), f32((texture >> 24u) & 15u)) / 15.0;
     out.local = position + vec3<f32>(0.0, drop, 0.0);
     out.face = face;
+    // Factors are given in display space (128 = ×1); textures are sampled in linear.
+    let factor = vec3<f32>(f32(tint & 0xffu), f32((tint >> 8u) & 0xffu), f32((tint >> 16u) & 0xffu)) / 128.0;
+    out.tint = pow(factor, vec3<f32>(2.2));
+    out.masked = (tint >> 24u) & 1u;
     return out;
+}
+
+// The marked pixels of a masked face (alpha 254) keep their colour; mipmaps blend both.
+fn tinted(texel: vec4<f32>, input: VertexOutput) -> vec3<f32> {
+    var amount = 1.0;
+    if input.masked == 1u {
+        amount = clamp(texel.a * 255.0 - 254.0, 0.0, 1.0);
+    }
+    return texel.rgb * mix(vec3<f32>(1.0), input.tint, amount);
 }
 
 fn rippled(uv: vec2<f32>, wave: f32) -> vec2<f32> {
@@ -190,12 +211,12 @@ fn fs_cutout(input: VertexOutput) -> @location(0) vec4<f32> {
     if texel.a < 0.5 {
         discard;
     }
-    return vec4<f32>(fogged(texel.rgb * lit(input), input.relative), 1.0);
+    return vec4<f32>(fogged(tinted(texel, input) * lit(input), input.relative), 1.0);
 }
 
 // Translucent blocks (water, ice): blended, never discarded.
 @fragment
 fn fs_translucent(input: VertexOutput) -> @location(0) vec4<f32> {
     let texel = textureSample(block_textures, block_sampler, rippled(input.uv, input.wave), variant_layer(input));
-    return vec4<f32>(fogged(texel.rgb * lit(input), input.relative), texel.a);
+    return vec4<f32>(fogged(texel.rgb * input.tint * lit(input), input.relative), texel.a);
 }

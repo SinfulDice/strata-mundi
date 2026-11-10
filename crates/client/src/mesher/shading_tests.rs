@@ -28,6 +28,7 @@ const SMOOTH: MeshOptions = MeshOptions {
     smooth_lighting: true,
     vegetation: Vegetation::Full,
     texture_variants: true,
+    biome_blend: 0,
 };
 
 const HARD: MeshOptions = MeshOptions {
@@ -151,6 +152,7 @@ fn torches_are_drawn_whatever_the_vegetation() {
     let off = MeshOptions {
         vegetation: Vegetation::Off,
         texture_variants: true,
+        biome_blend: 0,
         ..SMOOTH
     };
     let placed = [([5, 5, 5], 2), ([7, 5, 5], 3)];

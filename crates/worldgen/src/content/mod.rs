@@ -3,11 +3,13 @@ mod features;
 pub(crate) use features::bounded;
 pub use features::{Feature, MAX_CROWN, MAX_PATCH_RADIUS, Plants};
 
-use crate::defs::{BandsDef, BiomeDef, CavesDef, Climate, DimensionDef, Relief, TerrainDef};
+use crate::defs::{
+    BandsDef, BiomeColors, BiomeDef, CavesDef, Climate, DimensionDef, Relief, TerrainDef,
+};
 use features::load_features;
 use std::path::Path;
 use strata_core::chunk::BiomeId;
-use strata_core::content::{Block, BlockId, Registry};
+use strata_core::content::{BiomeTints, Block, BlockId, Registry, Tint};
 use strata_core::coords::WORLD_HEIGHT;
 use strata_core::id::Identifier;
 use strata_core::pack::{PackError, PackSet, Sourced};
@@ -84,6 +86,7 @@ pub struct Biome {
     pub spawn: bool,
     /// `(feature index, attempts per column)`.
     pub features: Vec<(usize, f64)>,
+    pub tints: BiomeTints,
 }
 
 /// Layers by height: `blocks[y % len]`, shifted by a little noise.
@@ -243,9 +246,17 @@ fn load_biomes(
                 },
                 spawn: value.spawn,
                 features,
+                tints: biome_tints(&value.colors),
             }
         })
         .collect()
+}
+
+fn biome_tints(colors: &BiomeColors) -> BiomeTints {
+    BiomeTints {
+        kinds: [colors.grass, colors.foliage, colors.water].map(Tint::from_factors),
+        fog: Tint::from_factors(colors.fog),
+    }
 }
 
 fn bands(def: &BandsDef, r: &mut Resolver<'_>) -> Option<Bands> {

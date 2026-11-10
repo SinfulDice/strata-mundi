@@ -10,4 +10,10 @@ Biome(
         (feature: "strata:brown_giant_mushroom", per_column: 0.5),
         (feature: "strata:mushrooms", per_column: 2.0),
     ],
+    colors: (
+        grass: (1.0, 1.0, 1.0),
+        foliage: (1.0, 1.0, 1.0),
+        water: (0.95, 0.85, 1.05),
+        fog: (1.03, 0.95, 1.05),
+    ),
 )

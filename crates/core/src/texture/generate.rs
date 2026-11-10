@@ -4,6 +4,7 @@ use super::multi::{
 };
 use super::recipe::{Painter, TextureRecipe};
 use super::{Rgba, RgbaImage};
+use crate::content::UNTINTED_ALPHA;
 use crate::id::Identifier;
 use std::collections::BTreeMap;
 
@@ -150,7 +151,11 @@ impl Context<'_, '_> {
             return Ok(layer);
         };
         let mut image = self.base(base, swap, depth)?;
-        image.draw(&upscale(&layer, image.width()), 0, 0);
+        let layer = upscale(&layer, image.width());
+        if matches!(recipe, TextureRecipe::Overlay { .. }) {
+            mark_untinted(&mut image, &layer);
+        }
+        image.draw(&layer, 0, 0);
         Ok(image)
     }
 
@@ -253,6 +258,19 @@ pub fn seed_of(id: &Identifier) -> u64 {
         .fold(0xcbf2_9ce4_8422_2325, |hash: u64, byte| {
             (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
         })
+}
+
+/// The base pixels an overlay leaves visible keep their colour on a tinted side
+/// (`TintFaces::TopFringe`): alpha `UNTINTED_ALPHA`, invisible elsewhere.
+fn mark_untinted(base: &mut RgbaImage, overlay: &RgbaImage) {
+    for y in 0..base.height().min(overlay.height()) {
+        for x in 0..base.width().min(overlay.width()) {
+            let Rgba([r, g, b, a]) = base.get(x, y);
+            if a == 255 && overlay.get(x, y).0[3] == 0 {
+                base.set(x, y, Rgba([r, g, b, UNTINTED_ALPHA]));
+            }
+        }
+    }
 }
 
 #[cfg(test)]

@@ -1,11 +1,13 @@
 use bytemuck::{Pod, Zeroable};
+use strata_core::content::Tint;
 use strata_core::light::PackedLight;
 
 /// Value of the face field for plant planes, after the six cube faces.
 pub const CROSS_FACE: usize = 6;
 
-/// 8-byte vertex: position inside the section (0..=16), face, ambient occlusion, texture
-/// repeat (0..=16), texture layer, liquid surface and light, decoded by the shader.
+/// 12-byte vertex: position inside the section (0..=16), face, ambient occlusion, texture
+/// repeat (0..=16), texture layer, liquid surface, light and biome colour, decoded by the
+/// shader.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Pod, Zeroable)]
 pub struct PackedVertex {
@@ -14,7 +16,13 @@ pub struct PackedVertex {
     /// layer:16 drop:4 animation:2 free:2 block_light:4 sky_light:4. `drop` lowers the
     /// vertex by sixteenths of a block (liquid surfaces).
     pub texture: u32,
+    /// r:8 g:8 b:8 (`Tint` factors, 128 = ×1) masked:1 free:7. `masked`: pixels with alpha
+    /// `UNTINTED_ALPHA` keep their colour (grass fringe on the sides).
+    pub tint: u32,
 }
+
+const NEUTRAL_TINT: u32 = 0x0080_8080;
+const MASKED: u32 = 1 << 24;
 
 /// Lowest a vertex can be pushed down, in sixteenths.
 pub const MAX_DROP: u8 = 15;
@@ -25,7 +33,7 @@ impl PackedVertex {
     pub const LAYOUT: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
         array_stride: std::mem::size_of::<Self>() as wgpu::BufferAddress,
         step_mode: wgpu::VertexStepMode::Vertex,
-        attributes: &wgpu::vertex_attr_array![0 => Uint32, 1 => Uint32],
+        attributes: &wgpu::vertex_attr_array![0 => Uint32, 1 => Uint32, 2 => Uint32],
     };
 
     pub fn new(position: [u32; 3], face: usize, ao: u8, uv: [u32; 2], layer: u16) -> Self {
@@ -40,7 +48,22 @@ impl PackedVertex {
         Self {
             geometry,
             texture: u32::from(layer),
+            tint: NEUTRAL_TINT,
         }
+    }
+
+    pub fn with_tint(self, tint: Tint, masked: bool) -> Self {
+        let [r, g, b] = tint.0.map(u32::from);
+        Self {
+            tint: r | (g << 8) | (b << 16) | if masked { MASKED } else { 0 },
+            ..self
+        }
+    }
+
+    pub fn tint(self) -> (Tint, bool) {
+        let channel = |shift: u32| (self.tint >> shift) as u8;
+        let color = Tint([channel(0), channel(8), channel(16)]);
+        (color, self.tint & MASKED != 0)
     }
 
     /// A liquid vertex: lowered by `drop` sixteenths, animated with `animation` (0 = still).
@@ -141,5 +164,9 @@ mod tests {
         assert_eq!(lit.light(), PackedLight::new(12, 5));
         assert_eq!((lit.drop(), lit.animation()), (MAX_DROP, 2));
         assert_eq!(lit.with_surface(3, 1).light(), PackedLight::new(12, 5));
+        assert_eq!(lit.tint(), (Tint::NEUTRAL, false));
+        let tinted = lit.with_tint(Tint([1, 200, 255]), true);
+        assert_eq!(tinted.tint(), (Tint([1, 200, 255]), true));
+        assert_eq!(tinted.light(), PackedLight::new(12, 5));
     }
 }

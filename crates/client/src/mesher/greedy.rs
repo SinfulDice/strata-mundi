@@ -2,13 +2,13 @@
 //! per-vertex ambient occlusion. Pure CPU code, run on worker threads.
 
 use super::cross::mesh_crosses;
+use super::face_key::FaceKey;
 use super::fluid::{Surface, fluid_face, hides};
-use super::neighborhood::{BlockTable, Neighborhood, SIZE};
-use super::shading::{FaceShading, Shading, shade_face};
+use super::neighborhood::{BlockTable, MeshBlock, Neighborhood, SIZE};
+use super::shading::{Shading, shade_face};
 use super::vertex::{MeshData, PackedVertex};
 use crate::settings::{GraphicsSettings, Vegetation};
-use strata_core::content::{Axis, Face, RenderKind};
-use strata_core::light::PackedLight;
+use strata_core::content::{Axis, Face, RenderKind, Tint};
 
 pub(super) type Vec3i = [i32; 3];
 
@@ -90,76 +90,6 @@ pub fn texture_turned(face: Face, axis: Axis) -> bool {
     frame(face).right[axis as usize] != 0
 }
 
-/// What makes two faces mergeable, packed in 12 bytes: the greedy pass compares keys a lot.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) struct FaceKey {
-    /// One `PackedLight` byte per corner, in the order of `CORNERS`.
-    light: u32,
-    layer: u16,
-    /// 2 bits per corner, in the order of `CORNERS`.
-    ao: u8,
-    /// turned:1 translucent:1 single:1 animation:2
-    flags: u8,
-    /// 4 bits per corner: sixteenths the corner is lowered by.
-    drop: u16,
-}
-
-impl FaceKey {
-    pub(super) fn new(
-        layer: u16,
-        turned: bool,
-        shading: FaceShading,
-        translucent: bool,
-        surface: Surface,
-    ) -> Self {
-        let pack = |values: [u8; 4], bits: u32| {
-            (0..4).fold(0u16, |acc, i| {
-                acc | (u16::from(values[i]) << (bits * i as u32))
-            })
-        };
-        Self {
-            light: (0..4).fold(0u32, |acc, i| {
-                acc | (u32::from(shading.light[i].0) << (8 * i))
-            }),
-            layer,
-            ao: pack(shading.ao, 2) as u8,
-            flags: u8::from(turned)
-                | (u8::from(translucent) << 1)
-                | (u8::from(surface.single) << 2)
-                | ((surface.animation & 3) << 3),
-            drop: pack(surface.drop, 4),
-        }
-    }
-
-    fn ao(self, corner: usize) -> u8 {
-        (self.ao >> (2 * corner)) & 3
-    }
-
-    fn light(self, corner: usize) -> PackedLight {
-        PackedLight((self.light >> (8 * corner)) as u8)
-    }
-
-    fn drop(self, corner: usize) -> u8 {
-        ((self.drop >> (4 * corner)) & 15) as u8
-    }
-
-    fn turned(self) -> bool {
-        self.flags & 1 != 0
-    }
-
-    fn translucent(self) -> bool {
-        self.flags & 2 != 0
-    }
-
-    fn single(self) -> bool {
-        self.flags & 4 != 0
-    }
-
-    fn animation(self) -> u8 {
-        (self.flags >> 3) & 3
-    }
-}
-
 /// Corner offsets along the frame's `a` and `b` axes, in quad order.
 pub(super) const CORNERS: [(i32, i32); 4] = [(-1, -1), (1, -1), (1, 1), (-1, 1)];
 
@@ -174,6 +104,9 @@ pub struct MeshOptions {
     /// Off: connected textures show their first image (fewer, larger merged faces).
     /// Random variants are picked by the shader and merge either way.
     pub texture_variants: bool,
+    /// Blocks over which biome colours blend (0: sharp borders); used when gathering the
+    /// neighbourhood.
+    pub biome_blend: u32,
 }
 
 impl MeshOptions {
@@ -183,6 +116,7 @@ impl MeshOptions {
             smooth_lighting: graphics.smooth_lighting,
             vegetation: graphics.vegetation,
             texture_variants: graphics.texture_variants,
+            biome_blend: graphics.biome_blend,
         }
     }
 
@@ -232,7 +166,7 @@ fn mesh_faces<const LIQUIDS: bool>(
                 } else {
                     &mut mesh.opaque
                 };
-                emit_quad(target, face, &frame, depth, rect, key);
+                emit_quad(target, blocks, (face, &frame), (depth, rect), key);
             });
         }
     }
@@ -264,7 +198,8 @@ fn face_key<const LIQUIDS: bool>(
         return None;
     }
     if LIQUIDS && let Some(fluid) = block.fluid {
-        return fluid_face(blocks, table, (face, frame), pos, (block, fluid), shading);
+        let key = fluid_face(blocks, table, (face, frame), pos, (block, fluid), shading)?;
+        return Some(tinted(key, blocks, block, (face, frame), pos));
     }
     let front = add(pos, frame.normal);
     let neighbour = blocks.get(front[0], front[1], front[2]);
@@ -275,13 +210,48 @@ fn face_key<const LIQUIDS: bool>(
     if block.varied && options.texture_variants {
         layer = table.variants().face_layer(blocks, (frame, pos), id, layer);
     }
-    Some(FaceKey::new(
+    let key = FaceKey::new(
         layer,
         block.turned[face.index()],
         shade_face(blocks, table, frame, front, shading),
         block.render == RenderKind::Translucent,
         Surface::FLAT,
-    ))
+    );
+    Some(tinted(key, blocks, block, (face, frame), pos))
+}
+
+fn tinted(
+    key: FaceKey,
+    blocks: &Neighborhood,
+    block: &MeshBlock,
+    (face, frame): (Face, &FaceFrame),
+    pos: Vec3i,
+) -> FaceKey {
+    let Some(tint) = block.face_tint(face) else {
+        return key;
+    };
+    let span = |axis: usize| {
+        let n = frame.normal[axis];
+        if n == 0 {
+            [pos[axis], pos[axis] + 1]
+        } else {
+            let plane = pos[axis] + i32::from(n > 0);
+            [plane, plane]
+        }
+    };
+    let (xs, zs) = (span(0), span(2));
+    let at = |cx: i32, cz: i32| blocks.tint(tint.kind(), (pos[0], pos[2]), (cx, cz));
+    let corners = if blocks.tints_blended() {
+        [
+            at(xs[0], zs[0]),
+            at(xs[1], zs[0]),
+            at(xs[1], zs[1]),
+            at(xs[0], zs[1]),
+        ]
+    } else {
+        [at(xs[0], zs[0]); 4]
+    };
+    key.with_tint(tint, corners)
 }
 
 /// Rectangle in slice coordinates: `(a, b, width, height)`.
@@ -316,10 +286,9 @@ fn merge_slice(mask: &mut [[Option<FaceKey>; SIZE]; SIZE], mut emit: impl FnMut(
 
 fn emit_quad(
     target: &mut MeshData,
-    face: Face,
-    frame: &FaceFrame,
-    depth: i32,
-    rect: Rect,
+    blocks: &Neighborhood,
+    (face, frame): (Face, &FaceFrame),
+    (depth, rect): (i32, Rect),
     key: FaceKey,
 ) {
     let (a0, b0, w, h) = (rect.0 as i32, rect.1 as i32, rect.2 as i32, rect.3 as i32);
@@ -350,12 +319,25 @@ fn emit_quad(
         .min()
         .unwrap_or(0);
     let width = if dot(frame.right, frame.a) != 0 { w } else { h };
+    let tint = key.tint();
     let vertices = corners.map(|(p, i)| {
         let (u, v) = (dot(p, frame.right) - min_u, dot(p, frame.down) - min_v);
         let uv = if key.turned() { [v, width - u] } else { [u, v] }.map(|c| c as u32);
-        PackedVertex::new(p.map(|c| c as u32), face.index(), key.ao(i), uv, key.layer)
-            .with_surface(key.drop(i), key.animation())
-            .with_light(key.light(i))
+        PackedVertex::new(
+            p.map(|c| c as u32),
+            face.index(),
+            key.ao(i),
+            uv,
+            key.layer(),
+        )
+        .with_surface(key.drop(i), key.animation())
+        .with_light(key.light(i))
+        .with_tint(
+            tint.map_or(Tint::NEUTRAL, |(kind, _, whole)| {
+                whole.unwrap_or_else(|| blocks.tint(kind, (p[0], p[2]), (p[0], p[2])))
+            }),
+            tint.is_some_and(|(_, masked, _)| masked),
+        )
     });
     target.push_quad(vertices);
 }

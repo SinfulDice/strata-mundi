@@ -2,7 +2,8 @@
 //! liquid never draws the faces it shares with its own family, and a liquid with more of
 //! itself above is full. Liquids only hide their neighbours where they are full.
 
-use super::greedy::{CORNERS, FaceFrame, FaceKey, Vec3i, add};
+use super::face_key::FaceKey;
+use super::greedy::{CORNERS, FaceFrame, Vec3i, add};
 use super::neighborhood::{BlockTable, MeshBlock, MeshFluid, Neighborhood};
 use super::shading::{Shading, shade_face};
 use strata_core::content::{BlockId, Face, RenderKind};
@@ -215,6 +216,7 @@ mod tests {
             smooth_lighting: true,
             vegetation: Vegetation::Full,
             texture_variants: true,
+            biome_blend: 0,
         };
         mesh_section(&blocks, &table(), options)
     }

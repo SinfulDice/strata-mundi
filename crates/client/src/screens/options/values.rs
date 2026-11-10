@@ -3,8 +3,8 @@
 use super::super::menu::Shared;
 use crate::settings::MAX_SCALE;
 use crate::settings::{
-    ANISOTROPY, BRIGHTNESS, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE, SENSITIVITY,
-    VERTICAL_DISTANCE,
+    ANISOTROPY, BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE,
+    SENSITIVITY, VERTICAL_DISTANCE,
 };
 use crate::settings::{
     AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, Preset, Settings, Vegetation,
@@ -27,6 +27,7 @@ pub enum Setting {
     Fog,
     AnimatedTextures,
     TextureVariants,
+    BiomeBlend,
     Stars,
     Clouds,
     Mipmaps,
@@ -70,6 +71,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Fog,
     Setting::AnimatedTextures,
     Setting::TextureVariants,
+    Setting::BiomeBlend,
     Setting::Stars,
     Setting::Clouds,
     Setting::Mipmaps,
@@ -173,6 +175,8 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::Fog => (on_off(shared, g.fog), None),
         Setting::AnimatedTextures => (on_off(shared, g.animated_textures), None),
         Setting::TextureVariants => (on_off(shared, g.texture_variants), None),
+        Setting::BiomeBlend if g.biome_blend == 0 => (shared.tr("ui-off"), None),
+        Setting::BiomeBlend => (g.biome_blend.to_string(), gauge(g.biome_blend, BIOME_BLEND)),
         Setting::Stars => (on_off(shared, g.stars), None),
         Setting::Clouds => (shared.tr(&format!("clouds-{}", g.clouds.id())), None),
         Setting::Mipmaps => (on_off(shared, g.mipmaps), None),
@@ -268,6 +272,7 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Fog => g.fog = !g.fog,
         Setting::AnimatedTextures => g.animated_textures = !g.animated_textures,
         Setting::TextureVariants => g.texture_variants = !g.texture_variants,
+        Setting::BiomeBlend => range(&mut g.biome_blend, BIOME_BLEND, 1, step),
         Setting::Stars => g.stars = !g.stars,
         Setting::Clouds => g.clouds = cycle(&CloudMode::ALL, g.clouds, step),
         Setting::Mipmaps => g.mipmaps = !g.mipmaps,

@@ -9,6 +9,7 @@ mod liquid;
 mod png_file;
 mod registry;
 mod textures;
+mod tint;
 
 pub use block::{
     Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
@@ -23,6 +24,7 @@ pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths}
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{BlockId, EntityTypeId, ItemId, Registry, RegistryId, TextureId};
 pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
+pub use tint::{BiomeTints, BlockTint, Tint, TintFaces, TintKind, UNTINTED_ALPHA};
 
 use crate::cinematic::{self, Cinematic};
 use crate::dimension::DimensionId;
@@ -222,6 +224,7 @@ fn load_blocks(
             slipperiness: value.slipperiness.clamp(0.0, 0.99),
             flammability: value.flammability,
             fire: value.fire.map(FireDef::clamped),
+            tint: value.tint,
         };
         let inserted = match (fluid_def, placement) {
             (Some(def), Placement::Fixed) => {

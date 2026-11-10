@@ -9,4 +9,10 @@ Biome(
     underwater: "strata:gravel",
     steep: Some("strata:snow_block"),
     frozen: true,
+    colors: (
+        grass: (1.0, 1.0, 1.0),
+        foliage: (1.0, 1.0, 1.0),
+        water: (0.78, 0.9, 1.1),
+        fog: (1.0, 1.03, 1.08),
+    ),
 )

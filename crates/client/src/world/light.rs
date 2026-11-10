@@ -181,7 +181,7 @@ mod tests {
         }
         world.set_block(15, 20, 3, BlockId(2));
         world.compute_light(&light_table());
-        let blocks = world.neighborhood((1, 0, 1), &table());
+        let blocks = world.neighborhood((1, 0, 1), &table(), 0);
         assert_eq!(blocks.light(-1, 4, 3).block(), 14);
         assert_eq!(blocks.light(0, 4, 3).block(), 13);
         assert_eq!(blocks.light(0, 4, 3).sky(), 15);

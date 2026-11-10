@@ -1,6 +1,7 @@
 use super::fire::{FireDef, Flammability};
 use super::fluid::{FluidDef, FluidState};
 use super::registry::{BlockId, TextureId};
+use super::tint::BlockTint;
 use crate::id::Identifier;
 use serde::Deserialize;
 
@@ -233,6 +234,9 @@ pub struct BlockDef {
     /// Makes the block a fire.
     #[serde(default)]
     pub fire: Option<FireDef>,
+    /// Takes the colour of the biome (grass, leaves, water).
+    #[serde(default)]
+    pub tint: Option<BlockTint>,
 }
 
 fn default_slipperiness() -> f32 {
@@ -278,6 +282,7 @@ pub struct Block {
     pub slipperiness: f32,
     pub flammability: Option<Flammability>,
     pub fire: Option<FireDef>,
+    pub tint: Option<BlockTint>,
 }
 
 impl Block {
@@ -302,6 +307,7 @@ impl Block {
             slipperiness: default_slipperiness(),
             flammability: None,
             fire: None,
+            tint: None,
         }
     }
 

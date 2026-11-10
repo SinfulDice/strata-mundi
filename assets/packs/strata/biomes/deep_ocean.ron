@@ -5,4 +5,10 @@ Biome(
     surface: "strata:gravel",
     subsurface: "strata:gravel",
     underwater: "strata:gravel",
+    colors: (
+        grass: (1.0, 1.0, 1.0),
+        foliage: (1.0, 1.0, 1.0),
+        water: (0.8, 0.85, 1.0),
+        fog: (1.0, 1.0, 1.0),
+    ),
 )

@@ -1,7 +1,7 @@
 use crate::commands::Feedback;
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::{BiomeMap, Column};
-use strata_core::content::{BlockId, EntityTypeId, Face, ItemId};
+use strata_core::content::{BiomeTints, BlockId, EntityTypeId, Face, ItemId};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
 use strata_core::id::Identifier;
@@ -105,6 +105,7 @@ pub struct DayState {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BiomeInfo {
     pub id: Identifier,
+    pub tints: BiomeTints,
 }
 
 /// State broadcast by the server.
@@ -202,6 +203,7 @@ mod tests {
     #[test]
     fn columns_keep_their_biomes() {
         use strata_core::chunk::BiomeId;
+        use strata_core::content::Tint;
         let pos = strata_core::coords::ColumnPos { x: -3, z: 7 };
         let mut column = Column::empty(pos);
         column.set(4, 130, 9, BlockId(5));
@@ -213,6 +215,10 @@ mod tests {
         assert_eq!(round_trip(&message), message);
         let welcome_biomes = vec![BiomeInfo {
             id: "strata:plains".parse().unwrap(),
+            tints: BiomeTints {
+                kinds: [Tint([1, 2, 3]), Tint([4, 5, 6]), Tint([7, 8, 9])],
+                fog: Tint([200, 100, 50]),
+            },
         }];
         assert_eq!(round_trip(&welcome_biomes), welcome_biomes);
     }

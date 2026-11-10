@@ -5,7 +5,7 @@ use super::neighborhood::{BlockTable, Neighborhood, SIZE};
 use super::shading::FULL_AO;
 use super::vertex::{CROSS_FACE, MeshData, PackedVertex};
 use crate::settings::Vegetation;
-use strata_core::content::{Face, RenderKind};
+use strata_core::content::{Face, RenderKind, Tint, TintKind};
 use strata_core::light::PackedLight;
 
 pub fn mesh_crosses(
@@ -27,7 +27,13 @@ pub fn mesh_crosses(
                 if block.render == RenderKind::Cross && (block.lamp || is_drawn(vegetation, world))
                 {
                     let light = blocks.light(x as i32, y as i32, z as i32);
-                    push_cross(target, [x, y, z], block.faces[Face::North.index()], light);
+                    let tint = block.face_tint(Face::North).map(|tint| tint.kind());
+                    let plant = Plant {
+                        cell: [x, y, z],
+                        layer: block.faces[Face::North.index()],
+                        light,
+                    };
+                    push_cross(target, blocks, plant, tint);
                 }
             }
         }
@@ -52,12 +58,24 @@ fn position_hash(x: i32, y: i32, z: i32) -> u32 {
     h ^ (h >> 12)
 }
 
+struct Plant {
+    cell: [u32; 3],
+    layer: u16,
+    light: PackedLight,
+}
+
 /// Plants have no ambient occlusion and take the light of their own cell.
-fn push_cross(target: &mut MeshData, [x, y, z]: [u32; 3], layer: u16, light: PackedLight) {
+fn push_cross(target: &mut MeshData, blocks: &Neighborhood, plant: Plant, tint: Option<TintKind>) {
+    let [x, y, z] = plant.cell;
     for (from, to) in [([x, z], [x + 1, z + 1]), ([x + 1, z], [x, z + 1])] {
         let corner = |[cx, cz]: [u32; 2], up: u32, u: u32| {
-            PackedVertex::new([cx, y + up, cz], CROSS_FACE, FULL_AO, [u, 1 - up], layer)
-                .with_light(light)
+            let color = tint.map_or(Tint::NEUTRAL, |kind| {
+                blocks.tint(kind, (x as i32, z as i32), (cx as i32, cz as i32))
+            });
+            let position = [cx, y + up, cz];
+            PackedVertex::new(position, CROSS_FACE, FULL_AO, [u, 1 - up], plant.layer)
+                .with_light(plant.light)
+                .with_tint(color, false)
         };
         let front = [
             corner(from, 0, 0),

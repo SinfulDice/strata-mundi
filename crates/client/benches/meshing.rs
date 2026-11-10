@@ -1,8 +1,13 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
-use strata_client::mesher::{BlockTable, MeshOptions, Neighborhood, TextureVariants, mesh_section};
+use std::sync::Arc;
+use strata_client::mesher::{
+    BlockTable, ColumnTints, MeshOptions, Neighborhood, TextureVariants, mesh_section,
+};
+use strata_core::chunk::BiomeId;
 use strata_core::content::{
-    Block, BlockId, FluidLevel, FluidState, RenderKind, TextureId, TextureLayout,
+    BiomeTints, Block, BlockId, BlockTint, FluidLevel, FluidState, RenderKind, TextureId,
+    TextureLayout, Tint, TintFaces, TintKind,
 };
 use strata_core::light::PackedLight;
 use strata_core::texture::Layout;
@@ -23,7 +28,14 @@ fn table() -> BlockTable {
         ..Block::air()
     };
     let flowing = (1..=7).map(|n| water(FluidLevel::Flowing(n)));
-    let blocks: Vec<Block> = [Block::air(), solid(1), solid(2), solid(3)]
+    let grass = Block {
+        tint: Some(BlockTint {
+            kind: TintKind::Grass,
+            faces: TintFaces::TopFringe,
+        }),
+        ..solid(1)
+    };
+    let blocks: Vec<Block> = [Block::air(), grass, solid(2), solid(3)]
         .into_iter()
         .chain([water(FluidLevel::Source)])
         .chain(flowing)
@@ -81,16 +93,41 @@ const AO: MeshOptions = MeshOptions {
     smooth_lighting: true,
     vegetation: strata_client::settings::Vegetation::Full,
     texture_variants: true,
+    biome_blend: BLEND,
 };
+
+const BLEND: u32 = 3;
+
+/// Plains west of x = 8, a yellower biome east of it.
+fn biome_border(x: i32, _: i32) -> BiomeId {
+    BiomeId(u16::from(x >= 8))
+}
+
+fn biome_tints() -> Vec<BiomeTints> {
+    [Tint::NEUTRAL, Tint([170, 128, 70])]
+        .map(|grass| BiomeTints {
+            kinds: [grass, Tint::NEUTRAL, Tint::NEUTRAL],
+            fog: Tint::NEUTRAL,
+        })
+        .to_vec()
+}
 
 fn meshing(c: &mut Criterion) {
     let table = table();
     // Real sections know their palette, which lets the mesher skip the liquid checks.
     let land: Vec<BlockId> = (0..WATER).map(BlockId).collect();
     let flooded: Vec<BlockId> = (0..WATER + 8).map(BlockId).collect();
+    let biomes = biome_tints();
+    let one_biome = Arc::new(ColumnTints::new(BLEND, &biomes, |_, _| BiomeId(0)));
+    let border = Arc::new(ColumnTints::new(BLEND, &biomes, biome_border));
     let surface = Neighborhood::build(terrain)
         .with_light(daylight)
-        .of_section([0; 3], &land, &table);
+        .of_section([0; 3], &land, &table)
+        .with_tints(one_biome);
+    let tinted_border = Neighborhood::build(terrain)
+        .with_light(daylight)
+        .of_section([0; 3], &land, &table)
+        .with_tints(border);
     let worst = Neighborhood::build(checkerboard)
         .with_light(daylight)
         .of_section([0; 3], &land, &table);
@@ -99,6 +136,12 @@ fn meshing(c: &mut Criterion) {
         .of_section([0; 3], &flooded, &table);
     c.bench_function("mesh_section_terrain", |b| {
         b.iter(|| mesh_section(black_box(&surface), &table, AO))
+    });
+    c.bench_function("mesh_section_biome_border", |b| {
+        b.iter(|| mesh_section(black_box(&tinted_border), &table, AO))
+    });
+    c.bench_function("column_tints_blend", |b| {
+        b.iter(|| ColumnTints::new(black_box(BLEND), &biomes, biome_border))
     });
     c.bench_function("mesh_section_checkerboard", |b| {
         b.iter(|| mesh_section(black_box(&worst), &table, AO))

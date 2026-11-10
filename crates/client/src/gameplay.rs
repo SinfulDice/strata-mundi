@@ -97,6 +97,8 @@ impl Gameplay {
                 day,
                 biomes,
             } => {
+                let tints = biomes.iter().map(|biome| biome.tints).collect();
+                self.view.world.set_biome_tints(tints);
                 self.biomes = biomes;
                 self.dimension = Some(dimension);
                 self.day = Some(DayClock::at(day.time, day.flows));

@@ -9,4 +9,5 @@ Block(
     replaceable: true,
     rooted: true,
     flammability: Some((catch: 60, burn: 100)),
+    tint: (kind: Grass),
 )

@@ -9,4 +9,5 @@ Block(
     replaceable: true,
     hanging: true,
     flammability: Some((catch: 15, burn: 100)),
+    tint: (kind: Foliage),
 )

@@ -218,6 +218,39 @@ pub struct BiomeDef {
     pub spawn: bool,
     #[serde(default)]
     pub features: Vec<Placement>,
+    /// Colour factors of tinted blocks and of the fog (1 = unchanged).
+    #[serde(default)]
+    pub colors: BiomeColors,
+}
+
+/// Per channel, in display space: `(1.0, 1.0, 1.0)` keeps the colour, at most 2.
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BiomeColors {
+    #[serde(default = "unchanged")]
+    pub grass: [f32; 3],
+    #[serde(default = "unchanged")]
+    pub foliage: [f32; 3],
+    #[serde(default = "unchanged")]
+    pub water: [f32; 3],
+    /// Multiplies the sky's horizon colour, which the fog takes.
+    #[serde(default = "unchanged")]
+    pub fog: [f32; 3],
+}
+
+impl Default for BiomeColors {
+    fn default() -> Self {
+        Self {
+            grass: unchanged(),
+            foliage: unchanged(),
+            water: unchanged(),
+            fog: unchanged(),
+        }
+    }
+}
+
+fn unchanged() -> [f32; 3] {
+    [1.0; 3]
 }
 
 /// Coloured layers by height under the surface and on cliffs (badlands strata).

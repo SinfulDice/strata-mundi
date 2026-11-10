@@ -13,4 +13,10 @@ Biome(
         (feature: "strata:mushrooms", per_column: 0.6),
         (feature: "strata:bushes", per_column: 0.8),
     ],
+    colors: (
+        grass: (0.92, 1.0, 0.88),
+        foliage: (0.92, 1.0, 0.88),
+        water: (1.0, 1.0, 1.0),
+        fog: (1.0, 1.0, 1.0),
+    ),
 )

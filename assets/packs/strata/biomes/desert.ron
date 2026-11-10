@@ -9,4 +9,10 @@ Biome(
         (feature: "strata:cactus", per_column: 1.2),
         (feature: "strata:dead_bushes", per_column: 0.8),
     ],
+    colors: (
+        grass: (1.4, 1.05, 0.6),
+        foliage: (1.0, 1.0, 1.0),
+        water: (0.95, 1.08, 1.0),
+        fog: (1.12, 1.02, 0.84),
+    ),
 )

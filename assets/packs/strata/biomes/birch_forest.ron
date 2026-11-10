@@ -12,4 +12,10 @@ Biome(
         (feature: "strata:flowers", per_column: 0.8),
         (feature: "strata:ferns", per_column: 0.6),
     ],
+    colors: (
+        grass: (1.0, 1.03, 0.9),
+        foliage: (1.0, 1.0, 1.0),
+        water: (1.0, 1.0, 1.0),
+        fog: (1.0, 1.0, 1.0),
+    ),
 )

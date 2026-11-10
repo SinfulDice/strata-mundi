@@ -22,6 +22,8 @@ pub fn generate_around(generator: &Arc<Generator>, x: f64, z: f64, radius: u32) 
     let threads = thread::available_parallelism().map_or(2, |n| n.get());
     let chunk = positions.len().div_ceil(threads).max(1);
     let mut world = ClientWorld::default();
+    let tints = generator.content().biomes().iter().map(|biome| biome.tints);
+    world.set_biome_tints(tints.collect());
     thread::scope(|scope| {
         let handles: Vec<_> = positions
             .chunks(chunk)

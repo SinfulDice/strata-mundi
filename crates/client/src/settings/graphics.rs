@@ -161,6 +161,8 @@ pub struct GraphicsSettings {
     /// Random variants by position and connected textures (glass): more faces to draw,
     /// since only identical neighbouring faces merge.
     pub texture_variants: bool,
+    /// Blocks over which grass, leaf and water colours blend at biome borders (0: sharp).
+    pub biome_blend: u32,
     /// Twinkling stars in the night sky.
     pub stars: bool,
     pub clouds: CloudMode,
@@ -210,6 +212,13 @@ impl GraphicsSettings {
             fog: true,
             animated_textures: preset != Preset::VeryLow,
             texture_variants: preset != Preset::VeryLow,
+            biome_blend: match preset {
+                Preset::VeryLow => 0,
+                Preset::Low | Preset::Ds => 1,
+                Preset::Medium => 2,
+                Preset::High => 3,
+                Preset::Ultra => 4,
+            },
             stars: preset != Preset::VeryLow,
             clouds: match preset {
                 Preset::VeryLow => CloudMode::Off,
@@ -255,6 +264,7 @@ pub const VERTICAL_DISTANCE: (u32, u32) = (2, 16);
 pub const RENDER_SCALE: (u32, u32) = (50, 200);
 pub const FOV: (u32, u32) = (50, 110);
 pub const BRIGHTNESS: (u32, u32) = (0, 100);
+pub const BIOME_BLEND: (u32, u32) = (0, crate::mesher::MAX_BLEND_RADIUS);
 pub const DEFAULT_BRIGHTNESS: u32 = 50;
 pub const ANISOTROPY: [u32; 5] = [1, 2, 4, 8, 16];
 /// More threads than this is never useful, whatever the file says.
@@ -269,6 +279,7 @@ impl GraphicsSettings {
         clamp(&mut self.render_scale, RENDER_SCALE);
         clamp(&mut self.fov, FOV);
         clamp(&mut self.brightness, BRIGHTNESS);
+        clamp(&mut self.biome_blend, BIOME_BLEND);
         if !ANISOTROPY.contains(&self.anisotropy) {
             self.anisotropy = 1;
         }

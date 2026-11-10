@@ -10,4 +10,10 @@ Biome(
         (feature: "strata:tall_grass", per_column: 1.0),
         (feature: "strata:mushrooms", per_column: 0.8),
     ],
+    colors: (
+        grass: (0.84, 0.95, 0.96),
+        foliage: (0.84, 0.95, 0.96),
+        water: (0.8, 0.9, 1.05),
+        fog: (0.96, 1.0, 1.04),
+    ),
 )

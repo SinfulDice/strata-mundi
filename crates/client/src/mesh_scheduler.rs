@@ -25,6 +25,7 @@ pub struct MeshScheduler {
     in_flight: HashSet<SectionKey>,
     /// Dirty sections within the vertical distance that could not be submitted yet.
     waiting: usize,
+    biome_blend: u32,
 }
 
 impl MeshScheduler {
@@ -43,6 +44,7 @@ impl MeshScheduler {
             next_version: 0,
             in_flight: HashSet::new(),
             waiting: 0,
+            biome_blend: options.biome_blend,
         })
     }
 
@@ -129,7 +131,7 @@ impl MeshScheduler {
             let job = MeshJob {
                 key,
                 version: self.versions.get(&key).copied().unwrap_or_default(),
-                blocks: world.neighborhood(key, &self.table),
+                blocks: world.neighborhood(key, &self.table, self.biome_blend),
             };
             if self.workers.submit(job).is_err() {
                 self.dirty.insert(key);

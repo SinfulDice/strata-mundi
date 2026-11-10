@@ -4,13 +4,17 @@ use crate::entities::ClientEntities;
 use crate::mesher::{BlockTable, LightSections, Neighborhood, SectionKey};
 use crate::render::Immersion;
 use glam::DVec3;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
-use strata_core::chunk::{BiomeId, BiomeMap, Column};
-use strata_core::content::{BlockId, Content, Face, surface_sixteenths};
+use strata_core::chunk::{BiomeMap, Column};
+use strata_core::content::{BiomeTints, BlockId, Content, Face, surface_sixteenths};
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 use strata_core::light::{ColumnLight, PackedLight, SectionLight};
 
+mod biomes;
+
+use biomes::TintCache;
 mod light;
 
 #[derive(Debug, Default)]
@@ -23,6 +27,9 @@ pub struct ClientWorld {
     /// Highest non-empty section of each column, kept up to date (asked every frame).
     tops: HashMap<ColumnPos, usize>,
     pub entities: ClientEntities,
+    /// Colours of the server's biomes, by `BiomeId`.
+    biome_tints: Arc<[BiomeTints]>,
+    tints: RefCell<TintCache>,
 }
 
 impl ClientWorld {
@@ -30,6 +37,7 @@ impl ClientWorld {
         let pos = column.pos;
         self.columns.insert(pos, Arc::new(column));
         self.biomes.insert(pos, Arc::new(biomes));
+        self.forget_tints_around(pos);
         self.light.remove(&pos);
         self.refresh_top(pos);
     }
@@ -37,6 +45,7 @@ impl ClientWorld {
     pub fn remove(&mut self, pos: ColumnPos) {
         self.columns.remove(&pos);
         self.biomes.remove(&pos);
+        self.tints.get_mut().forget(pos);
         self.light.remove(&pos);
         self.tops.remove(&pos);
     }
@@ -96,12 +105,6 @@ impl ClientWorld {
             Some(top) => self.tops.insert(pos, top),
             None => self.tops.remove(&pos),
         };
-    }
-
-    /// `None` where nothing is loaded.
-    pub fn biome_at(&self, x: i32, z: i32) -> Option<BiomeId> {
-        let map = self.biomes.get(&column_of(x, z))?;
-        Some(map.get(local(x), local(z)))
     }
 
     /// Air where nothing is loaded.
@@ -194,8 +197,9 @@ impl ClientWorld {
         self.columns.values().flat_map(section_keys_of)
     }
 
-    /// Section `key` plus a one-block border, with the 3×3 neighbouring columns looked up once.
-    pub fn neighborhood(&self, key: SectionKey, table: &BlockTable) -> Neighborhood {
+    /// Section `key` plus a one-block border, with the 3×3 neighbouring columns looked up
+    /// once, and biome colours blended over `blend` blocks.
+    pub fn neighborhood(&self, key: SectionKey, table: &BlockTable, blend: u32) -> Neighborhood {
         let (cx, cz, section) = key;
         let columns = around(&self.columns, cx, cz);
         let base_y = section as i32 * SECTION_SIZE;
@@ -209,7 +213,14 @@ impl ClientWorld {
             .and_then(|column| column.section(section))
             .map_or(&[][..], |s| s.palette());
         let origin = [cx * SECTION_SIZE, base_y, cz * SECTION_SIZE];
-        blocks.of_section(origin, palette, table)
+        let blocks = blocks.of_section(origin, palette, table);
+        match self
+            .column_tints(cx, cz, blend)
+            .filter(|_| blocks.contents().tinted)
+        {
+            Some(tints) => blocks.with_tints(tints),
+            None => blocks,
+        }
     }
 }
 
@@ -282,7 +293,7 @@ pub(crate) mod tests {
         let mut world = ClientWorld::default();
         world.set_block(-1, 20, 0, BlockId(3));
         world.set_block(16, 16, 15, BlockId(4));
-        let blocks = world.neighborhood((0, 0, 1), &table());
+        let blocks = world.neighborhood((0, 0, 1), &table(), 0);
         assert_eq!(blocks.get(-1, 4, 0), BlockId(3));
         assert_eq!(blocks.get(16, 0, 15), BlockId(4));
         assert_eq!(blocks.get(0, 0, 0), BlockId::AIR);
@@ -314,7 +325,7 @@ pub(crate) mod tests {
     fn the_cavern_floor_of_the_lowest_section_is_meshed() {
         let world = cavern_floor();
         let mesh = crate::mesher::mesh_section(
-            &world.neighborhood((0, 0, 0), &table()),
+            &world.neighborhood((0, 0, 0), &table(), 0),
             &table(),
             Default::default(),
         );

@@ -1,6 +1,11 @@
 use super::greedy::texture_turned;
+use super::tints::ColumnTints;
 use super::variants::TextureVariants;
-use strata_core::content::{Block, BlockId, Content, Face, RenderKind, surface_sixteenths};
+use std::sync::Arc;
+use strata_core::content::{
+    Block, BlockId, BlockTint, Content, Face, RenderKind, Tint, TintFaces, TintKind,
+    surface_sixteenths,
+};
 use strata_core::light::{PackedLight, SectionLight, section_index};
 
 pub const SIZE: usize = 16;
@@ -15,6 +20,8 @@ pub struct Neighborhood {
     /// World position of the section's (0, 0, 0) block.
     origin: [i32; 3],
     contents: Contents,
+    /// Shared by the sections of a column; `None`: textures keep their colour.
+    tints: Option<Arc<ColumnTints>>,
 }
 
 /// Kinds of block a section may hold that need their own meshing pass.
@@ -22,6 +29,8 @@ pub struct Neighborhood {
 pub struct Contents {
     pub liquid: bool,
     pub cross: bool,
+    /// Some block takes the biome colour.
+    pub tinted: bool,
 }
 
 /// The 3×3×3 sections around a section, by `[dy][dz][dx]` (each 0 to 2).
@@ -42,6 +51,7 @@ impl Contents {
     const ANY: Self = Self {
         liquid: true,
         cross: true,
+        tinted: true,
     };
 }
 
@@ -61,6 +71,7 @@ impl Neighborhood {
             light: Light::None,
             origin: [0; 3],
             contents: Contents::ANY,
+            tints: None,
         }
     }
 
@@ -109,8 +120,26 @@ impl Neighborhood {
             cross: palette
                 .iter()
                 .any(|&id| table.get(id).render == RenderKind::Cross),
+            tinted: palette.iter().any(|&id| table.get(id).tint.is_some()),
         };
         self
+    }
+
+    pub fn with_tints(mut self, tints: Arc<ColumnTints>) -> Self {
+        self.tints = Some(tints);
+        self
+    }
+
+    /// Colour at corner `(cx, cz)` (0 to 16) of a face of the block at `(x, z)`.
+    pub fn tint(&self, kind: TintKind, block: (i32, i32), corner: (i32, i32)) -> Tint {
+        self.tints
+            .as_ref()
+            .map_or(Tint::NEUTRAL, |tints| tints.at(kind, block, corner))
+    }
+
+    /// Without blending, each block face has a single colour.
+    pub fn tints_blended(&self) -> bool {
+        self.tints.as_ref().is_some_and(|tints| tints.is_blended())
     }
 
     pub fn origin(&self) -> [i32; 3] {
@@ -168,6 +197,7 @@ const UNKNOWN: MeshBlock = MeshBlock {
     solid_cube: false,
     lamp: false,
     varied: false,
+    tint: None,
 };
 
 /// What the mesher needs to know about each block, indexed by `BlockId`.
@@ -191,6 +221,40 @@ pub struct MeshBlock {
     pub lamp: bool,
     /// Some face has random variants or connects to its neighbours.
     pub varied: bool,
+    pub tint: Option<BlockTint>,
+}
+
+/// How a face takes the biome colour.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FaceTint {
+    Whole(TintKind),
+    /// Only the pixels not marked `UNTINTED_ALPHA`.
+    Masked(TintKind),
+}
+
+impl MeshBlock {
+    pub fn face_tint(&self, face: Face) -> Option<FaceTint> {
+        let tint = self.tint?;
+        match (tint.faces, face) {
+            (TintFaces::All, _) | (TintFaces::TopFringe, Face::Up) => {
+                Some(FaceTint::Whole(tint.kind))
+            }
+            (TintFaces::TopFringe, Face::Down) => None,
+            (TintFaces::TopFringe, _) => Some(FaceTint::Masked(tint.kind)),
+        }
+    }
+}
+
+impl FaceTint {
+    pub fn kind(self) -> TintKind {
+        match self {
+            Self::Whole(kind) | Self::Masked(kind) => kind,
+        }
+    }
+
+    pub fn masked(self) -> bool {
+        matches!(self, Self::Masked(_))
+    }
 }
 
 /// A liquid cell: its family (source block), surface height and animation code.
@@ -217,6 +281,7 @@ impl BlockTable {
                 solid_cube: block.render == RenderKind::Opaque && block.fluid.is_none(),
                 lamp: block.light_emission > 0,
                 varied: false,
+                tint: block.tint,
                 fluid: block.fluid.map(|state| MeshFluid {
                     family: state.source,
                     height: surface_sixteenths(state.level),

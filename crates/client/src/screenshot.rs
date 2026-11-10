@@ -101,7 +101,7 @@ pub fn render_image(
     }
     for key in world.section_keys() {
         let mesh = mesh_section(
-            &world.neighborhood(key, &table),
+            &world.neighborhood(key, &table, view.graphics.biome_blend),
             &table,
             MeshOptions::from_graphics(&view.graphics),
         );

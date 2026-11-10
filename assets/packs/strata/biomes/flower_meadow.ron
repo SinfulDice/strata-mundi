@@ -12,4 +12,10 @@ Biome(
         (feature: "strata:birch_tree", per_column: 0.15),
         (feature: "strata:oak_tree", per_column: 0.15),
     ],
+    colors: (
+        grass: (1.02, 1.06, 0.92),
+        foliage: (1.0, 1.0, 1.0),
+        water: (1.0, 1.0, 1.0),
+        fog: (1.0, 1.0, 1.0),
+    ),
 )
