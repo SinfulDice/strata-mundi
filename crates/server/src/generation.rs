@@ -99,8 +99,9 @@ impl GenerationWorkers {
         })
     }
 
-    pub fn finished(&self) -> impl Iterator<Item = Generated> + '_ {
-        self.results.try_iter()
+    /// The next result already there, if any.
+    pub fn next_finished(&self) -> Option<Generated> {
+        self.results.try_recv().ok()
     }
 
     /// The next result, waiting for it at most `timeout`.

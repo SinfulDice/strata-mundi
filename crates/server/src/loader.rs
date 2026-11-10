@@ -91,7 +91,7 @@ impl ColumnLoader {
     }
 
     fn receive_generated(&mut self) {
-        while let Some(generated) = self.workers.finished().next() {
+        while let Some(generated) = self.workers.next_finished() {
             self.accept(generated);
         }
     }
