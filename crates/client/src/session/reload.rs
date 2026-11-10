@@ -58,6 +58,7 @@ impl Session {
         if let Some(particles) = self.particles_mut() {
             particles.set_table(table);
         }
+        self.audio.set_content(&self.content);
         tracing::info!("resources reloaded");
         Ok(true)
     }

@@ -151,3 +151,16 @@ option-pack-rank = on (#{ $rank })
 option-pack-help = Confirm: enable/disable. Left/right: priority.
 option-packs-none = No resource packs
 option-packs-none-help = Put a pack in the resourcepacks folder.
+
+# Sound
+option-tab-sound = Sound
+option-master-volume = Master volume
+option-master-volume-help = Volume of every sound. No effect on performance; without a sound card the game runs silently.
+option-blocks-volume = Blocks
+option-blocks-volume-help = Footsteps, broken and placed blocks, water, lava and fire.
+option-ambient-volume = Ambience
+option-ambient-volume-help = Sounds of the place: wind, biome and cave ambiences.
+option-music-volume = Music
+option-music-volume-help = Volume of the music.
+option-subtitles = Subtitles
+option-subtitles-help = Writes every sound heard at the bottom right, with an arrow towards it.

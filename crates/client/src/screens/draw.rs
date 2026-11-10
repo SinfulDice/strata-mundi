@@ -1,7 +1,7 @@
 //! Drawing of the interface: HUD (or cinematic bands), the open menu, the on-screen
 //! keyboard and the F3 overlay, in one batch of quads.
 
-use super::hud::{HudModel, aimed_block_name};
+use super::hud::{HudModel, aimed_block_name, sample_subtitles, subtitle_lines};
 use super::keyboard::KeyboardModel;
 use super::menu::{self, Menu, Shared};
 use super::{MAX_AUTO_SCALE, Screens, UiFrame};
@@ -26,6 +26,7 @@ impl Screens {
             view: target,
             size,
             debug,
+            subtitles,
         } = frame;
         let fitting = auto_scale(size.0, size.1, MAX_AUTO_SCALE);
         self.scale = match self.settings.interface.scale {
@@ -76,11 +77,13 @@ impl Screens {
                     mount: game
                         .is_riding()
                         .then(|| content.translations.text(&language, "hud-dismount")),
+                    subtitles: subtitle_lines(subtitles, content, &language),
                 },
                 None => HudModel {
                     hotbar: &sample,
                     target: Some(content.translations.text(&language, "ui-editor-sample")),
                     mount: Some(content.translations.text(&language, "hud-dismount")),
+                    subtitles: subtitle_lines(&sample_subtitles(), content, &language),
                 },
             };
             let hud_ctx = UiContext {

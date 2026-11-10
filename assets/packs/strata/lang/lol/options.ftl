@@ -151,3 +151,16 @@ option-pack-rank = ON (#{ $rank })
 option-pack-help = OK: ON/OFF. LEFT/RITE: WHO WINZ.
 option-packs-none = NO PAKZ
 option-packs-none-help = PUT A PAK IN TEH resourcepacks FOLDR.
+
+# SOUNDZ
+option-tab-sound = SOUNDZ
+option-master-volume = ALL TEH LOUD
+option-master-volume-help = HOW LOUD IZ EVRYTHING. NO SLOW. NO SPEAKRZ? SILENT KITTEH MODE.
+option-blocks-volume = BLOKZ
+option-blocks-volume-help = STOMPZ, BLOKZ GO BOOM AN PLOP, WATUR, HOT SOUP AN HOT FIRE.
+option-ambient-volume = WORLD NOIZE
+option-ambient-volume-help = SOUNDZ OF TEH PLACE: WINDY, BIOMZ AN CAVEZ.
+option-music-volume = MUZIK
+option-music-volume-help = HOW LOUD IZ TEH MUZIK.
+option-subtitles = SOUNDZ WRITTED
+option-subtitles-help = WRITEZ EVRY SOUND AT TEH BOTTOM RITE, WIF ARROW TO IT.

@@ -5,6 +5,7 @@ mod reload;
 mod transitions;
 
 use crate::app::{ClientConfig, ClientError};
+use crate::audio::{Audio, listener_at};
 use crate::bench::BenchRun;
 use crate::debug_overlay::DebugOverlay;
 use crate::input::{Action, Binding, Gamepads, InputState};
@@ -57,6 +58,7 @@ pub struct Session {
     /// The system is going to sleep (lid closed): the world stays paused.
     suspended: bool,
     debug: DebugOverlay,
+    audio: Audio,
 }
 
 impl Session {
@@ -90,6 +92,7 @@ impl Session {
             config.settings_path,
         );
         let post = PostProcess::new(&gpu, surface.format());
+        let audio = Audio::start(&config.content, &applied.sound);
         let mut session = Self {
             post,
             gpu,
@@ -112,6 +115,7 @@ impl Session {
             sleep: SleepWatcher::start(),
             suspended: false,
             debug: DebugOverlay::default(),
+            audio,
         };
         session.screens.available_packs = session.launcher.resource_packs();
         match config.start {
@@ -241,14 +245,19 @@ impl Session {
         let pause = self.screens.wants_pause() || self.suspended;
         self.renderer.advance_time(frame_seconds);
         self.renderer.immersion = None;
-        let (view, camera) = match &mut self.stage {
+        let (view, camera, yaw, body) = match &mut self.stage {
             Stage::Empty => return,
             Stage::Title(title) => {
                 title.update(frame_seconds);
                 if self.screens.newer_version.is_none() {
                     self.screens.newer_version = self.launcher.newer_version();
                 }
-                (&mut title.view, title.camera.position)
+                (
+                    &mut title.view,
+                    title.camera.position,
+                    title.camera.yaw,
+                    None,
+                )
             }
             Stage::Playing(world) => {
                 world.set_paused(pause);
@@ -278,7 +287,9 @@ impl Session {
                     .view
                     .world
                     .immersion(world.game.camera.position, &self.content);
-                (&mut world.game.view, world.game.camera.position)
+                let body = world.game.player_body();
+                let camera = &world.game.camera;
+                (&mut world.game.view, camera.position, camera.yaw, body)
             }
         };
         view.world.entities.advance(f64::from(frame_seconds));
@@ -291,6 +302,12 @@ impl Session {
             frame_seconds.min(MAX_FRAME_SECONDS)
         };
         view.particles.update(particle_seconds, camera, &view.world);
+        for (pos, old, new) in view.block_changes.drain(..) {
+            self.audio.block_changed(pos, old, new);
+        }
+        let listener = listener_at(camera, yaw);
+        self.audio
+            .update(particle_seconds, listener, body.as_ref(), &view.world);
         view.particles
             .write_instances(camera, &view.world, &mut self.renderer.particles.instances);
         view.update(

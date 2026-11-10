@@ -18,6 +18,9 @@ impl Session {
         let old = std::mem::replace(&mut self.applied, new);
         self.apply_graphics(&old);
         self.apply_controls(&old);
+        if self.applied.sound != old.sound {
+            self.audio.apply_settings(&self.applied.sound);
+        }
         self.launcher.configure(&self.applied);
         if self.applied.game.resource_packs != old.game.resource_packs {
             self.apply_resource_packs(&old);

@@ -4,7 +4,7 @@ use super::super::menu::Shared;
 use crate::settings::MAX_SCALE;
 use crate::settings::{
     ANISOTROPY, BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE,
-    SENSITIVITY, VERTICAL_DISTANCE,
+    SENSITIVITY, VERTICAL_DISTANCE, VOLUME,
 };
 use crate::settings::{
     AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, ParticleMode, Preset, Settings,
@@ -36,6 +36,11 @@ pub enum Setting {
     Particles,
     MeshThreads,
     WorldThreads,
+    MasterVolume,
+    BlocksVolume,
+    AmbientVolume,
+    MusicVolume,
+    Subtitles,
     Language,
     Scale,
     Font,
@@ -81,6 +86,13 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Particles,
     Setting::MeshThreads,
     Setting::WorldThreads,
+];
+pub const SOUND: &[Setting] = &[
+    Setting::MasterVolume,
+    Setting::BlocksVolume,
+    Setting::AmbientVolume,
+    Setting::MusicVolume,
+    Setting::Subtitles,
 ];
 pub const INTERFACE: &[Setting] = &[
     Setting::Language,
@@ -191,6 +203,20 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::Particles => (shared.tr(&format!("particles-{}", g.particles.id())), None),
         Setting::MeshThreads => (threads_label(shared, g.worker_threads), None),
         Setting::WorldThreads => (threads_label(shared, g.generation_threads), None),
+        Setting::MasterVolume
+        | Setting::BlocksVolume
+        | Setting::AmbientVolume
+        | Setting::MusicVolume => {
+            let sound = &s.sound;
+            let volume = match setting {
+                Setting::BlocksVolume => sound.blocks,
+                Setting::AmbientVolume => sound.ambient,
+                Setting::MusicVolume => sound.music,
+                _ => sound.master,
+            };
+            (format!("{volume} %"), gauge(volume, VOLUME))
+        }
+        Setting::Subtitles => (on_off(shared, s.sound.subtitles), None),
         Setting::Language => (shared.tr("language-name"), None),
         Setting::Scale if i.scale == 0 => (shared.tr("ui-scale-auto"), None),
         Setting::Scale => (
@@ -286,6 +312,11 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::WorldThreads => {
             g.generation_threads = cycle_threads(g.generation_threads, cores, step)
         }
+        Setting::MasterVolume
+        | Setting::BlocksVolume
+        | Setting::AmbientVolume
+        | Setting::MusicVolume => range(volume_of(setting, s), VOLUME, 10, step),
+        Setting::Subtitles => s.sound.subtitles = !s.sound.subtitles,
         Setting::Language => i.cycle_language(),
         Setting::Scale => range(&mut i.scale, (0, MAX_SCALE), 1, step),
         Setting::Font => {
@@ -315,6 +346,17 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
     }
 }
 
+/// The volume a slider row stands for (the master for any other row).
+fn volume_of(setting: Setting, s: &mut Settings) -> &mut u32 {
+    let sound = &mut s.sound;
+    match setting {
+        Setting::BlocksVolume => &mut sound.blocks,
+        Setting::AmbientVolume => &mut sound.ambient,
+        Setting::MusicVolume => &mut sound.music,
+        _ => &mut sound.master,
+    }
+}
+
 fn range(value: &mut u32, (min, max): (u32, u32), unit: u32, step: i32) {
     let next = *value as i64 + i64::from(step) * i64::from(unit);
     *value = next.clamp(i64::from(min), i64::from(max)) as u32;
@@ -337,55 +379,4 @@ fn cycle_threads(current: usize, cores: usize, step: i32) -> usize {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn changing_a_graphics_value_leaves_the_preset() {
-        let mut settings = Settings::default();
-        step_setting(Setting::Fov, &mut settings, 1);
-        assert_eq!((settings.graphics.fov, settings.preset), (75, None));
-        step_setting(Setting::Preset, &mut settings, 1);
-        assert!(settings.preset.is_some());
-        step_setting(Setting::RenderDistance, &mut settings, -100);
-        assert_eq!(settings.graphics.render_distance, 2);
-        step_setting(Setting::Preset, &mut settings, 1);
-        step_setting(Setting::Brightness, &mut settings, 1);
-        assert!(settings.preset.is_some(), "brightness keeps the preset");
-        step_setting(Setting::Preset, &mut settings, 1);
-        assert_eq!(
-            settings.graphics.brightness, 60,
-            "and every preset keeps it"
-        );
-    }
-
-    #[test]
-    fn clouds_cycle_through_their_modes() {
-        let mut settings = Settings::default();
-        settings.apply_preset(crate::settings::Preset::Ds);
-        assert_eq!(settings.graphics.clouds, CloudMode::Flat);
-        step_setting(Setting::Clouds, &mut settings, 1);
-        assert_eq!(
-            (settings.graphics.clouds, settings.preset),
-            (CloudMode::Full, None)
-        );
-        step_setting(Setting::Clouds, &mut settings, 1);
-        assert_eq!(settings.graphics.clouds, CloudMode::Off);
-        step_setting(Setting::Clouds, &mut settings, -1);
-        assert_eq!(settings.graphics.clouds, CloudMode::Full);
-    }
-
-    #[test]
-    fn particles_cycle_off_reduced_full() {
-        let mut settings = Settings::default();
-        settings.apply_preset(crate::settings::Preset::Ds);
-        assert_eq!(settings.graphics.particles, ParticleMode::Reduced);
-        step_setting(Setting::Particles, &mut settings, 1);
-        assert_eq!(
-            (settings.graphics.particles, settings.preset),
-            (ParticleMode::Full, None)
-        );
-        step_setting(Setting::Particles, &mut settings, 1);
-        assert_eq!(settings.graphics.particles, ParticleMode::Off);
-    }
-}
+mod tests;

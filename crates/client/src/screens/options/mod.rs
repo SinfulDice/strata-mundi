@@ -9,23 +9,25 @@ use crate::input::{Action, Binding};
 use crate::settings::Settings;
 use crate::ui::{OptionRow, ScreenModel};
 use values::{
-    CONTROLS, GAME, GRAPHICS, INTERFACE, Setting, kebab_key, setting_key, step_setting, value,
+    CONTROLS, GAME, GRAPHICS, INTERFACE, SOUND, Setting, kebab_key, setting_key, step_setting,
+    value,
 };
 
 /// Rows visible at once (matches `options.ron`).
 pub const VISIBLE_ROWS: usize = 11;
 
 /// Tab titles; the keys tab lists `REBINDABLE` actions, the packs tab the resource packs.
-const TABS: [&str; 6] = [
+const TABS: [&str; 7] = [
     "option-tab-graphics",
+    "option-tab-sound",
     "option-tab-interface",
     "option-tab-controls",
     "option-tab-keys",
     "option-tab-game",
     "option-tab-packs",
 ];
-const KEYS_TAB: usize = 3;
-const PACKS_TAB: usize = 5;
+const KEYS_TAB: usize = 4;
+const PACKS_TAB: usize = 6;
 
 /// Actions the player can rebind (menu navigation keeps fixed keys so menus always work).
 pub const REBINDABLE: [Action; 27] = [
@@ -264,8 +266,9 @@ pub fn catalog() -> Vec<(&'static str, Vec<String>)> {
 fn tab_settings(index: usize) -> Option<&'static [Setting]> {
     match index {
         0 => Some(GRAPHICS),
-        1 => Some(INTERFACE),
-        2 => Some(CONTROLS),
+        1 => Some(SOUND),
+        2 => Some(INTERFACE),
+        3 => Some(CONTROLS),
         KEYS_TAB | PACKS_TAB => None,
         _ => Some(GAME),
     }
@@ -277,6 +280,7 @@ pub fn translation_keys() -> Vec<String> {
     use crate::settings::{Lighting, ParticleMode, Preset, Vegetation};
     let settings = GRAPHICS
         .iter()
+        .chain(SOUND)
         .chain(INTERFACE)
         .chain(CONTROLS)
         .chain(GAME)
@@ -292,6 +296,11 @@ pub fn translation_keys() -> Vec<String> {
                 .map(|v| format!("vegetation-{}", v.id())),
         )
         .chain(Lighting::ALL.iter().map(|l| format!("lighting-{}", l.id())))
+        .chain(
+            crate::audio::Direction::ALL
+                .iter()
+                .map(|d| d.key().to_owned()),
+        )
         .chain(
             ParticleMode::ALL
                 .iter()

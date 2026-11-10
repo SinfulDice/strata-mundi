@@ -114,6 +114,7 @@ impl Session {
             view,
             size: self.surface.size(),
             debug: &debug,
+            subtitles: self.audio.subtitles(),
         };
         self.screens.draw(&self.gpu, frame, &self.content, game);
     }

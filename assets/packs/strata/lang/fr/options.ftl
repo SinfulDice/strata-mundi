@@ -151,3 +151,16 @@ option-pack-rank = activé (n° { $rank })
 option-pack-help = Valider : activer/désactiver. Gauche/droite : priorité.
 option-packs-none = Aucun pack de ressources
 option-packs-none-help = Déposez un pack dans le dossier resourcepacks.
+
+# Son
+option-tab-sound = Son
+option-master-volume = Volume général
+option-master-volume-help = Volume de tous les sons. Aucun effet sur les performances ; sans carte son, le jeu tourne en silence.
+option-blocks-volume = Blocs
+option-blocks-volume-help = Pas, blocs cassés et posés, eau, lave et feu.
+option-ambient-volume = Ambiance
+option-ambient-volume-help = Sons du lieu : vent, ambiances des biomes et des grottes.
+option-music-volume = Musique
+option-music-volume-help = Volume de la musique.
+option-subtitles = Sous-titres
+option-subtitles-help = Écrit en bas à droite chaque son entendu, avec une flèche vers sa direction.

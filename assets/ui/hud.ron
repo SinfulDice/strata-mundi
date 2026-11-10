@@ -6,5 +6,6 @@ Screen(
         Label(id: "target", anchor: Top, at: (0, 4), text: "@target", boxed: true),
         Slots(id: "hotbar", anchor: Bottom, at: (0, -3), count: 9),
         Label(id: "mount", anchor: Bottom, at: (0, -32), text: "@mount", boxed: true),
+        Log(id: "subtitles", anchor: BottomRight, at: (-2, -2), size: (150, 72)),
     ],
 )

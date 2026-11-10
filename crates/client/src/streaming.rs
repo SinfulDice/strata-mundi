@@ -31,6 +31,8 @@ pub struct WorldView {
     biome_fog: BiomeFog,
     /// Off until given one (`with_particles`).
     pub particles: ParticleSystem,
+    /// Block changes of this frame with the previous block, for the sounds.
+    pub block_changes: Vec<(BlockPos, BlockId, BlockId)>,
 }
 
 impl WorldView {
@@ -49,6 +51,7 @@ impl WorldView {
             light_changes: HashMap::new(),
             biome_fog: BiomeFog::default(),
             particles: ParticleSystem::default(),
+            block_changes: Vec::new(),
         };
         match mode {
             Lighting::Full => view.start_lighting()?,
@@ -148,6 +151,7 @@ impl WorldView {
         }
         let old = self.world.block_at(pos);
         self.particles.block_changed(pos, old, block, &self.world);
+        self.block_changes.push((pos, old, block));
         self.world.set_block(pos.x, pos.y, pos.z, block);
         if self.lighting.is_some() {
             self.world.guess_light(pos, &self.light_table);

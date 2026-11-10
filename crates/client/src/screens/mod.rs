@@ -39,6 +39,8 @@ pub struct UiFrame<'a> {
     pub size: (u32, u32),
     /// F3 overlay lines, drawn over the HUD.
     pub debug: &'a [String],
+    /// Sounds heard lately (empty when subtitles are off).
+    pub subtitles: &'a [crate::audio::Subtitle],
 }
 
 /// Largest interface scale the automatic setting may pick.

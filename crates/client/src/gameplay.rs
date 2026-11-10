@@ -17,7 +17,7 @@ use glam::DVec3;
 use strata_core::cinematic::Cinematic;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
 use strata_core::dimension::DimensionId;
-use strata_core::physics::{EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
+use strata_core::physics::{Body, EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
 use strata_core::sky::DayCycle;
 use strata_protocol::commands::Feedback;
 use strata_protocol::{BiomeInfo, ClientConnection, ClientMessage, HotbarState, ServerMessage};
@@ -225,6 +225,14 @@ impl Gameplay {
         let (x, z) = (position.x.floor() as i32, position.z.floor() as i32);
         let id = self.view.world.biome_at(x, z)?;
         self.biomes.get(usize::from(id.0))
+    }
+
+    /// The local player's body as predicted, unless sitting in a boat.
+    pub fn player_body(&self) -> Option<Body> {
+        self.player
+            .as_ref()
+            .filter(|_| !self.is_riding())
+            .map(|player| player.body)
     }
 
     /// Whether the player sits in a boat (the HUD tells how to get off).
