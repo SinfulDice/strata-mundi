@@ -35,6 +35,8 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 26. [Atmosphère](atmosphere.md) : couleurs de biome, mélange au maillage, brouillard teinté, nuit.
 27. [Particules](particules.md) : éclats, gouttes, bulles ; pool borné, un seul dessin.
 
+28. [Audio](audio.md) : sons et musique synthétisés, mixeur, son 3D, réverbération, occlusion, cache, threads. Format des packs : [guide des sons](../guide-sons.md).
+
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 
 ## Carte des crates
@@ -56,11 +58,11 @@ graph TD
 
 | Crate | Rôle | Dépend de |
 |---|---|---|
-| `core` | Types purs du jeu : coordonnées, blocs, chunks, registres, packs, physique (joueur, nage, bateau) , mises à jour de blocs (fluides, feu), textures à images multiples, moteur de lumière et cycle jour/nuit (`sky`), carte des biomes d'une colonne, teintes et définitions de particules. Aucune fenêtre ni carte graphique : testable partout. | — |
+| `core` | Types purs du jeu : coordonnées, blocs, chunks, registres, packs, physique (joueur, nage, bateau) , mises à jour de blocs (fluides, feu), textures à images multiples, moteur de lumière et cycle jour/nuit (`sky`), carte des biomes d'une colonne, teintes et définitions de particules, synthèse des sons et composition de la musique (`audio`). Aucune fenêtre ni carte graphique : testable partout. | — |
 | `worldgen` | Fabrique le terrain à partir d'une graine (seed) : climat, relief, biomes, grottes, arbres, plantes, carte vue du ciel. Même graine = même monde. | `core` |
 | `protocol` | Les messages échangés entre client et serveur. | `core` |
 | `server` | Le « maître du jeu » : simule le monde 20 fois par seconde, décide de tout, sauvegarde. | `core`, `worldgen`, `protocol` |
-| `client` | Ce que voit et touche le joueur : affichage (dont ciel, nuages, teintes de biome et particules), clavier, manette, menus. Il ne modifie jamais le monde lui-même, il **demande** au serveur. | `core`, `protocol` |
+| `client` | Ce que voit et touche le joueur : affichage (dont ciel, nuages, teintes de biome et particules), son (mixeur, 3D, musique), clavier, manette, menus. Il ne modifie jamais le monde lui-même, il **demande** au serveur. | `core`, `protocol` |
 | `app` | Le programme qu'on lance : il démarre un serveur et un client dans le même processus. | tous |
 
 ## Outils du projet

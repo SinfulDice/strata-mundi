@@ -29,13 +29,13 @@ Vérifications rapides :
 
 ### Réglages conseillés pour le DS
 
-- Choisir le préréglage **DS** dans Options → Graphismes → Préréglage (30 images/s, échelle de rendu 75 %, distance 6, un seul fil de maillage) : il est gardé dans `config/settings.toml`. `strata --preset ds` l'applique pour un lancement sans l'écrire.
+- Choisir le préréglage **DS** dans Options → Graphismes → Préréglage (30 images/s, échelle de rendu 75 %, distance 6, un seul fil de maillage, audio spatial en stéréo simple) : il est gardé dans `config/settings.toml`. `strata --preset ds` l'applique pour un lancement sans l'écrire.
 - La console du DS n'a pas de clavier : tout le jeu se joue à la manette, sauf la console de commandes.
 - Les mesures d'images par seconde se font sur la machine elle-même : `strata --bench-scene flyover --preset ds` écrit un rapport dans `perf-reports/`.
 
 ### Où sont les fichiers
 
-`~/.local/share/strata-mundi/` (ou `--data-dir <dossier>`) : `saves/` (mondes), `backups/` (copies), `config/settings.toml` (réglages), `crash-reports/` (rapports de plantage).
+`~/.local/share/strata-mundi/` (ou `--data-dir <dossier>`) : `saves/` (mondes), `backups/` (copies), `config/settings.toml` (réglages), `crash-reports/` (rapports de plantage), `cache/music/` (morceaux rendus, ~50 Mo pour Terra, effaçables : ils sont refaits au besoin).
 
 ## Fermeture du clapet
 

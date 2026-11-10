@@ -8,13 +8,14 @@ Adapter le jeu à la machine (du PC puissant au DS à 8 W), au joueur (sensibili
 
 ### Un seul fichier
 
-Tout est dans `config/settings.toml` (dans le dossier de données), en quatre parties :
+Tout est dans `config/settings.toml` (dans le dossier de données), en cinq parties :
 
 ```toml
 preset = "ds"            # absent = « personnalisé »
 
 [graphics]               # distance, échelle de rendu, images/s, VSync, FOV, AO, brouillard…
 [interface]              # langue, taille, police, filtre daltonien, effets caméra, HUD
+[sound]                  # volumes, sous-titres, audio spatial, fréquence de la musique
 [controls]               # sensibilités, axe inversé, zone morte, saut auto, touches
 [game]                   # mises à jour, sauvegarde auto, copies, arrière-plan, packs
 ```
@@ -23,7 +24,7 @@ Une valeur absente ou invalide reprend sa valeur par défaut, sans toucher au re
 
 ### Préréglages
 
-Très bas, bas, moyen, haut, ultra et **DS** remplissent toute la partie `graphics` d'un coup. Toucher ensuite un seul réglage graphique fait passer en « personnalisé ». `--preset <nom>` en ligne de commande applique un préréglage pour ce lancement sans l'écrire.
+Très bas, bas, moyen, haut, ultra et **DS** remplissent toute la partie `graphics` d'un coup, plus un seul réglage de son : l'**audio spatial** (stéréo simple pour DS et très bas, avancé ailleurs). Les volumes et la fréquence de la musique ne changent jamais avec un préréglage. Toucher ensuite un seul de ces réglages fait passer en « personnalisé ». `--preset <nom>` en ligne de commande applique un préréglage pour ce lancement sans l'écrire.
 
 ### Application à chaud
 
@@ -38,6 +39,8 @@ L'écran d'options modifie une **copie** des réglages. À chaque image, la sess
 | Échelle de rendu, filtre daltonien, brouillard | rien à reconstruire : des valeurs passées aux shaders |
 | Touches, sensibilités, zone morte | l'état des entrées |
 | Saut auto, montée des demi-blocs | message `MovementPreferences` au serveur |
+| Volumes, sous-titres, fréquence de la musique | valeurs lues par le mixeur et le planificateur de musique (voir [Audio](audio.md)) |
+| Audio spatial | rayons de lieu et occlusion côté jeu, réverbération et filtre côté mixeur : tous coupés en « simple » |
 | Packs de ressources | rechargement des ressources (comme F5) |
 
 Le fichier est écrit quand un changement est fini (pas à chaque image d'un glissement de curseur).
@@ -64,6 +67,7 @@ L'onglet **Packs** liste les dossiers de `resourcepacks/` qui contiennent un `pa
 ## Où c'est dans le code
 
 - `crates/client/src/settings/` : `Settings` et ses quatre parties, chargement et écriture, préréglages.
+- `crates/client/src/settings/sound.rs` : `SoundSettings` (volumes, `SpatialAudio`, `MusicFrequency`).
 - `crates/client/src/screens/options/` : l'écran (onglets, lignes, valeurs, pas de chaque réglage, packs).
 - `crates/client/src/session/apply.rs` : comparaison des réglages et application.
 - `crates/client/src/render/post.rs` et `shaders/post.wgsl` : passe finale (échelle, filtres).
