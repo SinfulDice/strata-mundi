@@ -3,15 +3,17 @@
 ## État
 
 - **Version en cours** : v0.2 — Monde vivant
-- **Jalon en cours** : 9 — Atmosphère
-  - [x] Couleurs par biome : teinte de l'herbe, des feuilles, des plantes et de l'eau définie dans chaque biome du pack, mélangée aux frontières (pas de cassure), calculée au maillage ; brouillard de distance qui masque la limite de chargement, teinté selon le biome et l'heure ; vérifier la luminosité de nuit (herbe loin des feux trop claire sur `fire-night`) ; réglage du mélange (rayon) et préréglage DS ; captures de plusieurs biomes
-  - [x] Particules simples : casse de bloc (fragments de la texture), gouttes d'eau et de lave sous les plafonds, éclaboussures/bulles si simple ; système léger côté client (aucune donnée de monde), réglage particules (désactivées / réduites / complètes), préréglages ; tests et captures
+- **Jalon en cours** : 10 — Audio
+  - [ ] Moteur audio et sons synthétisés : crate de lecture (décision D053), sortie absente gérée (cloud sans carte son), sons positionnels 3D, volumes par catégorie (maître, blocs, ambiance, musique) dans les options, sons définis dans le pack par recettes de synthèse avec variations aléatoires (pas selon le matériau, casse, pose, eau, lave, feu, vent), déclenchés par le client depuis les événements reçus ; **sous-titres** activables ; remplacement possible par `.ogg` dans un pack de ressources ; tests sur les tampons synthétisés
+  - [ ] Ambiances et espace : ambiances par biome et sous terre (fondus), réverbération selon le lieu (grotte, intérieur, plein air) et occlusion derrière les murs, désactivables (réglage « audio spatial » : avancé / stéréo simple ; DS en stéréo simple) ; tests
+  - [ ] Musique : procédurale calme et rare façon C418 (piano, nappes, beaucoup de silence), **pré-rendue et mise en cache** dans un fichier, thème propre à Terra, désactivable, fréquence réglable, architecture prête pour la musique adaptative (v0.4), remplaçable par `.ogg` ; tests
 - **Dernière session** : 10/11/2026
 
 ## Fait
 
 ### v0.2
 
+- **Jalon 9 — Atmosphère** : carte des biomes envoyée avec chaque colonne (recalculée pour les colonnes sauvegardées), **teintes par biome** (herbe, feuilles, eau, brouillard) mélangées au maillage (sommet 12 octets, réglage « Mélange des biomes »), brouillard qui masque exactement le bord dessiné (le client demande sa distance + 2), teinté selon le biome et l'heure, nuits plus sombres ; **particules** (éclats de casse, gouttes et éclaboussures d'eau et de lave, bulles ; pool borné, un appel instancié, définies dans le pack, réglage désactivées/réduites/complètes). 2 000 particules : 0,41 ms par image.
 - **Jalon 8 — Feu et textures vivantes** : **feu** (propagation aux blocs inflammables avec valeurs du pack, extinction par l'eau et l'usure, reproductible par hachage avec la graine, replanifié au rechargement, budget partagé avec poids ×3), options `/fire spread|destroy` et à la création, briquet créatif ; **textures animées** (images du pack ou bandes PNG, choix par le shader), **connectées** (verre, bibliothèque), **variantes aléatoires** choisies dans le shader (fusion gloutonne intacte), portail d'essai, réglages « Textures animées » et « Variantes de textures » ; formats dans `docs/guide-textures.md`. Banc incendie de plaine : 35,8 ms pour 40 ticks.
 - **Jalon 7 — Jour, nuit et ciel** : journée de 20 min (part du jour réglable dans le pack, prête pour les saisons), heure du serveur envoyée avec son cycle et interpolée côté client, `/time set|add|query`, `/daycycle`, option de monde ; facteur du ciel continu (nuit sans remailler) ; ciel en passe plein écran derrière le terrain : dégradé, lever/coucher orangés, soleil et lune pixel art, **8 phases de lune** (changent sous l'horizon), étoiles scintillantes (réglage) ; **nuages** en couches pixel art qui dérivent, colorés selon l'heure (réglage désactivés/simples/complets) ; `--time` pour les captures.
 - **Jalon 6 — Lumière** : moteur de lumière dans `core` (ciel 0-15 qui descend et se diffuse, lumière des blocs par flood fill, retrait/ajout incrémental à travers les colonnes), calculé côté client sur un thread dédié par lots bornés (donnée dérivée), torche, lanterne, pierre lumineuse, lave émissive ; **lumière lissée par sommet** combinée à l'AO, facteur du ciel en uniforme, courbe de luminosité avec minimum ambiant, teinte chaude des blocs, lumière provisoire à la casse, réglages éclairage lissé / complet-plat / luminosité. Tests obligatoires : torche posée puis cassée = état initial (aussi à cheval sur deux colonnes) ; 120 modifications aléatoires = recalcul complet. Lumière d'une colonne : 1,04 ms.
@@ -98,6 +100,10 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 - Wiki : images en PNG (pas de WebP sans dépendance C) ; la vue du biome montagnes montre une flèche de pierre très haute, fidèle à la génération actuelle (à revoir en fin de version).
 - Lumière (à mesurer) : un bloc changé copie la colonne entière (`Arc::make_mut`, 1 fois par colonne et par image) pour le thread de lumière ; la courbe de lumière est calculée par fragment dans le shader (une table serait moins chère). Une colonne renvoyée laisse chez ses voisines la lumière de ses anciens blocs.
 - Vérification de mise à jour : aucune release publiée avant le tag v0.1.0 (réponse 404, sans effet).
+
+## À surveiller
+
+- DS (cloud, lavapipe) : chargement initial du monde ~12,3 s (cible < 10 s) depuis que le client demande sa distance + 2 (jalon 9) ; pic mémoire 234 Mio. À remesurer sur PC avant la fin de version.
 
 ## Blocages
 
