@@ -26,6 +26,8 @@ pub fn write_texture_sheet(
     let tiles: Vec<RgbaImage> = sheet_order(content)
         .into_iter()
         .filter_map(|id| content.textures.images.get(id))
+        // Animation frames and variants after every texture's first image.
+        .chain(&content.textures.extra)
         .map(|image| upscale(image, TILE))
         .collect();
     let rows = (tiles.len() as u32).div_ceil(COLUMNS);

@@ -136,3 +136,29 @@ fn glass_and_bookshelves_are_connected() {
         assert_eq!(layout.images, images, "{name}");
     }
 }
+
+#[test]
+fn natural_blocks_have_random_variants() {
+    let content = game();
+    for name in [
+        "strata:stone",
+        "strata:grass_block_top",
+        "strata:sand",
+        "strata:dirt",
+    ] {
+        let layout = content.textures.layout(texture(&content, name));
+        assert!(matches!(layout.layout, Layout::Random { .. }), "{name}");
+        assert_eq!(layout.images, 3, "{name}");
+        let images: Vec<_> = (0..3)
+            .map(|i| {
+                content.textures.layers().nth(usize::from(
+                    content.textures.image_layer(texture(&content, name), i).0,
+                ))
+            })
+            .collect();
+        assert!(
+            images[0] != images[1] && images[1] != images[2],
+            "{name}: distinct drawings"
+        );
+    }
+}

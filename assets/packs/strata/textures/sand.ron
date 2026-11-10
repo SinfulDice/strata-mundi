@@ -1,1 +1,1 @@
-Material(ramp: "sand", pattern: Noise(cells: (16, 16), octaves: 1))
+Random(variants: Reseed(recipe: Material(ramp: "sand", pattern: Noise(cells: (16, 16), octaves: 1)), count: 3))

@@ -1,8 +1,11 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
-use strata_client::mesher::{BlockTable, MeshOptions, Neighborhood, mesh_section};
-use strata_core::content::{Block, BlockId, FluidLevel, FluidState, RenderKind, TextureId};
+use strata_client::mesher::{BlockTable, MeshOptions, Neighborhood, TextureVariants, mesh_section};
+use strata_core::content::{
+    Block, BlockId, FluidLevel, FluidState, RenderKind, TextureId, TextureLayout,
+};
 use strata_core::light::PackedLight;
+use strata_core::texture::Layout;
 
 fn table() -> BlockTable {
     let solid = |layer| Block {
@@ -25,7 +28,20 @@ fn table() -> BlockTable {
         .chain([water(FluidLevel::Source)])
         .chain(flowing)
         .collect();
-    BlockTable::new(blocks.iter())
+    BlockTable::new(blocks.iter()).with_variants(variants())
+}
+
+/// Grass, dirt and stone with three random variants each, like the game.
+fn variants() -> TextureVariants {
+    let random = |extra| TextureLayout {
+        layout: Layout::Random {
+            weights: vec![1; 3],
+        },
+        extra,
+        images: 3,
+    };
+    let still = TextureLayout::still();
+    TextureVariants::from_layouts(vec![still.clone(), random(0), random(2), random(4), still])
 }
 
 /// Rolling terrain surface with three materials: a typical surface section.
