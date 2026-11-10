@@ -91,11 +91,15 @@ impl Bed {
             let ramp = (frame + 1) as f32 / frames as f32;
             let index = (self.cursor as usize).min(len - 1);
             let fraction = (self.cursor - index as f64) as f32;
-            let (a, b) = (buffer[index], buffer[(index + 1) % len]);
+            let after = if index + 1 < len { index + 1 } else { 0 };
+            let (a, b) = (buffer[index], buffer[after]);
             let sample = (a + (b - a) * fraction) * (start + (target - start) * ramp);
             out[frame * 2] += sample;
             out[frame * 2 + 1] += sample;
-            self.cursor = (self.cursor + step) % len as f64;
+            self.cursor += step;
+            if self.cursor >= len as f64 {
+                self.cursor -= len as f64;
+            }
         }
         self.gain = target;
     }

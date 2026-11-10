@@ -17,8 +17,8 @@ pub enum Space {
 
 /// Rays towards the 26 neighbours of a cell (faces, edges and corners).
 const RAYS: usize = 26;
-/// Rays cast per update: the whole set takes four.
-const RAYS_PER_UPDATE: usize = 7;
+/// Rays cast per second: the whole set about ten times a second, whatever the frame rate.
+const RAYS_PER_SECOND: f32 = 260.0;
 /// Blocks a ray goes at most; a ray that gets there escaped.
 pub const REACH: f32 = 48.0;
 /// Rays at or above the horizon that must escape for the open air.
@@ -48,6 +48,8 @@ fn reach(world: &impl Surroundings, from: DVec3, direction: DVec3) -> f32 {
 pub struct SpaceProbe {
     reaches: [f32; RAYS],
     next: usize,
+    /// Rays owed by the time gone by (a fraction is carried to the next update).
+    owed: f32,
     space: Space,
 }
 
@@ -56,15 +58,25 @@ impl Default for SpaceProbe {
         Self {
             reaches: [REACH; RAYS],
             next: 0,
+            owed: 0.0,
             space: Space::Outdoors,
         }
     }
 }
 
 impl SpaceProbe {
-    /// Casts the next rays; once all were cast, the space is judged again.
-    pub fn update(&mut self, world: &impl Surroundings, head: DVec3, underground: f32) -> Space {
-        for _ in 0..RAYS_PER_UPDATE {
+    /// Casts the rays due after `seconds`; once all were cast, the space is judged again.
+    pub fn update(
+        &mut self,
+        seconds: f32,
+        world: &impl Surroundings,
+        head: DVec3,
+        underground: f32,
+    ) -> Space {
+        self.owed = (self.owed + seconds.max(0.0) * RAYS_PER_SECOND).min(RAYS as f32);
+        let rays = self.owed as usize;
+        self.owed -= rays as f32;
+        for _ in 0..rays {
             self.reaches[self.next] = reach(world, head, direction(self.next));
             self.next += 1;
             if self.next == RAYS {
@@ -84,12 +96,11 @@ impl SpaceProbe {
 /// Open air where the sky is seen (or most rays upwards escape under some sky light),
 /// otherwise a room, a cave or a cavern by the mean distance to the walls.
 fn classify(reaches: &[f32; RAYS], sky: u8, underground: f32) -> Space {
-    let upwards: Vec<f32> = (0..RAYS)
-        .filter(|&i| direction(i).y >= 0.0)
-        .map(|i| reaches[i])
-        .collect();
-    let escaped = upwards.iter().filter(|&&r| r >= REACH).count() as f32;
-    let open = escaped / upwards.len() as f32;
+    let upwards = (0..RAYS).filter(|&i| direction(i).y >= 0.0);
+    let (count, escaped) = upwards.fold((0, 0), |(count, escaped), i| {
+        (count + 1, escaped + usize::from(reaches[i] >= REACH))
+    });
+    let open = escaped as f32 / count.max(1) as f32;
     if sky >= 15 || (open >= OPEN_SHARE && sky >= 8) {
         return Space::Outdoors;
     }

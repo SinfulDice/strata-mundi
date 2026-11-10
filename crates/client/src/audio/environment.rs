@@ -97,7 +97,9 @@ impl Environment {
             self.space = Space::Outdoors;
             return;
         }
-        let space = self.probe.update(world, moment.head, self.underground);
+        let space = self
+            .probe
+            .update(moment.seconds, world, moment.head, self.underground);
         if space != self.space && send(Command::Space(space)) {
             self.space = space;
         }

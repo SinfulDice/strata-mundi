@@ -53,6 +53,11 @@ impl Room {
     }
 }
 
+/// The next index of a delay line (cheaper than a remainder at every sample).
+fn next(index: usize, len: usize) -> usize {
+    if index + 1 >= len { 0 } else { index + 1 }
+}
+
 struct Comb {
     buffer: Vec<f32>,
     index: usize,
@@ -64,7 +69,7 @@ impl Comb {
         let out = self.buffer[self.index];
         self.filtered = out * (1.0 - damping) + self.filtered * damping;
         self.buffer[self.index] = input + self.filtered * feedback;
-        self.index = (self.index + 1) % self.buffer.len();
+        self.index = next(self.index, self.buffer.len());
         out
     }
 }
@@ -78,7 +83,7 @@ impl AllPass {
     fn process(&mut self, input: f32) -> f32 {
         let delayed = self.buffer[self.index];
         self.buffer[self.index] = input + delayed * ALLPASS_FEEDBACK;
-        self.index = (self.index + 1) % self.buffer.len();
+        self.index = next(self.index, self.buffer.len());
         delayed - input
     }
 }

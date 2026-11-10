@@ -131,10 +131,14 @@ fn a_piece_is_rendered_in_the_background_then_streamed_and_faded_out() {
     mixer.apply(Command::Music(MusicCommand::Start(feed)));
     let mut heard = 0.0f32;
     let mut out = vec![0.0; 2 * 4410];
-    for _ in 0..100 {
+    // A late chunk is silence that does not move the piece on: wait for the reader.
+    for _ in 0..10_000 {
         mixer.render(&mut out);
         heard = out.iter().fold(heard, |p, s| p.max(s.abs()));
-        std::thread::sleep(Duration::from_millis(2));
+        if heard > 0.01 {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(1));
     }
     assert!(heard > 0.01, "the piece is heard: {heard}");
     let mut sent = Vec::new();

@@ -113,7 +113,7 @@ fn space_of(world: &Rock, head: DVec3) -> Space {
     let mut probe = SpaceProbe::default();
     let under = underground(world, head);
     for _ in 0..4 {
-        probe.update(world, head, under);
+        probe.update(0.03, world, head, under);
     }
     probe.space()
 }

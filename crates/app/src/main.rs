@@ -119,7 +119,7 @@ fn main() -> anyhow::Result<()> {
         ui: loaded.ui,
         settings,
         settings_path,
-        music_cache: data.join("cache/music"),
+        music_cache: data.join("cache").join("music"),
         bench,
         launcher: Box::new(launcher),
         start,
