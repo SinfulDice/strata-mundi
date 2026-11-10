@@ -2,6 +2,7 @@
 //! the game asks (the game does the slow cross-fades, the mixer smooths each block).
 
 use super::mixer::Volumes;
+use super::trash::Trash;
 use std::sync::Arc;
 use strata_core::audio::SoundCategory;
 use strata_core::content::SoundId;
@@ -30,27 +31,49 @@ pub(super) struct Bed {
 
 impl Bed {
     /// Starts, changes or lets go a bed (an unknown one at gain 0 is ignored).
-    pub fn set(beds: &mut Vec<Bed>, asked: BedVolume) {
-        if let Some(bed) = beds.iter_mut().find(|b| b.asked.sound == asked.sound) {
-            bed.asked = asked;
+    pub fn set(beds: &mut Vec<Bed>, asked: BedVolume, trash: &Trash) {
+        if asked.buffer.is_empty() {
+            trash.buffer(asked.buffer);
             return;
         }
-        if asked.gain > 0.0 && !asked.buffer.is_empty() && beds.len() < BED_SLOTS {
+        if let Some(bed) = beds.iter_mut().find(|b| b.asked.sound == asked.sound) {
+            if bed.asked.buffer.len() != asked.buffer.len() {
+                bed.cursor = 0.0;
+            }
+            let old = std::mem::replace(&mut bed.asked, asked);
+            trash.buffer(old.buffer);
+            return;
+        }
+        if asked.gain > 0.0 && beds.len() < BED_SLOTS {
             beds.push(Bed {
                 asked,
                 cursor: 0.0,
                 gain: 0.0,
             });
+        } else {
+            trash.buffer(asked.buffer);
         }
     }
 
     /// Adds every bed to `out`, centred; silent beds that were let go are dropped.
     /// `step`: samples of a buffer read per output frame.
-    pub fn mix_all(beds: &mut Vec<Bed>, volumes: &Volumes, out: &mut [f32], step: f64) {
-        for bed in beds.iter_mut() {
+    pub fn mix_all(
+        beds: &mut Vec<Bed>,
+        volumes: &Volumes,
+        out: &mut [f32],
+        step: f64,
+        trash: &Trash,
+    ) {
+        let mut index = 0;
+        while index < beds.len() {
+            let bed = &mut beds[index];
             bed.mix(volumes, out, step);
+            if bed.gain > 0.0 || bed.asked.gain > 0.0 {
+                index += 1;
+            } else {
+                trash.buffer(beds.swap_remove(index).asked.buffer);
+            }
         }
-        beds.retain(|bed| bed.gain > 0.0 || bed.asked.gain > 0.0);
     }
 
     fn mix(&mut self, volumes: &Volumes, out: &mut [f32], step: f64) {
@@ -60,7 +83,7 @@ impl Bed {
             * volumes.get(self.asked.category)
             * std::f32::consts::FRAC_1_SQRT_2;
         let start = self.gain;
-        if start <= 0.0 && target <= 0.0 {
+        if (start <= 0.0 && target <= 0.0) || len == 0 {
             self.gain = 0.0;
             return;
         }

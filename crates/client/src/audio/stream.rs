@@ -1,9 +1,11 @@
 //! Music in the mixer: a piece arrives in chunks from a reader thread (never the whole
 //! piece in memory), is faded in and out, centred, at the music volume. A missing chunk
-//! (disk too slow) is a moment of silence, never a wait in the audio thread.
+//! (disk too slow) is a moment of silence, never a wait in the audio thread. Played
+//! chunks go back to the reader to be filled again.
 
 use super::mixer::Volumes;
-use crossbeam_channel::{Receiver, TryRecvError};
+use super::trash::{Garbage, Trash};
+use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use strata_core::audio::SoundCategory;
@@ -16,6 +18,8 @@ pub const MUSIC_FADE: f32 = 3.0;
 #[derive(Debug)]
 pub struct MusicFeed {
     pub chunks: Receiver<Vec<f32>>,
+    /// Played chunks, given back to the reader.
+    pub recycle: Sender<Vec<f32>>,
     pub done: Arc<AtomicBool>,
 }
 
@@ -42,11 +46,11 @@ pub(super) struct Stream {
 }
 
 impl Stream {
-    pub fn apply(slot: &mut Option<Stream>, command: MusicCommand) {
+    pub fn apply(slot: &mut Option<Stream>, command: MusicCommand, trash: &Trash) {
         match command {
             MusicCommand::Start(feed) => {
                 if let Some(old) = slot.take() {
-                    old.finish();
+                    old.finish(trash);
                 }
                 *slot = Some(Stream {
                     feed,
@@ -70,8 +74,8 @@ impl Stream {
         slot: &mut Option<Stream>,
         volumes: &Volumes,
         out: &mut [f32],
-        step: f64,
-        rate: f32,
+        (step, rate): (f64, f32),
+        trash: &Trash,
     ) {
         let Some(stream) = slot else {
             return;
@@ -79,9 +83,9 @@ impl Stream {
         let volume = volumes.get(SoundCategory::Music) * std::f32::consts::FRAC_1_SQRT_2;
         let fade = 1.0 / (MUSIC_FADE * rate).max(1.0);
         for frame in 0..out.len() / 2 {
-            let Some(sample) = stream.next_sample(step) else {
+            let Some(sample) = stream.next_sample(step, trash) else {
                 if let Some(over) = slot.take() {
-                    over.finish();
+                    over.finish(trash);
                 }
                 return;
             };
@@ -92,7 +96,7 @@ impl Stream {
             out[frame * 2 + 1] += value;
             if stream.fading_out && stream.gain <= 0.0 {
                 if let Some(over) = slot.take() {
-                    over.finish();
+                    over.finish(trash);
                 }
                 return;
             }
@@ -100,12 +104,13 @@ impl Stream {
     }
 
     /// The next sample; `None` once the piece is over (`Some(0)` while a chunk is late).
-    fn next_sample(&mut self, step: f64) -> Option<f32> {
+    fn next_sample(&mut self, step: f64, trash: &Trash) -> Option<f32> {
         while self.cursor as usize >= self.chunk.len() {
             match self.feed.chunks.try_recv() {
                 Ok(chunk) => {
                     self.cursor -= self.chunk.len() as f64;
-                    self.chunk = chunk;
+                    let played = std::mem::replace(&mut self.chunk, chunk);
+                    self.recycle(played, trash);
                 }
                 Err(TryRecvError::Empty) => return Some(0.0),
                 Err(TryRecvError::Disconnected) => return None,
@@ -119,7 +124,19 @@ impl Stream {
         Some(a + (b - a) * fraction)
     }
 
-    fn finish(self) {
+    fn recycle(&self, chunk: Vec<f32>, trash: &Trash) {
+        if chunk.capacity() == 0 {
+            return;
+        }
+        if let Err(back) = self.feed.recycle.try_send(chunk) {
+            trash.throw(Garbage::Chunk {
+                _held: back.into_inner(),
+            });
+        }
+    }
+
+    fn finish(self, trash: &Trash) {
         self.feed.done.store(true, Ordering::Release);
+        trash.throw(Garbage::Music { _held: self });
     }
 }

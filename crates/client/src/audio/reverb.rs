@@ -154,6 +154,13 @@ impl Reverb {
         self.target = Room::of(space);
     }
 
+    /// Stops at once, the tail forgotten (it must not ring again when turned back on).
+    pub fn silence(&mut self) {
+        self.target = Room::of(Space::Outdoors);
+        self.room = self.target;
+        self.stale = true;
+    }
+
     /// Whether it rings (or is still dying out).
     pub fn is_active(&self) -> bool {
         self.room.wet >= SILENT || self.target.wet >= SILENT

@@ -18,6 +18,8 @@ use strata_core::id::Identifier;
 const CHUNK: usize = SAMPLE_RATE as usize / 2;
 /// Chunks read ahead of the mixer.
 const AHEAD: usize = 4;
+/// Played chunks waiting to be filled again (more than can be in flight).
+const SPARE: usize = AHEAD + 2;
 
 type RenderResult = (Identifier, u8, io::Result<PathBuf>);
 
@@ -90,12 +92,14 @@ pub enum Source {
 /// A thread reading `source` a few chunks ahead; it stops once the mixer lets go.
 pub fn spawn_reader(source: Source) -> Option<MusicFeed> {
     let (sender, chunks) = crossbeam_channel::bounded(AHEAD);
+    let (recycle, spares) = crossbeam_channel::bounded(SPARE);
     let spawned = std::thread::Builder::new()
         .name("music-read".to_owned())
         .spawn(move || {
+            let chunks = Chunks { sender, spares };
             let result = match &source {
-                Source::Cached(path) => read_cached(path, &sender),
-                Source::Recording(path) => read_recording(path, &sender),
+                Source::Cached(path) => read_cached(path, &chunks),
+                Source::Recording(path) => read_recording(path, &chunks),
             };
             if let Err(error) = result {
                 tracing::warn!(?source, %error, "music could not be read");
@@ -104,6 +108,7 @@ pub fn spawn_reader(source: Source) -> Option<MusicFeed> {
     match spawned {
         Ok(_) => Some(MusicFeed {
             chunks,
+            recycle,
             done: Arc::new(AtomicBool::new(false)),
         }),
         Err(error) => {
@@ -113,17 +118,37 @@ pub fn spawn_reader(source: Source) -> Option<MusicFeed> {
     }
 }
 
-fn read_cached(path: &Path, sender: &Sender<Vec<f32>>) -> io::Result<()> {
+/// Where chunks go, and the played ones come back from.
+struct Chunks {
+    sender: Sender<Vec<f32>>,
+    spares: Receiver<Vec<f32>>,
+}
+
+impl Chunks {
+    fn spare(&self) -> Vec<f32> {
+        self.spares
+            .try_recv()
+            .unwrap_or_else(|_| Vec::with_capacity(CHUNK))
+    }
+
+    /// False once the mixer let the piece go.
+    fn send(&self, chunk: Vec<f32>) -> bool {
+        self.sender.send(chunk).is_ok()
+    }
+}
+
+fn read_cached(path: &Path, chunks: &Chunks) -> io::Result<()> {
     let mut stream = WavStream::open(path)?;
     loop {
-        let chunk = stream.read(CHUNK)?;
-        if chunk.is_empty() || sender.send(chunk).is_err() {
+        let mut chunk = chunks.spare();
+        stream.read_into(&mut chunk, CHUNK)?;
+        if chunk.is_empty() || !chunks.send(chunk) {
             return Ok(());
         }
     }
 }
 
-fn read_recording(path: &Path, sender: &Sender<Vec<f32>>) -> io::Result<()> {
+fn read_recording(path: &Path, chunks: &Chunks) -> io::Result<()> {
     let file = std::fs::File::open(path)?;
     let decoder = rodio::Decoder::try_from(file).map_err(io::Error::other)?;
     let channels = usize::from(rodio::Source::channels(&decoder).get());
@@ -135,7 +160,7 @@ fn read_recording(path: &Path, sender: &Sender<Vec<f32>>) -> io::Result<()> {
             return Ok(());
         }
         let chunk = resample(&downmix(&interleaved, channels), rate);
-        if sender.send(chunk).is_err() {
+        if !chunks.send(chunk) {
             return Ok(());
         }
     }

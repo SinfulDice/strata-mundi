@@ -3,6 +3,7 @@
 
 use super::controls::{Applied, Controls};
 use super::mixer::{Command, Mixer, Volumes};
+use super::trash::{Garbage, Trash};
 use crossbeam_channel::{Receiver, Sender};
 use rodio::{DeviceSinkBuilder, MixerDeviceSink, Source};
 use std::num::NonZero;
@@ -20,6 +21,7 @@ pub struct Output {
     _sink: MixerDeviceSink,
     commands: Sender<Command>,
     controls: Arc<Controls>,
+    trash: Receiver<Garbage>,
 }
 
 impl Output {
@@ -36,7 +38,8 @@ impl Output {
         let rate = sink.config().sample_rate();
         let (commands, receiver) = crossbeam_channel::bounded(QUEUE);
         let controls = Arc::new(Controls::new(volumes, spatial));
-        let mixer = Mixer::new(rate.get());
+        let (bin, trash) = Trash::new();
+        let mixer = Mixer::with_trash(rate.get(), bin);
         let source = MixerSource::new(mixer, receiver, Arc::clone(&controls), rate);
         sink.mixer().add(source);
         tracing::info!(rate = rate.get(), "audio device open");
@@ -44,7 +47,15 @@ impl Output {
             _sink: sink,
             commands,
             controls,
+            trash,
         })
+    }
+
+    /// Frees what the audio thread let go.
+    pub fn empty_trash(&self) {
+        for garbage in self.trash.try_iter() {
+            drop(garbage);
+        }
     }
 
     /// False if the command was dropped: the queue is full because the device is stuck

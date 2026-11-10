@@ -161,6 +161,7 @@ fn feed_of(seconds: f32) -> (MusicFeed, Arc<AtomicBool>) {
     let done = Arc::new(AtomicBool::new(false));
     let feed = MusicFeed {
         chunks,
+        recycle: crossbeam_channel::unbounded().0,
         done: Arc::clone(&done),
     };
     (feed, done)
@@ -249,4 +250,47 @@ fn controls_are_kept_and_never_queued() {
     assert_eq!(applied, 4);
     now.changes(Some(&now), &mut |_| applied += 1);
     assert_eq!(applied, 4, "nothing changed, nothing applied");
+}
+
+#[test]
+fn the_audio_thread_frees_nothing_itself() {
+    let (bin, trash) = trash::Trash::new();
+    let mut mixer = Mixer::with_trash(SAMPLE_RATE, bin);
+    let (sender, chunks) = crossbeam_channel::unbounded();
+    let (recycle, spares) = crossbeam_channel::bounded(2);
+    for _ in 0..4 {
+        sender.send(vec![0.5; 1000]).unwrap();
+    }
+    drop(sender);
+    let done = Arc::new(AtomicBool::new(false));
+    let feed = MusicFeed {
+        chunks,
+        recycle,
+        done: Arc::clone(&done),
+    };
+    mixer.apply(Command::Music(MusicCommand::Start(feed)));
+    mixer.apply(Command::Play(Voice {
+        id: 1,
+        buffer: vec![0.5; 100].into(),
+        category: SoundCategory::Ambient,
+        gain: 1.0,
+        pitch: 1.0,
+        at: None,
+        range: 16.0,
+        muffle: 0.0,
+    }));
+    let mut out = vec![0.0; 2 * 8192];
+    mixer.render(&mut out);
+    assert!(!mixer.music_playing() && mixer.voices() == 0);
+    assert!(done.load(Ordering::Acquire));
+    assert_eq!(
+        spares.try_iter().count(),
+        2,
+        "played chunks go back to the reader"
+    );
+    let thrown = trash.try_iter().count();
+    assert_eq!(
+        thrown, 3,
+        "the voice, a chunk the reader had no room for, the stream"
+    );
 }

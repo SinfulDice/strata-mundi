@@ -25,6 +25,7 @@ mod subtitles;
 mod surroundings;
 #[cfg(test)]
 mod tests;
+mod trash;
 mod triggers;
 
 pub use ambience::{AmbiencePlayer, AmbienceTable, FADE_SECONDS, Place, bed_targets};
@@ -153,6 +154,9 @@ impl Audio {
     /// around, follows the place, and starts what was asked this frame.
     pub fn update(&mut self, seconds: f32, hearing: &Hearing<'_>) {
         let (listener, world) = (hearing.listener, hearing.world);
+        if let Some(output) = &self.output {
+            output.empty_trash();
+        }
         self.listener = listener;
         self.send(Command::Listener(listener));
         if let Some(body) = hearing.player {

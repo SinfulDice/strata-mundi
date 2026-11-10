@@ -9,6 +9,7 @@ use super::reverb::Reverb;
 use super::space::Space;
 use super::spatial::{Listener, stereo_gains};
 use super::stream::{MusicCommand, Stream};
+use super::trash::Trash;
 use crate::settings::SoundSettings;
 use glam::DVec3;
 use std::sync::Arc;
@@ -16,6 +17,8 @@ use strata_core::audio::{SAMPLE_RATE, SoundCategory};
 
 /// Most sounds heard at once; a new one replaces the quietest if it is louder.
 pub const MAX_VOICES: usize = 32;
+/// Longest block rendered without the reverberation feed growing (no allocation).
+const MAX_BLOCK_FRAMES: usize = 8192;
 
 /// A sound to play: a rendered (or decoded) mono buffer at `SAMPLE_RATE`.
 #[derive(Debug, Clone)]
@@ -106,6 +109,7 @@ pub struct Mixer {
     reverb: Reverb,
     send: Vec<f32>,
     music: Option<Stream>,
+    trash: Trash,
 }
 
 impl Mixer {
@@ -120,8 +124,17 @@ impl Mixer {
             rate: rate as f32,
             spatial: true,
             reverb: Reverb::new(rate),
-            send: Vec::new(),
+            send: Vec::with_capacity(MAX_BLOCK_FRAMES),
             music: None,
+            trash: Trash::default(),
+        }
+    }
+
+    /// What it lets go is freed by whoever empties the trash.
+    pub(super) fn with_trash(output_rate: u32, trash: Trash) -> Self {
+        Self {
+            trash,
+            ..Self::new(output_rate)
         }
     }
 
@@ -142,7 +155,7 @@ impl Mixer {
             Command::Play(voice) => self.play(voice),
             Command::Listener(listener) => self.listener = listener,
             Command::Volumes(volumes) => self.volumes = volumes,
-            Command::Bed(bed) => Bed::set(&mut self.beds, bed),
+            Command::Bed(bed) => Bed::set(&mut self.beds, bed, &self.trash),
             Command::Muffle { id, muffle } => {
                 if let Some(playing) = self.playing.iter_mut().find(|p| p.voice.id == id) {
                     playing.voice.muffle = muffle.clamp(0.0, 1.0);
@@ -152,10 +165,10 @@ impl Mixer {
             Command::Spatial(spatial) => {
                 self.spatial = spatial;
                 if !spatial {
-                    self.reverb.set_space(Space::Outdoors);
+                    self.reverb.silence();
                 }
             }
-            Command::Music(music) => Stream::apply(&mut self.music, music),
+            Command::Music(music) => Stream::apply(&mut self.music, music, &self.trash),
         }
     }
 
@@ -163,6 +176,7 @@ impl Mixer {
         let gains = self.target(&voice);
         let loudness = gains[0].max(gains[1]);
         if loudness <= 0.0 || voice.buffer.is_empty() {
+            self.trash.buffer(voice.buffer);
             return;
         }
         let muffle = self.muffle_of(&voice);
@@ -183,10 +197,12 @@ impl Mixer {
             .enumerate()
             .map(|(index, p)| (index, p.gains[0].max(p.gains[1])))
             .min_by(|a, b| a.1.total_cmp(&b.1));
-        if let Some((index, quiet)) = quietest
-            && quiet < loudness
-        {
-            self.playing[index] = playing;
+        match quietest {
+            Some((index, quiet)) if quiet < loudness => {
+                let old = std::mem::replace(&mut self.playing[index], playing);
+                self.trash.buffer(old.voice.buffer);
+            }
+            _ => self.trash.buffer(playing.voice.buffer),
         }
     }
 
@@ -225,19 +241,21 @@ impl Mixer {
                 rate: self.rate,
             };
             if mix.voice(&mut self.playing[index], target, muffle) {
-                self.playing.swap_remove(index);
+                let over = self.playing.swap_remove(index);
+                self.trash.buffer(over.voice.buffer);
             } else {
                 index += 1;
             }
         }
-        Bed::mix_all(&mut self.beds, &self.volumes, out, self.rate_ratio);
-        Stream::mix(
-            &mut self.music,
+        Bed::mix_all(
+            &mut self.beds,
             &self.volumes,
             out,
             self.rate_ratio,
-            self.rate,
+            &self.trash,
         );
+        let rates = (self.rate_ratio, self.rate);
+        Stream::mix(&mut self.music, &self.volumes, out, rates, &self.trash);
         if self.spatial {
             self.reverb.render(&self.send, out);
         }

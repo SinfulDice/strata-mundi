@@ -150,6 +150,7 @@ pub struct WavStream {
     reader: BufReader<File>,
     left: usize,
     frames: usize,
+    bytes: Vec<u8>,
 }
 
 impl WavStream {
@@ -170,6 +171,7 @@ impl WavStream {
             reader,
             left: frames,
             frames,
+            bytes: Vec::new(),
         })
     }
 
@@ -183,14 +185,24 @@ impl WavStream {
 
     /// Up to `max` next samples (fewer at the end, none once finished).
     pub fn read(&mut self, max: usize) -> io::Result<Vec<f32>> {
+        let mut samples = Vec::new();
+        self.read_into(&mut samples, max)?;
+        Ok(samples)
+    }
+
+    /// Replaces the content of `samples` with up to `max` next samples, reusing its memory.
+    pub fn read_into(&mut self, samples: &mut Vec<f32>, max: usize) -> io::Result<()> {
         let count = max.min(self.left);
-        let mut bytes = vec![0; count * 2];
-        self.reader.read_exact(&mut bytes)?;
+        self.bytes.resize(count * 2, 0);
+        self.reader.read_exact(&mut self.bytes)?;
         self.left -= count;
-        Ok(bytes
-            .chunks_exact(2)
-            .map(|pair| f32::from(i16::from_le_bytes([pair[0], pair[1]])) / f32::from(i16::MAX))
-            .collect())
+        samples.clear();
+        samples.extend(
+            self.bytes.chunks_exact(2).map(|pair| {
+                f32::from(i16::from_le_bytes([pair[0], pair[1]])) / f32::from(i16::MAX)
+            }),
+        );
+        Ok(())
     }
 }
 
