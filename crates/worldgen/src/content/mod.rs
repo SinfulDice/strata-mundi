@@ -206,7 +206,12 @@ fn load_biomes(
     let defs = packs.layered::<BiomeDef>("biomes", errors);
     defs.into_iter()
         .enumerate()
-        .map(|(index, (id, Sourced { value, source }))| {
+        .filter_map(|(index, (id, Sourced { value, source }))| {
+            let Ok(index) = u16::try_from(index) else {
+                let message = "too many biomes (65 536 at most): this one is ignored";
+                errors.push(PackError::invalid(&source, message));
+                return None;
+            };
             let features = value
                 .features
                 .iter()
@@ -224,9 +229,9 @@ fn load_biomes(
                 errors,
                 source: &source,
             };
-            Biome {
+            Some(Biome {
                 id,
-                index: BiomeId(index.min(usize::from(u16::MAX)) as u16),
+                index: BiomeId(index),
                 climate: value.climate,
                 surface: r.block(&value.surface),
                 subsurface: r.block(&value.subsurface),
@@ -247,7 +252,7 @@ fn load_biomes(
                 spawn: value.spawn,
                 features,
                 tints: biome_tints(&value.colors),
-            }
+            })
         })
         .collect()
 }

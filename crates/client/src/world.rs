@@ -4,7 +4,6 @@ use crate::entities::ClientEntities;
 use crate::mesher::{BlockTable, LightSections, Neighborhood, SectionKey};
 use crate::render::Immersion;
 use glam::DVec3;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 use strata_core::chunk::{BiomeMap, Column};
@@ -45,7 +44,9 @@ pub struct ClientWorld {
     pub entities: ClientEntities,
     /// Colours of the server's biomes, by `BiomeId`.
     biome_tints: Arc<[BiomeTints]>,
-    tints: RefCell<TintCache>,
+    /// Fog colour factor of each biome, linear (read every frame).
+    biome_fog: Vec<glam::Vec3>,
+    tints: TintCache,
 }
 
 impl ClientWorld {
@@ -61,7 +62,7 @@ impl ClientWorld {
     pub fn remove(&mut self, pos: ColumnPos) {
         self.columns.remove(&pos);
         self.biomes.remove(&pos);
-        self.tints.get_mut().forget(pos);
+        self.tints.forget(pos);
         self.light.remove(&pos);
         self.tops.remove(&pos);
     }
@@ -215,7 +216,12 @@ impl ClientWorld {
 
     /// Section `key` plus a one-block border, with the 3×3 neighbouring columns looked up
     /// once, and biome colours blended over `blend` blocks.
-    pub fn neighborhood(&self, key: SectionKey, table: &BlockTable, blend: u32) -> Neighborhood {
+    pub fn neighborhood(
+        &mut self,
+        key: SectionKey,
+        table: &BlockTable,
+        blend: u32,
+    ) -> Neighborhood {
         let (cx, cz, section) = key;
         let columns = around(&self.columns, cx, cz);
         let base_y = section as i32 * SECTION_SIZE;
@@ -339,7 +345,7 @@ pub(crate) mod tests {
 
     #[test]
     fn the_cavern_floor_of_the_lowest_section_is_meshed() {
-        let world = cavern_floor();
+        let mut world = cavern_floor();
         let mesh = crate::mesher::mesh_section(
             &world.neighborhood((0, 0, 0), &table(), 0),
             &table(),

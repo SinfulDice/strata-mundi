@@ -142,7 +142,8 @@ pub fn render_image(
             "camera inside a solid block: the surrounding rock is invisible from inside"
         );
     }
-    for key in world.section_keys() {
+    let keys: Vec<_> = world.section_keys().collect();
+    for key in keys {
         let mesh = mesh_section(
             &world.neighborhood(key, &table, view.graphics.biome_blend),
             &table,

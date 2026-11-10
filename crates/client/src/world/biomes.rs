@@ -27,10 +27,15 @@ impl TintCache {
 }
 
 impl ClientWorld {
-    /// Colours of the biomes, by `BiomeId`; the caller remeshes.
+    /// Colours of the server's biomes, by `BiomeId`, from the welcome message (before any
+    /// column, so nothing is meshed with the old ones).
     pub fn set_biome_tints(&mut self, tints: Arc<[BiomeTints]>) {
+        self.biome_fog = tints
+            .iter()
+            .map(|tint| Vec3::from_array(tint.fog.factors()).powf(2.2))
+            .collect();
         self.biome_tints = tints;
-        self.tints.get_mut().columns.clear();
+        self.tints.columns.clear();
     }
 
     pub fn biome_tints(&self) -> &[BiomeTints] {
@@ -38,7 +43,7 @@ impl ClientWorld {
     }
 
     pub(super) fn forget_tints_around(&mut self, pos: ColumnPos) {
-        let tints = &mut self.tints.get_mut().columns;
+        let tints = &mut self.tints.columns;
         for dz in -1..=1 {
             for dx in -1..=1 {
                 tints.remove(&ColumnPos {
@@ -51,20 +56,23 @@ impl ClientWorld {
 
     /// Colours of a column blended with its neighbours over `radius` blocks, computed
     /// once per radius.
-    pub(super) fn column_tints(&self, cx: i32, cz: i32, radius: u32) -> Option<Arc<ColumnTints>> {
+    pub(super) fn column_tints(
+        &mut self,
+        cx: i32,
+        cz: i32,
+        radius: u32,
+    ) -> Option<Arc<ColumnTints>> {
         if self.biome_tints.is_empty() {
             return None;
         }
         let pos = ColumnPos { x: cx, z: cz };
-        {
-            let mut cache = self.tints.borrow_mut();
-            if cache.radius != radius {
-                cache.radius = radius;
-                cache.columns.clear();
-            }
-            if let Some(tints) = cache.columns.get(&pos) {
-                return Some(Arc::clone(tints));
-            }
+        let cache = &mut self.tints;
+        if cache.radius != radius {
+            cache.radius = radius;
+            cache.columns.clear();
+        }
+        if let Some(tints) = cache.columns.get(&pos) {
+            return Some(Arc::clone(tints));
         }
         let maps = around(&self.biomes, cx, cz);
         let centre = maps[1][1]?;
@@ -73,8 +81,7 @@ impl ClientWorld {
             let (dz, lz) = split_wide(z);
             maps[dz][dx].unwrap_or(centre).get(lx, lz)
         }));
-        let columns = &mut self.tints.borrow_mut().columns;
-        columns.insert(pos, Arc::clone(&tints));
+        self.tints.columns.insert(pos, Arc::clone(&tints));
         Some(tints)
     }
 
@@ -89,9 +96,11 @@ impl ClientWorld {
                 let Some(biome) = self.biome_at(x + dx * FOG_STEP, z + dz * FOG_STEP) else {
                     continue;
                 };
-                let tint = self.biome_tints.get(usize::from(biome.0)).copied();
-                let factors = Vec3::from_array(tint.unwrap_or_default().fog.factors());
-                sum += factors.powf(2.2);
+                sum += self
+                    .biome_fog
+                    .get(usize::from(biome.0))
+                    .copied()
+                    .unwrap_or(Vec3::ONE);
                 count += 1.0;
             }
         }
@@ -165,7 +174,7 @@ mod tests {
     }
 
     /// Colour of each top vertex of a section on its z = 0 edge, by world x.
-    fn top_colours(world: &ClientWorld, cx: i32, blend: u32) -> Vec<(i32, Tint)> {
+    fn top_colours(world: &mut ClientWorld, cx: i32, blend: u32) -> Vec<(i32, Tint)> {
         let table = table();
         let options = MeshOptions {
             biome_blend: blend,
@@ -190,9 +199,9 @@ mod tests {
 
     #[test]
     fn grass_colour_is_continuous_across_biome_and_column_borders() {
-        let world = world();
-        let mut row = top_colours(&world, 0, 4);
-        row.extend(top_colours(&world, 1, 4));
+        let mut world = world();
+        let mut row = top_colours(&mut world, 0, 4);
+        row.extend(top_colours(&mut world, 1, 4));
         let at = |x: i32| row.iter().filter(move |(vx, _)| *vx == x).map(|(_, t)| *t);
         let shared: Vec<Tint> = at(16).collect();
         assert!(!shared.is_empty());
@@ -212,8 +221,8 @@ mod tests {
 
     #[test]
     fn without_blending_each_block_keeps_its_biome_colour() {
-        let world = world();
-        let row = top_colours(&world, 1, 0);
+        let mut world = world();
+        let row = top_colours(&mut world, 1, 0);
         let colours = |x: i32| row.iter().filter(move |(vx, _)| *vx == x).map(|(_, t)| *t);
         assert!(colours(19).all(|t| t == GREEN));
         assert!(colours(21).all(|t| t == YELLOW));
@@ -226,7 +235,7 @@ mod tests {
 
     #[test]
     fn uniform_colours_still_merge() {
-        let world = world();
+        let mut world = world();
         let table = table();
         let mesh = mesh_section(
             &world.neighborhood((-1, 0, 0), &table, 4),

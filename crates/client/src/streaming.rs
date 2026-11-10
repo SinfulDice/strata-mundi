@@ -185,7 +185,7 @@ impl WorldView {
     ) {
         self.exchange_light();
         self.meshing
-            .update(&self.world, gpu, renderer, camera, vertical_distance);
+            .update(&mut self.world, gpu, renderer, camera, vertical_distance);
     }
 
     /// Sends this frame's block changes to the lighting thread and takes the light it

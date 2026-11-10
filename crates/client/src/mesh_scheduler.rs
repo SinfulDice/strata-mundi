@@ -78,7 +78,7 @@ impl MeshScheduler {
     /// then uploads finished meshes within the frame budget.
     pub fn update(
         &mut self,
-        world: &ClientWorld,
+        world: &mut ClientWorld,
         gpu: &Gpu,
         renderer: &mut Renderer,
         camera: DVec3,
@@ -99,7 +99,7 @@ impl MeshScheduler {
 
     fn submit_nearest(
         &mut self,
-        world: &ClientWorld,
+        world: &mut ClientWorld,
         gpu: &Gpu,
         renderer: &mut Renderer,
         camera: DVec3,
