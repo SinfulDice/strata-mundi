@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use super::bank::SoundBank;
-use super::decode::resample;
+use super::decode::{Resampler, resample};
 use super::*;
 use glam::DVec3;
 use std::sync::{Arc, OnceLock};
@@ -314,4 +314,25 @@ fn without_a_device_nothing_panics() {
         (line.key.as_str(), line.direction),
         ("subtitle-block-broken", Direction::Left)
     );
+}
+
+#[test]
+fn a_stream_resampled_block_by_block_matches_the_whole() {
+    let input: Vec<f32> = (0..10_000).map(|i| (i as f32 * 0.01).sin()).collect();
+    for rate in [22_050, 32_000, 48_000, 96_000] {
+        let whole = resample(&input, rate);
+        for block in [1, 7, 512, 4410] {
+            let mut resampler = Resampler::new(rate);
+            let mut streamed = Vec::new();
+            for chunk in input.chunks(block) {
+                resampler.push(chunk, &mut streamed);
+            }
+            assert_eq!(streamed.len(), whole.len(), "{rate} Hz by {block}");
+            let worst = streamed
+                .iter()
+                .zip(&whole)
+                .fold(0.0f32, |w, (a, b)| w.max((a - b).abs()));
+            assert!(worst < 1e-5, "{rate} Hz by {block}: {worst}");
+        }
+    }
 }

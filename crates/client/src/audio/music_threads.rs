@@ -2,7 +2,7 @@
 //! one piece at a time, started only when music is wanted) and reading the playing piece
 //! a chunk ahead of the mixer.
 
-use super::decode::{downmix, resample};
+use super::decode::{Resampler, downmix_into};
 use super::stream::MusicFeed;
 use crossbeam_channel::{Receiver, Sender};
 use std::io;
@@ -203,15 +203,20 @@ fn read_recording(path: &Path, chunks: &Chunks) -> io::Result<()> {
     let file = std::fs::File::open(path)?;
     let decoder = rodio::Decoder::try_from(file).map_err(io::Error::other)?;
     let channels = usize::from(rodio::Source::channels(&decoder).get());
-    let rate = rodio::Source::sample_rate(&decoder).get();
+    let mut resampler = Resampler::new(rodio::Source::sample_rate(&decoder).get());
     let mut samples = decoder.into_iter();
+    let (mut interleaved, mut mono) = (Vec::new(), Vec::new());
     loop {
-        let interleaved: Vec<f32> = samples.by_ref().take(CHUNK * channels).collect();
+        interleaved.clear();
+        interleaved.extend(samples.by_ref().take(CHUNK * channels));
         if interleaved.is_empty() {
             return Ok(());
         }
-        let chunk = resample(&downmix(&interleaved, channels), rate);
-        if !chunks.send(chunk) {
+        downmix_into(&interleaved, channels, &mut mono);
+        let mut chunk = chunks.spare();
+        chunk.clear();
+        resampler.push(&mono, &mut chunk);
+        if !chunk.is_empty() && !chunks.send(chunk) {
             return Ok(());
         }
     }
