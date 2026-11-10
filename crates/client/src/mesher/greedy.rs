@@ -171,7 +171,8 @@ pub struct MeshOptions {
     /// Off: a face takes the light of the cell in front of it, with hard steps.
     pub smooth_lighting: bool,
     pub vegetation: Vegetation,
-    /// Off: every face shows the first image of its texture (fewer, larger merged faces).
+    /// Off: connected textures show their first image (fewer, larger merged faces).
+    /// Random variants are picked by the shader and merge either way.
     pub texture_variants: bool,
 }
 

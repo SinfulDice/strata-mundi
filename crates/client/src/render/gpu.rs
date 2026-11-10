@@ -1,4 +1,4 @@
-use super::block_pipeline::SECTION_OFFSET_SIZE;
+use super::block_pipeline::SECTION_IMMEDIATE_SIZE;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -49,7 +49,7 @@ impl Gpu {
                     | (adapter.features() & optional_features),
                 // Every Vulkan device has at least 256 layers; packs may use more where possible.
                 required_limits: wgpu::Limits {
-                    max_immediate_size: SECTION_OFFSET_SIZE,
+                    max_immediate_size: SECTION_IMMEDIATE_SIZE,
                     max_texture_array_layers: adapter.limits().max_texture_array_layers,
                     ..Default::default()
                 }

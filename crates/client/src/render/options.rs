@@ -50,6 +50,8 @@ pub struct RenderOptions {
     pub render_scale: f32,
     pub color_filter: ColorFilter,
     pub animated_textures: bool,
+    /// Random texture variants, picked per pixel by the shader.
+    pub texture_variants: bool,
     /// 0 (moody) to 1 (bright): how much dark areas are lifted.
     pub brightness: f32,
     pub clouds: CloudMode,
@@ -63,6 +65,7 @@ impl Default for RenderOptions {
             render_scale: 1.0,
             color_filter: ColorFilter::None,
             animated_textures: true,
+            texture_variants: true,
             brightness: DEFAULT_BRIGHTNESS as f32 / 100.0,
             clouds: CloudMode::default(),
         }
@@ -86,6 +89,7 @@ impl RenderOptions {
             render_scale: 1.0,
             color_filter: ColorFilter::None,
             animated_textures: graphics.animated_textures,
+            texture_variants: graphics.texture_variants,
             brightness: graphics.brightness as f32 / 100.0,
             clouds: graphics.clouds,
         }

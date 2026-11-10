@@ -6,7 +6,8 @@ struct Camera {
     // Sky color (linear), which the fog fades to (the liquid's color with the eyes in it).
     sky: vec4<f32>,
     // x: seconds, wrapped; y: 1 with animated textures, 0 without; z: 1 when the fog
-    // counts the full distance (eyes in a liquid), 0 for the horizontal distance only.
+    // counts the full distance (eyes in a liquid), 0 for the horizontal distance only;
+    // w: 1 with random texture variants, 0 without.
     effects: vec4<f32>,
     // x: sky light factor (1 by day); y: brightness (0-1); z: light of the darkest places.
     light: vec4<f32>,
@@ -17,9 +18,18 @@ struct Camera {
 @group(1) @binding(1) var block_sampler: sampler;
 // Per layer: first_extra:16 frames:8 frame_time:8 (ticks); 0 for still layers.
 @group(1) @binding(2) var<storage, read> animations: array<u32>;
+// Per layer: second image, then start:24 images:8 into the running totals of the weights
+// that follow (see `variant_table`).
+@group(1) @binding(3) var<storage, read> variants: array<u32>;
 
-// Section origin relative to the camera (camera-relative rendering), set per draw.
-var<immediate> section_offset: vec4<f32>;
+struct Section {
+    // Origin relative to the camera (camera-relative rendering).
+    offset: vec4<f32>,
+    // Origin in the world, for the random variants.
+    origin: vec4<i32>,
+};
+
+var<immediate> section: Section;
 
 struct VertexOutput {
     @builtin(position) clip: vec4<f32>,
@@ -31,6 +41,10 @@ struct VertexOutput {
     @location(4) @interpolate(flat) wave: f32,
     // Sky and block light, 0 to 1, blended between corners.
     @location(5) light: vec2<f32>,
+    // Position in the section, and the face (6 for plant planes): the fragment finds its
+    // block even on merged faces.
+    @location(6) local: vec3<f32>,
+    @location(7) @interpolate(flat) face: u32,
 };
 
 // Per face (up, down, north, south, east, west), lit from above like Minecraft; 6 is the
@@ -54,9 +68,12 @@ fn surface_speed(animation: u32) -> f32 {
 // Layer showing now: image `(ticks / frame_time) % frames`, image 0 being the texture's
 // own layer and the others following `first_extra` (as `TextureLayout::frame_at`).
 fn animated_layer(layer: u32) -> u32 {
+    if camera.effects.y == 0.0 {
+        return layer;
+    }
     let entry = animations[min(layer, arrayLength(&animations) - 1u)];
     let frames = (entry >> 16u) & 0xffu;
-    if frames < 2u || camera.effects.y == 0.0 {
+    if frames < 2u {
         return layer;
     }
     let ticks = u32(camera.effects.x * 20.0);
@@ -65,6 +82,54 @@ fn animated_layer(layer: u32) -> u32 {
         return layer;
     }
     return (entry & 0xffffu) + frame - 1u;
+}
+
+// Same as `strata_core::content::position_hash` (u32 products wrap in WGSL too).
+fn position_hash(block: vec3<i32>) -> u32 {
+    var h = (bitcast<u32>(block.x) * 0x8DA6B343u) ^ (bitcast<u32>(block.y) * 0xD8163841u)
+        ^ (bitcast<u32>(block.z) * 0xCB1AB31Fu);
+    h ^= h >> 16u;
+    h *= 0x7FEB352Du;
+    h ^= h >> 15u;
+    h *= 0x846CA68Bu;
+    return h ^ (h >> 16u);
+}
+
+fn face_normal(face: u32) -> vec3<f32> {
+    var normals = array<vec3<f32>, 7>(
+        vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0, -1.0, 0.0), vec3<f32>(0.0, 0.0, -1.0),
+        vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(1.0, 0.0, 0.0), vec3<f32>(-1.0, 0.0, 0.0),
+        vec3<f32>(0.0),
+    );
+    return normals[min(face, 6u)];
+}
+
+// Random variant of the block under this pixel: the image whose running total of
+// weights first exceeds `position_hash % total` (as `TextureLayout::random_index`).
+// Plant planes keep their image, as before.
+fn variant_layer(input: VertexOutput) -> u32 {
+    let slot = input.layer * 2u + 1u;
+    if camera.effects.w == 0.0 || input.face >= 6u || slot >= arrayLength(&variants) {
+        return input.layer;
+    }
+    let entry = variants[slot];
+    let images = entry & 0xffu;
+    if images < 2u {
+        return input.layer;
+    }
+    // Faces lie on block boundaries: step back half a block to stand inside the block.
+    let inside = input.local - face_normal(input.face) * 0.5;
+    let block = vec3<i32>(floor(inside)) + section.origin.xyz;
+    let start = entry >> 8u;
+    let roll = position_hash(block) % max(variants[start + images - 1u], 1u);
+    var index = 0u;
+    while index + 1u < images && roll >= variants[start + index] {
+        index += 1u;
+    }
+    if index == 0u {
+        return input.layer;
+    }
+    return variants[slot - 1u] + index - 1u;
 }
 
 @vertex
@@ -87,13 +152,15 @@ fn vs_main(@location(0) geometry: u32, @location(1) texture: u32) -> VertexOutpu
         uv.y += drop - 0.8 * time * speed;
     }
     var out: VertexOutput;
-    out.relative = position + section_offset.xyz;
+    out.relative = position + section.offset.xyz;
     out.clip = camera.view_proj * vec4<f32>(out.relative, 1.0);
     out.uv = uv;
     out.layer = animated_layer(texture & 0xffffu);
     out.shade = face_shade(face) * ao_light(ao);
     out.wave = speed;
     out.light = vec2<f32>(f32(texture >> 28u), f32((texture >> 24u) & 15u)) / 15.0;
+    out.local = position + vec3<f32>(0.0, drop, 0.0);
+    out.face = face;
     return out;
 }
 
@@ -119,7 +186,7 @@ fn lit(input: VertexOutput) -> vec3<f32> {
 // Opaque and cutout blocks: pixels are either kept or dropped (leaves, glass frames).
 @fragment
 fn fs_cutout(input: VertexOutput) -> @location(0) vec4<f32> {
-    let texel = textureSample(block_textures, block_sampler, rippled(input.uv, input.wave), input.layer);
+    let texel = textureSample(block_textures, block_sampler, rippled(input.uv, input.wave), variant_layer(input));
     if texel.a < 0.5 {
         discard;
     }
@@ -129,6 +196,6 @@ fn fs_cutout(input: VertexOutput) -> @location(0) vec4<f32> {
 // Translucent blocks (water, ice): blended, never discarded.
 @fragment
 fn fs_translucent(input: VertexOutput) -> @location(0) vec4<f32> {
-    let texel = textureSample(block_textures, block_sampler, rippled(input.uv, input.wave), input.layer);
+    let texel = textureSample(block_textures, block_sampler, rippled(input.uv, input.wave), variant_layer(input));
     return vec4<f32>(fogged(texel.rgb * lit(input), input.relative), texel.a);
 }

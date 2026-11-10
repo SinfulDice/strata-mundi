@@ -12,14 +12,16 @@ pub struct CameraUniform {
     /// Sky color, linear (the fog color).
     pub sky: [f32; 4],
     /// x: seconds (wrapped); y: 1 with animated textures, 0 without; z: 1 = fog over the
-    /// full distance (eyes in a liquid).
+    /// full distance (eyes in a liquid); w: 1 with random texture variants, 0 without.
     pub effects: [f32; 4],
     /// x: sky light factor (1 = day, lower at night); y: brightness (0-1); z: light of
     /// the darkest places.
     pub light: [f32; 4],
 }
 
-pub const SECTION_OFFSET_SIZE: u32 = 16;
+/// Per draw: the section origin relative to the camera (`vec4<f32>`), then in the world
+/// (`vec4<i32>`, for the random texture variants).
+pub const SECTION_IMMEDIATE_SIZE: u32 = 32;
 
 /// The two passes of block rendering share bindings: opaque/cutout first, then translucent.
 pub struct BlockPipeline {
@@ -64,7 +66,7 @@ impl BlockPipeline {
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("block pipeline layout"),
             bind_group_layouts: &[Some(&camera_layout), Some(&texture_layout)],
-            immediate_size: SECTION_OFFSET_SIZE,
+            immediate_size: SECTION_IMMEDIATE_SIZE,
         });
         let shader = super::shaders::module(device, "block.wgsl");
         Self {
@@ -106,9 +108,10 @@ impl BlockPipeline {
         pass.set_bind_group(1, &self.texture_bind_group, &[]);
     }
 
-    /// `offset` is the section origin relative to the camera.
-    pub fn set_section_offset(pass: &mut wgpu::RenderPass<'_>, offset: glam::Vec3) {
+    /// `offset` is the section origin relative to the camera, `origin` in the world.
+    pub fn set_section(pass: &mut wgpu::RenderPass<'_>, offset: glam::Vec3, origin: glam::IVec3) {
         pass.set_immediates(0, bytemuck::bytes_of(&offset.extend(0.0).to_array()));
+        pass.set_immediates(16, bytemuck::bytes_of(&origin.extend(0).to_array()));
     }
 }
 
@@ -214,6 +217,16 @@ fn texture_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
                 },
                 count: None,
             },
+            wgpu::BindGroupLayoutEntry {
+                binding: 3,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
         ],
     })
 }
@@ -238,6 +251,10 @@ fn texture_group(
             wgpu::BindGroupEntry {
                 binding: 2,
                 resource: textures.animations.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 3,
+                resource: textures.variants.as_entire_binding(),
             },
         ],
     })

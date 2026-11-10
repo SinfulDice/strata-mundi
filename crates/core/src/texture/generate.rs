@@ -165,7 +165,14 @@ impl Context<'_, '_> {
             Frames::List(ids) => {
                 let mut images = Vec::new();
                 for id in ids {
-                    images.extend(self.texture(id, swap, depth + 1)?.images);
+                    let generated = self.texture(id, swap, depth + 1)?;
+                    if generated.images.len() > 1 {
+                        return Err(format!(
+                            "`{id}` has {} images; `List` takes textures of one image",
+                            generated.images.len()
+                        ));
+                    }
+                    images.push(generated.first());
                 }
                 images
             }
@@ -246,4 +253,34 @@ pub fn seed_of(id: &Identifier) -> u64 {
         .fold(0xcbf2_9ce4_8422_2325, |hash: u64, byte| {
             (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
         })
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_list_refuses_textures_of_several_images() {
+        let strip = RgbaImage::new(16, 32, Rgba([255; 4]));
+        let square = RgbaImage::new(16, 16, Rgba([255; 4]));
+        let ids = |names: &[&str]| names.iter().map(|n| n.parse().unwrap()).collect();
+        let recipe = |names: &[&str]| TextureRecipe::Animated {
+            frames: Frames::List(ids(names)),
+            frame_time: 2,
+        };
+        let (good, bad) = (recipe(&["t:a", "t:a"]), recipe(&["t:a", "t:strip"]));
+        let lookup = |id: &Identifier| match id.to_string().as_str() {
+            "t:a" => Some(Source::Image(&square)),
+            "t:strip" => Some(Source::Image(&strip)),
+            "t:good" => Some(Source::Recipe(&good)),
+            "t:bad" => Some(Source::Recipe(&bad)),
+            _ => None,
+        };
+        let palette = Palette::default();
+        let good = generate(&"t:good".parse().unwrap(), &lookup, &palette).unwrap();
+        assert_eq!(good.images.len(), 2);
+        let error = generate(&"t:bad".parse().unwrap(), &lookup, &palette).unwrap_err();
+        assert!(error.contains("t:strip"), "{error}");
+    }
 }

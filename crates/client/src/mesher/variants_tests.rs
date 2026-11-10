@@ -1,6 +1,7 @@
 use super::*;
 use crate::settings::Vegetation;
-use strata_core::content::{Block, BlockId, RenderKind, TextureId, TextureLayout, position_hash};
+use strata_core::content::{Block, BlockId, RenderKind, TextureId, TextureLayout};
+use strata_core::light::PackedLight;
 use strata_core::texture::{Connection, Layout};
 
 /// Layers: 0 missing, 1 glass (edges), 2 bookshelf side (vertical), 3 planks, 4 stone
@@ -157,15 +158,6 @@ fn stacked_bookshelves_join_vertically() {
     );
 }
 
-/// Expected layer of the stone top face at section cell `(x, z)` of a floor at y = 5.
-fn stone_layer(origin: [i32; 3], x: u32, z: u32) -> u16 {
-    let hash = position_hash(origin[0] + x as i32, origin[1] + 5, origin[2] + z as i32);
-    match layouts()[4].random_index(hash) {
-        0 => 4,
-        index => FIRST_EXTRA + 18 + index as u16 - 1,
-    }
-}
-
 fn stone_floor(origin: [i32; 3], variants: bool) -> Vec<[PackedVertex; 4]> {
     let floor: Vec<_> = (0..16)
         .flat_map(|x| (0..16).map(move |z| ([x, 5, z], 3)))
@@ -178,43 +170,47 @@ fn stone_floor(origin: [i32; 3], variants: bool) -> Vec<[PackedVertex; 4]> {
 }
 
 #[test]
-fn random_variants_are_stable_and_merge_only_alike_faces() {
-    let origin = [32, 64, -48];
-    let tops = stone_floor(origin, true);
+fn random_variants_are_left_to_the_shader_and_faces_still_merge() {
+    let tops = stone_floor([32, 64, -48], true);
+    assert_eq!(tops.len(), 1, "one merged face");
     assert_eq!(
-        tops,
-        stone_floor(origin, true),
-        "same position, same variants"
-    );
-    assert!(tops.len() > 3, "several variants: {}", tops.len());
-    let mut covered = 0;
-    let mut seen = std::collections::HashSet::new();
-    for quad in &tops {
-        let [x0, _, z0] = min_corner(quad);
-        let [x1, _, z1] =
-            std::array::from_fn(|i| quad.iter().map(|v| v.position()[i]).max().unwrap_or(0));
-        for x in x0..x1 {
-            for z in z0..z1 {
-                assert_eq!(stone_layer(origin, x, z), layer(quad), "cell {x},{z}");
-                covered += 1;
-            }
-        }
-        seen.insert(layer(quad));
-    }
-    assert_eq!(covered, 256, "every cell exactly once");
-    assert_eq!(seen.len(), 3, "all three variants appear");
-    assert_ne!(
-        tops,
-        stone_floor([48, 64, -48], true),
-        "another place, other variants"
+        layer(&tops[0]),
+        4,
+        "the base layer: the shader picks the variant"
     );
 }
 
+/// Rolling stone surface, as in the meshing benchmark.
+fn rolling(x: i32, y: i32, z: i32) -> BlockId {
+    let height = 8 + ((x as f32 * 0.4).sin() * 3.0 + (z as f32 * 0.3).cos() * 3.0) as i32;
+    BlockId(if y <= height { 3 } else { 0 })
+}
+
+/// Before the shader picked variants, this surface took 2 012 vertices with them and
+/// 1 816 without (smooth lighting), 1 732 and 1 164 with flat lighting.
 #[test]
-fn variants_can_be_turned_off() {
-    let tops = stone_floor([0; 3], false);
-    assert_eq!(tops.len(), 1, "one merged face");
-    assert_eq!(layer(&tops[0]), 4);
+fn random_variants_add_no_vertex_to_a_surface_section() {
+    let count = |variants, shaded| {
+        let blocks = Neighborhood::build(rolling)
+            .with_light(|_, y, _| PackedLight::new(if y > 8 { 15 } else { 12 }, 0))
+            .of_section([0; 3], &[BlockId(0), BlockId(3)], &table());
+        let options = MeshOptions {
+            ambient_occlusion: shaded,
+            smooth_lighting: shaded,
+            ..options(variants)
+        };
+        mesh_section(&blocks, &table(), options)
+            .opaque
+            .vertices
+            .len()
+    };
+    assert_eq!(count(true, true), count(false, true));
+    assert_eq!(count(true, false), count(false, false));
+    assert_eq!((count(true, true), count(true, false)), (1816, 1164));
+}
+
+#[test]
+fn connected_textures_can_be_turned_off() {
     let glass = mesh_at([0; 3], &[([5, 5, 5], 1), ([6, 5, 5], 1)], false);
     assert_eq!(quads(&glass.opaque).len(), 6, "plain glass merges again");
 }

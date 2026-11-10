@@ -1,9 +1,10 @@
-//! Textures the mesher picks per face: random variants by block position and connected
-//! textures by neighbours. Animations are left to the shader.
+//! Textures the mesher picks per face: connected textures, by neighbours. Random
+//! variants (by block position) and animations are left to the shader, so faces keep
+//! their base layer and still merge.
 
 use super::greedy::{FaceFrame, Vec3i, add};
 use super::neighborhood::Neighborhood;
-use strata_core::content::{BlockId, TextureLayout, TextureLibrary, position_hash};
+use strata_core::content::{BlockId, TextureLayout, TextureLibrary};
 use strata_core::texture::{Connection, Layout};
 
 /// Texture layouts by layer, with the GPU layer of each texture's second image.
@@ -29,11 +30,10 @@ impl TextureVariants {
         Self { layouts, second }
     }
 
-    /// Whether faces with this texture change from block to block.
+    /// Whether the mesher picks the image of faces with this texture.
     pub fn varies(&self, layer: u16) -> bool {
         self.layouts.get(usize::from(layer)).is_some_and(|layout| {
-            layout.images > 1
-                && matches!(layout.layout, Layout::Random { .. } | Layout::Connected(_))
+            layout.images > 1 && matches!(layout.layout, Layout::Connected(_))
         })
     }
 
@@ -45,7 +45,7 @@ impl TextureVariants {
     }
 
     /// Layer of the face of block `id` at `pos` (section coordinates) whose texture is
-    /// `layer`. Only faces of the same variant merge, so the greedy pass stays correct.
+    /// `layer`. Only faces of the same image merge, so the greedy pass stays correct.
     pub(super) fn face_layer(
         &self,
         blocks: &Neighborhood,
@@ -57,12 +57,8 @@ impl TextureVariants {
             return layer;
         };
         let index = match &layout.layout {
-            Layout::Random { .. } => {
-                let [x, y, z] = blocks.origin();
-                layout.random_index(position_hash(x + pos[0], y + pos[1], z + pos[2]))
-            }
             Layout::Connected(connect) => connection_mask(blocks, frame, pos, id, *connect),
-            Layout::Still | Layout::Animated { .. } => 0,
+            Layout::Still | Layout::Animated { .. } | Layout::Random { .. } => 0,
         };
         self.image(layer, index.min(layout.images.saturating_sub(1)))
     }

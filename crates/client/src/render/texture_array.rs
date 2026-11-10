@@ -23,12 +23,14 @@ impl Default for TextureFiltering {
 }
 
 /// All block textures in one GPU texture array (one layer per image), and the animation
-/// of each layer.
+/// and random variants of each layer.
 pub struct TextureArray {
     pub view: wgpu::TextureView,
     pub sampler: wgpu::Sampler,
-    /// One `u32` per layer, see `animation_entry`.
+    /// One `u32` per layer, see `animation_table`.
     pub animations: wgpu::Buffer,
+    /// See `variant_table`.
+    pub variants: wgpu::Buffer,
 }
 
 impl TextureArray {
@@ -86,10 +88,16 @@ impl TextureArray {
             contents: bytemuck::cast_slice(&animation_table(library)),
             usage: wgpu::BufferUsages::STORAGE,
         });
+        let variants = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("texture variants"),
+            contents: bytemuck::cast_slice(&variant_table(library)),
+            usage: wgpu::BufferUsages::STORAGE,
+        });
         Ok(Self {
             view,
             sampler,
             animations,
+            variants,
         })
     }
 }
@@ -107,6 +115,37 @@ fn animation_table(library: &TextureLibrary) -> Vec<u32> {
             table[usize::from(texture.0)] =
                 first | ((layout.images & 0xff) << 16) | ((frame_time & 0xff) << 24);
         }
+    }
+    table
+}
+
+/// Two `u32` per layer, then the running totals of the weights: `[2 × layer]` is the
+/// layer of the texture's second image, `[2 × layer + 1]` is `start:24 images:8`, where
+/// `start` indexes the totals (0 for layers without variants). The fragment shader picks
+/// the first image whose total exceeds `position_hash % total`, like
+/// `TextureLayout::random_index`.
+fn variant_table(library: &TextureLibrary) -> Vec<u32> {
+    let mut table = vec![0; library.layer_count().max(1) * 2];
+    for (texture, _, _) in library.images.iter() {
+        let layout = library.layout(texture);
+        let Layout::Random { weights } = &layout.layout else {
+            continue;
+        };
+        if layout.images < 2 || weights.len() < layout.images as usize {
+            continue;
+        }
+        let start = table.len() as u32;
+        let slot = usize::from(texture.0) * 2;
+        table[slot] = u32::from(library.image_layer(texture, 1).0);
+        table[slot + 1] = (start << 8) | (layout.images & 0xff);
+        let totals = weights
+            .iter()
+            .take(layout.images as usize)
+            .scan(0, |sum, &weight| {
+                *sum += weight;
+                Some(*sum)
+            });
+        table.extend(totals);
     }
     table
 }
@@ -198,6 +237,44 @@ mod tests {
         image.set(0, 0, Rgba([200, 100, 50, 255]));
         let small = half(&image);
         assert_eq!(small.get(0, 0), Rgba([200, 100, 50, 63]));
+    }
+
+    /// What `variant_layer` in block.wgsl does with the table.
+    fn variant_layer(table: &[u32], layer: u32, hash: u32) -> u32 {
+        let entry = table[layer as usize * 2 + 1];
+        let (start, images) = ((entry >> 8) as usize, entry & 0xff);
+        if images < 2 {
+            return layer;
+        }
+        let totals = &table[start..start + images as usize];
+        let roll = hash % totals[totals.len() - 1].max(1);
+        match totals.iter().position(|&total| roll < total).unwrap_or(0) {
+            0 => layer,
+            index => table[layer as usize * 2] + index as u32 - 1,
+        }
+    }
+
+    #[test]
+    fn the_variant_table_picks_like_the_layout() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
+        let packs = strata_core::pack::PackSet::discover(&dir, &mut Vec::new());
+        let (content, _) = strata_core::content::Content::load(&packs, &Default::default());
+        let library = &content.textures;
+        let table = variant_table(library);
+        let mut checked = 0;
+        for (texture, _, _) in library.images.iter() {
+            let layout = library.layout(texture);
+            if !matches!(layout.layout, Layout::Random { .. }) {
+                continue;
+            }
+            for hash in 0..500 {
+                let expected = library.image_layer(texture, layout.random_index(hash)).0;
+                let picked = variant_layer(&table, u32::from(texture.0), hash);
+                assert_eq!(picked, u32::from(expected), "{texture:?} hash {hash}");
+            }
+            checked += 1;
+        }
+        assert!(checked >= 3, "stone, grass, dirt and sand have variants");
     }
 
     #[test]

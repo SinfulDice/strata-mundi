@@ -23,22 +23,22 @@ graph TD
     T --> R[Random]
     T --> C[Connected]
     A -->|choix à chaque image| S[Shader]
-    R -->|choix à la fabrication du maillage| M[Mailleur]
-    C -->|choix à la fabrication du maillage| M
+    R -->|choix à chaque pixel| S
+    C -->|choix à la fabrication du maillage| M[Mailleur]
 ```
 
 - **Animée** : le shader choisit l'image. Il lit une table (un entier par couche : où sont les autres images, combien, durée de chacune) et calcule `(ticks / durée) % nombre_d'images`. Aucun remaillage, rien à renvoyer au GPU à chaque image. Le défilement de l'eau et de la lave (qui montre le sens du courant) est conservé, et l'ondulation par images (`Sway`) s'y ajoute.
-- **Aléatoire** : le mailleur choisit selon un **hachage de la position du bloc** dans le monde (pas de la section) : un même bloc a la même variante partout et à chaque lancement. Les poids rendent certaines variantes plus rares.
+- **Aléatoire** : le shader de fragments choisit selon un **hachage de la position du bloc** dans le monde (pas de la section) : un même bloc a la même variante partout et à chaque lancement. Les poids rendent certaines variantes plus rares. Pour retrouver son bloc, chaque pixel part de sa position dans la section (interpolée entre les coins), recule d'un demi-bloc le long de la normale de la face (une face est posée sur la limite entre deux blocs) et ajoute l'origine de la section, transmise à chaque dessin. Une table envoyée une fois au GPU donne, par couche, où sont les autres images et les **cumuls** des poids.
 - **Connectée** : le mailleur regarde les voisins. Pour chaque côté de la face (haut, droite, bas, gauche) où un bloc identique est présent, il prend l'image dont la bordure a été **retirée** de ce côté : deux vitres côte à côte forment une seule vitre. `Edges` donne 16 images (4 côtés = 16 combinaisons), `Vertical` 4 (haut et bas, faces latérales seulement : bibliothèques). Un voisin dont la face est elle-même couverte par un bloc identique ne compte pas, d'où le coin intérieur d'un « L » qui garde son cadre. Les bûches couchées ne se raccordent pas.
 
 ### Variantes et fusion gloutonne
 
-La couche choisie **remplace** celle du bloc dans la clé de la face. La fusion gloutonne (voir [Chunks et maillage](chunks-et-maillage.md)) ne regroupe donc que des faces de même image : un sol de pierre à trois variantes donne plusieurs rectangles au lieu d'un seul. Le temps CPU change peu ; le vrai coût est le nombre de faces, d'où deux réglages :
+La fusion gloutonne (voir [Chunks et maillage](chunks-et-maillage.md)) ne regroupe que des faces de même clé. Les variantes aléatoires étant choisies par le shader, la clé garde la couche de base : un sol de pierre à trois variantes reste **un seul rectangle**, chaque pixel prenant ensuite la variante de son bloc (section de surface de test : 1 732 sommets avant, 1 164 après, en lumière plate). Les raccords, eux, dépendent des voisins : le mailleur met l'image choisie dans la clé, et seules des vitres de même image fusionnent. Deux réglages :
 
 - `animated_textures` « Textures animées » : coupe l'animation (coût nul : c'est une valeur du shader) ;
-- `texture_variants` « Variantes de textures » : remaille le monde sans variantes ni raccords.
+- `texture_variants` « Variantes de textures » : coupe les variantes (valeur du shader) et les raccords (remaille le monde).
 
-Les deux sont coupés au préréglage le plus bas. Les blocs sans variante ne coûtent rien (`MeshBlock.varied`).
+Les deux sont coupés au préréglage le plus bas. Les blocs sans raccord ne coûtent rien au mailleur (`MeshBlock.varied`).
 
 ### Fabrication des images
 
@@ -50,9 +50,9 @@ Au chargement, la bibliothèque dessine toutes les images avec le processeur (d�
 |---|---|
 | Recettes d'images multiples (`Frames`, `Connection`, `Layout`, `connected`, `scrolled`, `swayed`, `split_strip`) | `crates/core/src/texture/multi.rs` |
 | Bibliothèque, couches, `TextureLayout` (`frame_at`, `random_index`), `position_hash` | `crates/core/src/content/textures.rs` |
-| Choix des variantes et raccords au maillage | `crates/client/src/mesher/variants.rs` (`TextureVariants`, `connection_mask`) |
-| Table d'animation envoyée au GPU | `crates/client/src/render/texture_array.rs` (`animation_table`) |
-| Animation dans le shader | `crates/client/src/render/shaders/block.wgsl` (`animated_layer`) |
+| Raccords au maillage | `crates/client/src/mesher/variants.rs` (`TextureVariants`, `connection_mask`) |
+| Tables d'animation et de variantes envoyées au GPU | `crates/client/src/render/texture_array.rs` (`animation_table`, `variant_table`) |
+| Animation et variantes dans le shader | `crates/client/src/render/shaders/block.wgsl` (`animated_layer`, `variant_layer`, `position_hash`) |
 | Tests | `crates/client/src/mesher/variants_tests.rs`, `crates/core/tests/texture_layouts.rs` |
 | Scènes de contrôle | `assets/scenes/textures.ron`, `assets/scenes/fire.ron` |
 

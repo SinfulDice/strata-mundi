@@ -105,7 +105,9 @@ Façons de fabriquer les images (`frames`), 64 images au plus :
 | `Scroll(base, count, step)` | `base` décalée de `step` pixels (à l'échelle 16 px) par image, en boucle (textures raccordables) |
 | `Sway(base, count, amplitude)` | les lignes de `base` balancées de gauche à droite (flammes, eau) |
 
-**En PNG**, comme Minecraft : une **bande verticale** d'images carrées (16×48 = 3 images de 16×16). Une bande qui remplace une texture animée garde son rythme (`frame_time`) ; sinon 2 ticks par image.
+**En PNG**, comme Minecraft : une **bande verticale** d'images carrées (16×48 = 3 images de 16×16). Une bande qui remplace une texture animée garde son rythme (`frame_time`) ; sinon 2 ticks par image. Attention : une bande posée sur une texture **à variantes** (`stone.png` de 16×48) en fait une **animation**, pas trois variantes ; pour des variantes dessinées, écris une recette `Random` avec `List` (voir plus bas).
+
+`List` n'accepte que des textures d'une seule image : citer une texture animée, connectée ou à variantes est une erreur signalée au chargement.
 
 Le réglage graphique « Textures animées » fige toutes les animations (première image).
 
@@ -120,6 +122,8 @@ Connected(base: "strata:glass_base", connect: Edges)
 Connected(base: "strata:bookshelf_base", connect: Vertical)
 ```
 
+**Pour redessiner du verre ou une bibliothèque**, remplace la **base** (`glass_base.png`, `bookshelf_base.png`) : le jeu en tire toutes les images raccordées. Un `glass.png` remplacerait la recette entière et le verre perdrait ses raccords.
+
 Un voisin ne se raccorde pas si sa propre face est cachée par un bloc identique devant elle : l'arête intérieure d'un mur en L garde sa bordure. Les coins entre deux côtés raccordés s'ouvrent aussi (pas de petit coin isolé quand seule la diagonale manque, comme les textures connectées simples). La texture de base peut être un PNG.
 
 ### Variantes aléatoires
@@ -133,9 +137,11 @@ Random(variants: Reseed(recipe: Material(ramp: "stone", pattern: Noise(cells: (4
 Random(variants: List(["mon_pack:herbe_a", "mon_pack:herbe_b"]), weights: [2, 1])
 ```
 
+**Pour redessiner la pierre en gardant des variantes**, un simple `stone.png` ne suffit pas : il remplace la recette et la pierre n'a plus qu'une image. Dessine plusieurs PNG à la racine de `textures/` (`stone_a.png`, `stone_b.png`…) et un `textures/strata/stone.ron` (sans `stone.png` à côté, qui gagnerait) qui les liste : `Random(variants: List(["mon_pack:stone_a", "mon_pack:stone_b"]))`.
+
 `weights` (facultatif) : une valeur de 1 à 64 par variante. Les recettes qui partent d'une texture à variantes (`Ore(base: "strata:stone")`) utilisent sa première image.
 
-Le réglage graphique « Variantes de textures » désactive variantes et raccords (moins de faces à afficher : seules les faces identiques voisines sont fusionnées).
+Le réglage graphique « Variantes de textures » désactive variantes et raccords (les variantes ne coûtent pas de faces en plus : la carte graphique les choisit pixel par pixel ; sans raccords, les vitres voisines fusionnent).
 
 ### Limites
 

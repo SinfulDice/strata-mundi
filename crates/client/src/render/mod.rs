@@ -214,7 +214,7 @@ impl Renderer {
                 self.time,
                 f32::from(u8::from(self.options.animated_textures)),
                 full,
-                0.0,
+                f32::from(u8::from(self.options.texture_variants)),
             ],
             light: [
                 self.sky.light.clamp(0.0, 1.0),
@@ -276,7 +276,11 @@ impl Renderer {
         self.blocks.bind(&mut pass, BlockPass::Cutout);
         for section in self.visible_sections(camera, &frustum) {
             if let Some(mesh) = &section.cutout {
-                BlockPipeline::set_section_offset(&mut pass, camera.relative(section.origin));
+                BlockPipeline::set_section(
+                    &mut pass,
+                    camera.relative(section.origin),
+                    section.origin.as_ivec3(),
+                );
                 mesh.draw(&mut pass);
             }
         }
@@ -362,7 +366,11 @@ impl Renderer {
         self.blocks.bind(pass, BlockPass::Translucent);
         for (_, section) in translucent {
             if let Some(mesh) = &section.translucent {
-                BlockPipeline::set_section_offset(pass, camera.relative(section.origin));
+                BlockPipeline::set_section(
+                    pass,
+                    camera.relative(section.origin),
+                    section.origin.as_ivec3(),
+                );
                 mesh.draw(pass);
             }
         }
