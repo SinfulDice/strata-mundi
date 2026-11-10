@@ -7,5 +7,4 @@ Block(
     sound: Some("strata:grass"),
     category: Some("strata:natural"),
     flammability: Some((catch: 30, burn: 60)),
-    tint: (kind: Foliage),
 )

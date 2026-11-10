@@ -4,12 +4,14 @@
 // Torches and lava light things a little warmer than the sky.
 const WARM_LIGHT: vec3<f32> = vec3<f32>(1.0, 0.8, 0.56);
 
-// Minecraft's light curve, lifted towards 1 - (1 - x)^4 by the brightness setting.
+// Minecraft's light curve, lifted towards 1 - (1 - x)^4 by the brightness setting. The
+// lift grows with the square of the setting: at the default 50 %, a quarter of it, so
+// dim light (night, far from a fire) stays clearly dark.
 fn light_curve(level: f32) -> f32 {
     let base = level / (4.0 - 3.0 * level);
     let dark = 1.0 - base;
     let bright = 1.0 - dark * dark * dark * dark;
-    return mix(base, bright, camera.light.y);
+    return mix(base, bright, camera.light.y * camera.light.y);
 }
 
 // Color factor for sky and block light from 0 to 1; full daylight leaves colors unchanged.

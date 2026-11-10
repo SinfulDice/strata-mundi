@@ -35,7 +35,7 @@ pub struct Immersion {
 pub(super) const IMMERSED_FOG_LEAD: f32 = 0.5;
 
 /// Light level of the darkest places, so that nothing is ever pitch black.
-pub(super) const MIN_AMBIENT: f32 = 0.2;
+pub(super) const MIN_AMBIENT: f32 = 0.15;
 
 /// Animation time wraps after an hour, keeping `f32` precise (one tiny jump an hour).
 pub(super) const TIME_WRAP: f32 = 3600.0;

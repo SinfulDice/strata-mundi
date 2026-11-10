@@ -52,7 +52,7 @@ fn default_twilight() -> f64 {
 }
 
 fn default_night_light() -> f32 {
-    0.2
+    0.1
 }
 
 /// A bounded day cycle. Time 0 is the first sunrise; the world time keeps counting days.
@@ -89,7 +89,8 @@ impl DayCycle {
             length: def.length.clamp(DAY_LENGTH_RANGE.0, DAY_LENGTH_RANGE.1),
             day_share,
             twilight: finite_or(def.twilight, 0.06).clamp(0.001, shortest),
-            night_light: finite_or(f64::from(def.night_light), 0.2).clamp(0.0, 1.0) as f32,
+            night_light: finite_or(f64::from(def.night_light), f64::from(default_night_light()))
+                .clamp(0.0, 1.0) as f32,
         }
     }
 

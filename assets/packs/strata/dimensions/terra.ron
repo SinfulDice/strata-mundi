@@ -7,7 +7,7 @@ Dimension(
         length: 24000,
         day_share: 0.5,
         twilight: 0.06,
-        night_light: 0.2,
+        night_light: 0.1,
     ),
     terrain: (
         sea_level: 120,
