@@ -1,0 +1,8 @@
+// Sea and shore: waves (heard from the land close by, the biomes around are mixed).
+Ambience(
+    biomes: ["strata:ocean", "strata:deep_ocean", "strata:beach"],
+    beds: [
+        (sound: "strata:ambient_waves", volume: 0.8),
+        (sound: "strata:ambient_wind", volume: 0.2),
+    ],
+)

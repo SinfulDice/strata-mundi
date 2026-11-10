@@ -1,0 +1,10 @@
+// Desert and badlands: dry wind, sand lifted by the gusts.
+Ambience(
+    biomes: ["strata:desert", "strata:badlands"],
+    beds: [
+        (sound: "strata:ambient_desert", volume: 0.7, altitude: (from: 130, to: 220, gain: (0.8, 1.4))),
+    ],
+    events: [
+        (sound: "strata:sand_gust", every: (15.0, 40.0), distance: (6.0, 14.0)),
+    ],
+)

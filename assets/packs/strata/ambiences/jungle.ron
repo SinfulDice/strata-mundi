@@ -1,0 +1,9 @@
+// Jungle: dense rustling leaves, insects all day long and louder at night.
+Ambience(
+    biomes: ["strata:jungle"],
+    beds: [
+        (sound: "strata:ambient_leaves", volume: 0.8),
+        (sound: "strata:ambient_insects", volume: 0.4),
+        (sound: "strata:ambient_insects", volume: 0.5, time: Night),
+    ],
+)

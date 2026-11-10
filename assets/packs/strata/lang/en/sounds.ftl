@@ -13,3 +13,6 @@ subtitle-swimming = Swimming
 subtitle-lava-bubbles = Lava bubbles
 subtitle-fire-crackles = Fire crackles
 subtitle-wind = Wind blows
+subtitle-drip = Water drips
+subtitle-frog = Frog croaks
+subtitle-sand-gust = Sand blows

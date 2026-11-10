@@ -20,8 +20,40 @@ pub fn render(def: &SoundDef, seed: u64) -> Vec<f32> {
     for layer in &def.layers {
         add_layer(&mut buffer, layer, &mut rng);
     }
-    finish(&mut buffer, def.volume.clamp(0.0, 1.0));
+    let volume = def.volume.clamp(0.0, 1.0);
+    if def.looped {
+        let mut looped = seamless(&buffer);
+        normalise(&mut looped, volume);
+        return looped;
+    }
+    finish(&mut buffer, volume);
     buffer
+}
+
+/// Longest blend between the end and the start of a loop.
+const LOOP_BLEND_SECONDS: f32 = 1.0;
+
+/// A loop of `buffer`: its last part is blended (equal power) into its first, so the
+/// last sample of the result leads straight into the first one.
+pub fn seamless(buffer: &[f32]) -> Vec<f32> {
+    let blend = samples(LOOP_BLEND_SECONDS).min(buffer.len() / 4);
+    let len = buffer.len() - blend;
+    let mut out = buffer[..len].to_vec();
+    for (i, sample) in out[..blend].iter_mut().enumerate() {
+        let t = (i as f32 + 0.5) / blend as f32 * std::f32::consts::FRAC_PI_2;
+        *sample = *sample * t.sin() + buffer[len + i] * t.cos();
+    }
+    out
+}
+
+fn normalise(buffer: &mut [f32], volume: f32) {
+    let peak = buffer.iter().fold(0.0f32, |peak, s| peak.max(s.abs()));
+    let scale = if peak < 1e-9 || !peak.is_finite() {
+        0.0
+    } else {
+        volume / peak
+    };
+    buffer.iter_mut().for_each(|s| *s *= scale);
 }
 
 fn add_layer(buffer: &mut [f32], layer: &Layer, rng: &mut Rng) {
@@ -269,13 +301,7 @@ impl Bubble {
 
 /// Peak at `volume`, faded end, trailing silence dropped.
 fn finish(buffer: &mut Vec<f32>, volume: f32) {
-    let peak = buffer.iter().fold(0.0f32, |peak, s| peak.max(s.abs()));
-    if peak < 1e-9 || !peak.is_finite() {
-        buffer.iter_mut().for_each(|s| *s = 0.0);
-        return;
-    }
-    let scale = volume / peak;
-    buffer.iter_mut().for_each(|s| *s *= scale);
+    normalise(buffer, volume);
     let audible = buffer
         .iter()
         .rposition(|s| s.abs() > SILENCE * volume.max(1e-6))

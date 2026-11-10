@@ -1,0 +1,14 @@
+// A frog croaking in the marsh at night.
+Sound(
+    category: Ambient,
+    subtitle: "subtitle-frog",
+    volume: 0.35,
+    pitch: (0.85, 1.15),
+    variants: 4,
+    duration: 0.6,
+    range: 32.0,
+    layers: [
+        Bubbles(count: (3, 5), spread: 0.25, hz: (140, 220), rise: 0.8, decay: (0.03, 0.05)),
+        Grains(count: (6, 10), spread: 0.25, length: (0.006, 0.012), color: Pink, filter: BandPass((hz: (500, 800), q: 3.0)), gain: 0.5),
+    ],
+)

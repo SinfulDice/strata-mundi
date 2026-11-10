@@ -1,0 +1,14 @@
+// Wind over open land, looping: a steady breath with slow gusts and a faint whistle.
+Sound(
+    category: Ambient,
+    volume: 0.5,
+    variants: 1,
+    duration: 9.0,
+    range: 256.0,
+    looped: true,
+    layers: [
+        Noise(color: Pink, filter: BandPass((hz: (350, 450), q: 0.7)), envelope: (hold: (10, 10), decay: (1, 1)), wobble: (rate: 0.17, depth: 0.6)),
+        Noise(color: Brown, filter: LowPass((hz: (180, 220))), envelope: (hold: (10, 10), decay: (1, 1)), gain: 0.8, wobble: (rate: 0.11, depth: 0.4)),
+        Noise(color: White, filter: BandPass((hz: (2000, 2400), q: 6.0)), envelope: (hold: (10, 10), decay: (1, 1)), gain: 0.08, wobble: (rate: 0.23, depth: 0.95)),
+    ],
+)

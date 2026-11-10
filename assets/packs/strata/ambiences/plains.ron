@@ -1,0 +1,10 @@
+// Open grassland: wind that grows stronger with height, a gust now and then.
+Ambience(
+    biomes: ["strata:plains", "strata:flower_meadow", "strata:savanna", "strata:river"],
+    beds: [
+        (sound: "strata:ambient_wind", volume: 0.5, altitude: (from: 130, to: 220, gain: (0.7, 1.4))),
+    ],
+    events: [
+        (sound: "strata:wind", every: (25.0, 60.0), distance: (8.0, 16.0)),
+    ],
+)

@@ -1,0 +1,14 @@
+// A gust lifting sand: a rising hiss of grains.
+Sound(
+    category: Ambient,
+    subtitle: "subtitle-sand-gust",
+    volume: 0.3,
+    pitch: (0.9, 1.1),
+    variants: 3,
+    duration: 3.0,
+    range: 48.0,
+    layers: [
+        Noise(color: White, filter: HighPass((hz: (3500, 4500))), envelope: (attack: 0.8, hold: (0.3, 0.6), decay: (0.8, 1.2)), wobble: (rate: 1.5, depth: 0.5)),
+        Grains(count: (80, 140), spread: 2.2, length: (0.002, 0.006), color: White, filter: HighPass((hz: (5000, 7000))), gain: 0.4, fade: 0.3, delay: (0.3, 0.5)),
+    ],
+)

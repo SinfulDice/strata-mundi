@@ -13,3 +13,6 @@ subtitle-swimming = SWIMMIN
 subtitle-lava-bubbles = HOT SOUP GO BLUB
 subtitle-fire-crackles = HOT FIRE GO CRACKL
 subtitle-wind = WINDY WOOSH
+subtitle-drip = WATUR GO PLIP
+subtitle-frog = FROGGEH SEZ RIBBIT
+subtitle-sand-gust = SANDZ FLY AROUND

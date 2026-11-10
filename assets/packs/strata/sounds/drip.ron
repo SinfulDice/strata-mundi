@@ -1,0 +1,14 @@
+// A drop of water falling far away in a cave.
+Sound(
+    category: Ambient,
+    subtitle: "subtitle-drip",
+    volume: 0.35,
+    pitch: (0.85, 1.2),
+    variants: 6,
+    duration: 0.4,
+    range: 32.0,
+    layers: [
+        Bubbles(count: (1, 1), spread: 0.0, hz: (900, 1500), rise: 1.8, decay: (0.03, 0.05)),
+        Grains(count: (1, 1), spread: 0.0, length: (0.001, 0.002), color: White, filter: BandPass((hz: (2500, 4000), q: 1.0)), gain: 0.3),
+    ],
+)

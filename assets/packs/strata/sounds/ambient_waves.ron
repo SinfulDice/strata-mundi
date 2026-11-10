@@ -1,0 +1,13 @@
+// Surf on the shore, looping: slow swells of low roar with foam hissing on top.
+Sound(
+    category: Ambient,
+    volume: 0.55,
+    variants: 1,
+    duration: 10.0,
+    range: 256.0,
+    looped: true,
+    layers: [
+        Noise(color: Brown, filter: LowPass((hz: (400, 500))), envelope: (hold: (10, 10), decay: (1, 1)), wobble: (rate: 0.12, depth: 0.85)),
+        Noise(color: Pink, filter: BandPass((hz: (1200, 1600), q: 0.5)), envelope: (hold: (10, 10), decay: (1, 1)), gain: 0.4, wobble: (rate: 0.12, depth: 0.95)),
+    ],
+)

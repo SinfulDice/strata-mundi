@@ -1,0 +1,11 @@
+// Marsh: a few leaves by day; insects and frogs at night.
+Ambience(
+    biomes: ["strata:swamp"],
+    beds: [
+        (sound: "strata:ambient_leaves", volume: 0.35),
+        (sound: "strata:ambient_insects", volume: 0.8, time: Night),
+    ],
+    events: [
+        (sound: "strata:frog", every: (4.0, 12.0), distance: (6.0, 16.0), time: Night),
+    ],
+)

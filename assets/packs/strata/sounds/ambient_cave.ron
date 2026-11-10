@@ -1,0 +1,13 @@
+// Underground, looping: a deep, barely heard rumble of the rock.
+Sound(
+    category: Ambient,
+    volume: 0.5,
+    variants: 1,
+    duration: 9.0,
+    range: 256.0,
+    looped: true,
+    layers: [
+        Noise(color: Brown, filter: LowPass((hz: (90, 110))), envelope: (hold: (10, 10), decay: (1, 1)), wobble: (rate: 0.07, depth: 0.5)),
+        Noise(color: Pink, filter: BandPass((hz: (220, 260), q: 1.5)), envelope: (hold: (10, 10), decay: (1, 1)), gain: 0.15, wobble: (rate: 0.09, depth: 0.8)),
+    ],
+)

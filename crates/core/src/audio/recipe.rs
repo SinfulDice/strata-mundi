@@ -38,6 +38,9 @@ pub struct SoundDef {
     /// Blocks beyond which it is not heard.
     #[serde(default = "default_range")]
     pub range: f32,
+    /// Played over and over (ambience beds): the end is blended into the start.
+    #[serde(default)]
+    pub looped: bool,
     pub layers: Vec<Layer>,
 }
 

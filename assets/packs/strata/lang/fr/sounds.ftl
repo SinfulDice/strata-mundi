@@ -13,3 +13,6 @@ subtitle-swimming = Nage
 subtitle-lava-bubbles = Lave qui bouillonne
 subtitle-fire-crackles = Feu qui crépite
 subtitle-wind = Vent qui souffle
+subtitle-drip = Goutte qui tombe
+subtitle-frog = Grenouille qui coasse
+subtitle-sand-gust = Sable qui vole

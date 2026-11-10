@@ -1,0 +1,10 @@
+// Under the surface: a deep rumble and far drops of water.
+Ambience(
+    underground: true,
+    beds: [
+        (sound: "strata:ambient_cave", volume: 0.8),
+    ],
+    events: [
+        (sound: "strata:drip", every: (3.0, 10.0), distance: (4.0, 16.0)),
+    ],
+)

@@ -1,0 +1,8 @@
+// Woods: leaves rustling over a light wind.
+Ambience(
+    biomes: ["strata:forest", "strata:birch_forest", "strata:taiga", "strata:mushroom_fields"],
+    beds: [
+        (sound: "strata:ambient_leaves", volume: 0.7),
+        (sound: "strata:ambient_wind", volume: 0.25, altitude: (from: 130, to: 220, gain: (0.7, 1.4))),
+    ],
+)

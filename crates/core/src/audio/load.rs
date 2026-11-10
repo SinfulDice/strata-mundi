@@ -1,6 +1,7 @@
 //! Loading sounds (`sounds/<name>.ron` recipes, replaced by `sounds/<name>.ogg` when a
 //! pack gives one) and sound sets (`sound_sets/<name>.ron`, what a block sounds like).
 
+use super::ambience::{Ambience, load_ambiences};
 use super::recipe::{SoundDef, bound};
 use crate::content::{Registry, SoundId};
 use crate::id::Identifier;
@@ -63,6 +64,7 @@ pub struct SoundSet {
 pub struct Sounds {
     pub registry: Registry<SoundId, Sound>,
     pub sets: BTreeMap<Identifier, SoundSet>,
+    pub ambiences: Vec<Ambience>,
 }
 
 impl Sounds {
@@ -117,7 +119,12 @@ pub fn load_sounds(packs: &PackSet, errors: &mut Vec<PackError>) -> Sounds {
             (id, set)
         })
         .collect();
-    Sounds { registry, sets }
+    let ambiences = load_ambiences(packs, &registry, errors);
+    Sounds {
+        registry,
+        sets,
+        ambiences,
+    }
 }
 
 /// The `.ogg` of each sound in the highest pack that has one, with that pack's rank.

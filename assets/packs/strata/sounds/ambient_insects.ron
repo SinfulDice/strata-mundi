@@ -1,0 +1,13 @@
+// Insects at night, looping: a high, pulsing chirr.
+Sound(
+    category: Ambient,
+    volume: 0.25,
+    variants: 1,
+    duration: 8.0,
+    range: 256.0,
+    looped: true,
+    layers: [
+        Noise(color: White, filter: BandPass((hz: (4300, 4500), q: 14.0)), envelope: (hold: (10, 10), decay: (1, 1)), wobble: (rate: 7.0, depth: 0.9)),
+        Noise(color: White, filter: BandPass((hz: (5600, 5900), q: 18.0)), envelope: (hold: (10, 10), decay: (1, 1)), gain: 0.6, wobble: (rate: 11.0, depth: 1.0)),
+    ],
+)

@@ -51,7 +51,10 @@ fn every_pack_sound_is_bounded() {
     let sounds = pack_sounds();
     assert!(sounds.registry.len() >= 38);
     for (_, id, sound) in sounds.registry.iter() {
-        assert!(sound.def.subtitle.is_some(), "{id} has a subtitle");
+        assert!(
+            sound.def.subtitle.is_some() != sound.def.looped,
+            "{id}: a subtitle, unless it is a looping bed"
+        );
         for index in 0..sound.def.variants {
             let buffer = render(&sound.def, variant_seed(sound, index));
             let longest = (sound.def.duration * SAMPLE_RATE as f32) as usize;
@@ -205,4 +208,69 @@ fn a_recording_replaces_its_recipe() {
         "{messages:#?}"
     );
     std::fs::remove_dir_all(root).unwrap();
+}
+
+/// A looped bed joins its end to its start without a jump, and keeps its loudness.
+#[test]
+fn looped_beds_are_seamless() {
+    let sounds = pack_sounds();
+    for name in ["ambient_wind", "ambient_waves", "ambient_cave"] {
+        let sound = sound(&sounds, name);
+        assert!(sound.def.looped);
+        let buffer = render(&sound.def, variant_seed(&sound, 0));
+        let seam = (buffer[buffer.len() - 1] - buffer[0]).abs();
+        let typical = buffer
+            .windows(2)
+            .map(|w| (w[1] - w[0]).abs())
+            .fold(0.0f32, f32::max);
+        assert!(
+            seam <= typical,
+            "{name}: seam {seam}, steps up to {typical}"
+        );
+        let quarter = buffer.len() / 4;
+        let (start, middle) = (
+            energy(&buffer[..quarter / 4]),
+            energy(&buffer[2 * quarter..2 * quarter + quarter / 4]),
+        );
+        assert!(
+            start > middle * 0.2,
+            "{name}: no dip where the loop is blended"
+        );
+    }
+    let ramp: Vec<f32> = (0..400).map(|i| i as f32).collect();
+    let looped = seamless(&ramp);
+    assert_eq!(looped.len(), 300);
+    assert!((looped[299] - 299.0).abs() < 1e-3);
+}
+
+#[test]
+fn ambiences_name_their_sounds_and_places() {
+    let sounds = pack_sounds();
+    let underground: Vec<_> = sounds.ambiences.iter().filter(|a| a.underground).collect();
+    assert_eq!(underground.len(), 1);
+    assert!(underground[0].biomes.is_empty() && !underground[0].events.is_empty());
+    let plains = crate::id::Identifier::new("strata", "plains").unwrap();
+    let heard: Vec<_> = sounds
+        .ambiences
+        .iter()
+        .filter(|a| a.biomes.contains(&plains))
+        .collect();
+    assert_eq!(heard.len(), 1, "a biome has one ambience");
+    let bed = heard[0].beds[0];
+    let altitude = bed.altitude.unwrap();
+    assert!(
+        altitude.factor(300.0) > altitude.factor(100.0),
+        "windier up high"
+    );
+    assert_eq!(TimeOfDay::Night.factor(1.0), 0.0);
+    assert_eq!(TimeOfDay::Day.factor(1.0), 1.0);
+    for ambience in &sounds.ambiences {
+        for event in &ambience.events {
+            let def = &sounds.get(event.sound).unwrap().def;
+            assert!(def.subtitle.is_some() && !def.looped, "{}", ambience.id);
+        }
+        for bed in &ambience.beds {
+            assert!(sounds.get(bed.sound).unwrap().def.looped, "{}", ambience.id);
+        }
+    }
 }

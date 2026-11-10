@@ -1,0 +1,14 @@
+// Leaves rustling in the canopy, looping: soft high hiss swelling with the breeze.
+Sound(
+    category: Ambient,
+    volume: 0.4,
+    variants: 1,
+    duration: 9.0,
+    range: 256.0,
+    looped: true,
+    layers: [
+        Noise(color: Pink, filter: BandPass((hz: (2800, 3400), q: 0.6)), envelope: (hold: (10, 10), decay: (1, 1)), wobble: (rate: 0.31, depth: 0.8)),
+        Grains(count: (300, 400), spread: 9.0, length: (0.004, 0.012), color: White, filter: HighPass((hz: (3000, 5000))), gain: 0.35),
+        Noise(color: Brown, filter: LowPass((hz: (200, 260))), envelope: (hold: (10, 10), decay: (1, 1)), gain: 0.3, wobble: (rate: 0.13, depth: 0.5)),
+    ],
+)

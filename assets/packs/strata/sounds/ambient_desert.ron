@@ -1,0 +1,13 @@
+// Dry wind over sand, looping: a thin breath and the hiss of blown grains.
+Sound(
+    category: Ambient,
+    volume: 0.4,
+    variants: 1,
+    duration: 9.0,
+    range: 256.0,
+    looped: true,
+    layers: [
+        Noise(color: Pink, filter: BandPass((hz: (500, 650), q: 0.8)), envelope: (hold: (10, 10), decay: (1, 1)), wobble: (rate: 0.14, depth: 0.7)),
+        Noise(color: White, filter: HighPass((hz: (4500, 5500))), envelope: (hold: (10, 10), decay: (1, 1)), gain: 0.2, wobble: (rate: 0.19, depth: 0.9)),
+    ],
+)
