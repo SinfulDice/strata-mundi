@@ -6,6 +6,7 @@
 use crate::lighting::{LightResult, LightWorker};
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::SectionKey;
+use crate::particles::ParticleSystem;
 use crate::render::{Gpu, Renderer};
 use crate::settings::Lighting;
 use crate::sky::BiomeFog;
@@ -28,6 +29,8 @@ pub struct WorldView {
     /// lighting thread together, so a column is copied at most once per frame.
     light_changes: HashMap<ColumnPos, Vec<(BlockPos, BlockId)>>,
     biome_fog: BiomeFog,
+    /// Off until given one (`with_particles`).
+    pub particles: ParticleSystem,
 }
 
 impl WorldView {
@@ -45,12 +48,18 @@ impl WorldView {
             light_table,
             light_changes: HashMap::new(),
             biome_fog: BiomeFog::default(),
+            particles: ParticleSystem::default(),
         };
         match mode {
             Lighting::Full => view.start_lighting()?,
             Lighting::Flat => view.light_flat(),
         }
         Ok(view)
+    }
+
+    pub fn with_particles(mut self, particles: ParticleSystem) -> Self {
+        self.particles = particles;
+        self
     }
 
     /// Switches light on or off while playing; the old meshes stay on screen until
@@ -138,6 +147,7 @@ impl WorldView {
             return;
         }
         let old = self.world.block_at(pos);
+        self.particles.block_changed(pos, old, block, &self.world);
         self.world.set_block(pos.x, pos.y, pos.z, block);
         if self.lighting.is_some() {
             self.world.guess_light(pos, &self.light_table);

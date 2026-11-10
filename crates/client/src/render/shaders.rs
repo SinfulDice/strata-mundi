@@ -9,19 +9,20 @@ macro_rules! shader {
     };
 }
 
-const BUILT_IN: [(&str, &str); 8] = [
+const BUILT_IN: [(&str, &str); 9] = [
     shader!("block.wgsl"),
     shader!("clouds.wgsl"),
     shader!("light.wgsl"),
     shader!("model.wgsl"),
     shader!("outline.wgsl"),
+    shader!("particle.wgsl"),
     shader!("post.wgsl"),
     shader!("sky.wgsl"),
     shader!("ui.wgsl"),
 ];
 
 /// Shaders that use the light functions of `light.wgsl`.
-const LIT: [&str; 2] = ["block.wgsl", "model.wgsl"];
+const LIT: [&str; 3] = ["block.wgsl", "model.wgsl", "particle.wgsl"];
 
 pub fn module(device: &wgpu::Device, name: &str) -> wgpu::ShaderModule {
     device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -62,6 +63,7 @@ mod tests {
             "light.wgsl",
             "model.wgsl",
             "outline.wgsl",
+            "particle.wgsl",
             "post.wgsl",
             "sky.wgsl",
             "ui.wgsl",

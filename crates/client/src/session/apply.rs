@@ -62,6 +62,11 @@ impl Session {
         if g.lighting != before.lighting {
             self.set_lighting(g.lighting);
         }
+        if g.particles != before.particles
+            && let Some(particles) = self.particles_mut()
+        {
+            particles.set_mode(g.particles);
+        }
         let remesh = (MeshOptions::from_graphics(&g), g.meshing_threads())
             != (MeshOptions::from_graphics(before), before.meshing_threads());
         if remesh && let Err(error) = self.remesh() {

@@ -17,6 +17,7 @@ mod look;
 mod mesh_scheduler;
 pub mod mesher;
 pub mod models;
+pub mod particles;
 mod player;
 pub mod preview;
 pub mod render;

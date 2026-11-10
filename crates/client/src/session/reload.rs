@@ -54,6 +54,10 @@ impl Session {
         self.screens.replace_assets(ui, atlas, ui_pipeline);
         self.screens.available_packs = self.launcher.resource_packs();
         self.remesh()?;
+        let table = crate::particles::ParticleTable::from_content(&self.content);
+        if let Some(particles) = self.particles_mut() {
+            particles.set_table(table);
+        }
         tracing::info!("resources reloaded");
         Ok(true)
     }

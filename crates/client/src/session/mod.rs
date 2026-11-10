@@ -282,6 +282,14 @@ impl Session {
         let entities = &mut self.renderer.models.entities;
         entities.clear();
         entities.extend(view.world.entity_models());
+        let particle_seconds = if pause {
+            0.0
+        } else {
+            frame_seconds.min(MAX_FRAME_SECONDS)
+        };
+        view.particles.update(particle_seconds, camera, &view.world);
+        view.particles
+            .write_instances(camera, &view.world, &mut self.renderer.particles.instances);
         view.update(
             &self.gpu,
             &mut self.renderer,

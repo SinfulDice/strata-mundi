@@ -10,6 +10,7 @@ mod model_pipeline;
 mod offscreen;
 mod options;
 mod outline;
+mod particle_pipeline;
 mod post;
 mod shaders;
 mod sky_pipeline;
@@ -38,6 +39,7 @@ use mesh::GpuMesh;
 pub use model_pipeline::ModelPipeline;
 use options::{FOG_START, IMMERSED_FOG_LEAD, MIN_AMBIENT, TIME_WRAP};
 use outline::OutlinePipeline;
+pub use particle_pipeline::{ParticleInstance, ParticlePipeline};
 use sky_pipeline::SkyPipeline;
 use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
@@ -80,6 +82,8 @@ pub struct Renderer {
     clouds: CloudPipeline,
     /// Entity models and those to draw this frame.
     pub models: ModelPipeline,
+    /// Particles to draw this frame.
+    pub particles: ParticlePipeline,
 }
 
 /// Where and how big the frame is.
@@ -98,6 +102,12 @@ impl Renderer {
         let textures = texture_array(gpu, textures, filtering)?;
         let blocks = BlockPipeline::new(&gpu.device, color_format, &textures);
         let models = ModelPipeline::new(
+            &gpu.device,
+            color_format,
+            &blocks.camera_layout,
+            &blocks.texture_layout,
+        );
+        let particles = ParticlePipeline::new(
             &gpu.device,
             color_format,
             &blocks.camera_layout,
@@ -135,6 +145,7 @@ impl Renderer {
             sky_pipeline,
             clouds,
             models,
+            particles,
         })
     }
 
@@ -240,6 +251,7 @@ impl Renderer {
         let uniform = self.camera_uniform(view_projection.to_cols_array_2d());
         self.blocks.write_camera(&gpu.queue, &uniform);
         self.models.prepare(gpu, camera, &frustum);
+        self.particles.prepare(gpu);
         let draw_sky = self.immersion.is_none();
         let clouds = self.cloud_draw(camera).filter(|_| draw_sky);
         if draw_sky {
@@ -285,6 +297,7 @@ impl Renderer {
             }
         }
         self.models.draw(&mut pass, &self.blocks);
+        self.particles.draw(&mut pass, &self.blocks, camera);
         if draw_sky {
             // Only where nothing opaque was drawn; with the eyes in a liquid, its fog
             // hides the sky.
@@ -340,6 +353,7 @@ impl Renderer {
         self.columns.clear();
         self.outline = None;
         self.models.entities.clear();
+        self.particles.instances.clear();
     }
 
     /// Back to front, so that blending sees what is behind each surface.

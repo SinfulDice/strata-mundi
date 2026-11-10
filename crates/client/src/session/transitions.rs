@@ -8,6 +8,7 @@ use crate::interaction::BlockInfo;
 use crate::launcher::RunningWorld;
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::MeshOptions;
+use crate::particles::{ParticleSystem, ParticleTable};
 use crate::render::{OffscreenTarget, Target};
 use crate::screens::UiAction;
 use crate::sleep::{SleepEvent, SleepWatcher};
@@ -40,7 +41,22 @@ impl Session {
             LightTable::from_content(&self.content),
             self.applied.graphics.lighting,
         )
+        .map(|view| view.with_particles(self.new_particles()))
         .map_err(ClientError::Threads)
+    }
+
+    fn new_particles(&self) -> ParticleSystem {
+        let table = ParticleTable::from_content(&self.content);
+        ParticleSystem::new(table, self.applied.graphics.particles)
+    }
+
+    /// The particles of the world on screen, if any.
+    pub(super) fn particles_mut(&mut self) -> Option<&mut ParticleSystem> {
+        match &mut self.stage {
+            Stage::Title(title) => Some(&mut title.view.particles),
+            Stage::Playing(world) => Some(&mut world.game.view.particles),
+            Stage::Empty => None,
+        }
     }
     /// Meshing restarted with the current settings, for the world on screen.
     pub(super) fn remesh(&mut self) -> Result<(), ClientError> {
