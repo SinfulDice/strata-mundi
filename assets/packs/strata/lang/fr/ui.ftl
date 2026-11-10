@@ -124,3 +124,15 @@ ui-update-available = Nouvelle version { $version } disponible sur GitHub
 ui-reload-failed = Ressources non rechargées : voir le journal.
 ui-reload-blocks-changed = Blocs ou objets modifiés : relancez le jeu.
 hud-dismount = <key:Sneak> : descendre du bateau
+
+world-type-strata-normal = Normal
+world-type-strata-flat = Plat
+world-type-strata-amplified = Amplifié
+world-type-strata-single_biome = Biome unique
+world-type-strata-archipelago = Archipel
+world-code-malformed = Ce code est abîmé ou n'est pas un code de monde.
+world-code-future = Ce code vient d'une version plus récente du jeu.
+world-settings-unknown-type = Type de monde inconnu : { $id } (pack de contenu manquant ?).
+world-settings-unknown-biome = Biome inconnu : { $id }.
+world-settings-unknown-block = Bloc inconnu : { $id }.
+world-settings-no-layers = Un monde plat a besoin d'au moins une couche.

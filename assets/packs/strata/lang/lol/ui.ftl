@@ -124,3 +124,15 @@ ui-update-available = NEW GAEM { $version } ON GITHUB, KTHX
 ui-reload-failed = NO RELOAD, CHECK TEH LOG.
 ui-reload-blocks-changed = BLOKZ CHANGED, RESTART PLZ.
 hud-dismount = <key:Sneak>: GIT OFF TEH FLOATEE
+
+world-type-strata-normal = NORMUL
+world-type-strata-flat = FLAT LIEK PANCAEK
+world-type-strata-amplified = SUPER BUMPY
+world-type-strata-single_biome = WUN BIOME ONLY
+world-type-strata-archipelago = LOTZ OF ILANDZ
+world-code-malformed = DIS CODE IZ BROKED OR NOT A WURLD CODE.
+world-code-future = DIS CODE IZ FROM TEH FUCHUR. UPDATE PLZ.
+world-settings-unknown-type = WAT WURLD TYPE IZ { $id }? (PAK MISSIN?)
+world-settings-unknown-biome = WAT BIOME IZ { $id }?
+world-settings-unknown-block = WAT BLOK IZ { $id }?
+world-settings-no-layers = FLAT WURLD NEEDZ AT LEEST WUN LAYR.

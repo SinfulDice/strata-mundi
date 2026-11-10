@@ -4,7 +4,7 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 11 — Types de monde
-  - [ ] Types et réglages de génération (worldgen + serveur) : normal, **plat personnalisable** (couches), **amplifié**, **biome unique**, **archipel d'îles** ; réglages taille des biomes, niveau de la mer, densité des grottes, fréquence des minerais (et place pour les structures) ; enregistrés dans `world.ron` ; **codes texte partageables** (encodage compact, validation, version) ; tests (déterminisme par type, codes aller-retour, valeurs bornées)
+  - [x] Types et réglages de génération (worldgen + serveur) : normal, **plat personnalisable** (couches), **amplifié**, **biome unique**, **archipel d'îles** ; réglages taille des biomes, niveau de la mer, densité des grottes, fréquence des minerais (et place pour les structures) ; enregistrés dans `world.ron` ; **codes texte partageables** (encodage compact, validation, version) ; tests (déterminisme par type, codes aller-retour, valeurs bornées)
   - [ ] Écran de création : choix du type, **éditeur de génération** (curseurs, couches du monde plat), **aperçu en carte 2D** calculé hors du fil de rendu (taille réduite en DS), champ code à copier/coller, traductions ; captures de chaque type de monde
 - **Dernière session** : 10/11/2026
 
