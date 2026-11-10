@@ -1,0 +1,14 @@
+// Metal breaking: a clang that rings a while.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-broken",
+    volume: 0.5,
+    pitch: (0.85, 1.1),
+    variants: 6,
+    duration: 0.9,
+    range: 24.0,
+    layers: [
+        Modes(modes: [(hz: (420, 460), decay: (0.35, 0.5)), (hz: (1130, 1200), decay: (0.25, 0.35), gain: 0.6), (hz: (2100, 2250), decay: (0.15, 0.22), gain: 0.4), (hz: (3400, 3600), decay: (0.1, 0.14), gain: 0.3)]),
+        Noise(color: White, filter: BandPass((hz: (2500, 3500))), envelope: (attack: 0.0005, decay: (0.01, 0.02)), gain: 0.8),
+    ],
+)

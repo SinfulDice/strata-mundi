@@ -1,0 +1,5 @@
+// Sounds of lava: it bubbles now and then.
+SoundSet(
+    ambient: "strata:lava_bubble",
+    ambient_chance: 0.04,
+)

@@ -1,0 +1,12 @@
+// Leaves set down: a brief rustle.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.38,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.2,
+    layers: [
+        Grains(count: (40, 60), spread: 0.1, length: (0.003, 0.01), color: Pink, filter: BandPass((hz: (2000, 4500), q: 0.8)), fade: 0.4),
+    ],
+)

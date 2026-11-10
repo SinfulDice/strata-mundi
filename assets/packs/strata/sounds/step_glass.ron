@@ -1,0 +1,14 @@
+// Footstep on glass or ice: a hard tick with a faint ring.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-footsteps",
+    volume: 0.28,
+    pitch: (0.9, 1.1),
+    variants: 6,
+    duration: 0.14,
+    layers: [
+        Noise(color: White, filter: HighPass((hz: (3000, 4000))), envelope: (attack: 0.0005, decay: (0.01, 0.02))),
+        Modes(modes: [(hz: (2800, 3300), decay: (0.05, 0.08), gain: 0.3), (hz: (5200, 6000), decay: (0.03, 0.05), gain: 0.2)]),
+        Noise(color: Pink, filter: LowPass((hz: (700, 1000))), envelope: (decay: (0.03, 0.05)), gain: 0.5),
+    ],
+)

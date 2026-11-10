@@ -1,0 +1,15 @@
+// Wind: slow gusts with a faint whistle.
+Sound(
+    category: Ambient,
+    subtitle: "subtitle-wind",
+    volume: 0.4,
+    pitch: (0.9, 1.1),
+    variants: 3,
+    duration: 7.0,
+    range: 256.0,
+    layers: [
+        Noise(color: Pink, filter: BandPass((hz: (300, 500), q: 0.8)), envelope: (attack: 1.5, hold: (2.0, 3.0), decay: (1.5, 2.0)), wobble: (rate: 0.25, depth: 0.7)),
+        Noise(color: Brown, filter: LowPass((hz: (150, 250))), envelope: (attack: 1.5, hold: (2.0, 3.0), decay: (1.5, 2.0)), gain: 0.7, wobble: (rate: 0.15, depth: 0.5)),
+        Noise(color: White, filter: BandPass((hz: (1800, 2600), q: 5.0)), envelope: (attack: 1.5, hold: (2.0, 3.0), decay: (1.5, 2.0)), gain: 0.15, wobble: (rate: 0.3, depth: 0.9)),
+    ],
+)

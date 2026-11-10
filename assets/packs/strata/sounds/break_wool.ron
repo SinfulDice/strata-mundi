@@ -1,0 +1,13 @@
+// Something soft breaking: a muffled tear.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-broken",
+    volume: 0.4,
+    pitch: (0.85, 1.1),
+    variants: 6,
+    duration: 0.3,
+    layers: [
+        Noise(color: Pink, filter: LowPass((hz: (900, 1300), sweep: 0.6)), envelope: (attack: 0.01, decay: (0.1, 0.15))),
+        Noise(color: Brown, filter: LowPass((hz: (250, 400))), envelope: (decay: (0.06, 0.1)), gain: 0.6),
+    ],
+)

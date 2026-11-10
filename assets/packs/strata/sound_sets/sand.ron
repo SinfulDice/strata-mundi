@@ -1,0 +1,6 @@
+// Sounds of sand blocks.
+SoundSet(
+    step: "strata:step_sand",
+    breaking: "strata:break_sand",
+    place: "strata:place_sand",
+)

@@ -1,0 +1,13 @@
+// Dirt set down: a soft, earthy pat.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.42,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.18,
+    layers: [
+        Noise(color: Brown, filter: LowPass((hz: (500, 800))), envelope: (decay: (0.05, 0.08))),
+        Grains(count: (6, 12), spread: 0.05, length: (0.003, 0.008), color: Pink, filter: BandPass((hz: (1000, 2200))), gain: 0.4),
+    ],
+)

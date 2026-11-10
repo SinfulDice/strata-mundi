@@ -1,0 +1,6 @@
+// Sounds of wool blocks.
+SoundSet(
+    step: "strata:step_wool",
+    breaking: "strata:break_wool",
+    place: "strata:place_wool",
+)

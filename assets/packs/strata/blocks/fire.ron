@@ -1,5 +1,6 @@
 Block(
     textures: All("strata:fire"),
+    sound: "strata:fire",
     render: Cross,
     solid: false,
     light_opacity: 0,

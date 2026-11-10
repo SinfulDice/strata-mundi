@@ -40,6 +40,7 @@ fn main() -> anyhow::Result<()> {
     let tool = args.texture_sheet.is_some()
         || args.screenshot.is_some()
         || args.render_icons.is_some()
+        || args.render_sounds.is_some()
         || args.render_biomes.is_some()
         || args.map.is_some();
     let saved_packs = if tool {
@@ -52,6 +53,9 @@ fn main() -> anyhow::Result<()> {
     let graphics = GraphicsSettings::for_preset(tool_preset);
     if let Some(dir) = &args.render_icons {
         return renders::render_icons(&loaded.content, dir);
+    }
+    if let Some(dir) = &args.render_sounds {
+        return renders::render_sounds(&loaded.content, dir);
     }
     if let Some(dir) = &args.render_biomes {
         let ultra = GraphicsSettings::for_preset(Preset::Ultra);

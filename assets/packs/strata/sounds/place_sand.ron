@@ -1,0 +1,13 @@
+// Sand set down: a soft pour.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.38,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.25,
+    layers: [
+        Noise(color: Pink, filter: BandPass((hz: (1800, 2800), q: 0.6)), envelope: (attack: 0.005, hold: (0.02, 0.04), decay: (0.06, 0.1))),
+        Noise(color: Brown, filter: LowPass((hz: (400, 600))), envelope: (decay: (0.04, 0.06)), gain: 0.6),
+    ],
+)

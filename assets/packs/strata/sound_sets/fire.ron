@@ -1,0 +1,5 @@
+// Sounds of fire: it crackles.
+SoundSet(
+    ambient: "strata:fire_crackle",
+    ambient_chance: 0.5,
+)

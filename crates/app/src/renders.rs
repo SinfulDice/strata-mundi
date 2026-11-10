@@ -9,6 +9,7 @@ use strata_client::camera::Camera;
 use strata_client::catalog::item_icon;
 use strata_client::screenshot::{View, capture, capture_sky, write_png};
 use strata_client::settings::GraphicsSettings;
+use strata_core::audio;
 use strata_core::content::Content;
 use strata_core::dimension::DimensionId;
 use strata_core::id::Identifier;
@@ -38,6 +39,24 @@ pub fn render_icons(content: &Content, dir: &Path) -> anyhow::Result<()> {
         write_png(&image_path(dir, id), &icon)?;
     }
     tracing::info!(dir = %dir.display(), "item icons written");
+    Ok(())
+}
+
+/// `<dir>/<namespace>/<name>-<variant>.wav` for every recipe (recordings are skipped).
+pub fn render_sounds(content: &Content, dir: &Path) -> anyhow::Result<()> {
+    for (_, id, sound) in content.sounds.registry.iter() {
+        for index in 0..sound.def.variants {
+            let buffer = audio::render(&sound.def, audio::variant_seed(sound, index));
+            let path = dir
+                .join(id.namespace())
+                .join(format!("{}-{index}.wav", id.name()));
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            audio::write_wav(&path, &buffer).with_context(|| path.display().to_string())?;
+        }
+    }
+    tracing::info!(dir = %dir.display(), "sounds written");
     Ok(())
 }
 

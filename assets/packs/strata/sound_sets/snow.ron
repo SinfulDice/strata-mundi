@@ -1,0 +1,6 @@
+// Sounds of snow blocks.
+SoundSet(
+    step: "strata:step_snow",
+    breaking: "strata:break_snow",
+    place: "strata:place_snow",
+)

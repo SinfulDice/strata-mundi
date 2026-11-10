@@ -4,7 +4,7 @@ Block(
     cull_same: false,
     light_opacity: 1,
     hardness: 0.2,
-    sound: Some("strata:grass"),
+    sound: Some("strata:leaves"),
     category: Some("strata:natural"),
     flammability: Some((catch: 30, burn: 60)),
 )

@@ -1,0 +1,13 @@
+// Snow breaking: a packed crunch that crumbles apart.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-broken",
+    volume: 0.42,
+    pitch: (0.85, 1.1),
+    variants: 6,
+    duration: 0.38,
+    layers: [
+        Grains(count: (70, 110), spread: 0.22, length: (0.002, 0.007), color: White, filter: BandPass((hz: (2500, 5000), q: 1.8)), fade: 0.4),
+        Noise(color: Pink, filter: LowPass((hz: (500, 800))), envelope: (decay: (0.08, 0.14)), gain: 0.6),
+    ],
+)

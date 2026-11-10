@@ -1,0 +1,13 @@
+// Metal set down: a short clank.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.42,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.4,
+    layers: [
+        Modes(modes: [(hz: (480, 540), decay: (0.15, 0.22)), (hz: (1200, 1300), decay: (0.1, 0.15), gain: 0.5), (hz: (2300, 2450), decay: (0.06, 0.09), gain: 0.3)]),
+        Noise(color: White, filter: BandPass((hz: (2000, 3000))), envelope: (attack: 0.0005, decay: (0.008, 0.015)), gain: 0.7),
+    ],
+)

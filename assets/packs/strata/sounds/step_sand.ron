@@ -1,0 +1,13 @@
+// Footstep in sand: a breathy shuffle of tiny grains.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-footsteps",
+    volume: 0.25,
+    pitch: (0.9, 1.1),
+    variants: 6,
+    duration: 0.22,
+    layers: [
+        Noise(color: Pink, filter: BandPass((hz: (2000, 3000), q: 0.6)), envelope: (attack: 0.01, hold: (0.02, 0.04), decay: (0.06, 0.1))),
+        Grains(count: (40, 70), spread: 0.1, length: (0.001, 0.003), color: White, filter: HighPass((hz: (3000, 4500))), gain: 0.4, fade: 0.5),
+    ],
+)

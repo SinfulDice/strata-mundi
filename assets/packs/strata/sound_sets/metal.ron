@@ -1,0 +1,6 @@
+// Sounds of metal blocks.
+SoundSet(
+    step: "strata:step_metal",
+    breaking: "strata:break_metal",
+    place: "strata:place_metal",
+)

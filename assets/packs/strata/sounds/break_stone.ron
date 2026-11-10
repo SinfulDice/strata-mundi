@@ -1,0 +1,14 @@
+// Stone breaking: a sharp crack and falling chips.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-broken",
+    volume: 0.55,
+    pitch: (0.85, 1.1),
+    variants: 6,
+    duration: 0.4,
+    layers: [
+        Noise(color: White, filter: BandPass((hz: (1500, 2500), q: 0.9)), envelope: (attack: 0.001, decay: (0.08, 0.12))),
+        Grains(count: (20, 35), spread: 0.18, length: (0.005, 0.02), color: Pink, filter: BandPass((hz: (800, 2500), q: 1.2)), gain: 0.6, fade: 0.3, delay: (0.01, 0.02)),
+        Modes(modes: [(hz: (110, 150), decay: (0.06, 0.1))], gain: 0.5),
+    ],
+)

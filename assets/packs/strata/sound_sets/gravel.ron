@@ -1,0 +1,6 @@
+// Sounds of gravel blocks.
+SoundSet(
+    step: "strata:step_gravel",
+    breaking: "strata:break_gravel",
+    place: "strata:place_gravel",
+)

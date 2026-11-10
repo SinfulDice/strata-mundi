@@ -1,5 +1,6 @@
 Block(
     textures: All("strata:water"),
+    sound: "strata:water",
     solid: false,
     render: Translucent,
     light_opacity: 2,

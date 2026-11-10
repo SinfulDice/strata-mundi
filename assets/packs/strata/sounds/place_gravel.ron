@@ -1,0 +1,13 @@
+// Gravel set down: a short rattle.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.42,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.22,
+    layers: [
+        Grains(count: (25, 40), spread: 0.1, length: (0.004, 0.012), color: White, filter: BandPass((hz: (1200, 3000), q: 1.5)), fade: 0.4),
+        Noise(color: Brown, filter: LowPass((hz: (300, 500))), envelope: (decay: (0.04, 0.07)), gain: 0.6),
+    ],
+)

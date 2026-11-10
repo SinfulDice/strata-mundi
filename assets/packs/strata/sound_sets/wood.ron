@@ -1,0 +1,6 @@
+// Sounds of wood blocks.
+SoundSet(
+    step: "strata:step_wood",
+    breaking: "strata:break_wood",
+    place: "strata:place_wood",
+)

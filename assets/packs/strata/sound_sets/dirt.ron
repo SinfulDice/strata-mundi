@@ -1,0 +1,6 @@
+// Sounds of dirt blocks.
+SoundSet(
+    step: "strata:step_dirt",
+    breaking: "strata:break_dirt",
+    place: "strata:place_dirt",
+)

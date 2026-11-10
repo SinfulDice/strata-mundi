@@ -1,0 +1,6 @@
+// Sounds of grass blocks.
+SoundSet(
+    step: "strata:step_grass",
+    breaking: "strata:break_grass",
+    place: "strata:place_grass",
+)

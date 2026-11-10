@@ -33,6 +33,7 @@ png = "0.18"
 postcard = { version = "1.1", default-features = false, features = ["use-std"] }
 pollster = "1"
 ron = "0.12"
+rodio = { version = "0.23", default-features = false, features = ["playback", "vorbis"] }
 serde = { version = "1", features = ["derive"] }
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 thiserror = "2"

@@ -1,0 +1,13 @@
+// Snow set down: a muffled pat.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.38,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.2,
+    layers: [
+        Noise(color: Pink, filter: LowPass((hz: (600, 900))), envelope: (decay: (0.05, 0.08))),
+        Grains(count: (20, 35), spread: 0.08, length: (0.002, 0.006), color: White, filter: BandPass((hz: (2500, 4500), q: 1.8)), gain: 0.5),
+    ],
+)

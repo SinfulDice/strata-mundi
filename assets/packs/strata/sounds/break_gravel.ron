@@ -1,0 +1,13 @@
+// Gravel breaking: stones tumbling over one another.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-broken",
+    volume: 0.5,
+    pitch: (0.85, 1.1),
+    variants: 6,
+    duration: 0.42,
+    layers: [
+        Grains(count: (50, 80), spread: 0.28, length: (0.005, 0.015), color: White, filter: BandPass((hz: (1000, 3000), q: 1.5)), fade: 0.3),
+        Noise(color: Brown, filter: LowPass((hz: (300, 500))), envelope: (decay: (0.08, 0.12)), gain: 0.6),
+    ],
+)

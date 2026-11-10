@@ -1,0 +1,6 @@
+// Sounds of water: walking in shallow water, falling in, swimming.
+SoundSet(
+    step: "strata:swim",
+    enter: "strata:water_splash",
+    swim: "strata:swim",
+)

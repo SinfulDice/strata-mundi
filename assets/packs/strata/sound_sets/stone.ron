@@ -1,0 +1,6 @@
+// Sounds of stone blocks.
+SoundSet(
+    step: "strata:step_stone",
+    breaking: "strata:break_stone",
+    place: "strata:place_stone",
+)

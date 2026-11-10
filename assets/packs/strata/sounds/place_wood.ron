@@ -1,0 +1,13 @@
+// Wood set down: a warm, hollow knock.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.45,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.22,
+    layers: [
+        Modes(modes: [(hz: (160, 220), decay: (0.08, 0.12)), (hz: (400, 500), decay: (0.05, 0.07), gain: 0.5), (hz: (900, 1100), decay: (0.025, 0.04), gain: 0.25)]),
+        Noise(color: White, filter: BandPass((hz: (1500, 2500))), envelope: (attack: 0.0005, decay: (0.008, 0.015)), gain: 0.5),
+    ],
+)

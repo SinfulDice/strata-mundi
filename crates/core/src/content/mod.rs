@@ -27,10 +27,13 @@ pub use particle::{
     ParticleTriggersDef, Particles,
 };
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
-pub use registry::{BlockId, EntityTypeId, ItemId, ParticleId, Registry, RegistryId, TextureId};
+pub use registry::{
+    BlockId, EntityTypeId, ItemId, ParticleId, Registry, RegistryId, SoundId, TextureId,
+};
 pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
 pub use tint::{BiomeTints, BlockTint, Tint, TintFaces, TintKind, UNTINTED_ALPHA};
 
+use crate::audio::{self, Sounds};
 use crate::cinematic::{self, Cinematic};
 use crate::dimension::DimensionId;
 use crate::id::Identifier;
@@ -55,6 +58,7 @@ pub struct Content {
     pub days: BTreeMap<Identifier, DayCycle>,
     pub skies: BTreeMap<Identifier, Sky>,
     pub particles: Registry<ParticleId, Particle>,
+    pub sounds: Sounds,
 }
 
 /// Identifier of the empty block, always `BlockId::AIR`.
@@ -71,7 +75,13 @@ impl Content {
         let presentation = PackSet::joined(packs, resource_packs);
         let textures = TextureLibrary::load(&presentation, &mut errors);
         let particles = particle::load_particles(&presentation, &textures, &mut errors);
-        let (blocks, fluids) = load_blocks(packs, &textures, &particles, &mut errors);
+        let sounds = audio::load_sounds(&presentation, &mut errors);
+        let presented = Presented {
+            textures: &textures,
+            particles: &particles,
+            sounds: &sounds,
+        };
+        let (blocks, fluids) = load_blocks(packs, &presented, &mut errors);
         let entities = entity::load_entities(packs, &textures, &mut errors);
         let known = Known {
             blocks: &blocks,
@@ -93,6 +103,7 @@ impl Content {
             days,
             skies,
             particles: particles.registry,
+            sounds,
         };
         (content, errors)
     }
@@ -167,10 +178,12 @@ impl Content {
             .values()
             .flat_map(|shot| &shot.keyframes)
             .filter_map(|key| key.subtitle.clone());
+        let sounds = self.sounds.subtitle_keys().cloned();
         let mut keys: Vec<String> = blocks
             .chain(items)
             .chain(categories)
             .chain(subtitles)
+            .chain(sounds)
             .collect();
         keys.sort();
         keys.dedup();
@@ -178,12 +191,23 @@ impl Content {
     }
 }
 
+/// What blocks may refer to that resource packs may restyle.
+struct Presented<'a> {
+    textures: &'a TextureLibrary,
+    particles: &'a Particles,
+    sounds: &'a Sounds,
+}
+
 fn load_blocks(
     packs: &PackSet,
-    textures: &TextureLibrary,
-    particles: &Particles,
+    presented: &Presented<'_>,
     errors: &mut Vec<PackError>,
 ) -> (Registry<BlockId, Block>, BTreeMap<BlockId, Fluid>) {
+    let Presented {
+        textures,
+        particles,
+        sounds,
+    } = *presented;
     let mut blocks = Registry::default();
     let mut fluids = Vec::new();
     blocks.insert(air_id(), Block::air());
@@ -211,6 +235,16 @@ fn load_blocks(
                 TextureId::MISSING
             }),
         });
+        if let Some(set) = value
+            .sound
+            .as_ref()
+            .filter(|set| !sounds.sets.contains_key(*set))
+        {
+            errors.push(PackError::invalid(
+                &source,
+                format!("unknown sound set `{set}`"),
+            ));
+        }
         let placement = value.placement;
         let block_particles =
             particle::block_particles(&value.particles, particles, &source, &mut *errors);

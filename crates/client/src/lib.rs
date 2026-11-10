@@ -1,6 +1,7 @@
 //! Client side: renders what the server sends and turns player input into intents.
 
 mod app;
+pub mod audio;
 pub mod bench;
 pub mod camera;
 pub mod catalog;

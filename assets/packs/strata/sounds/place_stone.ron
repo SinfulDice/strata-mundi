@@ -1,0 +1,14 @@
+// Stone set down: a solid knock.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.45,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.2,
+    layers: [
+        Noise(color: Pink, filter: LowPass((hz: (1200, 1800))), envelope: (attack: 0.0005, decay: (0.04, 0.07))),
+        Modes(modes: [(hz: (140, 190), decay: (0.05, 0.08)), (hz: (600, 750), decay: (0.02, 0.04), gain: 0.3)], gain: 0.7),
+        Noise(color: White, filter: BandPass((hz: (2500, 3500))), envelope: (attack: 0.0005, decay: (0.01, 0.02)), gain: 0.4),
+    ],
+)

@@ -1,0 +1,13 @@
+// Grass or plants torn up: a rip of roots and a crumble of earth.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-broken",
+    volume: 0.45,
+    pitch: (0.85, 1.1),
+    variants: 6,
+    duration: 0.35,
+    layers: [
+        Grains(count: (50, 80), spread: 0.15, length: (0.003, 0.009), color: Pink, filter: HighPass((hz: (1800, 3000))), gain: 0.6, fade: 0.4),
+        Noise(color: Brown, filter: LowPass((hz: (500, 800))), envelope: (decay: (0.08, 0.14)), gain: 0.8, delay: (0.01, 0.03)),
+    ],
+)

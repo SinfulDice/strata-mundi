@@ -1,0 +1,6 @@
+// Sounds of glass blocks.
+SoundSet(
+    step: "strata:step_glass",
+    breaking: "strata:break_glass",
+    place: "strata:place_glass",
+)

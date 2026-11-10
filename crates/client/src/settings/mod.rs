@@ -5,6 +5,7 @@ mod controls;
 mod game;
 mod graphics;
 mod interface;
+mod sound;
 
 pub use controls::{ControlSettings, DEAD_ZONE, SENSITIVITY};
 pub use game::GameSettings;
@@ -14,6 +15,7 @@ pub use graphics::{
     VERTICAL_DISTANCE, Vegetation, default_worker_threads,
 };
 pub use interface::{ColorFilter, FontChoice, InterfaceSettings, MAX_SCALE};
+pub use sound::{SoundSettings, VOLUME};
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -28,6 +30,7 @@ pub struct Settings {
     pub interface: InterfaceSettings,
     pub controls: ControlSettings,
     pub game: GameSettings,
+    pub sound: SoundSettings,
 }
 
 impl Default for Settings {
@@ -38,6 +41,7 @@ impl Default for Settings {
             interface: InterfaceSettings::default(),
             controls: ControlSettings::default(),
             game: GameSettings::default(),
+            sound: SoundSettings::default(),
         }
     }
 }
@@ -54,6 +58,7 @@ impl Settings {
         settings.interface.sanitize();
         settings.graphics.sanitize();
         settings.controls.sanitize();
+        settings.sound.sanitize();
         settings
     }
 

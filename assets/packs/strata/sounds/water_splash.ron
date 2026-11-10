@@ -1,0 +1,15 @@
+// Falling into water: an impact, bubbles and falling drops.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-splash",
+    volume: 0.6,
+    pitch: (0.9, 1.1),
+    variants: 4,
+    duration: 1.0,
+    range: 24.0,
+    layers: [
+        Noise(color: Pink, filter: LowPass((hz: (1500, 2500), sweep: 0.5)), envelope: (attack: 0.003, decay: (0.15, 0.25))),
+        Bubbles(count: (15, 30), spread: 0.45, hz: (400, 1500), rise: 1.8, decay: (0.02, 0.06), gain: 0.5, delay: (0.02, 0.05)),
+        Grains(count: (20, 40), spread: 0.55, length: (0.005, 0.015), color: White, filter: BandPass((hz: (1500, 4000), q: 2.0)), gain: 0.4, fade: 0.2, delay: (0.05, 0.1)),
+    ],
+)

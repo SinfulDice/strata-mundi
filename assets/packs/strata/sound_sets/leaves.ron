@@ -1,0 +1,6 @@
+// Sounds of leaves blocks.
+SoundSet(
+    step: "strata:step_leaves",
+    breaking: "strata:break_leaves",
+    place: "strata:place_leaves",
+)

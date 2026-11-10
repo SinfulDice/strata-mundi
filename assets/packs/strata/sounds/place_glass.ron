@@ -1,0 +1,13 @@
+// Glass set down: a careful clink.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-block-placed",
+    volume: 0.4,
+    pitch: (0.9, 1.15),
+    variants: 6,
+    duration: 0.25,
+    layers: [
+        Noise(color: White, filter: HighPass((hz: (2500, 3500))), envelope: (attack: 0.0005, decay: (0.008, 0.015))),
+        Modes(modes: [(hz: (2400, 2900), decay: (0.08, 0.12), gain: 0.5), (hz: (4300, 5200), decay: (0.05, 0.08), gain: 0.3), (hz: (6500, 7500), decay: (0.03, 0.05), gain: 0.2)]),
+    ],
+)

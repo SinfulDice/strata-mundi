@@ -1,5 +1,6 @@
 Block(
     textures: All("strata:lava"),
+    sound: "strata:lava",
     solid: false,
     light_opacity: 15,
     light_emission: 15,
