@@ -12,7 +12,7 @@ Chaque case du monde porte deux niveaux de 0 à 15 :
 - la **lumière du ciel** : 15 en plein air, elle baisse sous un toit ;
 - la **lumière des blocs** : elle part des sources (torche 14, lanterne, pierre lumineuse et lave 15, valeur `light_emission` du pack) et baisse en s'éloignant.
 
-Elles restent séparées : la nuit ne baisse que le ciel, pas les torches. Le **facteur du ciel** (de 0,2 la nuit à 1 le jour, voir [Jour, nuit et ciel](jour-nuit-et-ciel.md)) est appliqué par le shader : les niveaux stockés ne changent pas et le terrain n'est pas remaillé.
+Elles restent séparées : la nuit ne baisse que le ciel, pas les torches. Le **facteur du ciel** (de 0,1 la nuit à 1 le jour, voir [Jour, nuit et ciel](jour-nuit-et-ciel.md)) est appliqué par le shader : les niveaux stockés ne changent pas et le terrain n'est pas remaillé.
 
 ### Propagation
 

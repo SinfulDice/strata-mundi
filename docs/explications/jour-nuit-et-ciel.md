@@ -16,7 +16,7 @@ Tout le reste se **déduit** de ce seul nombre : position du soleil, clarté, co
 graph LR
     T[Temps du monde en ticks] --> F[Fraction du jour : 0 à 1]
     F --> S[Angle du soleil]
-    F --> L[Clarté du ciel : 0,2 à 1]
+    F --> L[Clarté du ciel : 0,1 à 1]
     F --> G[Lueur du crépuscule]
     T --> P[Phase de la lune : jours comptés de midi à midi, modulo 8]
     T --> N[Dérive des nuages]
@@ -31,13 +31,13 @@ Le fichier de la dimension (`dimensions/terra.ron`, section `day`) donne quatre 
 | `length` | ticks d'un jour complet | 24 000 |
 | `day_share` | part du cycle où le soleil est levé | 0,5 |
 | `twilight` | part du cycle que prend chaque lever ou coucher pour éclaircir ou assombrir | 0,06 |
-| `night_light` | clarté du ciel la nuit, en part du plein jour | 0,2 |
+| `night_light` | clarté du ciel la nuit, en part du plein jour | 0,1 |
 
 Tout est **borné** : un pack ne peut pas demander un jour de 0 tick ni une nuit de 0 %. Le calcul clé est le **facteur du ciel** :
 
 1. On mesure la distance (en part de cycle) au lever ou au coucher le plus proche, positive le jour, négative la nuit.
 2. Une courbe douce (*smoothstep*) la transforme en 0 (nuit) à 1 (jour), avec une transition progressive autour du lever et du coucher.
-3. Le facteur final vaut `night_light + (1 − night_light) × cette valeur` : il ne descend jamais sous 0,2 et ne fait jamais de saut. Un test le vérifie tick par tick, y compris avec des jours très inégaux (70 % de jour).
+3. Le facteur final vaut `night_light + (1 − night_light) × cette valeur` : il ne descend jamais sous `night_light` (0,1 par défaut) et ne fait jamais de saut. Un test le vérifie tick par tick, y compris avec des jours très inégaux (70 % de jour).
 
 Le soleil fait un demi-tour pendant le jour et un demi-tour pendant la nuit, quelle que soit la part du jour : il se lève à l'est, passe haut vers le sud (le chemin est penché de `path_tilt` degrés) et se couche à l'ouest. La lune est à l'opposé. Elle a **8 phases**, une par nuit, de pleine à nouvelle puis de nouveau pleine. La phase change **à midi**, quand la lune est sous l'horizon : on ne la voit jamais changer.
 
@@ -62,11 +62,11 @@ Le ciel est dessiné par **un seul triangle plein écran** (`sky.wgsl`) posé su
 - des **étoiles** calculées à la volée : le ciel est découpé en cellules, certaines (selon la densité) contiennent une étoile de 2 pixels environ qui scintille. Elles tournent avec le soleil, disparaissent près de l'horizon et en plein jour ;
 - le **soleil** et la **lune**, lus pixel par pixel dans leurs textures 16 × 16 (pixel art net, pas de flou). La phase de la lune est un ombrage elliptique.
 
-Le **brouillard** du terrain prend la couleur de l'horizon du moment : au loin, les collines se fondent dans le ciel du soir, pas dans un bleu fixe. Sous l'eau, pas de ciel (le brouillard du liquide le cache).
+Le **brouillard** du terrain prend la couleur de l'horizon du moment, **teintée par les biomes alentour** (marais verdâtre, savane dorée…) : au loin, les collines se fondent dans le ciel du soir, pas dans un bleu fixe. L'horizon du ciel prend la même teinte, pour que terrain noyé et ciel restent d'une seule couleur. Il se termine désormais deux anneaux de colonnes avant la distance de rendu (zone jamais dessinée). Détails dans [Atmosphère](atmosphere.md). Sous l'eau, pas de ciel (le brouillard du liquide le cache).
 
 ### La nuit sans remailler
 
-La clarté du ciel est un simple nombre dans l'uniforme de la caméra. Le shader des blocs le multiplie à la lumière du ciel de chaque sommet (voir [Lumière](lumiere.md)). Le terrain n'est donc **pas recalculé** quand la nuit tombe : seul ce nombre change.
+La clarté du ciel est un simple nombre dans l'uniforme de la caméra. Le shader des blocs le multiplie à la lumière du ciel de chaque sommet (voir [Lumière](lumiere.md)). Le terrain n'est donc **pas recalculé** quand la nuit tombe : seul ce nombre change. La nuit est plus sombre qu'avant (0,1 au lieu de 0,2), et le réglage de luminosité relève la courbe proportionnellement à son **carré** : à 50 %, seulement un quart du relèvement, donc le clair de lune reste lisible sans devenir du plein jour.
 
 ### Les nuages
 

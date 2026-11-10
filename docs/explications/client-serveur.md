@@ -23,19 +23,19 @@ Messages actuels :
 | `ClientMessage::InteractEntity` / `AttackEntity` | client → serveur | Monter dans une entité, la retirer (voir [Bateaux et entités](bateaux-et-entites.md)). |
 | `ClientMessage::ViewDistance` | client → serveur | Distance de rendu souhaitée. |
 | `ClientMessage::Disconnect` | client → serveur | Le joueur quitte : le serveur s'arrête. |
-| `ServerMessage::Welcome` | serveur → client | Dimension, corps du joueur et règles de déplacement. |
+| `ServerMessage::Welcome` | serveur → client | Dimension, corps du joueur, règles de déplacement et liste des biomes (noms, couleurs). |
 | `ServerMessage::PlayerState` | serveur → client | Position officielle du joueur après l'entrée n° `sequence`. |
 | `ServerMessage::BlockChanged` | serveur → client | Un bloc a changé. |
 | `ServerMessage::EntitySpawned` / `EntityMoved` / `EntityRemoved` | serveur → client | Une entité apparaît, bouge (seulement si position ou cap ont changé), disparaît. |
 | `ServerMessage::Mounted` | serveur → client | Le joueur est assis dans une entité, ou en est descendu. |
 | `ServerMessage::Tick { tick }` | serveur → client | Numéro du tick qui vient d'être simulé. |
-| `ServerMessage::Column` / `UnloadColumn` | serveur → client | Une colonne de blocs arrive ou doit être oubliée (voir [Monde infini](monde-infini.md)). |
+| `ServerMessage::Column` / `UnloadColumn` | serveur → client | Une colonne de blocs arrive (avec sa carte des biomes 16 × 16) ou doit être oubliée (voir [Monde infini](monde-infini.md)). |
 
 ## Où c'est dans le code
 
 - `crates/protocol/src/messages.rs` : les messages.
 - `crates/protocol/src/local.rs` : le transport en mémoire.
-- `crates/protocol/src/lib.rs` : la version du protocole (3 depuis les bateaux).
+- `crates/protocol/src/lib.rs` : la version du protocole (7 depuis les biomes envoyés au client).
 - `crates/server/src/integrated.rs` : le serveur qui lit les messages du client à chaque tour.
 - `crates/client/src/session.rs` (`receive_messages`) : le client qui lit les messages du serveur ; `gameplay.rs` les applique.
 
