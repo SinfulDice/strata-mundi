@@ -5,8 +5,8 @@
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 8 — Feu et textures vivantes
   - [x] Feu : bloc de feu (lumineux, sans collision, animé à la sous-tâche suivante), propagation aux blocs inflammables (inflammabilité et combustion dans le pack), extinction et usure, ne brûle pas sous l'eau, options de monde (empêcher la propagation, empêcher la destruction), briquet créatif pour allumer ; prévu pour l'extinction par la pluie (v0.5) ; tests (propagation bornée, options, déterminisme)
-  - [ ] Textures vivantes : textures animées (images et durées du pack ; eau, lave, feu, portail d'essai), textures connectées (verre, bibliothèque — nouveau bloc), variantes aléatoires par position (herbe, pierre…), formats documentés dans `docs/guide-textures.md`, réglage d'animation ; captures
-- **Dernière session** : 05/11/2026
+  - [x] Textures vivantes : textures animées (images et durées du pack ; eau, lave, feu, portail d'essai), textures connectées (verre, bibliothèque — nouveau bloc), variantes aléatoires par position (herbe, pierre…), formats documentés dans `docs/guide-textures.md`, réglage d'animation ; captures
+- **Dernière session** : 10/11/2026
 
 ## Fait
 
@@ -67,6 +67,8 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 05/11/2026 (v0.2 j6) | Maillage surface / damier / eau, lumière lissée | 0,21 / 1,44 / 0,31 ms | `meshing/*` (D046) |
 | 05/11/2026 (v0.2 j6) | Lumière initiale d'une colonne générée (voisines éclairées) | 1,20 ms | `light/light_generated_column` |
 | 05/11/2026 (v0.2 j6) | Poser puis casser une torche en plein air | 0,65 ms | `light/light_place_and_break_torch` |
+| 10/11/2026 (v0.2 j8) | Maillage d'une section de surface, 3 variantes (herbe, terre, pierre) | 0,28 ms (0,30 ms sans variantes, même session) | `meshing/mesh_section_terrain` |
+| 10/11/2026 (v0.2 j8) | Maillage pire cas (damier), avec variantes | 2,05 ms (1,90 ms sans variantes, même session) | `meshing/mesh_section_checkerboard` |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
