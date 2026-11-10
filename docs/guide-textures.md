@@ -153,3 +153,23 @@ Le réglage graphique « Variantes de textures » désactive variantes et raccor
 
 - Le tableau de textures de la carte graphique a **au moins 256 couches** sur toute machine Vulkan (2 048 sur la plupart) ; chaque image compte pour une couche. Le jeu de base en utilise environ 170.
 - Une texture animée, connectée ou à variantes ne peut pas en contenir une autre (pas d'animation de variantes).
+
+## Particules
+
+Les particules (éclats d'un bloc cassé, gouttes sous les plafonds, éclaboussures, bulles) sont décrites dans `particles/<nom>.ron` ; un pack de ressources peut les remplacer.
+
+```ron
+// particles/water_drip.ron
+Particle(
+    lifetime: (4.0, 5.0),      // secondes, tirées entre les deux
+    size: (0.09, 0.09),        // côté du carré, en blocs
+    gravity: 14.0,             // blocs/s², négatif pour monter (bulles)
+    hang: 1.2,                 // secondes accrochée avant de tomber
+    chance: 0.25,              // chance d'apparaître quand le jeu regarde l'émetteur
+    impact: (particle: "strata:water_splash", count: 4),
+)
+```
+
+Sans `texture`, la particule montre un morceau de 4 × 4 pixels de la texture du bloc qui l'émet (avec la couleur du biome) ; avec `texture: Some("strata:bubble")`, l'image entière. Autres champs : `color` (multiplie la texture), `speed`, `drag`, `collides`, `glows` (brille dans le noir), `in_liquid` (ne vit que dans un liquide), `burst` (nombre d'éclats à la casse, réglage « complètes »).
+
+Un bloc choisit ses particules : `particles: (breaking: None, drip: Some("strata:water_drip"), ambient: Some("strata:bubble"))`. Par défaut, tout bloc cassé lance `strata:block_fragments`.

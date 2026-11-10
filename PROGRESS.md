@@ -5,7 +5,7 @@
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 9 — Atmosphère
   - [x] Couleurs par biome : teinte de l'herbe, des feuilles, des plantes et de l'eau définie dans chaque biome du pack, mélangée aux frontières (pas de cassure), calculée au maillage ; brouillard de distance qui masque la limite de chargement, teinté selon le biome et l'heure ; vérifier la luminosité de nuit (herbe loin des feux trop claire sur `fire-night`) ; réglage du mélange (rayon) et préréglage DS ; captures de plusieurs biomes
-  - [ ] Particules simples : casse de bloc (fragments de la texture), gouttes d'eau et de lave sous les plafonds, éclaboussures/bulles si simple ; système léger côté client (aucune donnée de monde), réglage particules (désactivées / réduites / complètes), préréglages ; tests et captures
+  - [x] Particules simples : casse de bloc (fragments de la texture), gouttes d'eau et de lave sous les plafonds, éclaboussures/bulles si simple ; système léger côté client (aucune donnée de monde), réglage particules (désactivées / réduites / complètes), préréglages ; tests et captures
 - **Dernière session** : 10/11/2026
 
 ## Fait
@@ -72,6 +72,7 @@ Benchmarks CPU (cloud, `cargo bench`) :
 | 10/11/2026 (v0.2 j8) | Maillage pire cas (damier), avec variantes | 2,05 ms (1,90 ms sans variantes, même session) | `meshing/mesh_section_checkerboard` |
 | 10/11/2026 (v0.2 j8, relecture) | Incendie de plaine (97 × 97 herbes hautes allumées tous les 3 blocs, ~5 300 feux) : 40 ticks, 6 988 pas de feu | 35,8 ms (~0,9 ms par tick, ~5,1 µs le pas) | `fire/prairie_fire_40_ticks` |
 | 10/11/2026 (v0.2 j8, relecture) | Grand écoulement, même session (3 478 pas, ~1,8 µs le pas) | 6,31 ms | `fluids/large_flow_settles` |
+| 10/11/2026 (v0.2 j9) | Une image de particules : déplacer 2 000 particules et écrire leurs instances | 0,41 ms | `particles/frame_2000` |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
@@ -91,7 +92,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 - Nom du bloc visé sans « outil requis » : les outils arrivent en v0.3.
 - Bateaux : retirés seulement en créatif (clic gauche), sans objet rendu ; hors créatif un bateau posé n'est pas récupérable tant que la survie (v0.3) n'existe pas. Seaux réservés au créatif pour la même raison.
 - Horodatage GPU indisponible sur lavapipe (« n/d » dans les rapports cloud).
-- Réglages sans système en v0.1, ajoutés avec leur système : particules, distance de simulation (pas encore d'entités simulées), son.
+- Réglages sans système en v0.1, ajoutés avec leur système : distance de simulation (pas encore d'entités simulées), son.
 - Console : pas de saisie à la manette (règle du projet : « console exceptée ») ; `/gamemode survival` répond que la survie arrive en v0.3.
 - Wiki : images en PNG (pas de WebP sans dépendance C) ; la vue du biome montagnes montre une flèche de pierre très haute, fidèle à la génération actuelle (à revoir en fin de version).
 - Lumière (à mesurer) : un bloc changé copie la colonne entière (`Arc::make_mut`, 1 fois par colonne et par image) pour le thread de lumière ; la courbe de lumière est calculée par fragment dans le shader (une table serait moins chère). Une colonne renvoyée laisse chez ses voisines la lumière de ses anciens blocs.
