@@ -164,7 +164,7 @@ impl MusicPlayer {
         self.worker.is_some()
     }
 
-    pub fn update(&mut self, moment: &MusicMoment<'_>, send: &mut dyn FnMut(Command)) {
+    pub fn update(&mut self, moment: &MusicMoment<'_>, send: &mut dyn FnMut(Command) -> bool) {
         if !moment.enabled {
             self.stop(send);
             self.place = None;
@@ -191,7 +191,7 @@ impl MusicPlayer {
         }
     }
 
-    fn follow_place(&mut self, moment: &MusicMoment<'_>, send: &mut dyn FnMut(Command)) {
+    fn follow_place(&mut self, moment: &MusicMoment<'_>, send: &mut dyn FnMut(Command) -> bool) {
         if self.place.as_ref() == Some(moment.place) {
             return;
         }
@@ -201,6 +201,9 @@ impl MusicPlayer {
             .is_none_or(|old| !old.same_kind(moment.place));
         if kind_changed {
             self.stop(send);
+            if self.playing.is_some() {
+                return;
+            }
             self.schedule
                 .restart(moment.place.first_wait(moment.frequency));
         }
@@ -208,9 +211,10 @@ impl MusicPlayer {
         self.place = Some(moment.place.clone());
     }
 
-    fn stop(&mut self, send: &mut dyn FnMut(Command)) {
-        if self.playing.take().is_some() {
-            send(Command::Music(MusicCommand::FadeOut));
+    /// Kept as playing until the fade out is accepted (asked again next frame).
+    fn stop(&mut self, send: &mut dyn FnMut(Command) -> bool) {
+        if self.playing.is_some() && send(Command::Music(MusicCommand::FadeOut)) {
+            self.playing = None;
         }
     }
 
@@ -287,13 +291,16 @@ impl MusicPlayer {
         }
     }
 
-    fn start(&mut self, source: Source, send: &mut dyn FnMut(Command)) {
+    fn start(&mut self, source: Source, send: &mut dyn FnMut(Command) -> bool) {
         let Some(feed) = spawn_reader(source) else {
             self.broken = true;
             return;
         };
-        self.playing = Some(Arc::clone(&feed.done));
-        send(Command::Music(MusicCommand::Start(feed)));
+        let done = Arc::clone(&feed.done);
+        if !send(Command::Music(MusicCommand::Start(feed))) {
+            return;
+        }
+        self.playing = Some(done);
         self.schedule.started();
         self.last = self.next.take();
     }

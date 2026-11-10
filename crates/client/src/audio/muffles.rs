@@ -48,7 +48,7 @@ impl MuffleTracker {
         seconds: f32,
         world: &impl Surroundings,
         ears: DVec3,
-        send: &mut impl FnMut(Command),
+        send: &mut impl FnMut(Command) -> bool,
     ) {
         for voice in &mut self.voices {
             voice.left -= seconds;
@@ -61,12 +61,14 @@ impl MuffleTracker {
         self.due = CHECK_EVERY;
         for voice in &mut self.voices {
             let muffle = muffling(world, voice.at, ears);
-            if (muffle - voice.muffle).abs() >= NOTICEABLE {
-                voice.muffle = muffle;
-                send(Command::Muffle {
+            let changed = (muffle - voice.muffle).abs() >= NOTICEABLE;
+            if changed
+                && send(Command::Muffle {
                     id: voice.id,
                     muffle,
-                });
+                })
+            {
+                voice.muffle = muffle;
             }
         }
     }

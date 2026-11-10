@@ -4,7 +4,7 @@
 //! volume. Pure (no device): the output thread only asks it for blocks of samples, and
 //! tests read them directly.
 
-use super::beds::{Bed, BedVolume, MAX_BEDS};
+use super::beds::{BED_SLOTS, Bed, BedVolume};
 use super::reverb::Reverb;
 use super::space::Space;
 use super::spatial::{Listener, stereo_gains};
@@ -45,6 +45,10 @@ impl Volumes {
         Self(SoundCategory::ALL.map(|category| settings.gain(category)))
     }
 
+    pub(super) fn from_gains(gains: [f32; 3]) -> Self {
+        Self(gains)
+    }
+
     pub(super) fn get(&self, category: SoundCategory) -> f32 {
         self.0[category as usize]
     }
@@ -56,7 +60,7 @@ impl Default for Volumes {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Command {
     Play(Voice),
     Listener(Listener),
@@ -109,7 +113,7 @@ impl Mixer {
         let rate = output_rate.max(1);
         Self {
             playing: Vec::with_capacity(MAX_VOICES),
-            beds: Vec::with_capacity(MAX_BEDS),
+            beds: Vec::with_capacity(BED_SLOTS),
             listener: Listener::default(),
             volumes: Volumes::default(),
             rate_ratio: f64::from(SAMPLE_RATE) / f64::from(rate),

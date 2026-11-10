@@ -6,6 +6,7 @@
 mod ambience;
 mod bank;
 mod beds;
+mod controls;
 mod environment;
 mod mixer;
 mod muffles;
@@ -86,7 +87,8 @@ impl Audio {
     /// Opens the default device; without one the game goes on in silence. Music is
     /// cached in `music_cache`.
     pub fn start(content: &Content, settings: &SoundSettings, music_cache: PathBuf) -> Self {
-        Self::with_output(Output::open(), content, settings, music_cache)
+        let output = Output::open(Volumes::of(settings), settings.spatial.is_advanced());
+        Self::with_output(output, content, settings, music_cache)
     }
 
     /// No device at all (captures, tests).
@@ -183,11 +185,7 @@ impl Audio {
             &view,
             &mut self.rng,
             &mut self.cues,
-            &mut |command| {
-                if let Some(output) = output {
-                    output.send(command);
-                }
-            },
+            &mut |command| output.is_some_and(|output| output.send(command)),
         );
         let heard: Vec<(Cue, f32)> = std::mem::take(&mut self.cues)
             .into_iter()
@@ -231,9 +229,7 @@ impl Audio {
         };
         self.next_voice = self.next_voice.wrapping_add(1);
         let seconds = pick.buffer.len() as f32 / SAMPLE_RATE as f32 / pick.pitch.max(0.01);
-        self.environment
-            .track(self.next_voice, cue.at, seconds, muffle);
-        self.send(Command::Play(Voice {
+        let sent = self.send(Command::Play(Voice {
             id: self.next_voice,
             buffer: pick.buffer,
             category,
@@ -243,28 +239,32 @@ impl Audio {
             range,
             muffle,
         }));
+        if sent {
+            self.environment
+                .track(self.next_voice, cue.at, seconds, muffle);
+        }
     }
 
     /// Starts, fades or lets go the ambience beds (buffers made on first use).
     fn send_beds(&mut self) {
-        if self.output.is_none() {
+        let Some(output) = &self.output else {
             return;
-        }
-        for (sound, gain) in self.environment.changed_beds() {
-            let category = self
-                .bank
+        };
+        let bank = &mut self.bank;
+        self.environment.send_beds(&mut |sound, gain| {
+            let category = bank
                 .sound(sound)
                 .map_or(SoundCategory::Ambient, |s| s.def.category);
-            let Some(buffer) = self.bank.bed(sound) else {
-                continue;
+            let Some(buffer) = bank.bed(sound) else {
+                return false;
             };
-            self.send(Command::Bed(BedVolume {
+            output.send(Command::Bed(BedVolume {
                 sound,
                 buffer,
                 category,
                 gain,
-            }));
-        }
+            }))
+        });
     }
 
     fn update_music(&mut self, seconds: f32, hearing: &Hearing<'_>) {
@@ -277,9 +277,7 @@ impl Audio {
         };
         let output = self.output.as_ref();
         self.music.update(&moment, &mut |command| {
-            if let Some(output) = output {
-                output.send(command);
-            }
+            output.is_some_and(|output| output.send(command))
         });
     }
 
@@ -287,10 +285,10 @@ impl Audio {
         self.subtitles.lines()
     }
 
-    fn send(&self, command: Command) {
-        if let Some(output) = &self.output {
-            output.send(command);
-        }
+    fn send(&self, command: Command) -> bool {
+        self.output
+            .as_ref()
+            .is_some_and(|output| output.send(command))
     }
 }
 

@@ -6,8 +6,10 @@ use std::sync::Arc;
 use strata_core::audio::SoundCategory;
 use strata_core::content::SoundId;
 
-/// Most beds looping at once.
+/// Most beds looping at once (the game holds back more).
 pub const MAX_BEDS: usize = 12;
+/// Room in the mixer: beds let go still fade out for a block while new ones start.
+pub(super) const BED_SLOTS: usize = 2 * MAX_BEDS;
 
 /// What the game asks of one bed.
 #[derive(Debug, Clone)]
@@ -33,7 +35,7 @@ impl Bed {
             bed.asked = asked;
             return;
         }
-        if asked.gain > 0.0 && !asked.buffer.is_empty() && beds.len() < MAX_BEDS {
+        if asked.gain > 0.0 && !asked.buffer.is_empty() && beds.len() < BED_SLOTS {
             beds.push(Bed {
                 asked,
                 cursor: 0.0,

@@ -11,14 +11,21 @@ use strata_core::audio::SoundCategory;
 /// Seconds of a fade in or out.
 pub const MUSIC_FADE: f32 = 3.0;
 
-/// The chunks of one piece, and a flag the mixer raises once it is over (or let go).
-#[derive(Debug, Clone)]
+/// The chunks of one piece, and a flag raised once it is over or let go (also when the
+/// feed is dropped anywhere, a lost command included).
+#[derive(Debug)]
 pub struct MusicFeed {
     pub chunks: Receiver<Vec<f32>>,
     pub done: Arc<AtomicBool>,
 }
 
-#[derive(Debug, Clone)]
+impl Drop for MusicFeed {
+    fn drop(&mut self) {
+        self.done.store(true, Ordering::Release);
+    }
+}
+
+#[derive(Debug)]
 pub enum MusicCommand {
     /// Plays a piece (faded in), letting go the one before.
     Start(MusicFeed),

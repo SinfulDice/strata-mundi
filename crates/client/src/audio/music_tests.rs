@@ -79,6 +79,7 @@ fn disabled_music_renders_and_plays_nothing() {
     for _ in 0..100 {
         player.update(&moment(60.0, &MusicPlace::Title, false), &mut |_| {
             commands += 1;
+            true
         });
     }
     assert_eq!(commands, 0);
@@ -90,11 +91,11 @@ fn disabled_music_renders_and_plays_nothing() {
 fn the_first_piece_of_a_world_comes_after_a_short_silence() {
     let mut player = MusicPlayer::new(temp_dir("first"), Vec::new());
     let place = terra();
-    player.update(&moment(0.0, &place, true), &mut |_| {});
+    player.update(&moment(0.0, &place, true), &mut |_| true);
     let (low, high) = MusicFrequency::Normal.wait();
     let wait = player.wait().unwrap();
     assert!((low * 0.1..=high * 0.1).contains(&wait), "{wait}");
-    player.update(&moment(0.0, &MusicPlace::Title, true), &mut |_| {});
+    player.update(&moment(0.0, &MusicPlace::Title, true), &mut |_| true);
     let wait = player.wait().unwrap();
     assert!((TITLE_WAIT.0..=TITLE_WAIT.1).contains(&wait), "{wait}");
 }
@@ -107,6 +108,7 @@ fn wait_for_start(player: &mut MusicPlayer, place: &MusicPlace) -> MusicFeed {
             if let Command::Music(MusicCommand::Start(feed)) = command {
                 started = Some(feed);
             }
+            true
         });
         if let Some(feed) = started {
             return feed;
@@ -136,7 +138,10 @@ fn a_piece_is_rendered_in_the_background_then_streamed_and_faded_out() {
     }
     assert!(heard > 0.01, "the piece is heard: {heard}");
     let mut sent = Vec::new();
-    player.update(&moment(0.1, &terra(), true), &mut |c| sent.push(c));
+    player.update(&moment(0.1, &terra(), true), &mut |c| {
+        sent.push(c);
+        true
+    });
     assert!(matches!(
         sent.as_slice(),
         [Command::Music(MusicCommand::FadeOut)]
@@ -192,4 +197,56 @@ fn music_at_volume_zero_is_silent() {
     mixer.apply(Command::Volumes(Volumes::of(&settings)));
     mixer.apply(Command::Music(MusicCommand::Start(feed)));
     assert_eq!(block_peak(&mut mixer, 4.0), 0.0);
+}
+
+#[test]
+fn a_refused_start_is_asked_again_and_a_dropped_feed_ends_the_piece() {
+    let dir = temp_dir("lost");
+    let mut player = MusicPlayer::new(dir, vec![terra_short()]);
+    let place = MusicPlace::Title;
+    let mut refused = 0;
+    for _ in 0..600 {
+        player.update(&moment(1.0, &place, true), &mut |command| {
+            refused += usize::from(matches!(command, Command::Music(MusicCommand::Start(_))));
+            false
+        });
+        if refused > 0 {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert_eq!(refused, 1, "a piece was offered");
+    assert!(!player.is_playing() && player.wait() == Some(0.0));
+    let feed = wait_for_start(&mut player, &place);
+    assert!(player.is_playing());
+    drop(feed);
+    player.update(&moment(0.1, &place, true), &mut |_| true);
+    assert!(!player.is_playing());
+    assert!(
+        player.wait().is_some_and(|wait| wait > 0.0),
+        "silence again"
+    );
+}
+
+#[test]
+fn controls_are_kept_and_never_queued() {
+    let controls = controls::Controls::new(Volumes::default(), true);
+    let listener = listener_at(DVec3::new(1.0, 2.0, 3.0), 0.5);
+    assert!(controls.take(Command::Listener(listener)).is_none());
+    assert!(controls.take(Command::Space(Space::SmallCave)).is_none());
+    assert!(
+        controls
+            .take(Command::Music(MusicCommand::FadeOut))
+            .is_some()
+    );
+    let mut mixer = Mixer::new(SAMPLE_RATE);
+    let now = controls.read();
+    let mut applied = 0;
+    now.changes(None, &mut |command| {
+        applied += 1;
+        mixer.apply(command);
+    });
+    assert_eq!(applied, 4);
+    now.changes(Some(&now), &mut |_| applied += 1);
+    assert_eq!(applied, 4, "nothing changed, nothing applied");
 }
