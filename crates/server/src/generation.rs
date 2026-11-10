@@ -102,6 +102,12 @@ impl GenerationWorkers {
     pub fn finished(&self) -> impl Iterator<Item = Generated> + '_ {
         self.results.try_iter()
     }
+
+    /// The next result, waiting for it at most `timeout`.
+    #[cfg(test)]
+    pub fn wait_finished(&self, timeout: std::time::Duration) -> Option<Generated> {
+        self.results.recv_timeout(timeout).ok()
+    }
 }
 
 impl Drop for GenerationWorkers {

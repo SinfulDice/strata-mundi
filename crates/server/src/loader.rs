@@ -42,6 +42,8 @@ pub struct ColumnLoader {
     biomes: HashMap<ColumnPos, BiomeMap>,
     requested: HashSet<ColumnPos>,
     biomes_requested: HashSet<ColumnPos>,
+    /// Columns read from a save, waiting for their biomes.
+    without_biomes: HashSet<ColumnPos>,
     sent: HashSet<ColumnPos>,
     modified: HashSet<ColumnPos>,
     /// Columns put in place since the last `take_arrived`.
@@ -58,6 +60,7 @@ impl ColumnLoader {
             biomes: HashMap::new(),
             requested: HashSet::new(),
             biomes_requested: HashSet::new(),
+            without_biomes: HashSet::new(),
             sent: HashSet::new(),
             modified: HashSet::new(),
             arrived: Vec::new(),
@@ -70,7 +73,7 @@ impl ColumnLoader {
         let mut events = self.unload_far(center, viewer.view_distance);
         let wanted = self.load_order(center, viewer);
         self.request_missing(&wanted);
-        self.request_biomes(&wanted);
+        self.request_biomes();
         let ready: Vec<ColumnPos> = wanted
             .iter()
             .filter(|p| !self.sent.contains(p) && self.columns.contains_key(p))
@@ -88,32 +91,47 @@ impl ColumnLoader {
     }
 
     fn receive_generated(&mut self) {
-        for generated in self.workers.finished() {
-            match generated {
-                // A result for a place left and asked again may arrive twice: the first
-                // one in may already have been changed by a player.
-                Generated::Column(column, biomes) => {
-                    let pos = column.pos;
-                    if self.requested.remove(&pos) && !self.columns.contains_key(&pos) {
-                        self.arrived.push(pos);
-                        self.columns.insert(pos, column);
-                        self.biomes.insert(pos, biomes);
-                    }
+        while let Some(generated) = self.workers.finished().next() {
+            self.accept(generated);
+        }
+    }
+
+    /// Waits up to `timeout` for one generation result; `false` if none came.
+    #[cfg(test)]
+    pub fn wait_generated(&mut self, timeout: std::time::Duration) -> bool {
+        let next = self.workers.wait_finished(timeout);
+        let came = next.is_some();
+        next.into_iter()
+            .for_each(|generated| self.accept(generated));
+        came
+    }
+
+    fn accept(&mut self, generated: Generated) {
+        match generated {
+            // A result for a place left and asked again may arrive twice: the first
+            // one in may already have been changed by a player.
+            Generated::Column(column, biomes) => {
+                let pos = column.pos;
+                if self.requested.remove(&pos) && !self.columns.contains_key(&pos) {
+                    self.arrived.push(pos);
+                    self.columns.insert(pos, column);
+                    self.biomes.insert(pos, biomes);
                 }
-                Generated::Biomes(pos, biomes) => {
-                    if self.biomes_requested.remove(&pos) && self.columns.contains_key(&pos) {
-                        self.biomes.insert(pos, biomes);
-                    }
+            }
+            Generated::Biomes(pos, biomes) => {
+                if self.biomes_requested.remove(&pos) && self.columns.contains_key(&pos) {
+                    self.without_biomes.remove(&pos);
+                    self.biomes.insert(pos, biomes);
                 }
             }
         }
     }
 
     /// Columns read from a save get their biomes from the generation threads.
-    fn request_biomes(&mut self, wanted: &[ColumnPos]) {
-        let missing: Vec<ColumnPos> = wanted
+    fn request_biomes(&mut self) {
+        let missing: Vec<ColumnPos> = self
+            .without_biomes
             .iter()
-            .filter(|p| self.columns.contains_key(p) && !self.biomes.contains_key(p))
             .filter(|p| !self.biomes_requested.contains(p))
             .copied()
             .collect();
@@ -202,6 +220,7 @@ impl ColumnLoader {
             if let Some(column) = self.store.load(pos) {
                 self.arrived.push(pos);
                 self.columns.insert(pos, column);
+                self.without_biomes.insert(pos);
             }
         }
         // Saved columns wait for their turn to be read; they are never generated.
@@ -226,6 +245,7 @@ impl ColumnLoader {
         let gone: Vec<ColumnPos> = self.columns.keys().copied().filter(far).collect();
         self.requested.retain(|p| !far(p));
         self.biomes_requested.retain(|p| !far(p));
+        self.without_biomes.retain(|p| !far(p));
         gone.into_iter()
             .filter_map(|pos| {
                 self.biomes.remove(&pos);
@@ -295,137 +315,4 @@ impl BlockAccess for Bounded<'_> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-pub mod tests {
-    use super::*;
-    use crate::save::BlockNames;
-    use std::path::Path;
-    use std::sync::Arc;
-    use strata_core::content::Content;
-    use strata_core::pack::PackSet;
-    use strata_worldgen::{Generator, Seed, WorldgenContent};
-
-    pub fn loader() -> ColumnLoader {
-        let mut errors = Vec::new();
-        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
-        let packs = PackSet::discover(&dir, &mut errors);
-        let (content, _) = Content::load(&packs, &PackSet::default());
-        let terra = "strata:terra".parse().unwrap();
-        let worldgen = WorldgenContent::load(&packs, &content.blocks, &terra, &mut errors).unwrap();
-        let generator = Arc::new(Generator::new(Seed(1), Arc::new(worldgen)));
-        let names = Arc::new(BlockNames::new(&content.blocks));
-        let store = RegionStore::in_memory(names);
-        ColumnLoader::new(GenerationWorkers::spawn(2, generator).unwrap(), store)
-    }
-
-    /// Ticks until nothing new arrives for a while; returns the columns sent.
-    fn settle(loader: &mut ColumnLoader, viewer: &Viewer) -> HashSet<ColumnPos> {
-        let mut sent = HashSet::new();
-        let mut quiet = 0;
-        while quiet < 50 {
-            let events = loader.update(viewer);
-            quiet = if events.is_empty() { quiet + 1 } else { 0 };
-            for event in events {
-                match event {
-                    LoadEvent::Loaded(column, _) => sent.insert(column.pos),
-                    LoadEvent::Unloaded(pos) => sent.remove(&pos),
-                };
-            }
-            std::thread::sleep(std::time::Duration::from_millis(5));
-        }
-        sent
-    }
-
-    #[test]
-    fn lowering_the_view_distance_unloads_far_columns() {
-        let mut loader = loader();
-        let mut viewer = Viewer {
-            x: 0.0,
-            z: 0.0,
-            yaw: 0.0,
-            view_distance: 6,
-        };
-        let sent = settle(&mut loader, &viewer);
-        assert!(sent.contains(&ColumnPos { x: 6, z: 0 }));
-        viewer.view_distance = 2;
-        let events = loader.update(&viewer);
-        let unloaded: HashSet<ColumnPos> = events
-            .into_iter()
-            .filter_map(|e| match e {
-                LoadEvent::Unloaded(pos) => Some(pos),
-                LoadEvent::Loaded(..) => None,
-            })
-            .collect();
-        assert!(unloaded.contains(&ColumnPos { x: 6, z: 0 }));
-        assert!(unloaded.contains(&ColumnPos { x: 5, z: 0 }));
-        assert!(
-            !unloaded.contains(&ColumnPos { x: 4, z: 0 }),
-            "kept by the margin"
-        );
-    }
-
-    #[test]
-    fn changes_survive_unloading_and_reloading() {
-        let mut loader = loader();
-        let mut viewer = Viewer {
-            x: 0.0,
-            z: 0.0,
-            yaw: 0.0,
-            view_distance: 2,
-        };
-        settle(&mut loader, &viewer);
-        let pos = BlockPos::new(3, 300, 3);
-        assert!(loader.set_block(pos, BlockId(1)));
-        viewer.x = 2000.0;
-        settle(&mut loader, &viewer);
-        assert_eq!(loader.block(pos), None, "unloaded");
-        viewer.x = 0.0;
-        settle(&mut loader, &viewer);
-        assert_eq!(loader.block(pos), Some(BlockId(1)));
-    }
-
-    #[test]
-    fn saved_columns_come_back_with_their_generated_biomes() {
-        let mut loader = loader();
-        let pos = ColumnPos { x: 0, z: 0 };
-        let generated = loader.workers.generator().biome_map(pos);
-        let mut column = Column::empty(pos);
-        column.set(1, 1, 1, BlockId(1));
-        loader.store.store(&column);
-        let viewer = Viewer {
-            x: 8.0,
-            z: 8.0,
-            yaw: 0.0,
-            view_distance: 2,
-        };
-        for _ in 0..400 {
-            for event in loader.update(&viewer) {
-                if let LoadEvent::Loaded(column, biomes) = event
-                    && column.pos == pos
-                {
-                    assert_eq!(column.get(1, 1, 1), BlockId(1), "read from the save");
-                    assert_eq!(biomes, generated);
-                    return;
-                }
-            }
-            std::thread::sleep(std::time::Duration::from_millis(5));
-        }
-        panic!("the saved column never came");
-    }
-
-    #[test]
-    fn nearest_columns_come_first_and_front_beats_back() {
-        let viewer = Viewer {
-            x: 8.0,
-            z: 8.0,
-            yaw: 0.0,
-            view_distance: 4,
-        };
-        let order = wanted(ColumnPos { x: 0, z: 0 }, &viewer);
-        assert_eq!(order[0], ColumnPos { x: 0, z: 0 });
-        let front = order.iter().position(|p| *p == ColumnPos { x: 0, z: -3 });
-        let back = order.iter().position(|p| *p == ColumnPos { x: 0, z: 3 });
-        assert!(front < back, "yaw 0 looks north (-Z)");
-        assert!(order.iter().all(|p| p.x.abs() <= 4 && p.z.abs() <= 4));
-    }
-}
+pub mod tests;
