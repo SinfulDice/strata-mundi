@@ -6,6 +6,7 @@ mod dsp;
 mod load;
 pub mod music;
 mod recipe;
+mod spaces;
 mod synth;
 #[cfg(test)]
 mod tests;
@@ -19,6 +20,7 @@ pub use load::{Sound, SoundSet, SoundSetDef, Sounds, load_sounds, variant_seed};
 pub use recipe::{
     Band, Envelope, Filter, Layer, MAX_GRAINS, MAX_LAYERS, Mode, SoundCategory, SoundDef, Wobble,
 };
+pub use spaces::{MAX_FEEDBACK, SpaceDef};
 pub use synth::{render, seamless};
 pub use wav::{WAV_HEADER, wav_bytes, wav_header, write_wav};
 

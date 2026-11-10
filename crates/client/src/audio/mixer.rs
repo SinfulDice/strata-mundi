@@ -5,8 +5,7 @@
 //! tests read them directly.
 
 use super::beds::{BED_SLOTS, Bed, BedVolume};
-use super::reverb::Reverb;
-use super::space::Space;
+use super::reverb::{Reverb, Room};
 use super::spatial::{Listener, stereo_gains};
 use super::stream::{MusicCommand, Stream};
 use super::trash::Trash;
@@ -74,7 +73,8 @@ pub enum Command {
         id: u32,
         muffle: f32,
     },
-    Space(Space),
+    /// The reverberation of the place.
+    Room(Room),
     /// Advanced spatial audio (reverberation, muffling) or plain stereo.
     Spatial(bool),
     Music(MusicCommand),
@@ -161,7 +161,7 @@ impl Mixer {
                     playing.voice.muffle = muffle.clamp(0.0, 1.0);
                 }
             }
-            Command::Space(space) => self.reverb.set_space(space),
+            Command::Room(room) => self.reverb.set_room(room),
             Command::Spatial(spatial) => {
                 self.spatial = spatial;
                 if !spatial {

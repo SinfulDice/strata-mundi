@@ -1,27 +1,21 @@
-//! What the mixer follows rather than receives: the ears, the volumes, the space and the
+//! What the mixer follows rather than receives: the ears, the volumes, the room and the
 //! spatial setting. The game overwrites them (the last value wins, none is ever lost to a
 //! full queue) and the output thread reads them before each block.
 
 use super::mixer::{Command, Volumes};
-use super::space::Space;
+use super::reverb::Room;
 use super::spatial::Listener;
 use glam::DVec3;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use strata_core::audio::SoundCategory;
-
-const SPACES: [Space; 4] = [
-    Space::Outdoors,
-    Space::Interior,
-    Space::SmallCave,
-    Space::LargeCavern,
-];
 
 #[derive(Default)]
 pub struct Controls {
     position: [AtomicU64; 3],
     yaw: AtomicU32,
     volumes: [AtomicU32; 3],
-    space: AtomicU8,
+    /// Feedback, damping and wet level.
+    room: [AtomicU32; 3],
     spatial: AtomicBool,
 }
 
@@ -30,7 +24,7 @@ pub struct Controls {
 pub struct Applied {
     listener: Listener,
     volumes: Volumes,
-    space: Space,
+    room: Room,
     spatial: bool,
 }
 
@@ -38,6 +32,7 @@ impl Controls {
     pub fn new(volumes: Volumes, spatial: bool) -> Self {
         let controls = Self::default();
         controls.set_volumes(volumes);
+        controls.set_room(Room::DRY);
         controls.spatial.store(spatial, Ordering::Relaxed);
         controls
     }
@@ -47,7 +42,7 @@ impl Controls {
         match command {
             Command::Listener(listener) => self.set_listener(listener),
             Command::Volumes(volumes) => self.set_volumes(volumes),
-            Command::Space(space) => self.set_space(space),
+            Command::Room(room) => self.set_room(room),
             Command::Spatial(spatial) => self.spatial.store(spatial, Ordering::Relaxed),
             other => return Some(other),
         }
@@ -68,22 +63,28 @@ impl Controls {
         }
     }
 
-    fn set_space(&self, space: Space) {
-        let index = SPACES.iter().position(|s| *s == space).unwrap_or(0);
-        self.space.store(index as u8, Ordering::Relaxed);
+    fn set_room(&self, room: Room) {
+        let values = [room.feedback, room.damping, room.wet];
+        for (atomic, value) in self.room.iter().zip(values) {
+            atomic.store(value.to_bits(), Ordering::Relaxed);
+        }
     }
 
     pub fn read(&self) -> Applied {
         let axis = |index: usize| f64::from_bits(self.position[index].load(Ordering::Relaxed));
         let volume = |index: usize| f32::from_bits(self.volumes[index].load(Ordering::Relaxed));
-        let space = usize::from(self.space.load(Ordering::Relaxed));
+        let room = |index: usize| f32::from_bits(self.room[index].load(Ordering::Relaxed));
         Applied {
             listener: Listener {
                 position: DVec3::new(axis(0), axis(1), axis(2)),
                 yaw: f32::from_bits(self.yaw.load(Ordering::Relaxed)),
             },
             volumes: Volumes::from_gains([volume(0), volume(1), volume(2)]),
-            space: SPACES.get(space).copied().unwrap_or_default(),
+            room: Room {
+                feedback: room(0),
+                damping: room(1),
+                wet: room(2),
+            },
             spatial: self.spatial.load(Ordering::Relaxed),
         }
     }
@@ -101,8 +102,8 @@ impl Applied {
         if last.is_none_or(|l| l.volumes != self.volumes) {
             apply(Command::Volumes(self.volumes));
         }
-        if last.is_none_or(|l| l.space != self.space || l.spatial != self.spatial) {
-            apply(Command::Space(self.space));
+        if last.is_none_or(|l| l.room != self.room || l.spatial != self.spatial) {
+            apply(Command::Room(self.room));
         }
     }
 }

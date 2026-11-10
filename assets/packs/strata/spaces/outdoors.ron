@@ -1,0 +1,2 @@
+// The open air: no reverberation.
+Space(feedback: 0.70, damping: 0.5, wet: 0.0)

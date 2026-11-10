@@ -1,0 +1,2 @@
+// A cavern: far walls, a long bright tail.
+Space(feedback: 0.92, damping: 0.25, wet: 0.42)

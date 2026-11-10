@@ -3,6 +3,8 @@
 //! slightly longer delays on the right. Feedback below 1 and damped: the tail always dies.
 
 use super::space::Space;
+use strata_core::audio::{Sounds, SpaceDef};
+use strata_core::id::Identifier;
 
 /// Freeverb's delays at 44.1 kHz, in samples.
 const COMBS: [usize; 8] = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617];
@@ -17,39 +19,41 @@ const GLIDE: f32 = 0.15;
 /// Below this wet level (and aiming at it) the reverberation is not computed at all.
 const SILENT: f32 = 1e-4;
 
-/// How a place rings.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Room {
-    /// Comb feedback: length of the tail (must stay below 1).
-    pub feedback: f32,
-    /// High frequencies lost at each echo, 0 to 1.
-    pub damping: f32,
-    pub wet: f32,
-}
+/// How a place rings (from the pack).
+pub type Room = SpaceDef;
 
-impl Room {
-    pub fn of(space: Space) -> Self {
-        let (feedback, damping, wet) = match space {
-            Space::Outdoors => (0.70, 0.5, 0.0),
-            Space::Interior => (0.76, 0.6, 0.18),
-            Space::SmallCave => (0.84, 0.4, 0.30),
-            Space::LargeCavern => (0.92, 0.25, 0.42),
-        };
-        Self {
-            feedback,
-            damping,
-            wet,
-        }
+/// The pack's room of each space; a space the packs leave out does not ring.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Rooms([Room; 4]);
+
+impl Rooms {
+    pub fn new(sounds: &Sounds) -> Self {
+        Self(Space::ALL.map(|space| {
+            Identifier::new("strata", space.name())
+                .ok()
+                .and_then(|id| sounds.spaces.get(&id).copied())
+                .unwrap_or(Room::DRY)
+        }))
     }
 
-    fn glide(&mut self, target: Room) {
-        let step = |from: &mut f32, to: f32| *from += (to - *from) * GLIDE;
-        step(&mut self.feedback, target.feedback);
-        step(&mut self.damping, target.damping);
-        step(&mut self.wet, target.wet);
-        if (self.wet - target.wet).abs() < SILENT {
-            self.wet = target.wet;
-        }
+    pub fn of(&self, space: Space) -> Room {
+        self.0[space as usize]
+    }
+}
+
+impl Default for Rooms {
+    fn default() -> Self {
+        Self([Room::DRY; 4])
+    }
+}
+
+fn glide(room: &mut Room, target: Room) {
+    let step = |from: &mut f32, to: f32| *from += (to - *from) * GLIDE;
+    step(&mut room.feedback, target.feedback);
+    step(&mut room.damping, target.damping);
+    step(&mut room.wet, target.wet);
+    if (room.wet - target.wet).abs() < SILENT {
+        room.wet = target.wet;
     }
 }
 
@@ -146,22 +150,21 @@ pub struct Reverb {
 
 impl Reverb {
     pub fn new(rate: u32) -> Self {
-        let outdoors = Room::of(Space::Outdoors);
         Self {
             ears: [Ear::new(rate, 0), Ear::new(rate, STEREO_SPREAD)],
-            room: outdoors,
-            target: outdoors,
+            room: Room::DRY,
+            target: Room::DRY,
             stale: false,
         }
     }
 
-    pub fn set_space(&mut self, space: Space) {
-        self.target = Room::of(space);
+    pub fn set_room(&mut self, room: Room) {
+        self.target = room;
     }
 
     /// Stops at once, the tail forgotten (it must not ring again when turned back on).
     pub fn silence(&mut self) {
-        self.target = Room::of(Space::Outdoors);
+        self.target = Room::DRY;
         self.room = self.target;
         self.stale = true;
     }
@@ -183,7 +186,7 @@ impl Reverb {
             self.stale = false;
         }
         let start = self.room.wet;
-        self.room.glide(self.target);
+        glide(&mut self.room, self.target);
         let frames = send.len().min(out.len() / 2);
         for (frame, &input) in send.iter().take(frames).enumerate() {
             let ramp = (frame + 1) as f32 / frames as f32;

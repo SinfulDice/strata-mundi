@@ -8,6 +8,10 @@ use strata_core::content::{BiomeTints, SoundId};
 use strata_core::id::Identifier;
 use strata_core::pack::PackSet;
 
+fn room(space: Space) -> Room {
+    Rooms::new(&content().sounds).of(space)
+}
+
 fn content() -> &'static Content {
     static CONTENT: OnceLock<Content> = OnceLock::new();
     CONTENT.get_or_init(|| {
@@ -289,7 +293,7 @@ fn brightness(stereo: &[f32]) -> f32 {
 }
 
 fn cavern(mixer: &mut Mixer) {
-    mixer.apply(Command::Space(Space::LargeCavern));
+    mixer.apply(Command::Room(room(Space::LargeCavern)));
     let mut warm = vec![0.0; 1024];
     for _ in 0..60 {
         mixer.render(&mut warm);
@@ -299,7 +303,7 @@ fn cavern(mixer: &mut Mixer) {
 #[test]
 fn the_reverberation_is_bounded_and_dies_out() {
     let mut reverb = Reverb::new(SAMPLE_RATE);
-    reverb.set_space(Space::LargeCavern);
+    reverb.set_room(room(Space::LargeCavern));
     let block = 512;
     let mut out = vec![0.0; block * 2];
     let silence = vec![0.0; block];
@@ -385,7 +389,7 @@ fn mixes_can_be_listened_to() {
 }
 
 fn small_cave(mixer: &mut Mixer) {
-    mixer.apply(Command::Space(Space::SmallCave));
+    mixer.apply(Command::Room(room(Space::SmallCave)));
     let mut warm = vec![0.0; 1024];
     for _ in 0..60 {
         mixer.render(&mut warm);
@@ -419,4 +423,17 @@ fn the_game_follows_the_place_without_a_device() {
         audio.update(0.05, &hearing);
     }
     assert_eq!(audio.environment.space(), Space::Outdoors);
+}
+
+#[test]
+fn every_space_rings_as_the_pack_says() {
+    let sounds = &content().sounds;
+    for space in Space::ALL {
+        let id = Identifier::new("strata", space.name()).unwrap();
+        assert!(sounds.spaces.contains_key(&id), "{id}");
+    }
+    let rooms = Rooms::new(sounds);
+    assert_eq!(rooms.of(Space::Outdoors).wet, 0.0);
+    assert!(rooms.of(Space::LargeCavern).feedback > rooms.of(Space::Interior).feedback);
+    assert_eq!(Rooms::default().of(Space::LargeCavern), Room::DRY);
 }

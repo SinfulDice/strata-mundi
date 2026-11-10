@@ -38,16 +38,19 @@ impl SoundTable {
         let blocks = content
             .blocks
             .iter()
-            .map(|(id, _, block)| BlockSounds {
-                set: block
+            .map(|(id, _, block)| {
+                let set: SoundSet = block
                     .sound
                     .as_ref()
                     .and_then(|set| content.sounds.sets.get(set))
                     .copied()
-                    .unwrap_or_default(),
-                liquid: block.fluid.is_some(),
-                yields: id == BlockId::AIR || block.replaceable || block.fluid.is_some(),
-                density: density(block),
+                    .unwrap_or_default();
+                BlockSounds {
+                    set,
+                    liquid: block.fluid.is_some(),
+                    yields: id == BlockId::AIR || block.replaceable || block.fluid.is_some(),
+                    density: set.density.unwrap_or_else(|| density(block)),
+                }
             })
             .collect();
         Self { blocks }
@@ -81,6 +84,7 @@ impl SoundTable {
     }
 }
 
+/// What a block muffles when its sound set does not say.
 fn density(block: &Block) -> f32 {
     match block.render {
         _ if block.fluid.is_some() => 0.4,

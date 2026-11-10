@@ -238,7 +238,7 @@ fn controls_are_kept_and_never_queued() {
     let controls = controls::Controls::new(Volumes::default(), true);
     let listener = listener_at(DVec3::new(1.0, 2.0, 3.0), 0.5);
     assert!(controls.take(Command::Listener(listener)).is_none());
-    assert!(controls.take(Command::Space(Space::SmallCave)).is_none());
+    assert!(controls.take(Command::Room(Room::DRY)).is_none());
     assert!(
         controls
             .take(Command::Music(MusicCommand::FadeOut))

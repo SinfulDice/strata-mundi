@@ -5,7 +5,7 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use glam::DVec3;
 use std::hint::black_box;
-use strata_client::audio::{BedVolume, Command, MAX_VOICES, Mixer, Space, Voice};
+use strata_client::audio::{BedVolume, Command, MAX_VOICES, Mixer, Room, Voice};
 use strata_core::audio::{Rng, SAMPLE_RATE, SoundCategory};
 use strata_core::content::SoundId;
 
@@ -21,7 +21,11 @@ fn noise(seconds: f32, seed: u64) -> std::sync::Arc<[f32]> {
 fn busy(spatial: bool) -> Mixer {
     let mut mixer = Mixer::new(SAMPLE_RATE);
     mixer.apply(Command::Spatial(spatial));
-    mixer.apply(Command::Space(Space::LargeCavern));
+    mixer.apply(Command::Room(Room {
+        feedback: 0.92,
+        damping: 0.25,
+        wet: 0.42,
+    }));
     let buffer = noise(600.0, 1);
     for index in 0..MAX_VOICES {
         let angle = index as f64 * 0.7;

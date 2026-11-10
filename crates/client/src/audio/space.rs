@@ -15,6 +15,25 @@ pub enum Space {
     LargeCavern,
 }
 
+impl Space {
+    pub const ALL: [Self; 4] = [
+        Self::Outdoors,
+        Self::Interior,
+        Self::SmallCave,
+        Self::LargeCavern,
+    ];
+
+    /// Its file in the packs' `spaces/`.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Outdoors => "outdoors",
+            Self::Interior => "interior",
+            Self::SmallCave => "small_cave",
+            Self::LargeCavern => "large_cavern",
+        }
+    }
+}
+
 /// Rays towards the 26 neighbours of a cell (faces, edges and corners).
 const RAYS: usize = 26;
 /// Rays cast per second: the whole set about ten times a second, whatever the frame rate.

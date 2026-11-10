@@ -34,7 +34,7 @@ pub use beds::{BedVolume, MAX_BEDS};
 pub use environment::{Environment, Moment};
 pub use mixer::{Command, MAX_VOICES, Mixer, Voice, Volumes};
 pub use music::{MusicMoment, MusicPlace, MusicPlayer, MusicSchedule, TITLE_WAIT};
-pub use reverb::{Reverb, Room};
+pub use reverb::{Reverb, Room, Rooms};
 pub use space::{REACH, Space, SpaceProbe};
 pub use spatial::{Direction, Listener, attenuation, stereo_gains};
 pub use stream::{MUSIC_FADE, MusicCommand, MusicFeed};

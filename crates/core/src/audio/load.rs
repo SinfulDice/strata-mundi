@@ -4,6 +4,7 @@
 use super::ambience::{Ambience, load_ambiences};
 use super::music::{Theme, load_themes};
 use super::recipe::{SoundDef, bound};
+use super::spaces::{SpaceDef, load_spaces};
 use crate::content::{Registry, SoundId};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced, category_files};
@@ -44,6 +45,10 @@ pub struct SoundSetDef {
     /// the player (a few hundred are tried each second).
     #[serde(default = "ambient_chance")]
     pub ambient_chance: f32,
+    /// How much the block muffles the sounds heard through it, 0 to 1; by default from
+    /// its shape (a full solid block 1, glass 0.6, a liquid 0.4, leaves 0.2).
+    #[serde(default)]
+    pub density: Option<f32>,
 }
 
 fn ambient_chance() -> f32 {
@@ -59,6 +64,7 @@ pub struct SoundSet {
     pub swim: Option<SoundId>,
     pub ambient: Option<SoundId>,
     pub ambient_chance: f32,
+    pub density: Option<f32>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -67,6 +73,8 @@ pub struct Sounds {
     pub sets: BTreeMap<Identifier, SoundSet>,
     pub ambiences: Vec<Ambience>,
     pub themes: Vec<Theme>,
+    /// The reverberation of each kind of place.
+    pub spaces: BTreeMap<Identifier, SpaceDef>,
 }
 
 impl Sounds {
@@ -127,6 +135,7 @@ pub fn load_sounds(packs: &PackSet, errors: &mut Vec<PackError>) -> Sounds {
         sets,
         ambiences,
         themes: load_themes(packs, errors),
+        spaces: load_spaces(packs, errors),
     }
 }
 
@@ -174,6 +183,7 @@ fn resolve_set(
         swim: find(&def.swim),
         ambient: find(&def.ambient),
         ambient_chance: def.ambient_chance.clamp(0.0, 1.0),
+        density: def.density.map(|density| density.clamp(0.0, 1.0)),
     }
 }
 

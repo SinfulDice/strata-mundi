@@ -5,6 +5,7 @@ use super::ambience::{AmbiencePlayer, AmbienceTable, Place};
 use super::beds::MAX_BEDS;
 use super::mixer::Command;
 use super::muffles::MuffleTracker;
+use super::reverb::{Room, Rooms};
 use super::space::{Space, SpaceProbe};
 use super::surroundings::{Surroundings, biomes_around, underground};
 use super::triggers::Cue;
@@ -30,6 +31,9 @@ pub struct Environment {
     underground: f32,
     due: f32,
     space: Space,
+    rooms: Rooms,
+    /// The room last sent (`None`: send it again).
+    room: Option<Room>,
     /// Loudness last sent for each bed.
     sent: Vec<(SoundId, f32)>,
 }
@@ -48,6 +52,7 @@ impl Environment {
     pub fn new(sounds: &Sounds) -> Self {
         Self {
             table: AmbienceTable::new(sounds),
+            rooms: Rooms::new(sounds),
             ..Self::default()
         }
     }
@@ -55,6 +60,8 @@ impl Environment {
     /// New content: the beds are sent again with their new buffers.
     pub fn set_content(&mut self, sounds: &Sounds) {
         self.table = AmbienceTable::new(sounds);
+        self.rooms = Rooms::new(sounds);
+        self.room = None;
         self.sent.clear();
     }
 
@@ -95,13 +102,16 @@ impl Environment {
         if !moment.spatial {
             self.muffles.clear();
             self.space = Space::Outdoors;
+            self.room = None;
             return;
         }
         let space = self
             .probe
             .update(moment.seconds, world, moment.head, self.underground);
-        if space != self.space && send(Command::Space(space)) {
-            self.space = space;
+        self.space = space;
+        let room = self.rooms.of(space);
+        if self.room != Some(room) && send(Command::Room(room)) {
+            self.room = Some(room);
         }
         self.muffles
             .update(moment.seconds, world, moment.head, send);

@@ -1,0 +1,2 @@
+// A house: walls and a roof close by, a short warm ring.
+Space(feedback: 0.76, damping: 0.6, wet: 0.18)

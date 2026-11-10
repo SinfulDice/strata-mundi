@@ -1,0 +1,2 @@
+// A cave: close rock walls, a clear echo.
+Space(feedback: 0.84, damping: 0.4, wet: 0.30)
