@@ -20,7 +20,7 @@ use strata_core::dimension::DimensionId;
 use strata_core::physics::{EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
 use strata_core::sky::DayCycle;
 use strata_protocol::commands::Feedback;
-use strata_protocol::{ClientConnection, ClientMessage, HotbarState, ServerMessage};
+use strata_protocol::{BiomeInfo, ClientConnection, ClientMessage, HotbarState, ServerMessage};
 
 /// Field of view widening while sprinting, and how fast it eases in and out (per second).
 const SPRINT_ZOOM: f32 = 1.1;
@@ -45,6 +45,8 @@ pub struct Gameplay {
     pub day: Option<DayClock>,
     /// The server's day cycle (not the client's packs), from the welcome message.
     pub day_cycle: Option<DayCycle>,
+    /// The server's biomes, indexed by `BiomeId`.
+    pub biomes: Vec<BiomeInfo>,
     player: Option<LocalPlayer>,
     border: i32,
     /// Last hotbar sent to the server, to send only changes.
@@ -71,6 +73,7 @@ impl Gameplay {
             dimension: None,
             day: None,
             day_cycle: None,
+            biomes: Vec::new(),
             player: None,
             border: DEFAULT_WORLD_BORDER,
             sent_hotbar: HotbarState::default(),
@@ -92,7 +95,9 @@ impl Gameplay {
                 hotbar,
                 look,
                 day,
+                biomes,
             } => {
+                self.biomes = biomes;
                 self.dimension = Some(dimension);
                 self.day = Some(DayClock::at(day.time, day.flows));
                 self.day_cycle = Some(DayCycle::new(&day.cycle));
@@ -114,7 +119,7 @@ impl Gameplay {
                     player.reconcile(sequence, body, &terrain);
                 }
             }
-            ServerMessage::Column(column) => self.view.insert(*column),
+            ServerMessage::Column { column, biomes } => self.view.insert(*column, biomes),
             ServerMessage::UnloadColumn(pos) => self.view.remove(pos, renderer),
             ServerMessage::BlockChanged { pos, block } => self.view.set_block(pos, block),
             ServerMessage::Hotbar(hotbar) => {
@@ -213,6 +218,14 @@ impl Gameplay {
     }
 
     /// Whether the player sits in a boat (the HUD tells how to get off).
+    /// The biome under the camera, as the server named it.
+    pub fn biome_at_camera(&self) -> Option<&BiomeInfo> {
+        let position = self.camera.position;
+        let (x, z) = (position.x.floor() as i32, position.z.floor() as i32);
+        let id = self.view.world.biome_at(x, z)?;
+        self.biomes.get(usize::from(id.0))
+    }
+
     pub fn is_riding(&self) -> bool {
         self.interaction.mount.is_some()
     }

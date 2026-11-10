@@ -4,6 +4,7 @@ debug-position = WER I AM: { $x } / { $y } / { $z }
 debug-section = CHUNK: { $x } { $y } { $z }
 debug-facing = LOOKIN: { $direction } ({ $yaw }° / { $pitch }°)
 debug-world = COLUMNZ: { $columns } | MESHEZ WAITIN: { $pending } | DISTANCE: { $distance }
+debug-biome = PLACE KIND: { $biome }
 debug-target = BLOK I SEEZ: { $block } AT { $x } { $y } { $z }
 debug-memory = MEMORIEZ: { $megabytes } MB
 debug-gpu = GRAFIX CARD: { $name } ({ $driver })

@@ -4,6 +4,7 @@ debug-position = XYZ : { $x } / { $y } / { $z }
 debug-section = Section : { $x } { $y } { $z }
 debug-facing = Regard : { $direction } ({ $yaw }° / { $pitch }°)
 debug-world = Colonnes : { $columns } | maillages en attente : { $pending } | distance : { $distance }
+debug-biome = Biome : { $biome }
 debug-target = Bloc visé : { $block } en { $x } { $y } { $z }
 debug-memory = Mémoire : { $megabytes } Mo
 debug-gpu = Carte graphique : { $name } ({ $driver })

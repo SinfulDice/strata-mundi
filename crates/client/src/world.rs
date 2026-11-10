@@ -6,7 +6,7 @@ use crate::render::Immersion;
 use glam::DVec3;
 use std::collections::HashMap;
 use std::sync::Arc;
-use strata_core::chunk::Column;
+use strata_core::chunk::{BiomeId, BiomeMap, Column};
 use strata_core::content::{BlockId, Content, Face, surface_sixteenths};
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 use strata_core::light::{ColumnLight, PackedLight, SectionLight};
@@ -17,6 +17,7 @@ mod light;
 pub struct ClientWorld {
     /// Shared with the lighting thread, copied only when a block changes.
     columns: HashMap<ColumnPos, Arc<Column>>,
+    biomes: HashMap<ColumnPos, Arc<BiomeMap>>,
     /// Light of the lit columns, from the lighting thread (or computed for a capture).
     light: HashMap<ColumnPos, ColumnLight>,
     /// Highest non-empty section of each column, kept up to date (asked every frame).
@@ -25,15 +26,17 @@ pub struct ClientWorld {
 }
 
 impl ClientWorld {
-    pub fn insert(&mut self, column: Column) {
+    pub fn insert(&mut self, column: Column, biomes: BiomeMap) {
         let pos = column.pos;
         self.columns.insert(pos, Arc::new(column));
+        self.biomes.insert(pos, Arc::new(biomes));
         self.light.remove(&pos);
         self.refresh_top(pos);
     }
 
     pub fn remove(&mut self, pos: ColumnPos) {
         self.columns.remove(&pos);
+        self.biomes.remove(&pos);
         self.light.remove(&pos);
         self.tops.remove(&pos);
     }
@@ -93,6 +96,12 @@ impl ClientWorld {
             Some(top) => self.tops.insert(pos, top),
             None => self.tops.remove(&pos),
         };
+    }
+
+    /// `None` where nothing is loaded.
+    pub fn biome_at(&self, x: i32, z: i32) -> Option<BiomeId> {
+        let map = self.biomes.get(&column_of(x, z))?;
+        Some(map.get(local(x), local(z)))
     }
 
     /// Air where nothing is loaded.

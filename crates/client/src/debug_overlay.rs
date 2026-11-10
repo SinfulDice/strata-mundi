@@ -119,6 +119,10 @@ impl DebugOverlay {
                     ("distance", view.render_distance.to_string()),
                 ],
             ));
+            if let Some(biome) = game.biome_at_camera() {
+                let name = tr(&biome.id.translation_key("biome"), &[]);
+                lines.push(tr("debug-biome", &[("biome", name)]));
+            }
             if let Some(hit) = game.interaction.target {
                 let block = game.view.world.block_at(hit.block);
                 let name = view.content.block_name(block);

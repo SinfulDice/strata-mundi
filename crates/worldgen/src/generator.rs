@@ -10,7 +10,7 @@ use crate::surface::{Ground, Heights, SurfaceRules};
 use crate::terrain::{Grid, Overhangs};
 use std::ops::RangeInclusive;
 use std::sync::Arc;
-use strata_core::chunk::Column;
+use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE};
 
@@ -98,13 +98,19 @@ impl Generator {
         }
     }
 
-    #[tracing::instrument(skip(self), level = "trace")]
     pub fn generate(&self, pos: ColumnPos) -> Column {
+        self.generate_with_biomes(pos).0
+    }
+
+    /// The column and the biome of each of its block columns.
+    #[tracing::instrument(skip(self), level = "trace")]
+    pub fn generate_with_biomes(&self, pos: ColumnPos) -> (Column, BiomeMap) {
         let mut column = Column::empty(pos);
         let origin = (pos.x * SECTION_SIZE, pos.z * SECTION_SIZE);
         let samples: ColumnSamples<'_> = std::array::from_fn(|lz| {
             std::array::from_fn(|lx| self.sample(origin.0 + lx as i32, origin.1 + lz as i32))
         });
+        let biomes = BiomeMap::from_fn(|lx, lz| samples[lz as usize][lx as usize].1.index);
         let ring = self.ring(origin, &samples);
         let grid = self.overhang_grid(origin, &samples);
         let rules = self.rules();
@@ -133,7 +139,17 @@ impl Generator {
             .place(self.seed, &self.content, &mut column, &tops);
         place_surface_features(self, &mut column);
         place_plants(self, &mut column, &tops);
-        column
+        (column, biomes)
+    }
+
+    /// The biomes of a column without generating it (columns read from a save).
+    pub fn biome_map(&self, pos: ColumnPos) -> BiomeMap {
+        let origin = (pos.x * SECTION_SIZE, pos.z * SECTION_SIZE);
+        BiomeMap::from_fn(|lx, lz| {
+            self.sample(origin.0 + lx as i32, origin.1 + lz as i32)
+                .1
+                .index
+        })
     }
 
     /// Heights of the column and of the blocks around it: plain (for slopes) and lowest

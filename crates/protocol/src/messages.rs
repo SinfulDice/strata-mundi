@@ -1,9 +1,10 @@
 use crate::commands::Feedback;
 use serde::{Deserialize, Serialize};
-use strata_core::chunk::Column;
+use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::{BlockId, EntityTypeId, Face, ItemId};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
+use strata_core::id::Identifier;
 use strata_core::physics::{Body, MoveInput, MovementSettings};
 use strata_core::sky::DayCycleDef;
 
@@ -100,6 +101,12 @@ pub struct DayState {
     pub cycle: DayCycleDef,
 }
 
+/// A biome of the player's dimension, at its index in `Welcome::biomes`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BiomeInfo {
+    pub id: Identifier,
+}
+
 /// State broadcast by the server.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ServerMessage {
@@ -114,6 +121,8 @@ pub enum ServerMessage {
         /// Yaw and pitch, in radians.
         look: [f32; 2],
         day: DayState,
+        /// Indexed by `BiomeId`.
+        biomes: Vec<BiomeInfo>,
     },
     /// Sent once per tick so the client can interpolate between ticks.
     Tick {
@@ -130,8 +139,11 @@ pub enum ServerMessage {
         sequence: u32,
         body: Body,
     },
-    /// A column of blocks entering the player's view distance.
-    Column(Box<Column>),
+    /// A column of blocks entering the player's view distance, with its biomes.
+    Column {
+        column: Box<Column>,
+        biomes: BiomeMap,
+    },
     /// A column leaving the view distance: the client forgets it.
     UnloadColumn(ColumnPos),
     BlockChanged {
@@ -185,6 +197,24 @@ mod tests {
             cycle: false,
         };
         assert_eq!(round_trip(&time), time);
+    }
+
+    #[test]
+    fn columns_keep_their_biomes() {
+        use strata_core::chunk::BiomeId;
+        let pos = strata_core::coords::ColumnPos { x: -3, z: 7 };
+        let mut column = Column::empty(pos);
+        column.set(4, 130, 9, BlockId(5));
+        let biomes = BiomeMap::from_fn(|x, z| BiomeId(if x + z < 12 { 3 } else { 300 }));
+        let message = ServerMessage::Column {
+            column: Box::new(column),
+            biomes,
+        };
+        assert_eq!(round_trip(&message), message);
+        let welcome_biomes = vec![BiomeInfo {
+            id: "strata:plains".parse().unwrap(),
+        }];
+        assert_eq!(round_trip(&welcome_biomes), welcome_biomes);
     }
 
     #[test]

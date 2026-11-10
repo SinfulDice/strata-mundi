@@ -28,6 +28,12 @@ fn generation(c: &mut Criterion) {
             generator.generate(black_box(ColumnPos { x, z: 3 }))
         })
     });
+    c.bench_function("biome_map_column", |b| {
+        b.iter(|| {
+            x += 1;
+            generator.biome_map(black_box(ColumnPos { x, z: 3 }))
+        })
+    });
 }
 
 /// First mountain with overhangs found from the climate, the costliest kind of terrain.

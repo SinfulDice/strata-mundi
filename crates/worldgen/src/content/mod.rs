@@ -6,6 +6,7 @@ pub use features::{Feature, MAX_CROWN, MAX_PATCH_RADIUS, Plants};
 use crate::defs::{BandsDef, BiomeDef, CavesDef, Climate, DimensionDef, Relief, TerrainDef};
 use features::load_features;
 use std::path::Path;
+use strata_core::chunk::BiomeId;
 use strata_core::content::{Block, BlockId, Registry};
 use strata_core::coords::WORLD_HEIGHT;
 use strata_core::id::Identifier;
@@ -61,6 +62,8 @@ pub struct Caves {
 #[derive(Debug, Clone)]
 pub struct Biome {
     pub id: Identifier,
+    /// Position in `WorldgenContent::biomes`, as sent to clients.
+    pub index: BiomeId,
     pub climate: Climate,
     pub surface: BlockId,
     pub subsurface: BlockId,
@@ -199,7 +202,8 @@ fn load_biomes(
 ) -> Vec<Biome> {
     let defs = packs.layered::<BiomeDef>("biomes", errors);
     defs.into_iter()
-        .map(|(id, Sourced { value, source })| {
+        .enumerate()
+        .map(|(index, (id, Sourced { value, source }))| {
             let features = value
                 .features
                 .iter()
@@ -219,6 +223,7 @@ fn load_biomes(
             };
             Biome {
                 id,
+                index: BiomeId(index.min(usize::from(u16::MAX)) as u16),
                 climate: value.climate,
                 surface: r.block(&value.surface),
                 subsurface: r.block(&value.subsurface),

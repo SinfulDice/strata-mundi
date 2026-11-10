@@ -12,7 +12,7 @@ use crate::world::ClientWorld;
 use glam::DVec3;
 use std::collections::HashMap;
 use std::sync::Arc;
-use strata_core::chunk::Column;
+use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, WORLD_HEIGHT};
 use strata_core::light::LightTable;
@@ -104,9 +104,9 @@ impl WorldView {
         }
     }
 
-    pub fn insert(&mut self, column: Column) {
+    pub fn insert(&mut self, column: Column, biomes: BiomeMap) {
         let pos = column.pos;
-        self.world.insert(column);
+        self.world.insert(column, biomes);
         self.light_changes.remove(&pos);
         match (&mut self.lighting, self.world.shared_column(pos)) {
             (Some(lighting), Some(shared)) => lighting.insert(shared),
@@ -265,6 +265,7 @@ mod tests {
     use super::*;
     use crate::mesher::{BlockTable, MeshOptions};
     use std::collections::HashSet;
+    use strata_core::chunk::BiomeId;
     use strata_core::content::{Block, RenderKind};
     use strata_core::light::{LightTable, PackedLight, SectionLight};
 
@@ -294,7 +295,7 @@ mod tests {
                 let mut column = Column::empty(pos);
                 column.set(0, 0, 0, BlockId(1));
                 column.set(0, 40, 0, BlockId(1));
-                view.insert(column);
+                view.insert(column, BiomeMap::uniform(BiomeId(0)));
             }
         }
         view
@@ -361,7 +362,7 @@ mod tests {
         );
         let mut column = Column::empty(CENTRE);
         column.set(0, 0, 0, BlockId(1));
-        view.insert(column);
+        view.insert(column, BiomeMap::uniform(BiomeId(0)));
         assert!(view.world.is_lit(CENTRE), "lit as soon as it arrives");
         assert!(view.meshing.take_dirty().contains(&(0, 0, 0)));
         view.set_lighting(Lighting::Full);

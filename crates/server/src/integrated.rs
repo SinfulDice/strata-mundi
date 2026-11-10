@@ -14,7 +14,7 @@ use strata_core::content::Content;
 use strata_core::dimension::DimensionId;
 use strata_core::sky::DayCycle;
 use strata_protocol::{
-    ClientMessage, DAY_TIME_PERIOD, DayState, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE,
+    BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE,
     ServerConnection, ServerMessage,
 };
 use strata_worldgen::Generator;
@@ -94,6 +94,7 @@ impl IntegratedServer {
                     flows: meta.day_cycle,
                     cycle: config.content.day_cycle(&config.dimension).def(),
                 },
+                biomes: biome_infos(&config.generator),
             });
             for message in game.take_entity_messages() {
                 connection.send(message);
@@ -290,10 +291,22 @@ impl IntegratedServer {
     fn stream_columns(&mut self, viewer: &Viewer) {
         for event in self.loader.update(viewer) {
             let message = match event {
-                LoadEvent::Loaded(column) => ServerMessage::Column(Box::new(column)),
+                LoadEvent::Loaded(column, biomes) => ServerMessage::Column {
+                    column: Box::new(column),
+                    biomes,
+                },
                 LoadEvent::Unloaded(pos) => ServerMessage::UnloadColumn(pos),
             };
             self.connection.send(message);
         }
     }
+}
+
+fn biome_infos(generator: &Generator) -> Vec<BiomeInfo> {
+    let biomes = generator.content().biomes().iter();
+    biomes
+        .map(|biome| BiomeInfo {
+            id: biome.id.clone(),
+        })
+        .collect()
 }
