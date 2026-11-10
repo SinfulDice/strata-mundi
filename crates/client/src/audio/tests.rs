@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
-use super::bank::{SoundBank, resample};
+use super::bank::SoundBank;
+use super::decode::resample;
 use super::*;
 use glam::DVec3;
 use std::sync::{Arc, OnceLock};
@@ -206,17 +207,23 @@ fn two_plays_differ_and_buffers_are_cached() {
     let mut bank = SoundBank::new(content().sounds.clone());
     let mut rng = strata_core::audio::Rng::new(3);
     let step = sound_id("step_stone");
+    assert!(
+        bank.pick(step, &mut rng).is_none(),
+        "made in the background"
+    );
+    assert_eq!(bank.cached_samples(), 0);
+    for _ in 0..50 {
+        bank.pick(step, &mut rng);
+        bank.wait_ready();
+    }
     let a = bank.pick(step, &mut rng).unwrap();
     let b = bank.pick(step, &mut rng).unwrap();
     assert!(!Arc::ptr_eq(&a.buffer, &b.buffer), "another variant");
     assert_ne!(a.pitch, b.pitch);
-    let cached = bank.cached_samples();
-    assert_eq!(cached, a.buffer.len() + b.buffer.len());
-    for _ in 0..50 {
-        bank.pick(step, &mut rng);
-    }
     let variants = usize::from(bank.sound(step).unwrap().def.variants);
-    assert!(bank.cached_samples() <= variants * (0.14 * SAMPLE_RATE as f32) as usize);
+    let cached = bank.cached_samples();
+    assert!(cached >= a.buffer.len() + b.buffer.len());
+    assert!(cached <= variants * (0.14 * SAMPLE_RATE as f32) as usize);
     assert_eq!(resample(&[0.0, 1.0, 0.0, -1.0], SAMPLE_RATE * 2).len(), 2);
 }
 

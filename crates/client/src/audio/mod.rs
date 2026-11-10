@@ -7,6 +7,7 @@ mod ambience;
 mod bank;
 mod beds;
 mod controls;
+mod decode;
 mod environment;
 mod mixer;
 mod muffles;
@@ -157,6 +158,7 @@ impl Audio {
         if let Some(output) = &self.output {
             output.empty_trash();
         }
+        self.bank.collect();
         self.listener = listener;
         self.send(Command::Listener(listener));
         if let Some(body) = hearing.player {

@@ -2,7 +2,7 @@
 //! one piece at a time, started only when music is wanted) and reading the playing piece
 //! a chunk ahead of the mixer.
 
-use super::bank::{downmix, resample};
+use super::decode::{downmix, resample};
 use super::stream::MusicFeed;
 use crossbeam_channel::{Receiver, Sender};
 use std::io;

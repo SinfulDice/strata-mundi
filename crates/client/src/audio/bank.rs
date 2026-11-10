@@ -1,12 +1,12 @@
-//! Buffers of every sound, made the first time each variant is played and kept: rendered
-//! from the recipe, or decoded from the pack's `.ogg`.
+//! Buffers of every sound, made the first time each variant is asked and kept: rendered
+//! from the recipe, or decoded from the pack's `.ogg`. The work is done on a thread of
+//! its own; a sound not ready yet is not played (it is the next time).
 
+use super::decode::decode;
+use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
-use strata_core::audio::{self, MAX_SECONDS, Rng, SAMPLE_RATE, Sound, Sounds};
+use strata_core::audio::{self, Rng, Sound, Sounds};
 use strata_core::content::{RegistryId, SoundId};
-
-/// Longest recording kept (memory bound for packs that ship long files).
-const MAX_RECORDING_SECONDS: f32 = 6.0 * MAX_SECONDS;
 
 /// One play of a sound: which buffer and how fast.
 #[derive(Debug, Clone)]
@@ -15,18 +15,43 @@ pub struct Pick {
     pub pitch: f32,
 }
 
+#[derive(Debug, Clone, Default)]
+enum Slot {
+    #[default]
+    Missing,
+    Asked,
+    Ready(Arc<[f32]>),
+    /// The recording could not be decoded: the recipe is used.
+    Failed,
+}
+
 #[derive(Default)]
 struct Entry {
-    variants: Vec<Option<Arc<[f32]>>>,
-    /// `None` until first played; `Some(None)` when it could not be decoded.
-    recording: Option<Option<Arc<[f32]>>>,
+    variants: Vec<Slot>,
+    recording: Slot,
     last_variant: Option<usize>,
 }
+
+/// Which buffer of a sound: a variant of the recipe, or the recording.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Part {
+    Variant(usize),
+    Recording,
+}
+
+struct Job {
+    id: SoundId,
+    part: Part,
+    sound: Sound,
+}
+
+type Made = (SoundId, Part, Option<Arc<[f32]>>);
 
 #[derive(Default)]
 pub struct SoundBank {
     sounds: Sounds,
     entries: Vec<Entry>,
+    worker: Option<(Sender<Job>, Receiver<Made>)>,
 }
 
 impl SoundBank {
@@ -35,18 +60,23 @@ impl SoundBank {
             .registry
             .iter()
             .map(|(_, _, sound)| Entry {
-                variants: vec![None; usize::from(sound.def.variants)],
+                variants: vec![Slot::Missing; usize::from(sound.def.variants)],
                 ..Entry::default()
             })
             .collect();
-        Self { sounds, entries }
+        Self {
+            sounds,
+            entries,
+            worker: None,
+        }
     }
 
     pub fn sound(&self, id: SoundId) -> Option<&Sound> {
         self.sounds.get(id)
     }
 
-    /// A buffer and a pitch for one play; never the same variant twice in a row.
+    /// A buffer and a pitch for one play, never the same variant twice in a row; `None`
+    /// while the buffer is being made.
     pub fn pick(&mut self, id: SoundId, rng: &mut Rng) -> Option<Pick> {
         let sound = self.sounds.get(id)?;
         let pitch = rng.range(sound.def.pitch);
@@ -68,22 +98,89 @@ impl SoundBank {
         self.buffer(id, 0)
     }
 
+    /// Keeps the buffers made since the last call.
+    pub fn collect(&mut self) {
+        let Some(made) = self.worker.as_ref().map(|(_, made)| made.clone()) else {
+            return;
+        };
+        for (id, part, buffer) in made.try_iter() {
+            self.store(id, part, buffer);
+        }
+    }
+
     /// The pack's recording if it has a readable one, else variant `index` of the recipe.
     fn buffer(&mut self, id: SoundId, index: usize) -> Option<Arc<[f32]>> {
         let sound = self.sounds.get(id)?;
-        let entry = self.entries.get_mut(id.index())?;
-        if let Some(path) = &sound.ogg {
-            let recording = entry.recording.get_or_insert_with(|| decode(path));
-            if let Some(buffer) = recording {
-                return Some(Arc::clone(buffer));
+        let entry = self.entries.get(id.index())?;
+        let (part, slot) = match (&sound.ogg, &entry.recording) {
+            (Some(_), slot) if !matches!(slot, Slot::Failed) => (Part::Recording, slot),
+            _ => (Part::Variant(index), entry.variants.get(index)?),
+        };
+        match slot {
+            Slot::Ready(buffer) => Some(Arc::clone(buffer)),
+            Slot::Asked | Slot::Failed => None,
+            Slot::Missing => {
+                self.ask(id, part);
+                None
             }
         }
-        let slot = entry.variants.get_mut(index)?;
-        let buffer = slot.get_or_insert_with(|| {
-            let seed = audio::variant_seed(sound, index as u8);
-            audio::render(&sound.def, seed).into()
-        });
-        Some(Arc::clone(buffer))
+    }
+
+    fn ask(&mut self, id: SoundId, part: Part) {
+        let Some(sound) = self.sounds.get(id).cloned() else {
+            return;
+        };
+        if self.worker.is_none() {
+            self.worker = spawn_worker();
+        }
+        let job = Job { id, part, sound };
+        let job = match &self.worker {
+            Some((jobs, _)) => match jobs.send(job) {
+                Ok(()) => {
+                    self.set(id, part, Slot::Asked);
+                    return;
+                }
+                Err(lost) => lost.into_inner(),
+            },
+            None => job,
+        };
+        let (id, part, buffer) = make(job);
+        self.store(id, part, buffer);
+    }
+
+    fn store(&mut self, id: SoundId, part: Part, buffer: Option<Arc<[f32]>>) {
+        self.set(id, part, buffer.map_or(Slot::Failed, Slot::Ready));
+    }
+
+    fn set(&mut self, id: SoundId, part: Part, value: Slot) {
+        let Some(entry) = self.entries.get_mut(id.index()) else {
+            return;
+        };
+        let slot = match part {
+            Part::Recording => Some(&mut entry.recording),
+            Part::Variant(index) => entry.variants.get_mut(index),
+        };
+        if let Some(slot) = slot {
+            *slot = value;
+        }
+    }
+
+    /// Waits for every buffer asked.
+    #[cfg(test)]
+    pub fn wait_ready(&mut self) {
+        let asked = |bank: &Self| {
+            bank.entries.iter().any(|entry| {
+                entry
+                    .variants
+                    .iter()
+                    .chain(std::iter::once(&entry.recording))
+                    .any(|slot| matches!(slot, Slot::Asked))
+            })
+        };
+        while asked(self) {
+            self.collect();
+            std::thread::sleep(std::time::Duration::from_millis(1));
+        }
     }
 
     /// Samples kept in memory.
@@ -91,57 +188,49 @@ impl SoundBank {
     pub fn cached_samples(&self) -> usize {
         self.entries
             .iter()
-            .flat_map(|entry| entry.variants.iter().chain(entry.recording.iter()))
-            .flatten()
-            .map(|buffer| buffer.len())
+            .flat_map(|entry| {
+                entry
+                    .variants
+                    .iter()
+                    .chain(std::iter::once(&entry.recording))
+            })
+            .map(|slot| match slot {
+                Slot::Ready(buffer) => buffer.len(),
+                _ => 0,
+            })
             .sum()
     }
 }
 
-/// Mono at `SAMPLE_RATE`; `None` (and a warning) if the file cannot be read.
-fn decode(path: &std::path::Path) -> Option<Arc<[f32]>> {
-    let read = || -> Result<Vec<f32>, String> {
-        let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-        let decoder = rodio::Decoder::try_from(file).map_err(|e| e.to_string())?;
-        let channels = usize::from(rodio::Source::channels(&decoder).get());
-        let rate = rodio::Source::sample_rate(&decoder).get();
-        let limit = (MAX_RECORDING_SECONDS * rate as f32) as usize * channels;
-        let interleaved: Vec<f32> = decoder.take(limit).collect();
-        Ok(resample(&downmix(&interleaved, channels), rate))
+fn make(job: Job) -> Made {
+    let buffer = match job.part {
+        Part::Recording => job.sound.ogg.as_deref().and_then(decode),
+        Part::Variant(index) => {
+            let seed = audio::variant_seed(&job.sound, index as u8);
+            Some(audio::render(&job.sound.def, seed).into())
+        }
     };
-    match read() {
-        Ok(samples) if !samples.is_empty() => Some(samples.into()),
-        Ok(_) => {
-            tracing::warn!(path = %path.display(), "empty recording: the recipe is used");
-            None
-        }
+    (job.id, job.part, buffer)
+}
+
+/// The thread that makes the buffers; `None` (and the work done in place) without one.
+fn spawn_worker() -> Option<(Sender<Job>, Receiver<Made>)> {
+    let (jobs, job_receiver) = crossbeam_channel::unbounded::<Job>();
+    let (made_sender, made) = crossbeam_channel::unbounded();
+    let spawned = std::thread::Builder::new()
+        .name("sound-bank".to_owned())
+        .spawn(move || {
+            for job in job_receiver {
+                if made_sender.send(make(job)).is_err() {
+                    break;
+                }
+            }
+        });
+    match spawned {
+        Ok(_) => Some((jobs, made)),
         Err(error) => {
-            tracing::warn!(path = %path.display(), %error, "recording unreadable: the recipe is used");
+            tracing::warn!(%error, "no sound thread: sounds are made on first play");
             None
         }
     }
-}
-
-pub fn downmix(interleaved: &[f32], channels: usize) -> Vec<f32> {
-    interleaved
-        .chunks(channels.max(1))
-        .map(|frame| frame.iter().sum::<f32>() / frame.len() as f32)
-        .collect()
-}
-
-/// Linear resampling to `SAMPLE_RATE` (recordings are short effects).
-pub fn resample(samples: &[f32], rate: u32) -> Vec<f32> {
-    if rate == SAMPLE_RATE || samples.len() < 2 {
-        return samples.to_vec();
-    }
-    let ratio = f64::from(rate) / f64::from(SAMPLE_RATE);
-    let len = (samples.len() as f64 / ratio) as usize;
-    (0..len)
-        .map(|i| {
-            let position = i as f64 * ratio;
-            let index = (position as usize).min(samples.len() - 2);
-            let fraction = (position - index as f64) as f32;
-            samples[index] + (samples[index + 1] - samples[index]) * fraction
-        })
-        .collect()
 }
