@@ -127,7 +127,8 @@ impl Launcher for GameLauncher {
         self.autosave_ticks = u64::from(game.autosave_minutes) * 60 * u64::from(TICKS_PER_SECOND);
         self.backups_kept = game.backups_kept as usize;
         self.generation_threads = settings.graphics.world_threads();
-        self.view_distance = settings.graphics.render_distance;
+        self.view_distance =
+            strata_client::world::requested_view_distance(settings.graphics.render_distance);
     }
 
     fn newer_version(&self) -> Option<String> {

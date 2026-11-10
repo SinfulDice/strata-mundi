@@ -13,14 +13,15 @@ use crate::mesher::BlockTable;
 use crate::models::ModelLibrary;
 use crate::render::{Gpu, PostProcess, RenderOptions, Renderer, TextureFiltering, WindowSurface};
 use crate::screens::Screens;
+use crate::settings::RENDER_DISTANCE;
 use crate::settings::Settings;
 use crate::sleep::SleepWatcher;
 use crate::stage::Stage;
+use crate::world::requested_view_distance;
 use glam::Vec2;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use strata_core::content::Content;
-use strata_protocol::{MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE};
 use winit::event::{DeviceEvent, MouseScrollDelta, WindowEvent};
 use winit::keyboard::PhysicalKey;
 use winit::window::{CursorGrabMode, Window};
@@ -254,7 +255,9 @@ impl Session {
                 if let Some(day) = world.game.day.as_mut().filter(|_| !pause) {
                     day.advance(frame_seconds);
                 }
-                let wanted = settled_columns(self.applied.graphics.render_distance);
+                let wanted = settled_columns(requested_view_distance(
+                    self.applied.graphics.render_distance,
+                ));
                 let settled = world.game.view.is_settled(wanted);
                 let dt = frame_seconds.min(MAX_FRAME_SECONDS);
                 match &mut self.bench {
@@ -318,7 +321,7 @@ impl Session {
 
     /// Changes how far the world is loaded, while playing.
     pub fn set_render_distance(&mut self, distance: u32) {
-        let distance = distance.clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
+        let distance = distance.clamp(RENDER_DISTANCE.0, RENDER_DISTANCE.1);
         tracing::info!(distance, "render distance");
         self.screens.change_settings(|s| {
             s.graphics.render_distance = distance;

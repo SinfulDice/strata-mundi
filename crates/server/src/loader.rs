@@ -256,7 +256,7 @@ fn wanted(center: ColumnPos, viewer: &Viewer) -> Vec<ColumnPos> {
     let forward = (sin, -cos);
     let mut columns: Vec<(i64, ColumnPos)> = (-r..=r)
         .flat_map(|dz| (-r..=r).map(move |dx| (dx, dz)))
-        .filter(|(dx, dz)| dx * dx + dz * dz <= r * r + r)
+        .filter(|&(dx, dz)| strata_protocol::in_view_disc(dx, dz, viewer.view_distance))
         .map(|(dx, dz)| {
             let distance = (dx * dx + dz * dz) as f32;
             let facing = (dx as f32 * forward.0 + dz as f32 * forward.1) / distance.sqrt().max(1.0);

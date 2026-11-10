@@ -11,11 +11,27 @@ use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::{BiomeTints, BlockId, Content, Face, surface_sixteenths};
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, SECTIONS_PER_COLUMN};
 use strata_core::light::{ColumnLight, PackedLight, SectionLight};
+use strata_protocol::{MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE};
 
 mod biomes;
 
 use biomes::TintCache;
 mod light;
+
+/// Rings of columns at the edge of the loaded disc that are never drawn: a column is lit
+/// once its 8 neighbours are loaded, and meshed once they are all lit (D046).
+pub const UNDRAWN_RING: u32 = 2;
+
+/// Columns to ask the server for, so that `render_distance` columns are drawn.
+pub fn requested_view_distance(render_distance: u32) -> u32 {
+    (render_distance + UNDRAWN_RING).clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE)
+}
+
+/// Columns drawn around the player for a render distance (less only at the protocol's
+/// bound).
+pub fn drawn_distance(render_distance: u32) -> u32 {
+    requested_view_distance(render_distance).saturating_sub(UNDRAWN_RING)
+}
 
 #[derive(Debug, Default)]
 pub struct ClientWorld {

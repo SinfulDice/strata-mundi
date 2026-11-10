@@ -101,28 +101,17 @@ impl RenderOptions {
     }
 }
 
-/// Columns at the edge of the loaded disc that are never drawn: a section is meshed only
-/// once the 5 × 5 columns around it are loaded and lit (D046).
-const UNMESHED_RING: f32 = 2.0;
+/// Columns between the drawn radius and the nearest undrawn column the camera can see:
+/// the drawn disc is jagged along its diagonals and the camera may stand anywhere in
+/// its column.
+const JAGGED_EDGE: f32 = 2.0;
 
-/// Where the fog is complete: the nearest the drawn world can end, whatever the camera's
-/// place in its column.
+/// Where the fog is complete: before the edge of the drawn world (the server sends a
+/// margin of undrawn columns beyond it).
 fn fog_end(render_distance: u32) -> f32 {
-    (render_distance as f32 - UNMESHED_RING).max(1.0) * SECTION_SIZE as f32
+    let drawn = crate::world::drawn_distance(render_distance) as f32;
+    (drawn - JAGGED_EDGE).max(1.0) * SECTION_SIZE as f32
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_fog_ends_before_the_first_undrawn_column() {
-        for distance in [2, 6, 12, 32] {
-            let end = fog_end(distance);
-            let drawn = (distance as f32 - UNMESHED_RING) * SECTION_SIZE as f32;
-            assert!(end <= drawn.max(SECTION_SIZE as f32), "{distance}: {end}");
-            assert!(end > 0.0);
-        }
-        assert_eq!(fog_end(12), 160.0);
-    }
-}
+mod tests;

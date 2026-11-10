@@ -6,7 +6,8 @@ use crate::mesher::MeshOptions;
 use crate::render::RenderOptions;
 use crate::settings::Settings;
 use crate::stage::Stage;
-use strata_protocol::{ClientMessage, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE};
+use crate::world::requested_view_distance;
+use strata_protocol::ClientMessage;
 
 impl Session {
     pub(super) fn apply_settings(&mut self) {
@@ -43,9 +44,7 @@ impl Session {
         if g.render_distance != before.render_distance
             && let Stage::Playing(world) = &self.stage
         {
-            let distance = g
-                .render_distance
-                .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
+            let distance = requested_view_distance(g.render_distance);
             world.connection.send(ClientMessage::ViewDistance(distance));
         }
         if g.vsync != before.vsync {

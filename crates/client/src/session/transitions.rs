@@ -16,12 +16,11 @@ use crate::stage::{InWorld, Stage, TitleScene};
 use crate::streaming::WorldView;
 use crate::ui::ICON_SIZE;
 use crate::world::ClientWorld;
+use crate::world::requested_view_distance;
 use glam::DVec3;
 use std::sync::Arc;
 use strata_core::light::LightTable;
-use strata_protocol::{
-    ClientMessage, Disconnected, MAX_VIEW_DISTANCE, MIN_VIEW_DISTANCE, ServerMessage,
-};
+use strata_protocol::{ClientMessage, Disconnected, ServerMessage};
 
 impl Session {
     fn new_meshing(&self) -> Result<MeshScheduler, ClientError> {
@@ -93,11 +92,7 @@ impl Session {
     }
     pub(super) fn enter_world(&mut self, running: RunningWorld) -> Result<(), ClientError> {
         self.renderer.clear();
-        let distance = self
-            .applied
-            .graphics
-            .render_distance
-            .clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
+        let distance = requested_view_distance(self.applied.graphics.render_distance);
         running
             .connection
             .send(ClientMessage::ViewDistance(distance));
