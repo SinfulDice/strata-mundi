@@ -1,0 +1,9 @@
+Particle(
+    lifetime: (5.0, 6.0),
+    size: (0.08, 0.08),
+    gravity: 12.0,
+    hang: 2.0,
+    glows: true,
+    chance: 0.15,
+    impact: (particle: "strata:lava_splash", count: 3),
+)

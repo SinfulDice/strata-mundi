@@ -24,4 +24,5 @@ Block(
         spread_below: 1,
         spread_above: 4,
     ),
+    particles: (breaking: None),
 )

@@ -1,0 +1,9 @@
+// Pieces of a broken block's texture (no `texture`: the block's own), tinted like it.
+Particle(
+    lifetime: (0.5, 1.1),
+    size: (0.08, 0.15),
+    gravity: 16.0,
+    speed: 3.0,
+    drag: 0.6,
+    burst: 32,
+)

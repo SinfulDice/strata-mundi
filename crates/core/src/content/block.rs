@@ -1,5 +1,6 @@
 use super::fire::{FireDef, Flammability};
 use super::fluid::{FluidDef, FluidState};
+use super::particle::{BlockParticles, ParticleTriggersDef};
 use super::registry::{BlockId, TextureId};
 use super::tint::BlockTint;
 use crate::id::Identifier;
@@ -237,6 +238,9 @@ pub struct BlockDef {
     /// Takes the colour of the biome (grass, leaves, water).
     #[serde(default)]
     pub tint: Option<BlockTint>,
+    /// Particles it gives off (breaking, drips, bubbles).
+    #[serde(default)]
+    pub particles: ParticleTriggersDef,
 }
 
 fn default_slipperiness() -> f32 {
@@ -283,6 +287,7 @@ pub struct Block {
     pub flammability: Option<Flammability>,
     pub fire: Option<FireDef>,
     pub tint: Option<BlockTint>,
+    pub particles: BlockParticles,
 }
 
 impl Block {
@@ -308,6 +313,7 @@ impl Block {
             flammability: None,
             fire: None,
             tint: None,
+            particles: BlockParticles::default(),
         }
     }
 

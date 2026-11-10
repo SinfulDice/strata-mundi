@@ -1,0 +1,7 @@
+Particle(
+    lifetime: (0.2, 0.4),
+    size: (0.04, 0.06),
+    gravity: 14.0,
+    speed: 1.6,
+    drag: 0.5,
+)

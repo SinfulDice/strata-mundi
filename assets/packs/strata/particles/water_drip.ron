@@ -1,0 +1,9 @@
+// A drop of the liquid above a ceiling: it swells, falls, then splashes.
+Particle(
+    lifetime: (4.0, 5.0),
+    size: (0.07, 0.07),
+    gravity: 14.0,
+    hang: 1.2,
+    chance: 0.25,
+    impact: (particle: "strata:water_splash", count: 4),
+)

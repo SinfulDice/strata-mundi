@@ -84,6 +84,36 @@ fn base_game_pack_loads_cleanly() {
 }
 
 #[test]
+fn blocks_name_their_particles() {
+    let (content, _) = load(&game_packs());
+    let particle = |name: &str| content.particles.key(&id(name));
+    let block = |name: &str| content.blocks.by_identifier(&id(name)).unwrap().particles;
+    let fragments = particle("strata:block_fragments");
+    assert!(fragments.is_some());
+    assert_eq!(
+        block("strata:stone").breaking,
+        fragments,
+        "fragments by default"
+    );
+    assert_eq!(block("strata:fire").breaking, None);
+    let water = block("strata:water");
+    assert_eq!(
+        (water.breaking, water.drip),
+        (None, particle("strata:water_drip"))
+    );
+    assert_eq!(
+        block("strata:water__3").drip,
+        water.drip,
+        "flowing water drips too"
+    );
+    assert_eq!(water.ambient, particle("strata:bubble"));
+    let drip = content.particles.get(water.drip.unwrap()).unwrap();
+    assert_eq!(drip.impact.map(|(p, _)| p), particle("strata:water_splash"));
+    let bubble = content.particles.get(water.ambient.unwrap()).unwrap();
+    assert!(bubble.texture.is_some() && bubble.in_liquid && bubble.gravity < 0.0);
+}
+
+#[test]
 fn every_text_is_translated_in_every_language() {
     let (content, _) = load(&game_packs());
     let missing = content.translations.missing(&content.translation_keys());

@@ -1,0 +1,10 @@
+// Rises from the bottom of water and bursts at the surface.
+Particle(
+    texture: Some("strata:bubble"),
+    lifetime: (1.5, 3.0),
+    size: (0.08, 0.14),
+    gravity: -3.0,
+    drag: 0.2,
+    in_liquid: true,
+    chance: 0.04,
+)

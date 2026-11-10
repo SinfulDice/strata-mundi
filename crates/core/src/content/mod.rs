@@ -6,6 +6,7 @@ mod fire;
 mod fluid;
 mod item;
 mod liquid;
+mod particle;
 mod png_file;
 mod registry;
 mod textures;
@@ -21,8 +22,12 @@ pub use fluid::{
 };
 pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
+pub use particle::{
+    BlockParticles, ImpactDef, MAX_BURST, Particle, ParticleDef, ParticleTriggersDef,
+    default_breaking,
+};
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
-pub use registry::{BlockId, EntityTypeId, ItemId, Registry, RegistryId, TextureId};
+pub use registry::{BlockId, EntityTypeId, ItemId, ParticleId, Registry, RegistryId, TextureId};
 pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
 pub use tint::{BiomeTints, BlockTint, Tint, TintFaces, TintKind, UNTINTED_ALPHA};
 
@@ -49,6 +54,7 @@ pub struct Content {
     /// Day cycles and skies by dimension.
     pub days: BTreeMap<Identifier, DayCycle>,
     pub skies: BTreeMap<Identifier, Sky>,
+    pub particles: Registry<ParticleId, Particle>,
 }
 
 /// Identifier of the empty block, always `BlockId::AIR`.
@@ -64,7 +70,8 @@ impl Content {
         let mut errors = Vec::new();
         let presentation = PackSet::joined(packs, resource_packs);
         let textures = TextureLibrary::load(&presentation, &mut errors);
-        let (blocks, fluids) = load_blocks(packs, &textures, &mut errors);
+        let particles = particle::load_particles(&presentation, &textures, &mut errors);
+        let (blocks, fluids) = load_blocks(packs, &textures, &particles, &mut errors);
         let entities = entity::load_entities(packs, &textures, &mut errors);
         let known = Known {
             blocks: &blocks,
@@ -85,6 +92,7 @@ impl Content {
             cinematics,
             days,
             skies,
+            particles,
         };
         (content, errors)
     }
@@ -173,6 +181,7 @@ impl Content {
 fn load_blocks(
     packs: &PackSet,
     textures: &TextureLibrary,
+    particles: &Registry<ParticleId, Particle>,
     errors: &mut Vec<PackError>,
 ) -> (Registry<BlockId, Block>, BTreeMap<BlockId, Fluid>) {
     let mut blocks = Registry::default();
@@ -203,6 +212,8 @@ fn load_blocks(
             }),
         });
         let placement = value.placement;
+        let block_particles =
+            particle::block_particles(&value.particles, particles, &source, &mut *errors);
         let fluid_def = value.fluid;
         let block = Block {
             solid: value.solid,
@@ -225,6 +236,7 @@ fn load_blocks(
             flammability: value.flammability,
             fire: value.fire.map(FireDef::clamped),
             tint: value.tint,
+            particles: block_particles,
         };
         let inserted = match (fluid_def, placement) {
             (Some(def), Placement::Fixed) => {

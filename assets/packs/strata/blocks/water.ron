@@ -15,4 +15,5 @@ Block(
         view: (fog_color: "#1e4a8c", fog_distance: 12.0, animation: Ripple),
     ),
     tint: (kind: Water),
+    particles: (breaking: None, drip: Some("strata:water_drip"), ambient: Some("strata:bubble")),
 )

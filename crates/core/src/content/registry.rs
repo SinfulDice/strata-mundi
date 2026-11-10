@@ -47,6 +47,10 @@ impl<K: RegistryId, T> Registry<K, T> {
         self.values.get(key.index())
     }
 
+    pub fn get_mut(&mut self, key: K) -> Option<&mut T> {
+        self.values.get_mut(key.index())
+    }
+
     pub fn key(&self, id: &Identifier) -> Option<K> {
         self.lookup.get(id).map(|&index| K::from_index(index))
     }
@@ -105,6 +109,10 @@ registry_id!(ItemId);
 registry_id!(
     /// Numeric id of an entity type (boats; creatures from v0.4).
     EntityTypeId
+);
+registry_id!(
+    /// Numeric id of a particle (client-side effects only).
+    ParticleId
 );
 registry_id!(
     /// Layer in the block texture array; 0 is the "missing texture" pattern.
