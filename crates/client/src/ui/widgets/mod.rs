@@ -125,6 +125,14 @@ fn draw_node(node: &Node, parent: Rect, d: &mut Draw<'_, '_>) {
                 draw_node(child, rect, d);
             }
         }
+        Node::Group { id, children } => {
+            if d.model.shown(id) {
+                for child in children {
+                    draw_node(child, parent, d);
+                }
+            }
+        }
+        Node::Image { .. } => controls::image(d, node, parent),
         Node::Label { .. } => controls::label(d, node, parent),
         Node::Button { .. } => controls::button(d, node, parent),
         Node::TextField { .. } => controls::text_field(d, node, parent),

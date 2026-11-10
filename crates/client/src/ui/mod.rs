@@ -32,6 +32,7 @@ pub struct ScreenDefs {
     pub title: ScreenDef,
     pub worlds: ScreenDef,
     pub create_world: ScreenDef,
+    pub world_generation: ScreenDef,
     pub confirm_delete: ScreenDef,
     pub pause: ScreenDef,
     pub options: ScreenDef,
@@ -43,13 +44,14 @@ pub struct ScreenDefs {
 }
 
 impl ScreenDefs {
-    fn all(&self) -> [&ScreenDef; 13] {
+    fn all(&self) -> [&ScreenDef; 14] {
         [
             &self.hud,
             &self.inventory,
             &self.title,
             &self.worlds,
             &self.create_world,
+            &self.world_generation,
             &self.confirm_delete,
             &self.pause,
             &self.options,
@@ -90,6 +92,7 @@ impl UiAssets {
             title: read("title")?,
             worlds: read("worlds")?,
             create_world: read("create_world")?,
+            world_generation: read("world_generation")?,
             confirm_delete: read("confirm_delete")?,
             pause: read("pause")?,
             options: read("options")?,

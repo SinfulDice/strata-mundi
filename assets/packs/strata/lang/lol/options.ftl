@@ -76,6 +76,11 @@ option-particles-help = BITZ OV BROKEN BLOKZ, DRIPPY DROPZ, BUBBLZ. SUM: LES BIT
 particles-off = NO SPARKLEZ
 particles-reduced = SUM SPARKLEZ
 particles-full = ALL TEH SPARKLEZ
+option-map-preview = MAP PEEK
+option-map-preview-help = TINY MAP OV TEH WORLD IN TEH MAKER, DRAWD IN TEH BAK. BLURRY: FOUR TIEMS LES DOTZ.
+map-preview-off = NO PEEK
+map-preview-coarse = BLURRY
+map-preview-detailed = SHARP
 option-mesh-threads = MESH THREADZ
 option-mesh-threads-help = MOAR = WORLD SHOWZ FASTR, MOAR CPU.
 option-world-threads = WORLD THREADZ

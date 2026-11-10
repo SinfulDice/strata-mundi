@@ -9,6 +9,7 @@ mod cinematic;
 mod debug_overlay;
 pub mod entities;
 mod gameplay;
+pub mod generation;
 mod hotbar;
 pub mod input;
 mod interaction;

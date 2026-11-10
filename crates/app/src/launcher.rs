@@ -8,6 +8,7 @@ use anyhow::Context;
 use glam::DVec3;
 use std::path::PathBuf;
 use std::sync::Arc;
+use strata_client::generation::{GenerationCatalog, MapSource};
 use strata_client::launcher::{LaunchError, Launcher, Panorama, RunningWorld};
 use strata_client::settings::Settings;
 use strata_client::ui::UiAssets;
@@ -169,6 +170,17 @@ impl Launcher for GameLauncher {
                 None
             }
         }
+    }
+
+    fn generation_catalog(&self) -> GenerationCatalog {
+        crate::maps::catalog(&self.worldgen)
+    }
+
+    fn map_source(&self) -> Arc<dyn MapSource> {
+        Arc::new(crate::maps::GeneratorMaps {
+            worldgen: Arc::clone(&self.worldgen),
+            threads: self.generation_threads,
+        })
     }
 
     fn panorama(&self) -> Panorama {

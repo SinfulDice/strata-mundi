@@ -76,6 +76,11 @@ option-particles-help = Éclats des blocs cassés, gouttes sous les plafonds, bu
 particles-off = Désactivées
 particles-reduced = Réduites
 particles-full = Complètes
+option-map-preview = Aperçu de la carte
+option-map-preview-help = Carte du monde dans l'éditeur de génération, calculée en arrière-plan. Grossier : quatre fois moins de points.
+map-preview-off = Désactivé
+map-preview-coarse = Grossier
+map-preview-detailed = Détaillé
 option-mesh-threads = Fils de maillage
 option-mesh-threads-help = Plus = monde affiché plus vite, plus de CPU.
 option-world-threads = Fils de génération

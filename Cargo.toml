@@ -17,6 +17,7 @@ strata-protocol = { path = "crates/protocol" }
 strata-client = { path = "crates/client" }
 
 anyhow = "1"
+arboard = { version = "3.7", default-features = false }
 bytemuck = { version = "1", features = ["derive"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 clap = { version = "4", features = ["derive"] }

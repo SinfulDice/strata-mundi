@@ -41,6 +41,18 @@ pub trait ScreenModel {
     fn tooltip(&self, _id: &str, _index: usize) -> Option<String> {
         None
     }
+    /// Whether a `Group` is drawn.
+    fn shown(&self, _id: &str) -> bool {
+        true
+    }
+    /// Where the picture of an `Image` is in the interface atlas.
+    fn image(&self, _id: &str) -> Option<Rect> {
+        None
+    }
+    /// Back (Escape, B) pressed: `true` if the model handled it (else the menu closes).
+    fn back(&mut self) -> bool {
+        false
+    }
     /// Clicked, or confirmed with Enter / the A button.
     fn activate(&mut self, _id: &str, _index: usize) {}
     /// Left/right on a focused slider or option row (or a click at `fraction` of its width).
@@ -51,6 +63,8 @@ pub trait ScreenModel {
     fn quick_slot(&mut self, _id: &str, _index: usize, _slot: usize) {}
     /// Characters typed into a text field (`\u{8}` erases one).
     fn type_text(&mut self, _id: &str, _text: &str) {}
+    /// Text read from the clipboard for a `Effect::Paste` request.
+    fn paste(&mut self, _id: &str, _text: &str) {}
 }
 
 /// One line of a `Log` widget.

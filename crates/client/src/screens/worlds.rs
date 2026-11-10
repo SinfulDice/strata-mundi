@@ -1,16 +1,12 @@
-//! World list, world creation and delete confirmation.
+//! World list and delete confirmation.
 
+use super::creation::CreateForm;
 use super::menu::{Effect, Menu, Shared, UiAction};
 use crate::ui::{ListRow, ScreenModel};
-use strata_core::coords::DEFAULT_WORLD_BORDER;
-use strata_protocol::{GameMode, NewWorld, WorldStatus, WorldSummary};
+use strata_protocol::{GameMode, WorldStatus, WorldSummary};
 
 /// Rows of the list visible at once (matches `worlds.ron`).
 pub const VISIBLE_ROWS: usize = 5;
-const MAX_NAME: usize = 32;
-const MAX_SEED: usize = 32;
-const MAX_BORDER_DIGITS: usize = 8;
-const MIN_BORDER: i32 = 1_000;
 
 pub struct WorldsModel<'a> {
     pub selected: &'a mut Option<usize>,
@@ -86,7 +82,7 @@ impl ScreenModel for WorldsModel<'_> {
                 self.open_selected();
                 return;
             }
-            "create" => Effect::Push(Menu::CreateWorld(CreateForm::new(&self.shared))),
+            "create" => Effect::Push(Menu::CreateWorld(Box::new(CreateForm::new(&self.shared)))),
             "delete" => match self.chosen() {
                 Some(world) => Effect::Push(Menu::ConfirmDelete {
                     id: world.id.clone(),
@@ -117,139 +113,6 @@ impl WorldsModel<'_> {
         };
         self.shared.effects.push(effect);
     }
-}
-
-/// What the "new world" screen is filling in.
-pub struct CreateForm {
-    pub name: String,
-    default_name: String,
-    pub seed: String,
-    pub border: String,
-    pub mode: GameMode,
-    pub fluids: bool,
-    pub day_cycle: bool,
-    pub fire_spread: bool,
-    pub fire_destroy: bool,
-}
-
-impl CreateForm {
-    pub fn new(shared: &Shared<'_>) -> Self {
-        let default_name = shared.tr("ui-new-world-default-name");
-        Self {
-            name: default_name.clone(),
-            default_name,
-            seed: String::new(),
-            border: DEFAULT_WORLD_BORDER.to_string(),
-            mode: GameMode::Creative,
-            fluids: true,
-            day_cycle: true,
-            fire_spread: true,
-            fire_destroy: true,
-        }
-    }
-
-    fn world(&self) -> NewWorld {
-        let border = self
-            .border
-            .parse::<i32>()
-            .unwrap_or(DEFAULT_WORLD_BORDER)
-            .clamp(MIN_BORDER, DEFAULT_WORLD_BORDER);
-        let name = self.name.trim();
-        NewWorld {
-            name: if name.is_empty() {
-                &self.default_name
-            } else {
-                name
-            }
-            .to_owned(),
-            seed: self.seed.trim().to_owned(),
-            mode: self.mode,
-            border,
-            fluids: self.fluids,
-            day_cycle: self.day_cycle,
-            fire_spread: self.fire_spread,
-            fire_destroy: self.fire_destroy,
-            generation: Default::default(),
-        }
-    }
-}
-
-pub struct CreateModel<'a> {
-    pub form: &'a mut CreateForm,
-    pub shared: Shared<'a>,
-}
-
-impl ScreenModel for CreateModel<'_> {
-    fn text(&self, id: &str) -> Option<String> {
-        match id {
-            "name" => Some(self.form.name.clone()),
-            "seed" => Some(self.form.seed.clone()),
-            "border" => Some(self.form.border.clone()),
-            "mode" => Some(self.shared.tr_with(
-                "ui-new-world-mode",
-                &[("mode", self.shared.tr(mode_key(self.form.mode)))],
-            )),
-            "fluids" => Some(self.shared.tr_with(
-                "ui-new-world-fluids",
-                &[("flow", on_off(self.form.fluids).to_owned())],
-            )),
-            "day_cycle" => Some(self.shared.tr_with(
-                "ui-new-world-day-cycle",
-                &[("cycle", on_off(self.form.day_cycle).to_owned())],
-            )),
-            "fire_spread" => Some(self.shared.tr_with(
-                "ui-new-world-fire-spread",
-                &[("spread", on_off(self.form.fire_spread).to_owned())],
-            )),
-            "fire_destroy" => Some(self.shared.tr_with(
-                "ui-new-world-fire-destroy",
-                &[("destroy", on_off(self.form.fire_destroy).to_owned())],
-            )),
-            _ => None,
-        }
-    }
-
-    fn type_text(&mut self, id: &str, text: &str) {
-        match id {
-            "name" => edit(&mut self.form.name, text, MAX_NAME, |_| true),
-            "seed" => edit(&mut self.form.seed, text, MAX_SEED, |_| true),
-            "border" => edit(&mut self.form.border, text, MAX_BORDER_DIGITS, |c| {
-                c.is_ascii_digit()
-            }),
-            _ => {}
-        }
-    }
-
-    fn activate(&mut self, id: &str, _: usize) {
-        let effect = match id {
-            // Survival arrives in v0.3: creative is the only mode for now.
-            "mode" => return,
-            "fluids" => {
-                self.form.fluids = !self.form.fluids;
-                return;
-            }
-            "day_cycle" => {
-                self.form.day_cycle = !self.form.day_cycle;
-                return;
-            }
-            "fire_spread" => {
-                self.form.fire_spread = !self.form.fire_spread;
-                return;
-            }
-            "fire_destroy" => {
-                self.form.fire_destroy = !self.form.fire_destroy;
-                return;
-            }
-            "create" => Effect::Action(UiAction::Create(self.form.world())),
-            "back" => Effect::Pop,
-            _ => return,
-        };
-        self.shared.effects.push(effect);
-    }
-}
-
-fn on_off(on: bool) -> &'static str {
-    if on { "on" } else { "off" }
 }
 
 pub struct ConfirmModel<'a> {

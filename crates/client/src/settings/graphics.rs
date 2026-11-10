@@ -133,6 +133,29 @@ impl ParticleMode {
     }
 }
 
+/// Map of the generation editor: its size, or none.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MapPreview {
+    Off,
+    /// Half the pixels on each side, as wide an area.
+    Coarse,
+    #[default]
+    Detailed,
+}
+
+impl MapPreview {
+    pub const ALL: [MapPreview; 3] = [Self::Off, Self::Coarse, Self::Detailed];
+
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Off => "off",
+            Self::Coarse => "coarse",
+            Self::Detailed => "detailed",
+        }
+    }
+}
+
 /// How light is computed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -195,6 +218,7 @@ pub struct GraphicsSettings {
     pub anisotropy: u32,
     pub vegetation: Vegetation,
     pub particles: ParticleMode,
+    pub map_preview: MapPreview,
     /// Background threads for meshing.
     pub worker_threads: usize,
     /// Background threads for world generation (integrated server).
@@ -261,6 +285,10 @@ impl GraphicsSettings {
                 Preset::VeryLow => ParticleMode::Off,
                 Preset::Low | Preset::Ds => ParticleMode::Reduced,
                 _ => ParticleMode::Full,
+            },
+            map_preview: match preset {
+                Preset::VeryLow | Preset::Low | Preset::Ds => MapPreview::Coarse,
+                _ => MapPreview::Detailed,
             },
             worker_threads: threads,
             generation_threads: threads,
@@ -350,6 +378,7 @@ mod tests {
         assert_eq!(ds.vegetation, Vegetation::Reduced);
         assert_eq!(ds.clouds, CloudMode::Flat);
         assert_eq!(ds.particles, ParticleMode::Reduced);
+        assert_eq!(ds.map_preview, MapPreview::Coarse);
         let very_low = GraphicsSettings::for_preset(Preset::VeryLow);
         assert_eq!(very_low.particles, ParticleMode::Off);
     }

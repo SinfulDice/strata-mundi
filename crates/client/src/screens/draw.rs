@@ -34,6 +34,7 @@ impl Screens {
             chosen => chosen.min(auto_scale(size.0, size.1, u32::MAX)),
         };
         self.refresh_font(gpu, content);
+        self.upload_preview(gpu);
         let screen = Rect::new(0, 0, size.0 / self.scale, size.1 / self.scale);
         let editor = matches!(self.stack.last(), Some(Menu::HudEditor { .. }));
         let language = self.settings.interface.language.clone();
@@ -108,6 +109,7 @@ impl Screens {
                 newer_version: self.newer_version.as_deref(),
                 console: &self.console,
                 packs: &self.available_packs,
+                generation: &self.generation,
                 effects: &mut Vec::new(),
             };
             let def = menu.def(&self.assets.screens);

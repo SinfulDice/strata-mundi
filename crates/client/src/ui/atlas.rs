@@ -12,6 +12,9 @@ const WORLD_ICONS_PER_ROW: u32 = ATLAS_SIZE / ICON_SIZE.0;
 /// First row kept free for world captures.
 const WORLD_ICONS_TOP: u32 =
     ATLAS_SIZE - WORLD_ICON_SLOTS.div_ceil(WORLD_ICONS_PER_ROW) * ICON_SIZE.1;
+/// The map of the generation editor, above the world captures.
+const PREVIEW_SIZE: u32 = 96;
+const PREVIEW_TOP: u32 = WORLD_ICONS_TOP - PREVIEW_SIZE;
 /// Icons are drawn twice the texture resolution (crisp at the 16-pixel slot size scaled up).
 const MAX_ICON: u32 = 64;
 
@@ -41,7 +44,7 @@ impl UiAtlas {
                 if shelf.0 + icon_size > ATLAS_SIZE {
                     shelf = (0, shelf.1 + icon_size);
                 }
-                if shelf.1 + icon_size > WORLD_ICONS_TOP {
+                if shelf.1 + icon_size > PREVIEW_TOP {
                     tracing::warn!("interface atlas full: some item icons are missing");
                     return None;
                 }
@@ -69,6 +72,12 @@ impl UiAtlas {
         let x = (slot % WORLD_ICONS_PER_ROW) * ICON_SIZE.0;
         let y = WORLD_ICONS_TOP + (slot / WORLD_ICONS_PER_ROW) * ICON_SIZE.1;
         Some(Rect::new(x as i32, y as i32, ICON_SIZE.0, ICON_SIZE.1))
+    }
+
+    /// Where a map of `size` pixels goes (`None` if larger than the place kept for it).
+    pub fn preview_slot(size: (u32, u32)) -> Option<Rect> {
+        let fits = size.0 <= PREVIEW_SIZE && size.1 <= PREVIEW_SIZE && size.0 * size.1 > 0;
+        fits.then(|| Rect::new(0, PREVIEW_TOP as i32, size.0, size.1))
     }
 
     /// Glyph rectangle in the atlas and pen advance, in atlas pixels.

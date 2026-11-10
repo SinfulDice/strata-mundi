@@ -7,8 +7,8 @@ use crate::settings::{
     SENSITIVITY, VERTICAL_DISTANCE, VOLUME,
 };
 use crate::settings::{
-    AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, MusicFrequency, ParticleMode,
-    Preset, Settings, SpatialAudio, Vegetation, default_worker_threads,
+    AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, MapPreview, MusicFrequency,
+    ParticleMode, Preset, Settings, SpatialAudio, Vegetation, default_worker_threads,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -34,6 +34,7 @@ pub enum Setting {
     Anisotropy,
     Vegetation,
     Particles,
+    MapPreview,
     MeshThreads,
     WorldThreads,
     MasterVolume,
@@ -86,6 +87,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Anisotropy,
     Setting::Vegetation,
     Setting::Particles,
+    Setting::MapPreview,
     Setting::MeshThreads,
     Setting::WorldThreads,
 ];
@@ -205,6 +207,10 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
             None,
         ),
         Setting::Particles => (shared.tr(&format!("particles-{}", g.particles.id())), None),
+        Setting::MapPreview => (
+            shared.tr(&format!("map-preview-{}", g.map_preview.id())),
+            None,
+        ),
         Setting::MeshThreads => (threads_label(shared, g.worker_threads), None),
         Setting::WorldThreads => (threads_label(shared, g.generation_threads), None),
         Setting::MasterVolume
@@ -320,6 +326,7 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Anisotropy => g.anisotropy = cycle(&ANISOTROPY, g.anisotropy, step),
         Setting::Vegetation => g.vegetation = cycle(&Vegetation::ALL, g.vegetation, step),
         Setting::Particles => g.particles = cycle(&ParticleMode::ALL, g.particles, step),
+        Setting::MapPreview => g.map_preview = cycle(&MapPreview::ALL, g.map_preview, step),
         Setting::MeshThreads => g.worker_threads = cycle_threads(g.worker_threads, cores, step),
         Setting::WorldThreads => {
             g.generation_threads = cycle_threads(g.generation_threads, cores, step)

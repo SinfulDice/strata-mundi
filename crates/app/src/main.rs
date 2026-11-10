@@ -5,6 +5,7 @@ mod content;
 mod crash;
 mod launcher;
 mod logging;
+mod maps;
 mod music_render;
 mod offline;
 mod paths;

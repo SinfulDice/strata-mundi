@@ -34,6 +34,15 @@ pub enum Node {
         size: (u32, u32),
         children: Vec<Node>,
     },
+    /// Children drawn only while the model shows the group (a tab's content).
+    Group { id: String, children: Vec<Node> },
+    /// A picture made by the model (a map), stretched to `size`.
+    Image {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        size: (u32, u32),
+    },
     /// `text` is a translation key (it may hold markup, see `ui::rich`), or `@name` for
     /// text supplied by the screen model.
     Label {
@@ -136,8 +145,9 @@ fn one() -> u32 {
 impl Node {
     pub fn at(&self) -> Option<(i32, i32)> {
         match self {
-            Self::Shade => None,
+            Self::Shade | Self::Group { .. } => None,
             Self::Panel { at, .. }
+            | Self::Image { at, .. }
             | Self::Label { at, .. }
             | Self::Button { at, .. }
             | Self::Slider { at, .. }
@@ -158,6 +168,8 @@ impl Node {
         match self {
             Self::Shade => None,
             Self::Panel { id, .. }
+            | Self::Group { id, .. }
+            | Self::Image { id, .. }
             | Self::Label { id, .. }
             | Self::Button { id, .. }
             | Self::Slider { id, .. }
@@ -194,7 +206,9 @@ impl ScreenDef {
 fn collect_keys(nodes: &[Node], keys: &mut Vec<String>) {
     for node in nodes {
         match node {
-            Node::Panel { children, .. } => collect_keys(children, keys),
+            Node::Panel { children, .. } | Node::Group { children, .. } => {
+                collect_keys(children, keys)
+            }
             Node::Label { text, .. } | Node::Button { text, .. } if !text.starts_with('@') => {
                 keys.push(text.clone());
             }

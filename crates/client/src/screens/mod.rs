@@ -1,6 +1,7 @@
 //! Everything drawn over the world: the HUD in play, menus on demand, the title screen.
 
 mod console;
+mod creation;
 mod draw;
 mod editor;
 mod handling;
@@ -22,6 +23,7 @@ use crate::render::{Gpu, UiPipeline};
 use crate::settings::{FontChoice, Settings};
 use crate::ui::{Hit, ICON_SIZE, Rect, ScreenModel, UiAssets, UiAtlas};
 use console::ConsoleLog;
+pub use creation::GenerationSources;
 use draw::key_rows;
 use keyboard::{Keyboard, KeyboardModel};
 use menu::{Effect, Menu, Shared};
@@ -83,6 +85,11 @@ pub struct Screens {
     console: ConsoleLog,
     /// Resource packs found on disk, for the options.
     pub available_packs: Vec<String>,
+    pub generation: GenerationSources,
+    /// Opened on first use; kept, since on X11 copied text lives as long as it does.
+    clipboard: Option<arboard::Clipboard>,
+    /// Request number of the map in the atlas (`None` after the atlas is rebuilt).
+    preview_uploaded: Option<u64>,
 }
 
 impl Screens {
@@ -125,6 +132,9 @@ impl Screens {
             atlas_font: (font, 1),
             console: ConsoleLog::default(),
             available_packs: Vec::new(),
+            generation: GenerationSources::default(),
+            clipboard: None,
+            preview_uploaded: None,
         }
     }
 
@@ -165,6 +175,7 @@ impl Screens {
         self.atlas = atlas;
         self.atlas_font = (FontChoice::Pixel, 1);
         self.pipeline = pipeline;
+        self.preview_uploaded = None;
         self.labels_stale = true;
     }
 
@@ -179,6 +190,7 @@ impl Screens {
         self.atlas_font = (choice, density);
         self.atlas = UiAtlas::build(content, source.font(density));
         self.pipeline.write_atlas(gpu, 0, 0, &self.atlas.image);
+        self.preview_uploaded = None;
     }
 
     /// Server answers to console commands.
@@ -273,10 +285,61 @@ impl Screens {
             newer_version: self.newer_version.as_deref(),
             console: &self.console,
             packs: &self.available_packs,
+            generation: &self.generation,
             effects: &mut self.effects,
         };
         let mut model = menu::model(menu, shared);
         Some(f(model.as_mut()))
+    }
+
+    /// Copies the newest map of the generation editor into the atlas.
+    fn upload_preview(&mut self, gpu: &Gpu) {
+        let Some(Menu::CreateWorld(form)) = self.stack.last_mut() else {
+            return;
+        };
+        let quality = self.settings.graphics.map_preview;
+        let Some(image) = form.refresh_preview(quality, self.generation.maps.as_ref()) else {
+            return;
+        };
+        if self.preview_uploaded == Some(image.request) {
+            return;
+        }
+        let Some(place) = UiAtlas::preview_slot(image.size) else {
+            return;
+        };
+        let pixels = image.pixels.iter().flat_map(|&[r, g, b]| [r, g, b, 255]);
+        if let Some(rgba) = RgbaImage::from_bytes(place.w, place.h, pixels.collect()) {
+            self.pipeline
+                .write_atlas(gpu, place.x as u32, place.y as u32, &rgba);
+            self.preview_uploaded = Some(image.request);
+        }
+    }
+
+    fn copy_text(&mut self, text: String) {
+        let copied = self.clipboard().map(|c| c.set_text(text));
+        if let Some(Err(error)) = copied {
+            tracing::warn!(%error, "nothing copied");
+        }
+    }
+
+    fn paste_text(&mut self) -> Option<String> {
+        match self.clipboard()?.get_text() {
+            Ok(text) => Some(text),
+            Err(error) => {
+                tracing::warn!(%error, "nothing to paste");
+                None
+            }
+        }
+    }
+
+    fn clipboard(&mut self) -> Option<&mut arboard::Clipboard> {
+        if self.clipboard.is_none() {
+            match arboard::Clipboard::new() {
+                Ok(clipboard) => self.clipboard = Some(clipboard),
+                Err(error) => tracing::warn!(%error, "no clipboard"),
+            }
+        }
+        self.clipboard.as_mut()
     }
 
     /// Presses key `index` of the on-screen keyboard: (field, text to type, closed).
@@ -344,6 +407,24 @@ const CODE_KEYS: &[&str] = &[
     "ui-key-shift",
     "ui-key-space",
     "ui-key-done",
+    "ui-gen-type",
+    "ui-gen-tab-general",
+    "ui-gen-tab-layers",
+    "ui-gen-tab-biome",
+    "ui-gen-tab-code",
+    "ui-gen-biome-size",
+    "ui-gen-sea-level",
+    "ui-gen-caves",
+    "ui-gen-ores",
+    "ui-gen-percent",
+    "ui-gen-default",
+    "ui-gen-thickness",
+    "ui-gen-block",
+    "ui-gen-layer-thickness",
+    "ui-gen-code-applied",
+    "ui-gen-preview-off",
+    "ui-gen-preview-busy",
+    "ui-gen-preview-legend",
 ];
 
 #[cfg(test)]

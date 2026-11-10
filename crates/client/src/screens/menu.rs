@@ -2,12 +2,13 @@
 //! answering for each one.
 
 use super::console::{ConsoleLog, ConsoleModel, ConsoleState};
+use super::creation::{CreateForm, CreateModel, GenerationModel, GenerationSources, Page};
 use super::editor::EditorModel;
 use super::inventory::{InventoryModel, InventoryState};
 use super::options::{OptionsModel, OptionsState};
 use super::pause::{CrashModel, NoticeModel, PauseModel};
 use super::title::TitleModel;
-use super::worlds::{ConfirmModel, CreateForm, CreateModel, WorldsModel};
+use super::worlds::{ConfirmModel, WorldsModel};
 use crate::hotbar::Hotbar;
 use crate::input::Action;
 use crate::settings::Settings;
@@ -22,7 +23,7 @@ pub enum Menu {
         selected: Option<usize>,
         scroll: usize,
     },
-    CreateWorld(CreateForm),
+    CreateWorld(Box<CreateForm>),
     ConfirmDelete {
         id: String,
         name: String,
@@ -46,6 +47,7 @@ impl Menu {
         match self {
             Self::Title => &defs.title,
             Self::Worlds { .. } => &defs.worlds,
+            Self::CreateWorld(form) if form.page == Page::Generation => &defs.world_generation,
             Self::CreateWorld(_) => &defs.create_world,
             Self::ConfirmDelete { .. } => &defs.confirm_delete,
             Self::Pause => &defs.pause,
@@ -73,6 +75,12 @@ pub enum Effect {
     /// Interface settings changed: apply and write them.
     SettingsChanged,
     Action(UiAction),
+    /// Nothing focused any more (the widgets on screen changed).
+    ClearFocus,
+    /// Text for the clipboard.
+    Copy(String),
+    /// The clipboard's text, for the model's `paste` on this field.
+    Paste(String),
 }
 
 /// Requests only the session can carry out (they need the launcher or the server).
@@ -108,6 +116,7 @@ pub struct Shared<'a> {
     pub console: &'a ConsoleLog,
     /// Resource packs that can be enabled.
     pub packs: &'a [String],
+    pub generation: &'a GenerationSources,
     pub effects: &'a mut Vec<Effect>,
 }
 
@@ -138,7 +147,10 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
             scroll,
             shared,
         }),
-        Menu::CreateWorld(form) => Box::new(CreateModel { form, shared }),
+        Menu::CreateWorld(form) => match form.page {
+            Page::Generation => Box::new(GenerationModel { form, shared }),
+            Page::Main => Box::new(CreateModel { form, shared }),
+        },
         Menu::ConfirmDelete { id, name } => Box::new(ConfirmModel { id, name, shared }),
         Menu::Pause => Box::new(PauseModel { shared }),
         Menu::Options(state) => Box::new(OptionsModel {

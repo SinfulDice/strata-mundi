@@ -118,6 +118,7 @@ impl Session {
             audio,
         };
         session.screens.available_packs = session.launcher.resource_packs();
+        session.refresh_generation();
         match config.start {
             Some(running) => session.enter_world(running)?,
             None => {

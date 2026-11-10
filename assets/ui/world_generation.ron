@@ -1,0 +1,52 @@
+// Generation editor, opened from the new world screen: one group per tab (the model shows
+// one), the map on the right. Visible rows: 7 layers, 10 biomes (screens/creation/screen.rs).
+Screen(
+    root: [
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (316, 218),
+            children: [
+                Label(id: "title", anchor: TopLeft, at: (8, 4), text: "ui-gen-title"),
+                Tabs(id: "tabs", anchor: TopLeft, at: (8, 17), size: (196, 13)),
+                Group(id: "general", children: [
+                    Slider(id: "world_type", anchor: TopLeft, at: (8, 34), size: (196, 16)),
+                    Slider(id: "biome_size", anchor: TopLeft, at: (8, 56), size: (196, 16)),
+                    Slider(id: "sea_level", anchor: TopLeft, at: (8, 74), size: (196, 16)),
+                    Slider(id: "caves", anchor: TopLeft, at: (8, 92), size: (196, 16)),
+                    Slider(id: "ores", anchor: TopLeft, at: (8, 110), size: (196, 16)),
+                    Label(id: "general_help", anchor: TopLeft, at: (8, 132), text: "ui-gen-general-help", dim: true),
+                ]),
+                Group(id: "layers", children: [
+                    OptionList(id: "layers", anchor: TopLeft, at: (8, 34), size: (196, 91), row_height: 13),
+                    Slider(id: "block", anchor: TopLeft, at: (8, 128), size: (196, 14)),
+                    Slider(id: "thickness", anchor: TopLeft, at: (8, 145), size: (196, 14)),
+                    Button(id: "add", anchor: TopLeft, at: (8, 163), size: (47, 14), text: "ui-gen-layer-add"),
+                    Button(id: "remove", anchor: TopLeft, at: (57, 163), size: (47, 14), text: "ui-gen-layer-remove"),
+                    Button(id: "up", anchor: TopLeft, at: (106, 163), size: (47, 14), text: "ui-gen-layer-up"),
+                    Button(id: "down", anchor: TopLeft, at: (155, 163), size: (49, 14), text: "ui-gen-layer-down"),
+                ]),
+                Group(id: "biome", children: [
+                    OptionList(id: "biomes", anchor: TopLeft, at: (8, 34), size: (196, 130), row_height: 13),
+                ]),
+                Group(id: "code", children: [
+                    Label(id: "code_label", anchor: TopLeft, at: (8, 34), text: "ui-gen-code-current", dim: true),
+                    Label(id: "code_0", anchor: TopLeft, at: (8, 46), text: "@code_0"),
+                    Label(id: "code_1", anchor: TopLeft, at: (8, 56), text: "@code_1"),
+                    Label(id: "code_2", anchor: TopLeft, at: (8, 66), text: "@code_2"),
+                    Button(id: "copy", anchor: TopLeft, at: (8, 78), size: (96, 14), text: "ui-gen-copy"),
+                    Label(id: "paste_label", anchor: TopLeft, at: (8, 100), text: "ui-gen-code-paste", dim: true),
+                    TextField(id: "code_field", anchor: TopLeft, at: (8, 111), size: (196, 12), placeholder: "ui-gen-code-placeholder"),
+                    Button(id: "paste", anchor: TopLeft, at: (8, 127), size: (96, 14), text: "ui-gen-paste"),
+                    Button(id: "apply", anchor: TopLeft, at: (108, 127), size: (96, 14), text: "ui-gen-apply"),
+                    Label(id: "code_status", anchor: TopLeft, at: (8, 146), text: "@code_status", dim: true),
+                ]),
+                Image(id: "preview", anchor: TopLeft, at: (212, 34), size: (96, 96)),
+                Label(id: "preview_status", anchor: TopLeft, at: (212, 133), text: "@preview_status", dim: true),
+                Label(id: "help", anchor: BottomLeft, at: (8, -8), text: "ui-gen-help", dim: true),
+                Button(id: "done", anchor: BottomRight, at: (-8, -5), size: (70, 16), text: "ui-gen-done"),
+            ],
+        ),
+    ],
+)

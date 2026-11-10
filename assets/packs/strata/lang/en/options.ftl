@@ -76,6 +76,11 @@ option-particles-help = Fragments of broken blocks, drips under ceilings, bubble
 particles-off = Off
 particles-reduced = Reduced
 particles-full = Full
+option-map-preview = Map preview
+option-map-preview-help = Map of the world in the generation editor, drawn in the background. Coarse: four times fewer points.
+map-preview-off = Off
+map-preview-coarse = Coarse
+map-preview-detailed = Detailed
 option-mesh-threads = Meshing threads
 option-mesh-threads-help = More = world shown faster, more CPU.
 option-world-threads = Generation threads

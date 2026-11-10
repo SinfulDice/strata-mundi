@@ -1,10 +1,12 @@
 //! What the menus need from the program around the client: the saved worlds and a way
 //! to start a server for one. The client never touches the files itself.
 
+use crate::generation::{GenerationCatalog, MapSource};
 use crate::settings::Settings;
 use crate::ui::UiAssets;
 use crate::world::ClientWorld;
 use glam::DVec3;
+use std::sync::Arc;
 use std::thread::JoinHandle;
 use strata_core::content::Content;
 use strata_core::dimension::DimensionId;
@@ -61,4 +63,8 @@ pub trait Launcher {
     /// Packs and interface files read again from disk, with the `enabled` resource packs
     /// (lowest priority first); `None` if they are unusable.
     fn reload_resources(&self, enabled: &[String]) -> Option<(Content, UiAssets)>;
+    /// World types and biomes offered on the creation screen.
+    fn generation_catalog(&self) -> GenerationCatalog;
+    /// Draws the maps of the generation editor (called from a background thread).
+    fn map_source(&self) -> Arc<dyn MapSource>;
 }

@@ -120,6 +120,27 @@ pub(super) fn text_field(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     d.hit(id, 0, rect, HitKind::TextField);
 }
 
+/// The model's picture, or an empty frame while there is none.
+pub(super) fn image(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
+    let Node::Image {
+        id,
+        anchor,
+        at,
+        size,
+    } = node
+    else {
+        return;
+    };
+    let rect = parent.place(*anchor, d.ctx.offset(id, *at), *size);
+    let theme = d.theme();
+    let (field, light, dark) = (theme.field.0, theme.panel_light.0, theme.panel_dark.0);
+    match d.model.image(id) {
+        Some(source) => d.painter.image(rect, source),
+        None => d.painter.fill(rect, field),
+    }
+    d.painter.bevel(rect, dark, light);
+}
+
 pub(super) fn slider(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     let Node::Slider {
         id,

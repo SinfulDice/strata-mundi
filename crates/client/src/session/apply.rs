@@ -22,9 +22,18 @@ impl Session {
             self.audio.apply_settings(&self.applied.sound);
         }
         self.launcher.configure(&self.applied);
+        self.refresh_generation();
         if self.applied.game.resource_packs != old.game.resource_packs {
             self.apply_resource_packs(&old);
         }
+    }
+
+    /// World types and the map source, with the generation threads just set.
+    pub(super) fn refresh_generation(&mut self) {
+        self.screens.generation = crate::screens::GenerationSources {
+            catalog: std::sync::Arc::new(self.launcher.generation_catalog()),
+            maps: Some(self.launcher.map_source()),
+        };
     }
 
     /// Refused or failed: the previous packs come back, in use and in the file.

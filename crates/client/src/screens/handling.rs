@@ -18,8 +18,8 @@ pub struct Handled {
     pub actions: Vec<UiAction>,
 }
 
-/// Widgets showing a window over longer content (world list, item grid).
-const SCROLLERS: [&str; 2] = ["list", "items"];
+/// Widgets showing a window over longer content (world list, item grid, settings rows).
+const SCROLLERS: [&str; 5] = ["list", "items", "options", "layers", "biomes"];
 
 pub(super) const MOVES: [(Action, Direction); 4] = [
     (Action::MenuUp, Direction::Up),
@@ -52,7 +52,7 @@ impl Screens {
         self.device = input.last_device();
         self.refresh_labels(content);
         if self.in_world && self.stack.is_empty() {
-            if let Some(game) = game.filter(|g| g.cinematic.is_some()) {
+            if let Some(game) = game.as_deref_mut().filter(|g| g.cinematic.is_some()) {
                 return skip_cinematic(input, game);
             }
             let menu = if input.just_pressed(Action::Pause) {
@@ -69,17 +69,22 @@ impl Screens {
             };
             self.effects.push(Effect::Push(menu));
         } else if matches!(self.stack.last(), Some(Menu::Console(_))) {
-            self.handle_console(input, game, content);
+            self.handle_console(input, game.as_deref_mut(), content);
         } else if self.keyboard.is_some() {
-            self.handle_keyboard(input, game, content);
+            self.handle_keyboard(input, game.as_deref_mut(), content);
         } else if self.editing.is_some() {
             if self.handle_typing(input, game.as_deref_mut(), content) {
-                self.handle_menu(input, game, content);
+                self.handle_menu(input, game.as_deref_mut(), content);
             }
         } else {
-            self.handle_menu(input, game, content);
+            self.handle_menu(input, game.as_deref_mut(), content);
         }
-        let actions = self.apply_effects();
+        let (actions, paste) = self.apply_effects();
+        if let Some(field) = paste
+            && let Some(text) = self.paste_text()
+        {
+            self.with_model(game, content, |m| m.paste(&field, &text));
+        }
         // Written once the change is over, not at every frame of a drag.
         if self.settings_dirty && !input.is_held(Action::Attack) {
             self.settings.save(&self.settings_path);
@@ -108,7 +113,11 @@ impl Screens {
         let closes_inventory = input.just_pressed(Action::Inventory)
             && matches!(self.stack.last(), Some(Menu::Inventory(_)));
         if input.just_pressed(Action::MenuBack) || closes_inventory {
-            if !matches!(self.stack.last(), Some(Menu::Title)) {
+            let handled = input.just_pressed(Action::MenuBack)
+                && self
+                    .with_model(game.as_deref_mut(), content, |m| m.back())
+                    .unwrap_or(false);
+            if !handled && !matches!(self.stack.last(), Some(Menu::Title)) {
                 self.effects.push(Effect::Pop);
             }
             return;
@@ -212,7 +221,12 @@ impl Screens {
     ) {
         let steps = input.scroll_steps();
         if steps != 0 {
-            self.with_model(game.as_deref_mut(), content, |m| m.scroll("", -steps));
+            let id = self
+                .focus
+                .as_ref()
+                .map(|f| f.id.clone())
+                .unwrap_or_default();
+            self.with_model(game.as_deref_mut(), content, |m| m.scroll(&id, -steps));
         }
         let tabs = i32::from(input.just_pressed(Action::HotbarNext))
             - i32::from(input.just_pressed(Action::HotbarPrevious));
@@ -345,8 +359,9 @@ impl Screens {
             .cloned()
     }
 
-    fn apply_effects(&mut self) -> Vec<UiAction> {
-        let mut actions = Vec::new();
+    /// The session's actions, and the field waiting for the clipboard's text.
+    fn apply_effects(&mut self) -> (Vec<UiAction>, Option<String>) {
+        let (mut actions, mut paste) = (Vec::new(), None);
         for effect in std::mem::take(&mut self.effects) {
             match effect {
                 Effect::Push(menu) => {
@@ -369,8 +384,14 @@ impl Screens {
                     self.labels_stale = true;
                 }
                 Effect::Action(action) => actions.push(action),
+                Effect::ClearFocus => {
+                    self.focus = None;
+                    self.dragging = None;
+                }
+                Effect::Copy(text) => self.copy_text(text),
+                Effect::Paste(field) => paste = Some(field),
             }
         }
-        actions
+        (actions, paste)
     }
 }

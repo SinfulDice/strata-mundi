@@ -9,6 +9,7 @@ license.workspace = true
 [dependencies]
 strata-core.workspace = true
 strata-protocol.workspace = true
+arboard.workspace = true
 bytemuck.workspace = true
 chrono.workspace = true
 crossbeam-channel.workspace = true
