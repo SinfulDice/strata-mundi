@@ -6,6 +6,7 @@
 - **Jalon en cours** : 8 — Feu et textures vivantes
   - [x] Feu : bloc de feu (lumineux, sans collision, animé à la sous-tâche suivante), propagation aux blocs inflammables (inflammabilité et combustion dans le pack), extinction et usure, ne brûle pas sous l'eau, options de monde (empêcher la propagation, empêcher la destruction), briquet créatif pour allumer ; prévu pour l'extinction par la pluie (v0.5) ; tests (propagation bornée, options, déterminisme)
   - [x] Textures vivantes : textures animées (images et durées du pack ; eau, lave, feu, portail d'essai), textures connectées (verre, bibliothèque — nouveau bloc), variantes aléatoires par position (herbe, pierre…), formats documentés dans `docs/guide-textures.md`, réglage d'animation ; captures
+  - [x] Corrections de la relecture : valeurs du feu dans `FireDef` (pack + `equilibrage.md`), feux replanifiés au chargement d'une colonne, hasard du feu mêlé à la graine et à la dimension (référence figée), banc `fire/prairie_fire_40_ticks` et pas de feu compté triple dans le budget, variantes aléatoires choisies par le shader (fusion gloutonne rétablie), `List` d'une texture multi-images refusé, guide des textures, tests de `commands.rs` séparés
 - **Dernière session** : 10/11/2026
 
 ## Fait
