@@ -14,6 +14,7 @@ Une bonne réserve de boue et de bois de chêne, des champignons à ramasser, et
 
 - **Sol** : herbe sur les îlots, **boue** sous l'eau seulement.
 - **Eau** : peu profonde (quelques blocs au plus), en mares entre les îlots.
+- **Couleurs** : herbe, feuilles et eau y tirent sur le vert olive, et le brouillard sur le vert pâle ; les teintes se fondent doucement aux frontières des biomes (réglage « Mélange des biomes »).
 - **Végétation** : chênes des marais à lianes, herbes hautes, fougères, petits champignons.
 
 ## Conseils

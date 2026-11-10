@@ -14,6 +14,7 @@ A good supply of mud and oak wood, mushrooms to pick, and the perfect setting fo
 
 - **Ground**: grass on the islets, **mud** under the water only.
 - **Water**: shallow (a few blocks at most), in pools between the islets.
+- **Colours**: grass, leaves and water lean olive green, and the fog pale green; tints fade gently across biome borders ("Biome blend" setting).
 - **Vegetation**: swamp oaks with vines, tall grass, ferns, small mushrooms.
 
 ## Tips

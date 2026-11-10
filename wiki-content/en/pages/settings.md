@@ -10,6 +10,10 @@ A preset sets all the graphics at once: **Very low**, **Low**, **Medium**, **Hig
 
 Changes apply **live**, without restarting: the game only redoes what changed (re-meshing the world, textures, window…). Settings are sorted into six tabs (Graphics, Interface, Controls, Keys, Game, Packs) and saved in a single file; an invalid value simply goes back to its default.
 
+## Atmosphere
+
+Two graphics settings dress up the world: **Biome blend** (fades grass, leaf and water colours across borders, in blocks; off: sharp borders) and **Particles** (off, reduced or full: fragments of broken blocks, drips under ceilings, bubbles). Blending rebuilds the meshes; particles set to off cost nothing.
+
 ## Accessibility
 
 A readable font, interface size, colour-blind filters, reduced camera effects and an interface layout editor are all in the Interface tab.

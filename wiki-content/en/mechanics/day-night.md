@@ -8,7 +8,7 @@ On Terra, a day lasts **20 minutes**: about 10 minutes of daylight and 10 of nig
 - **The sun and moon** are big, crisp pixels. The moon has **8 phases**, one per day, from full moon to new moon and back.
 - **Stars** twinkle at night and fade near the horizon and at dawn.
 - **Clouds** drift gently, always the same way, very high up: above the hills, below the great peaks. Their colour follows the time (white by day, pinkish at twilight, dark grey at night). They only move while time passes: when the game is paused, they stop.
-- **Daylight** drops at night but never to zero: you can still see a little by the glow of the sky. Placed lights (torches, lanterns, glowstone) make the difference.
+- **Daylight** drops at night but never to zero: you can still see a little by the glow of the sky. Since 0.2, nights are **noticeably darker**: moonlit terrain stays readable, but a torch has never been more welcome. Placed lights (torches, lanterns, glowstone) make the difference.
 
 ## Setting the time
 

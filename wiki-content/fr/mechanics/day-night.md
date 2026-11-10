@@ -4,11 +4,11 @@ Sur Terra, une journée dure **20 minutes** : environ 10 minutes de jour, 10 de 
 
 ## À voir
 
-- **Le ciel** passe du bleu du jour à l'orangé du crépuscule, puis au bleu sombre de la nuit. Le brouillard et l'horizon suivent.
+- **Le ciel** passe du bleu du jour à l'orangé du crépuscule, puis au bleu sombre de la nuit. Le brouillard et l'horizon suivent, et le brouillard prend aussi la teinte du biome où l'on se trouve.
 - **Le soleil et la lune** sont de gros pixels bien nets. La lune a **8 phases**, une par jour, de la pleine lune à la nouvelle lune, puis retour.
 - **Les étoiles** scintillent la nuit et s'effacent près de l'horizon et à l'aube.
 - **Les nuages** dérivent doucement, toujours dans le même sens, très haut : au-dessus des collines, sous les grands pics. Leur couleur suit l'heure (blancs le jour, rosés au crépuscule, gris sombre la nuit). Le vent ne les fait avancer que tant que le temps passe : en pause, ils s'arrêtent.
-- **La lumière du jour** baisse la nuit sans jamais tomber à zéro : on y voit encore un peu à la lueur du ciel. Les lumières posées (torches, lanternes, pierre lumineuse) font la différence.
+- **La lumière du jour** baisse la nuit sans jamais tomber à zéro : on y voit encore un peu à la lueur du ciel. Depuis la 0.2, les nuits sont **nettement plus sombres** : le terrain au clair de lune reste lisible, mais une torche n'a jamais été aussi appréciée. Les lumières posées (torches, lanternes, pierre lumineuse) font la différence.
 
 ## Régler l'heure
 

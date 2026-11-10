@@ -10,6 +10,10 @@ Le préréglage règle tous les graphismes d'un coup : **Très bas**, **Bas**, *
 
 Les changements s'appliquent **à chaud**, sans redémarrer : le jeu ne refait que ce qui a changé (re-maillage du monde, textures, fenêtre…). Les réglages sont rangés en six onglets (Graphismes, Interface, Commandes, Touches, Jeu, Packs) et enregistrés dans un seul fichier ; une valeur invalide reprend simplement sa valeur par défaut.
 
+## Atmosphère
+
+Deux réglages graphiques habillent le monde : **Mélange des biomes** (fondu des couleurs de l'herbe, des feuilles et de l'eau aux frontières, en blocs ; désactivé : frontières nettes) et **Particules** (désactivées, réduites ou complètes : éclats des blocs cassés, gouttes sous les plafonds, bulles). Le mélange refait les maillages ; les particules désactivées ne coûtent rien.
+
 ## Accessibilité
 
 Police lisible, taille de l'interface, filtres pour daltoniens, réduction des effets de caméra et éditeur de disposition de l'interface se trouvent dans l'onglet Interface.

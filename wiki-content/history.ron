@@ -124,7 +124,14 @@
         ],
         "commands/tp": [(version: "0.1.0", change: Added)],
         "mechanics/boats": [(version: "0.2.0", change: Added)],
-        "mechanics/day-night": [(version: "0.2.0", change: Added)],
+        "mechanics/day-night": [
+            (version: "0.2.0", change: Added),
+            (version: "0.2.0", change: Changed(
+                fr: "Nuits plus sombres et brouillard teinté par le biome.",
+                en: "Darker nights and fog tinted by the biome.",
+                lol: "DARKR NITEZ AN FOG TINTD BY TEH BIOM.",
+            )),
+        ],
         "mechanics/fire": [(version: "0.2.0", change: Added)],
         "mechanics/fluids": [(version: "0.2.0", change: Added)],
         "mechanics/game-modes": [(version: "0.1.0", change: Added)],
