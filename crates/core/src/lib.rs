@@ -8,6 +8,8 @@ pub mod coords;
 pub mod dimension;
 pub mod files;
 pub mod font;
+pub mod generation;
+pub mod hash;
 pub mod id;
 pub mod lang;
 pub mod light;

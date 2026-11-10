@@ -12,6 +12,7 @@ fontdue.workspace = true
 glam.workspace = true
 fluent-syntax.workspace = true
 png.workspace = true
+postcard.workspace = true
 ron.workspace = true
 serde.workspace = true
 thiserror.workspace = true

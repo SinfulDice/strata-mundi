@@ -3325,6 +3325,7 @@ dependencies = [
  "fontdue",
  "glam",
  "png",
+ "postcard",
  "ron",
  "serde",
  "thiserror 2.0.21",
