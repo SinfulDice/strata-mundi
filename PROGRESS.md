@@ -4,7 +4,7 @@
 
 - **Version en cours** : v0.2 — Monde vivant
 - **Jalon en cours** : 12 — Clôture
-  - [ ] Captures de référence (grottes, falaises, nuit, lever de soleil ajoutées à `docs/screenshots.ron`) par `visual-tester`, ultra et DS
+  - [x] Captures de référence (grottes, falaises, nuit, lever de soleil ajoutées à `docs/screenshots.ron`) par `visual-tester`, ultra et DS
   - [ ] Critères de fin vérifiés un par un, `perf-check` (bancs et mémoire), wiki complet en mode strict, rapport dans `docs/versions/v0.2.md`, allègement de `PROGRESS.md`, tag `v0.2.0` (à pousser par l'utilisateur si refusé)
 - **Dernière session** : 11/11/2026
 
