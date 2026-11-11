@@ -3,7 +3,7 @@
 //! - noodles: thin, winding galleries, the same idea at a smaller scale;
 //! - cheese: large caverns where one noise is high, more common deep down, with pillars
 //!   where a vertical noise rises;
-//! - ravines: deep narrow cracks following the zero line of a 2D noise.
+//! - ravines: rare, deep and narrow cracks with nearly vertical walls.
 //!
 //! Inside aquifers, carved space fills with water up to the region's level; near the
 //! bottom of the world, with lava. Noise is sampled on a coarse grid and interpolated.
@@ -28,6 +28,11 @@ const LOWEST: i32 = 5;
 const TUNNEL_STRETCH: f64 = 1.6;
 const CAVERN_STRETCH: f64 = 1.8;
 const PILLAR_THRESHOLD: f64 = 0.55;
+/// Nothing stands closer than this to a ravine open at the surface, in blocks: no tree
+/// leaning over the void.
+const RAVINE_MARGIN: f64 = 4.0;
+/// Columns this close to a ravine open at the surface lose their soil, in blocks.
+const RAVINE_RIM: f64 = 1.5;
 
 pub struct Caves {
     spaghetti: (Noise, Noise),
@@ -97,13 +102,24 @@ impl Caves {
         }
     }
 
-    /// Whether a tunnel or a surface ravine may open a block of `ys` at `(x, z)`, for
-    /// things that must not stand over a cave entrance (trees from other columns, spawn).
+    /// Whether a tunnel may open a block of `ys` at `(x, z)`, or a surface ravine passes
+    /// nearby, for things that must not stand over a cave entrance (trees, spawn).
     pub fn may_open(&self, x: i32, z: i32, ys: RangeInclusive<i32>) -> bool {
-        self.ravines.span(x, z).opens_at_surface()
+        self.ravines.span(x, z).surface_within(RAVINE_MARGIN)
             || ys
                 .into_iter()
                 .any(|y| grid::at_point(x, y, z, |x, y, z| self.openness(x, y, z)) > 1.0)
+    }
+
+    /// Whether `(x, z)` is on the rim of a ravine open at the surface, or inside it: its
+    /// walls are bare rock.
+    pub fn on_ravine_rim(&self, x: i32, z: i32) -> bool {
+        self.ravines.span(x, z).surface_within(RAVINE_RIM)
+    }
+
+    /// Whether a ravine (open at the surface or hidden) passes under `(x, z)`.
+    pub fn in_ravine(&self, x: i32, z: i32) -> bool {
+        self.ravines.span(x, z).is_inside()
     }
 
     fn fill(&self, y: i32, table: Table) -> BlockId {

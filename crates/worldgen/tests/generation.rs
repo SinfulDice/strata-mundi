@@ -19,7 +19,7 @@ fn same_seed_gives_same_world_in_any_order() {
     let backward = common::generator(42);
     let mut positions = positions();
     let mut pair = common::caves::Pair::new(42);
-    let ravine = pair.find(|pair, pos| pair.tallest_air_run(pos) >= 60);
+    let ravine = pair.find(common::caves::Pair::has_ravine);
     let border = pair.find(|pair, pos| pair.crosses_aquifer_border(pos));
     positions.extend([
         ravine.expect("a ravine"),

@@ -67,6 +67,12 @@ impl Pair {
         tallest
     }
 
+    /// Whether a ravine crosses the column and carves a tall gap there.
+    pub fn has_ravine(&mut self, pos: ColumnPos) -> bool {
+        let crossed = blocks_of(pos).any(|(x, z)| self.caves.in_ravine(x, z));
+        crossed && self.tallest_air_run(pos) >= 25
+    }
+
     /// Whether the column holds cave water with carved air at or below its level, which
     /// only happens across a border between two aquifer regions.
     pub fn crosses_aquifer_border(&mut self, pos: ColumnPos) -> bool {

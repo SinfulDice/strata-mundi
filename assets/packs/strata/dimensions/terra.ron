@@ -27,7 +27,9 @@ Dimension(
             noodle_top: 100,
             cheese: 0.3,
             cavern_top: 140,
-            ravines: 0.03,
+            // Ravines: half-width in blocks; one per square of `ravine_spacing` blocks.
+            ravines: 3.5,
+            ravine_spacing: 320,
             ravine_depth: (30, 80),
             aquifers: 0.35,
             aquifer_cell: 64,

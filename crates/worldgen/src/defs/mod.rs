@@ -70,8 +70,12 @@ pub struct CavesDef {
     /// Caverns thin out towards this height and stop a third higher.
     #[serde(default = "default_cavern_top")]
     pub cavern_top: i32,
+    /// Half-width of ravines in the middle, in blocks.
     #[serde(default = "default_ravines")]
     pub ravines: f64,
+    /// Side of the square regions holding one ravine each, in blocks: higher = rarer.
+    #[serde(default = "default_ravine_spacing")]
+    pub ravine_spacing: i32,
     /// Smallest and largest depth of ravines, in blocks.
     #[serde(default = "default_ravine_depth")]
     pub ravine_depth: (i32, i32),
@@ -360,7 +364,11 @@ fn default_aquifer_depth() -> i32 {
 }
 
 fn default_ravines() -> f64 {
-    0.03
+    3.5
+}
+
+fn default_ravine_spacing() -> i32 {
+    320
 }
 
 fn default_aquifers() -> f64 {

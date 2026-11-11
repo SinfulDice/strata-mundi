@@ -137,8 +137,8 @@ fn reference_seeds_have_every_kind_of_cave() {
                 }
                 found.cavern_layers += usize::from(layer >= 200);
             }
-            found.ravine_columns += usize::from(pair.tallest_air_run(pos) >= 60);
         }
+        found.ravine_columns = usize::from(pair.find(Pair::has_ravine).is_some());
         assert!(found.cavern_layers > 0, "seed {seed}: {found:?}");
         assert!(found.ravine_columns > 0, "seed {seed}: {found:?}");
         assert!(found.aquifer_water > 0, "seed {seed}: {found:?}");

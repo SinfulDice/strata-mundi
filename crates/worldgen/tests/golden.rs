@@ -9,8 +9,8 @@ use strata_core::coords::{ColumnPos, WORLD_HEIGHT};
 use strata_core::generation::WorldgenSettings;
 use strata_worldgen::{Generator, Seed};
 
-/// Same value before world types existed (v0.2 milestone 10).
-const EXPECTED: u64 = 0x100d_8776_6ea2_2d01;
+/// Changed by v0.2.1 milestone 1 (rare, narrow ravines with bare rock walls).
+const EXPECTED: u64 = 0x8f0a_d9ba_d4cf_19c0;
 
 fn fnv(hash: &mut u64, bytes: &[u8]) {
     for &byte in bytes {

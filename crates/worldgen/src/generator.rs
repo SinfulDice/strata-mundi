@@ -141,6 +141,7 @@ impl Generator {
             let roofs = self.cave_roofs(&tops, &ring.lowest);
             let keep = [terrain.bedrock, terrain.water, terrain.ice, settings.lava];
             caves.carve(&mut column, &roofs, &keep);
+            self.bare_ravine_walls(caves, &mut column, &samples, &tops);
         }
         place_ores(self, &mut column);
         self.deposits
@@ -177,6 +178,38 @@ impl Generator {
             }
         }
         tops
+    }
+
+    /// Soil left on the walls and rims of ravines open at the surface turns to the
+    /// biome's rock: no grass or dirt hanging over the void.
+    fn bare_ravine_walls(
+        &self,
+        caves: &Caves,
+        column: &mut Column,
+        samples: &ColumnSamples<'_>,
+        tops: &[[i32; 16]; 16],
+    ) {
+        let origin = (column.pos.x * SECTION_SIZE, column.pos.z * SECTION_SIZE);
+        let stone = self.content.terrain.stone;
+        // Own height, not the roof: a rim next to a ravine on dry land may itself be near
+        // lower ground.
+        let dry = self.content.terrain.sea_level + DRY_LAND;
+        for (lz, row) in samples.iter().enumerate() {
+            for (lx, (_, biome)) in row.iter().enumerate() {
+                let top = tops[lz][lx];
+                if top < dry || !caves.on_ravine_rim(origin.0 + lx as i32, origin.1 + lz as i32) {
+                    continue;
+                }
+                let soil = [biome.surface, biome.subsurface];
+                let rock = biome.steep.filter(|b| !soil.contains(b)).unwrap_or(stone);
+                let (cx, cz) = (lx as u32, lz as u32);
+                for y in 0..=top {
+                    if soil.contains(&column.get(cx, y, cz)) {
+                        column.set(cx, y, cz, rock);
+                    }
+                }
+            }
+        }
     }
 
     /// The biomes of a column without generating it (columns read from a save).
@@ -266,6 +299,13 @@ impl Generator {
     /// coordinates, inclusive).
     pub fn deposits_near(&self, min: (i32, i32), max: (i32, i32)) -> Vec<Vein> {
         Deposits::veins(self.seed, &self.content, min, max).collect()
+    }
+
+    /// Whether a ravine, open at the surface or hidden, passes under `(x, z)`.
+    pub fn in_ravine(&self, x: i32, z: i32) -> bool {
+        self.caves
+            .as_ref()
+            .is_some_and(|caves| caves.in_ravine(x, z))
     }
 
     /// Whether caves may open a block of `ys` at `(x, z)`.
