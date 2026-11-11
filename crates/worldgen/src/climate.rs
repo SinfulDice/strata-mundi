@@ -191,17 +191,18 @@ impl ClimateMaps {
         let height = sample.height + (jitter * 40.0) as i32;
         let band = content.terrain.heat_band(c.temperature + jitter);
         let allowed = |b: &&Biome| b.allows_heat(band);
+        let same_bed = |b: &&Biome| b.river == on_river;
         let fits = |b: &&Biome| {
-            b.river == on_river
-                && b.min_height.is_none_or(|min| height >= min)
+            b.min_height.is_none_or(|min| height >= min)
                 && b.max_height.is_none_or(|max| height <= max)
         };
         let nearest = |list: &mut dyn Iterator<Item = &'a Biome>| {
             list.min_by(|a, b| distance(a).total_cmp(&distance(b)))
         };
         // `WorldgenContent::load` never returns an empty biome list.
-        nearest(&mut biomes.iter().filter(allowed).filter(fits))
-            .or_else(|| nearest(&mut biomes.iter().filter(allowed)))
+        let candidates = || biomes.iter().filter(allowed).filter(same_bed);
+        nearest(&mut candidates().filter(fits))
+            .or_else(|| nearest(&mut candidates()))
             .or_else(|| nearest(&mut biomes.iter()))
             .unwrap_or(&biomes[0])
     }

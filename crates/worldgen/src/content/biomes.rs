@@ -1,5 +1,6 @@
 use super::Resolver;
 use crate::defs::{BandsDef, BiomeColors, BiomeDef, Climate};
+use std::path::Path;
 use strata_core::chunk::BiomeId;
 use strata_core::content::{BiomeTints, Block, BlockId, Registry, Tint};
 use strata_core::id::Identifier;
@@ -141,4 +142,83 @@ fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, 
     let mut resolved: Vec<_> = peaks.iter().map(|(y, id)| (*y, r.block(id))).collect();
     resolved.sort_by_key(|(y, _)| *y);
     resolved
+}
+
+/// Every heat band must hold a land biome (rivers aside), and no biome may name a band
+/// that does not exist: a colder or hotter region would otherwise fall back to any biome.
+pub(super) fn check_heat(
+    bands: &[f64],
+    biomes: &[Biome],
+    source: &Path,
+    errors: &mut Vec<PackError>,
+) {
+    let last = u8::try_from(bands.len()).unwrap_or(u8::MAX);
+    for biome in biomes {
+        if let Some((_, highest)) = biome.heat.filter(|&(_, highest)| highest > last) {
+            let message = format!(
+                "biome `{}` names heat band {highest}, but there are only {} bands",
+                biome.id,
+                bands.len() + 1
+            );
+            errors.push(PackError::invalid(source, message));
+        }
+    }
+    if bands.is_empty() {
+        return;
+    }
+    for band in 0..=last {
+        let held = biomes
+            .iter()
+            .any(|b| !b.river && b.heat.is_some() && b.allows_heat(band));
+        if !held {
+            let message = format!("no land biome may appear in heat band {band}");
+            errors.push(PackError::invalid(source, message));
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used)]
+
+    use super::*;
+    use crate::WorldgenContent;
+    use strata_core::content::Content;
+
+    fn pack_biomes() -> (Vec<f64>, Vec<Biome>) {
+        let mut errors = Vec::new();
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
+        let packs = PackSet::discover(&dir, &mut errors);
+        let (content, _) = Content::load(&packs, &PackSet::default());
+        let terra = "strata:terra".parse().expect("valid id");
+        let worldgen = WorldgenContent::load(&packs, &content.blocks, &terra, &mut errors)
+            .expect("terra exists");
+        (
+            worldgen.terrain.heat_bands.clone(),
+            worldgen.biomes().to_vec(),
+        )
+    }
+
+    fn heat_errors(bands: &[f64], biomes: &[Biome]) -> usize {
+        let mut errors = Vec::new();
+        check_heat(bands, biomes, Path::new("terra.ron"), &mut errors);
+        errors.len()
+    }
+
+    #[test]
+    fn the_pack_covers_every_heat_band() {
+        let (bands, biomes) = pack_biomes();
+        assert_eq!(heat_errors(&bands, &biomes), 0);
+    }
+
+    #[test]
+    fn missing_or_unknown_heat_bands_are_errors() {
+        let (bands, mut biomes) = pack_biomes();
+        let hottest = u8::try_from(bands.len()).expect("few bands");
+        let mut hot_gone = biomes.clone();
+        hot_gone.retain(|b| b.heat.is_none_or(|(_, last)| last < hottest));
+        assert!(heat_errors(&bands, &hot_gone) > 0);
+        biomes[0].heat = Some((0, hottest + 1));
+        assert!(heat_errors(&bands, &biomes) > 0);
+    }
 }

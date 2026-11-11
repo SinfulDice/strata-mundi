@@ -8,7 +8,7 @@ pub use features::{Feature, MAX_CROWN, MAX_PATCH_RADIUS, Plants};
 pub use world_types::WorldType;
 
 use crate::defs::{CavesDef, ClimateSizes, DimensionDef, Relief, TerrainDef};
-use biomes::load_biomes;
+use biomes::{check_heat, load_biomes};
 use features::load_features;
 use std::collections::HashMap;
 use std::path::Path;
@@ -28,6 +28,8 @@ pub struct WorldgenContent {
     world_types: Vec<WorldType>,
     /// Every block, for the layers of flat worlds.
     pub(crate) blocks: HashMap<Identifier, BlockId>,
+    /// Leaves of every tree: a trunk grows through the crown of a neighbouring tree.
+    pub(crate) tree_leaves: Vec<BlockId>,
 }
 
 #[derive(Debug, Clone)]
@@ -150,6 +152,7 @@ impl WorldgenContent {
             errors.push(PackError::invalid(source, "no biome defined"));
             return None;
         }
+        check_heat(&terrain.heat_bands, &biomes, source, errors);
         let blocks_by_id = blocks
             .iter()
             .map(|(key, id, _)| (id.clone(), key))
@@ -158,9 +161,10 @@ impl WorldgenContent {
         Some(Self {
             terrain,
             biomes,
-            features,
             world_types,
             blocks: blocks_by_id,
+            tree_leaves: tree_leaves(&features),
+            features,
         })
     }
 }
@@ -226,11 +230,7 @@ fn resolve_terrain(
 impl Terrain {
     /// Heat band of a temperature: 0 below the first threshold.
     pub fn heat_band(&self, temperature: f64) -> u8 {
-        let warmer = self
-            .heat_bands
-            .iter()
-            .filter(|&&t| temperature >= t)
-            .count();
+        let warmer = self.heat_bands.partition_point(|&t| t <= temperature);
         u8::try_from(warmer).unwrap_or(u8::MAX)
     }
 
@@ -247,6 +247,16 @@ impl Terrain {
                 bounded_caves(def, density, self.sea_level, self.water, *lava)
             });
     }
+}
+
+fn tree_leaves(features: &[Feature]) -> Vec<BlockId> {
+    features
+        .iter()
+        .filter_map(|feature| match feature {
+            Feature::Tree(tree) => Some(tree.leaves),
+            _ => None,
+        })
+        .collect()
 }
 
 fn sorted_bands(thresholds: &[f64]) -> Vec<f64> {

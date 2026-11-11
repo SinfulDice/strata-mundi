@@ -23,6 +23,9 @@ Dimension(
         // Temperatures splitting the world into heat bands, coldest first: a biome only
         // appears in the bands of its `heat`, so a biome intermediate between two bands
         // always separates biomes more than one band apart (no desert against snow).
+        // This holds while each band stays far wider than the temperature change from one
+        // block to the next (under 0.01 even with the smallest biomes, `biome_scale` 0.25):
+        // keep bands at least 0.1 wide.
         heat_bands: [-0.38, -0.13, 0.13, 0.38],
         // Caves; `enabled: false` turns them off.
         caves: (

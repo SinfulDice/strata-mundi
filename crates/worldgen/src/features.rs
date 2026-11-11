@@ -2,7 +2,7 @@
 //! its eight neighbours, so trees cross borders seamlessly whatever the loading order.
 
 use crate::caves::{CLEARANCE, MAX_MARGIN, Nearby};
-use crate::content::{Feature, MAX_CROWN, WorldgenContent};
+use crate::content::{Feature, MAX_CROWN};
 use crate::generator::Generator;
 use crate::rng::Rng;
 use crate::trees::{Part, Tree};
@@ -56,28 +56,16 @@ pub fn place_ores(generator: &Generator, column: &mut Column) {
 
 /// `ravines` holds the ravines near the column and the trees that may reach it.
 pub fn place_surface_features(generator: &Generator, column: &mut Column, ravines: &Nearby) {
-    let leaves = all_leaves(generator.content());
+    let leaves = &generator.content().tree_leaves;
     for dz in -1..=1 {
         for dx in -1..=1 {
             let source = ColumnPos {
                 x: column.pos.x + dx,
                 z: column.pos.z + dz,
             };
-            place_rooted_in(generator, (source, ravines), column, &leaves);
+            place_rooted_in(generator, (source, ravines), column, leaves);
         }
     }
-}
-
-/// Leaves of every tree: a trunk grows through the crown of a neighbouring tree.
-fn all_leaves(content: &WorldgenContent) -> Vec<BlockId> {
-    content
-        .features
-        .iter()
-        .filter_map(|feature| match feature {
-            Feature::Tree(tree) => Some(tree.leaves),
-            _ => None,
-        })
-        .collect()
 }
 
 fn place_rooted_in(
@@ -182,20 +170,20 @@ impl Writer<'_> {
 
     /// `(dx, dy, dz)` from the feature origin. Only replaces air (or `over`).
     fn put(&mut self, offset: (i32, i32, i32), block: BlockId, over: Option<BlockId>) {
-        self.put_over(offset, block, &|current| Some(current) == over);
+        self.put_over(offset, block, |current| Some(current) == over);
     }
 
     /// A log replaces air and the leaves of any tree.
     fn put_log(&mut self, offset: (i32, i32, i32), log: BlockId) {
         let leaves = self.leaves;
-        self.put_over(offset, log, &|current| leaves.contains(&current));
+        self.put_over(offset, log, |current| leaves.contains(&current));
     }
 
     fn put_over(
         &mut self,
         offset: (i32, i32, i32),
         block: BlockId,
-        over: &dyn Fn(BlockId) -> bool,
+        over: impl Fn(BlockId) -> bool,
     ) {
         let Some((lx, lz)) = self.local(offset.0, offset.2) else {
             return;
