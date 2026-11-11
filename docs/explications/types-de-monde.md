@@ -6,11 +6,13 @@
 
 ![Éditeur de génération](../maquettes/types-de-monde/editeur.png)
 
+![Onglet Code](../maquettes/types-de-monde/editeur-code.png)
+
 ## Comment ça marche
 
 ### Les réglages
 
-Tout ce que choisit le joueur tient dans une seule valeur, `WorldgenSettings` (crate `core`) : le type (un identifiant de `world_types/` du pack), des pourcentages (100 % = le monde du pack), un niveau de la mer optionnel, un biome et des couches optionnels. « Optionnel » veut dire « celui du type » : l'éditeur range une valeur égale à celle du type comme « par défaut », pour que les réglages restent courts et que le monde normal reste exactement celui du pack. Le serveur reçoit ces réglages avec la demande de création et les garde dans `world.ron`. Le détail de leur effet sur la génération est dans la décision D056.
+Tout ce que choisit le joueur tient dans une seule valeur, `WorldgenSettings` (crate `core`) : le type (un identifiant de `world_types/` du pack), des pourcentages (100 % = le monde du pack), un niveau de la mer optionnel, un biome et des couches optionnels. « Optionnel » veut dire « celui du type » : l'éditeur range une valeur égale à celle du type comme « par défaut », et oublie biome et couches quand le type ne s’en sert pas, pour que les réglages restent courts et que le monde normal reste exactement celui du pack. Le serveur reçoit ces réglages avec la demande de création et les garde dans `world.ron`. Le détail de leur effet sur la génération est dans la décision D056.
 
 ### L'écran
 

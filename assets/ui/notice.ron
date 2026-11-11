@@ -6,9 +6,9 @@ Screen(
             id: "window",
             anchor: Center,
             at: (0, 0),
-            size: (260, 56),
+            size: (260, 70),
             children: [
-                Label(id: "message", anchor: Top, at: (0, 8), text: "@message"),
+                Label(id: "message", anchor: Top, at: (0, 8), text: "@message", wrap: Some(244)),
                 Button(id: "ok", anchor: Bottom, at: (0, -8), size: (80, 18), text: "ui-ok"),
             ],
         ),

@@ -2,6 +2,7 @@
 //! opened from it, two pages of one menu sharing what is being filled in.
 
 mod editor;
+mod layers;
 mod preview;
 mod screen;
 
@@ -36,6 +37,15 @@ pub struct GenerationSources {
     pub maps: Option<Arc<dyn MapSource>>,
 }
 
+/// What the code tab last did.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CodeStatus {
+    Applied,
+    Copied,
+    NoClipboard,
+    Refused(crate::generation::GenerationError),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Page {
     Main,
@@ -62,7 +72,7 @@ pub struct CreateForm {
     /// The preview thread could not start: not tried again.
     preview_failed: bool,
     pub code_field: String,
-    pub code_status: Option<Result<(), crate::generation::GenerationError>>,
+    pub code_status: Option<CodeStatus>,
     pub layer_scroll: usize,
     pub biome_scroll: usize,
 }

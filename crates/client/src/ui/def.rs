@@ -57,6 +57,9 @@ pub enum Node {
         /// Whole-number magnification (titles, the logo).
         #[serde(default = "one")]
         size: u32,
+        /// Width beyond which the text goes on to the next line (none: one line).
+        #[serde(default)]
+        wrap: Option<u32>,
     },
     /// `text` as for labels; `@name` gives buttons whose caption changes (on/off, modes).
     Button {

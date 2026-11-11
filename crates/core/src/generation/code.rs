@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 const VERSION: u32 = 1;
+/// Longer texts are refused before decoding (64 long layers stay well below).
+pub const MAX_CODE_LENGTH: usize = 4096;
 const ALPHABET: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 /// The pack's namespace is left out of codes to keep them short.
 const BASE_NAMESPACE: &str = "strata";
@@ -68,6 +70,9 @@ impl WorldgenSettings {
 
     /// Spaces, dashes and case are ignored; the values read are bounded.
     pub fn from_code(text: &str) -> Result<Self, CodeError> {
+        if text.len() > MAX_CODE_LENGTH {
+            return Err(CodeError::Malformed);
+        }
         let text = text.trim().to_ascii_uppercase();
         let (version, body) = text
             .strip_prefix('S')
@@ -203,7 +208,7 @@ mod tests {
                     },
                     FlatLayer {
                         block: Identifier::builtin("strata", "stone"),
-                        thickness: 300,
+                        thickness: 60,
                     },
                 ],
                 caves: true,
@@ -243,12 +248,17 @@ mod tests {
             let mut damaged = code.clone().into_bytes();
             damaged[index] = if damaged[index] == b'Z' { b'Y' } else { b'Z' };
             let damaged = String::from_utf8(damaged).unwrap();
-            assert_ne!(
-                WorldgenSettings::from_code(&damaged),
-                Ok(flat()),
-                "{damaged}"
-            );
+            assert!(WorldgenSettings::from_code(&damaged).is_err(), "{damaged}");
         }
+    }
+
+    #[test]
+    fn overlong_texts_are_refused() {
+        let long = format!("S1-{}", "0".repeat(MAX_CODE_LENGTH));
+        assert_eq!(
+            WorldgenSettings::from_code(&long),
+            Err(CodeError::Malformed)
+        );
     }
 
     #[test]

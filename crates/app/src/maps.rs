@@ -49,12 +49,15 @@ impl MapSource for GeneratorMaps {
     }
 }
 
-/// Whether the packs can make a world with `settings`, said to the player if not.
+/// The settings as saved, if the packs can make a world with them (said to the player if
+/// not).
 pub fn check(
     worldgen: &WorldgenContent,
     settings: &WorldgenSettings,
-) -> Result<(), GenerationError> {
-    worldgen.with_settings(settings).map(drop).map_err(explain)
+) -> Result<WorldgenSettings, GenerationError> {
+    let used = worldgen.used_settings(settings).map_err(explain)?;
+    worldgen.with_settings(&used).map_err(explain)?;
+    Ok(used)
 }
 
 fn explain(error: SettingsError) -> GenerationError {

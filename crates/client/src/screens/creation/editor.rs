@@ -5,11 +5,11 @@ use crate::generation::{GenerationCatalog, GenerationError, WorldTypeChoice};
 use std::ops::RangeInclusive;
 use std::sync::Arc;
 use strata_core::generation::{
-    BIOME_SIZES, DENSITIES, FlatLayer, FlatSettings, MAX_FLAT_LAYERS, SEA_LEVELS, WorldgenSettings,
+    BIOME_SIZES, DENSITIES, FlatLayer, FlatSettings, LAYER_THICKNESS, MAX_FLAT_LAYERS, SEA_LEVELS,
+    WorldgenSettings,
 };
 use strata_core::id::Identifier;
 
-pub const MAX_THICKNESS: u16 = 64;
 const PERCENT_STEP: i32 = 25;
 const SEA_STEP: i32 = 4;
 
@@ -219,7 +219,10 @@ impl GenerationEditor {
         self.change_layers(|layers| {
             if let Some(layer) = layers.get_mut(layer) {
                 let thickness = i32::from(layer.thickness) + steps;
-                layer.thickness = thickness.clamp(1, i32::from(MAX_THICKNESS)) as u16;
+                layer.thickness = thickness.clamp(
+                    i32::from(*LAYER_THICKNESS.start()),
+                    i32::from(*LAYER_THICKNESS.end()),
+                ) as u16;
             }
         });
     }
@@ -279,10 +282,11 @@ impl GenerationEditor {
         }
         let defaults = (world_type.biome.clone(), world_type.flat.clone());
         self.settings = settings;
-        if self.settings.biome == defaults.0 {
+        // Unused by the type, or the type's own: stored as default.
+        if defaults.0.is_none() || self.settings.biome == defaults.0 {
             self.settings.biome = None;
         }
-        if self.settings.flat == defaults.1 {
+        if defaults.1.is_none() || self.settings.flat == defaults.1 {
             self.settings.flat = None;
         }
         self.layer = 0;

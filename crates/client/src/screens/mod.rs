@@ -11,6 +11,7 @@ mod keyboard;
 mod menu;
 mod options;
 mod pause;
+mod system;
 mod title;
 mod worlds;
 
@@ -21,7 +22,7 @@ use crate::gameplay::Gameplay;
 use crate::input::{Action, InputDevice, KeyNames};
 use crate::render::{Gpu, UiPipeline};
 use crate::settings::{FontChoice, Settings};
-use crate::ui::{Hit, ICON_SIZE, Rect, ScreenModel, UiAssets, UiAtlas};
+use crate::ui::{Hit, Rect, ScreenModel, UiAssets, UiAtlas};
 use console::ConsoleLog;
 pub use creation::GenerationSources;
 use draw::key_rows;
@@ -29,7 +30,6 @@ use keyboard::{Keyboard, KeyboardModel};
 use menu::{Effect, Menu, Shared};
 use std::path::PathBuf;
 use strata_core::content::Content;
-use strata_core::texture::RgbaImage;
 use strata_protocol::WorldSummary;
 use strata_protocol::commands::Feedback;
 use winit::keyboard::KeyCode;
@@ -227,17 +227,6 @@ impl Screens {
         self.stack.iter().any(|menu| menu.pauses(&self.settings))
     }
 
-    fn upload_icon(&self, gpu: &Gpu, slot: usize, png: Option<&[u8]>) -> Option<Rect> {
-        let place = UiAtlas::world_icon_slot(slot)?;
-        let image = decode_icon(png?)?;
-        if (image.width(), image.height()) != (place.w, place.h) {
-            return None;
-        }
-        self.pipeline
-            .write_atlas(gpu, place.x as u32, place.y as u32, &image);
-        Some(place)
-    }
-
     fn reset_focus(&mut self) {
         self.focus = None;
         self.hits.clear();
@@ -298,56 +287,6 @@ impl Screens {
         Some(f(model.as_mut()))
     }
 
-    /// Copies the newest map of the generation editor into the atlas.
-    fn upload_preview(&mut self, gpu: &Gpu) {
-        let Some(Menu::CreateWorld(form)) = self.stack.last_mut() else {
-            return;
-        };
-        let quality = self.settings.graphics.map_preview;
-        let Some(image) = form.refresh_preview(quality, self.generation.maps.as_ref()) else {
-            return;
-        };
-        if self.preview_uploaded == Some(image.request) {
-            return;
-        }
-        let Some(place) = UiAtlas::preview_slot(image.size) else {
-            return;
-        };
-        let pixels = image.pixels.iter().flat_map(|&[r, g, b]| [r, g, b, 255]);
-        if let Some(rgba) = RgbaImage::from_bytes(place.w, place.h, pixels.collect()) {
-            self.pipeline
-                .write_atlas(gpu, place.x as u32, place.y as u32, &rgba);
-            self.preview_uploaded = Some(image.request);
-        }
-    }
-
-    fn copy_text(&mut self, text: String) {
-        let copied = self.clipboard().map(|c| c.set_text(text));
-        if let Some(Err(error)) = copied {
-            tracing::warn!(%error, "nothing copied");
-        }
-    }
-
-    fn paste_text(&mut self) -> Option<String> {
-        match self.clipboard()?.get_text() {
-            Ok(text) => Some(text),
-            Err(error) => {
-                tracing::warn!(%error, "nothing to paste");
-                None
-            }
-        }
-    }
-
-    fn clipboard(&mut self) -> Option<&mut arboard::Clipboard> {
-        if self.clipboard.is_none() {
-            match arboard::Clipboard::new() {
-                Ok(clipboard) => self.clipboard = Some(clipboard),
-                Err(error) => tracing::warn!(%error, "no clipboard"),
-            }
-        }
-        self.clipboard.as_mut()
-    }
-
     /// Presses key `index` of the on-screen keyboard: (field, text to type, closed).
     fn press_key(&mut self, content: &Content, index: usize) -> Option<(String, String, bool)> {
         let keyboard = self.keyboard.as_mut()?;
@@ -364,22 +303,6 @@ impl Screens {
         let field = model.keyboard.field.clone();
         Some((field, typed, done))
     }
-}
-
-fn decode_icon(png_bytes: &[u8]) -> Option<RgbaImage> {
-    let decoder = png::Decoder::new(std::io::Cursor::new(png_bytes));
-    let mut reader = decoder.read_info().ok()?;
-    let info = reader.info();
-    if (info.width, info.height) != ICON_SIZE {
-        return None;
-    }
-    let mut buffer = vec![0; reader.output_buffer_size()?];
-    let info = reader.next_frame(&mut buffer).ok()?;
-    if info.color_type != png::ColorType::Rgba || info.bit_depth != png::BitDepth::Eight {
-        return None;
-    }
-    buffer.truncate(info.buffer_size());
-    RgbaImage::from_bytes(info.width, info.height, buffer)
 }
 
 /// Interface texts chosen in code rather than in screen files.

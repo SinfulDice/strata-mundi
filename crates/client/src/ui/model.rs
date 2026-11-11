@@ -63,8 +63,10 @@ pub trait ScreenModel {
     fn quick_slot(&mut self, _id: &str, _index: usize, _slot: usize) {}
     /// Characters typed into a text field (`\u{8}` erases one).
     fn type_text(&mut self, _id: &str, _text: &str) {}
-    /// Text read from the clipboard for a `Effect::Paste` request.
-    fn paste(&mut self, _id: &str, _text: &str) {}
+    /// The clipboard's text for an `Effect::Paste` request (`None`: no clipboard).
+    fn paste(&mut self, _id: &str, _text: Option<&str>) {}
+    /// Whether the text of an `Effect::Copy` reached the clipboard.
+    fn copied(&mut self, _done: bool) {}
 }
 
 /// One line of a `Log` widget.

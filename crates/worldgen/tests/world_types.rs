@@ -275,3 +275,27 @@ fn unknown_names_are_errors() {
     );
     assert_eq!(error(flat(Vec::new())), Some(SettingsError::NoLayers));
 }
+
+#[test]
+fn saved_settings_drop_what_their_type_does_not_use() {
+    let (_, worldgen) = common::load();
+    let stray = WorldgenSettings {
+        biome: Some(id("strata:desert")),
+        flat: Some(FlatSettings {
+            layers: vec![FlatLayer {
+                block: id("strata:sand"),
+                thickness: 2,
+            }],
+            caves: false,
+            features: false,
+        }),
+        ..of_type("normal")
+    };
+    let used = worldgen.used_settings(&stray).expect("known type");
+    assert_eq!(used, of_type("normal"));
+    let single = WorldgenSettings {
+        biome: Some(id("strata:desert")),
+        ..of_type("single_biome")
+    };
+    assert_eq!(worldgen.used_settings(&single), Ok(single.clone()));
+}

@@ -2,7 +2,7 @@
 //! and densities. Only generic mechanisms here; the types themselves live in `world_types/`.
 
 use crate::content::bounded_relief;
-use crate::content::{Feature, Flat, WorldgenContent};
+use crate::content::{Feature, Flat, WorldType, WorldgenContent};
 use crate::defs::{Relief, ReliefChanges};
 use strata_core::generation::{FlatSettings, WorldgenSettings};
 use strata_core::id::Identifier;
@@ -42,12 +42,8 @@ impl SettingsError {
 impl WorldgenContent {
     /// The generation content changed by the settings (bounded first).
     pub fn with_settings(&self, settings: &WorldgenSettings) -> Result<Self, SettingsError> {
-        let settings = settings.clone().bounded();
-        let world_type = self
-            .world_types()
-            .iter()
-            .find(|t| t.id == settings.world_type)
-            .ok_or_else(|| SettingsError::UnknownType(settings.world_type.clone()))?;
+        let settings = self.used_settings(settings)?;
+        let world_type = self.world_type(&settings.world_type)?;
         let mut content = self.clone();
         let forced = world_type
             .biome
@@ -77,6 +73,29 @@ impl WorldgenContent {
         terrain.scale_caves(caves);
         content.scale_ores(factor(settings.ores));
         Ok(content)
+    }
+
+    /// `settings` bounded, without the biome or layers its type does not use (as saved).
+    pub fn used_settings(
+        &self,
+        settings: &WorldgenSettings,
+    ) -> Result<WorldgenSettings, SettingsError> {
+        let mut settings = settings.clone().bounded();
+        let world_type = self.world_type(&settings.world_type)?;
+        if world_type.biome.is_none() {
+            settings.biome = None;
+        }
+        if world_type.flat.is_none() {
+            settings.flat = None;
+        }
+        Ok(settings)
+    }
+
+    fn world_type(&self, id: &Identifier) -> Result<&WorldType, SettingsError> {
+        self.world_types()
+            .iter()
+            .find(|t| &t.id == id)
+            .ok_or_else(|| SettingsError::UnknownType(id.clone()))
     }
 
     fn biome_index(&self, id: &Identifier) -> Result<usize, SettingsError> {

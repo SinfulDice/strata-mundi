@@ -10,6 +10,7 @@ pub(super) fn label(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         boxed,
         dim,
         size,
+        wrap,
     } = node
     else {
         return;
@@ -21,13 +22,24 @@ pub(super) fn label(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     if content.is_empty() {
         return;
     }
-    let pad = 4 * u32::from(*boxed);
-    let width = if *size > 1 {
-        d.painter.text_width(&content) * size
-    } else {
-        rich_width(d, &content)
+    let lines = match wrap {
+        Some(width) if *size == 1 => wrap_lines(d, &content, *width),
+        _ => vec![content],
     };
-    let dims = (width + 2 * pad, d.painter.line_height() * size + pad);
+    let pad = 4 * u32::from(*boxed);
+    let width = lines
+        .iter()
+        .map(|line| {
+            if *size > 1 {
+                d.painter.text_width(line) * size
+            } else {
+                rich_width(d, line)
+            }
+        })
+        .max()
+        .unwrap_or(0);
+    let line_height = d.painter.line_height() * size;
+    let dims = (width + 2 * pad, line_height * lines.len() as u32 + pad);
     let rect = parent.place(*anchor, d.ctx.offset(id, *at), dims);
     let theme = d.theme();
     let (panel, light, dark) = (theme.panel.0, theme.panel_light.0, theme.panel_dark.0);
@@ -37,15 +49,61 @@ pub(super) fn label(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         d.painter.fill(rect, panel);
         d.painter.bevel(rect, light, dark);
     }
-    let (x, y) = (rect.x + pad as i32, rect.y + pad as i32 / 2);
-    if *size > 1 {
-        d.painter.text_sized(x, y, &content, color, shadow, *size);
-    } else {
-        draw_rich(d, x, y, &content, color);
+    let x = rect.x + pad as i32;
+    for (row, line) in lines.iter().enumerate() {
+        let y = rect.y + pad as i32 / 2 + (row as u32 * line_height) as i32;
+        if *size > 1 {
+            d.painter.text_sized(x, y, line, color, shadow, *size);
+        } else {
+            draw_rich(d, x, y, line, color);
+        }
     }
     if d.ctx.editing {
         d.element(id, rect);
     }
+}
+
+/// Lines of at most `width` pixels, cut between words; a word too long for a line (a
+/// code) is cut anywhere, unless it holds markup.
+fn wrap_lines(d: &Draw<'_, '_>, text: &str, width: u32) -> Vec<String> {
+    let mut lines = Vec::new();
+    for paragraph in text.split('\n') {
+        let mut line = String::new();
+        for word in paragraph.split(' ') {
+            let joined = if line.is_empty() {
+                word.to_owned()
+            } else {
+                format!("{line} {word}")
+            };
+            if rich_width(d, &joined) <= width {
+                line = joined;
+                continue;
+            }
+            if !line.is_empty() {
+                lines.push(std::mem::take(&mut line));
+            }
+            line = word.to_owned();
+            while !word.contains('<') && rich_width(d, &line) > width {
+                let cut = fitting_prefix(d, &line, width);
+                lines.push(line[..cut].to_owned());
+                line = line[cut..].to_owned();
+            }
+        }
+        lines.push(line);
+    }
+    lines
+}
+
+/// Bytes of the longest start of `text` that fits in `width` (at least one character).
+fn fitting_prefix(d: &Draw<'_, '_>, text: &str, width: u32) -> usize {
+    let mut fitting = text.chars().next().map_or(0, char::len_utf8);
+    for (index, ch) in text.char_indices().skip(1) {
+        if d.painter.text_width(&text[..index + ch.len_utf8()]) > width {
+            break;
+        }
+        fitting = index + ch.len_utf8();
+    }
+    fitting
 }
 
 fn caption(d: &Draw<'_, '_>, id: &str, text: &str) -> String {
@@ -123,15 +181,14 @@ pub(super) fn text_field(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
 
 /// The end of `text` that fits in `width` (long text shows its last characters, as typed).
 fn tail_fitting<'t>(d: &Draw<'_, '_>, text: &'t str, width: u32) -> &'t str {
-    let mut used = 0;
-    let mut buffer = [0; 4];
-    for (start, ch) in text.char_indices().rev() {
-        used += d.painter.text_width(ch.encode_utf8(&mut buffer));
-        if used > width {
-            return &text[start + ch.len_utf8()..];
+    let mut start = text.len();
+    for (index, _) in text.char_indices().rev() {
+        if d.painter.text_width(&text[index..]) > width {
+            break;
         }
+        start = index;
     }
-    text
+    &text[start..]
 }
 
 /// The model's picture, or an empty frame while there is none.

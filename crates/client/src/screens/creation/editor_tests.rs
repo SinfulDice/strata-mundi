@@ -133,7 +133,7 @@ fn layers_are_added_removed_and_moved() {
     editor.change_thickness(0, -10);
     assert_eq!(editor.layers()[0].thickness, 1);
     editor.change_thickness(0, 1000);
-    assert_eq!(editor.layers()[0].thickness, MAX_THICKNESS);
+    assert_eq!(editor.layers()[0].thickness, *LAYER_THICKNESS.end());
 }
 
 #[test]
@@ -192,4 +192,21 @@ fn bad_codes_are_refused_without_change() {
     let refused = editor.apply_code(&unknown_block.to_code()).unwrap_err();
     assert_eq!(refused.message, "world-settings-unknown-block");
     assert_eq!(editor.settings, before);
+}
+
+#[test]
+fn codes_drop_what_their_type_does_not_use() {
+    let mut editor = editor();
+    let stray = WorldgenSettings {
+        world_type: id("normal"),
+        biome: Some(id("desert")),
+        flat: Some(FlatSettings {
+            layers: vec![layer("sand", 2)],
+            caves: false,
+            features: false,
+        }),
+        ..WorldgenSettings::default()
+    };
+    editor.apply_code(&stray.to_code()).unwrap();
+    assert_eq!(editor.settings, WorldgenSettings::default());
 }

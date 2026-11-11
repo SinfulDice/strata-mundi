@@ -3,7 +3,7 @@
 
 mod code;
 
-pub use code::CodeError;
+pub use code::{CodeError, MAX_CODE_LENGTH};
 
 use crate::coords::WORLD_HEIGHT;
 use crate::id::Identifier;
@@ -15,6 +15,8 @@ pub const BIOME_SIZES: RangeInclusive<u16> = 25..=400;
 pub const DENSITIES: RangeInclusive<u16> = 0..=400;
 pub const SEA_LEVELS: RangeInclusive<i32> = 48..=240;
 pub const MAX_FLAT_LAYERS: usize = 64;
+/// Thickness of one flat layer, in blocks (more is several layers of the same block).
+pub const LAYER_THICKNESS: RangeInclusive<u16> = 1..=64;
 /// Room left above the layers of a flat world, to build.
 const FLAT_HEADROOM: i32 = 64;
 
@@ -106,7 +108,10 @@ impl FlatSettings {
             if room <= 0 {
                 return false;
             }
-            let thickness = i32::from(layer.thickness).clamp(1, room);
+            let wanted = layer
+                .thickness
+                .clamp(*LAYER_THICKNESS.start(), *LAYER_THICKNESS.end());
+            let thickness = i32::from(wanted).min(room);
             layer.thickness = thickness as u16;
             room -= thickness;
             true
@@ -160,19 +165,21 @@ mod tests {
 
     #[test]
     fn flat_layers_leave_room_to_build() {
+        let mut layers = vec![layer("stone", 0)];
+        layers.extend(std::iter::repeat_n(layer("dirt", 400), 20));
         let flat = FlatSettings {
-            layers: vec![
-                layer("stone", 0),
-                layer("stone", 400),
-                layer("dirt", 400),
-                layer("grass_block", 5),
-            ],
+            layers,
             caves: false,
             features: false,
         }
         .bounded();
-        assert_eq!(flat.layers.len(), 3);
         assert_eq!(flat.layers[0].thickness, 1);
+        assert!(
+            flat.layers
+                .iter()
+                .all(|l| LAYER_THICKNESS.contains(&l.thickness))
+        );
+        assert!(flat.layers.len() < 21, "layers beyond the room are dropped");
         assert_eq!(flat.top(), WORLD_HEIGHT - FLAT_HEADROOM - 1);
         let many = FlatSettings {
             layers: vec![layer("dirt", 1); 100],

@@ -107,12 +107,13 @@ impl Launcher for GameLauncher {
         save::list(&self.saves)
     }
 
-    fn create(&mut self, world: NewWorld) -> Result<RunningWorld, LaunchError> {
+    fn create(&mut self, mut world: NewWorld) -> Result<RunningWorld, LaunchError> {
         let seed = match world.seed.trim() {
             "" => crate::random_seed(),
             text => Seed::from_text(text),
         };
-        crate::maps::check(&self.worldgen, &world.generation).map_err(LaunchError::Settings)?;
+        world.generation =
+            crate::maps::check(&self.worldgen, &world.generation).map_err(LaunchError::Settings)?;
         let now = chrono::Utc::now().timestamp();
         let (folder, meta) = save::create(&self.saves, &world, seed.0, now).map_err(reported)?;
         self.start_saved(folder, meta)

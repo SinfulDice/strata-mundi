@@ -18,6 +18,12 @@ pub struct Handled {
     pub actions: Vec<UiAction>,
 }
 
+/// The clipboard, after the effects: a copy done (or not), a field waiting for its text.
+enum Clip {
+    Copied(bool),
+    Paste(String),
+}
+
 /// Widgets showing a window over longer content (world list, item grid, settings rows).
 const SCROLLERS: [&str; 5] = ["list", "items", "options", "layers", "biomes"];
 
@@ -79,11 +85,16 @@ impl Screens {
         } else {
             self.handle_menu(input, game.as_deref_mut(), content);
         }
-        let (actions, paste) = self.apply_effects();
-        if let Some(field) = paste
-            && let Some(text) = self.paste_text()
-        {
-            self.with_model(game, content, |m| m.paste(&field, &text));
+        let (actions, clip) = self.apply_effects();
+        match clip {
+            Some(Clip::Copied(copied)) => {
+                self.with_model(game, content, |m| m.copied(copied));
+            }
+            Some(Clip::Paste(field)) => {
+                let text = self.paste_text();
+                self.with_model(game, content, |m| m.paste(&field, text.as_deref()));
+            }
+            None => {}
         }
         // Written once the change is over, not at every frame of a drag.
         if self.settings_dirty && !input.is_held(Action::Attack) {
@@ -359,9 +370,9 @@ impl Screens {
             .cloned()
     }
 
-    /// The session's actions, and the field waiting for the clipboard's text.
-    fn apply_effects(&mut self) -> (Vec<UiAction>, Option<String>) {
-        let (mut actions, mut paste) = (Vec::new(), None);
+    /// The session's actions, and what the clipboard did or is asked for.
+    fn apply_effects(&mut self) -> (Vec<UiAction>, Option<Clip>) {
+        let (mut actions, mut clip) = (Vec::new(), None);
         for effect in std::mem::take(&mut self.effects) {
             match effect {
                 Effect::Push(menu) => {
@@ -388,10 +399,10 @@ impl Screens {
                     self.focus = None;
                     self.dragging = None;
                 }
-                Effect::Copy(text) => self.copy_text(text),
-                Effect::Paste(field) => paste = Some(field),
+                Effect::Copy(text) => clip = Some(Clip::Copied(self.copy_text(text))),
+                Effect::Paste(field) => clip = Some(Clip::Paste(field)),
             }
         }
-        (actions, paste)
+        (actions, clip)
     }
 }
