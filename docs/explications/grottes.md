@@ -15,11 +15,19 @@ Le **bruit** est une fonction qui, pour chaque point de l'espace, donne un nombr
 | **Spaghetti** | deux bruits 3D sont **tous les deux proches de zéro** | longs tunnels sinueux |
 | **Nouilles** | même idée, plus fine, seulement sous `noodle_top` (y 100) et sur la moitié de l'espace (un bruit « interrupteur ») | galeries étroites et tortueuses |
 | **Cavernes « fromage »** | un bruit dépasse un seuil, de plus en plus facilement en profondeur ; aucune au-dessus de y ≈ 180 | grandes salles, avec des **piliers** là où un autre bruit, étiré à la verticale, monte |
-| **Ravins** | on suit la **ligne zéro** d'un bruit 2D, uniquement où un masque rare l'autorise | fissures en V, larges en haut, étroites (20 %) au fond |
+| **Ravins** | un ravin par carré de `ravine_spacing` blocs (320), tiré au hasard depuis la graine | fissures étroites et profondes, parois presque verticales |
 
 Pourquoi « proche de zéro » ? Un bruit vaut zéro le long d'une surface ; deux bruits qui valent zéro ensemble, c'est l'intersection de deux surfaces : une **ligne**, donc un tunnel. Plus on tolère de s'éloigner de zéro (la largeur du réglage), plus le tunnel est gros.
 
-Les ravins ont deux profils : certains s'ouvrent à la surface (on les voit de loin), d'autres restent cachés entre y ≈ 0 et 80.
+### Les ravins
+
+Comme les canyons de Minecraft, les ravins sont **rares** : on en croise un de temps en temps (environ 0,6 % du sol est au-dessus d'un ravin). Le monde est découpé en carrés de 320 blocs de côté ; chaque carré reçoit **un** ravin, avec un point de départ, une direction, une longueur (80 à 145 blocs) et une courbure tirés de la graine. Pour savoir si un bloc est dans un ravin, on mesure sa distance à la ligne centrale :
+
+- la largeur est maximale au milieu (environ 7 blocs) et s'effile jusqu'à zéro aux deux bouts, où le ravin est aussi moins profond ;
+- les parois sont **presque verticales** : la largeur ne diminue vraiment que tout près du fond (30 % de la largeur en bas), avec de petites corniches d'une couche à l'autre ;
+- un ravin sur trois environ reste **caché** sous terre (entre y ≈ 0 et 80) ; les autres s'ouvrent à la surface.
+
+Pour qu'un ravin ouvert ne soit pas une « rigole verte », les colonnes situées dedans ou à moins d'un bloc et demi du bord perdent leur herbe et leur terre : elles deviennent la roche du biome (ou la pierre). Les arbres ne poussent pas à moins de 4 blocs du bord, pour qu'aucun ne penche au-dessus du vide.
 
 ### La grille interpolée
 
@@ -65,7 +73,8 @@ Dans `assets/packs/strata/dimensions/terra.ron`, le bloc `caves: (...)`. Sans ce
 | `noodle_top` | `100` | hauteur max des nouilles |
 | `cheese` | `0.3` | seuil des cavernes : plus haut = moins de cavernes |
 | `cavern_top` | `140` | les cavernes se raréfient vers cette hauteur et cessent un tiers plus haut |
-| `ravines` | `0.03` | largeur des ravins |
+| `ravines` | `3.5` | demi-largeur des ravins en leur milieu, en blocs (0 = aucun ravin) |
+| `ravine_spacing` | `320` | côté des carrés qui contiennent chacun un ravin : plus grand = plus rares |
 | `ravine_depth` | `(30, 80)` | profondeur minimale et maximale des ravins |
 | `aquifers` | `0.35` | part des régions avec une nappe |
 | `aquifer_cell` | `64` | côté d'une région de nappe |
@@ -82,11 +91,12 @@ Les valeurs sont bornées au chargement : une faute de frappe ne peut pas casser
 |---|---|
 | Orchestration, spaghetti, nouilles, cavernes, remplissage | `crates/worldgen/src/caves/mod.rs` (`Caves`, `Caves::carve`, `Caves::may_open`) |
 | Grille interpolée | `crates/worldgen/src/caves/grid.rs` (`CaveGrid`, `at_point`) |
-| Ravins | `crates/worldgen/src/caves/ravines.rs` (`Ravines`, `Span`) |
+| Ravins | `crates/worldgen/src/caves/ravines.rs` (`Ravines`, `Nearby`, `Span`) ; parois nues : `Generator::bare_ravine_walls` |
 | Aquifères | `crates/worldgen/src/caves/aquifers.rs` (`Aquifers`, `Table`) |
 | Calcul des toits | `crates/worldgen/src/generator.rs` (`Generator::cave_roofs`), type `Roofs` dans `caves/mod.rs` |
 | Réglages lus dans le pack | `crates/worldgen/src/defs.rs` (`CavesDef`), `content.rs` (`Caves`) |
 | Tests (côtes, rivières, déterminisme) | `crates/worldgen/tests/caves.rs` |
+| Tests des ravins (rareté, parois sans herbe) | `crates/worldgen/tests/ravines.rs` |
 | Décision | `docs/decisions.md` (D037) |
 
 <details><summary>Côté Rust</summary>
