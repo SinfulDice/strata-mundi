@@ -78,10 +78,11 @@ impl Caves {
         let top = roofs.tunnels.iter().flatten().copied().max().unwrap_or(0);
         let origin = (column.pos.x * SECTION_SIZE, column.pos.z * SECTION_SIZE);
         let grid = CaveGrid::sample(origin, top, |x, y, z| self.openness(x, y, z));
+        let ravines = self.ravines.around(origin, (origin.0 + 15, origin.1 + 15));
         for lz in 0..16 {
             for lx in 0..16 {
                 let (x, z) = (origin.0 + lx as i32, origin.1 + lz as i32);
-                let ravine = self.ravines.span(x, z);
+                let ravine = ravines.span(x, z);
                 let table = self.aquifers.table(x, z);
                 let (tunnel_roof, cavern_roof) = (roofs.tunnels[lz][lx], roofs.caverns[lz][lx]);
                 for y in LOWEST..=tunnel_roof {
@@ -111,10 +112,16 @@ impl Caves {
                 .any(|y| grid::at_point(x, y, z, |x, y, z| self.openness(x, y, z)) > 1.0)
     }
 
-    /// Whether `(x, z)` is on the rim of a ravine open at the surface, or inside it: its
-    /// walls are bare rock.
-    pub fn on_ravine_rim(&self, x: i32, z: i32) -> bool {
-        self.ravines.span(x, z).surface_within(RAVINE_RIM)
+    /// Blocks of the column at `origin` on the rim of a ravine open at the surface, or
+    /// inside it (their walls are bare rock), indexed `[z][x]`.
+    pub fn ravine_rims(&self, origin: (i32, i32)) -> [[bool; 16]; 16] {
+        let ravines = self.ravines.around(origin, (origin.0 + 15, origin.1 + 15));
+        std::array::from_fn(|lz| {
+            std::array::from_fn(|lx| {
+                let (x, z) = (origin.0 + lx as i32, origin.1 + lz as i32);
+                ravines.span(x, z).surface_within(RAVINE_RIM)
+            })
+        })
     }
 
     /// Whether a ravine (open at the surface or hidden) passes under `(x, z)`.

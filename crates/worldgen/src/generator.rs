@@ -194,10 +194,11 @@ impl Generator {
         // Own height, not the roof: a rim next to a ravine on dry land may itself be near
         // lower ground.
         let dry = self.content.terrain.sea_level + DRY_LAND;
+        let rims = caves.ravine_rims(origin);
         for (lz, row) in samples.iter().enumerate() {
             for (lx, (_, biome)) in row.iter().enumerate() {
                 let top = tops[lz][lx];
-                if top < dry || !caves.on_ravine_rim(origin.0 + lx as i32, origin.1 + lz as i32) {
+                if top < dry || !rims[lz][lx] {
                     continue;
                 }
                 let soil = [biome.surface, biome.subsurface];

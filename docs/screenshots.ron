@@ -11,6 +11,7 @@
     (name: "spawn-42", seed: "42", look: (30.0, -20.0)),
     (name: "aerial-7", seed: "7", pos: (0.0, 230.0, 0.0), look: (45.0, -30.0)),
     (name: "aerial-99", seed: "99", pos: (0.0, 230.0, 0.0), look: (45.0, -30.0)),
+    (name: "ravine-42", seed: "42", pos: (-806.0, 185.0, -925.0), look: (90.0, -35.0)),
     (name: "biome-badlands-42", seed: "42", pos: (1040.0, 190.0, -650.0), look: (135.0, -25.0)),
     (name: "biome-jungle-42", seed: "42", pos: (-440.0, 205.0, 105.0), look: (135.0, -30.0)),
     (name: "biome-swamp-42", seed: "42", pos: (-190.0, 165.0, 835.0), look: (135.0, -28.0)),
