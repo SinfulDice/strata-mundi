@@ -2,7 +2,7 @@
 
 use glam::Vec3;
 
-/// Seconds for the fog to get about two thirds of the way to a new biome's colour.
+/// Seconds for the fog to get about two thirds of the way to a new colour.
 const EASE_SECONDS: f32 = 1.5;
 
 /// Linear factor applied to the horizon and the fog; 1 = the sky's own colour.
@@ -15,14 +15,17 @@ impl BiomeFog {
     /// Moves toward `target` (snaps on the first frame); `None` keeps the last colour.
     pub fn follow(&mut self, target: Option<Vec3>, seconds: f32) -> Vec3 {
         let next = match (self.current, target) {
-            (Some(current), Some(target)) => {
-                current.lerp(target, 1.0 - (-seconds.max(0.0) / EASE_SECONDS).exp())
-            }
+            (Some(current), Some(target)) => current.lerp(target, ease(seconds)),
             (current, target) => target.or(current).unwrap_or(Vec3::ONE),
         };
         self.current = Some(next);
         next
     }
+}
+
+/// Share of the way to a new target covered in `seconds`.
+pub(super) fn ease(seconds: f32) -> f32 {
+    1.0 - (-seconds.max(0.0) / EASE_SECONDS).exp()
 }
 
 #[cfg(test)]

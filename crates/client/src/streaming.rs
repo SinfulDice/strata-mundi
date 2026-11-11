@@ -9,7 +9,7 @@ use crate::mesher::SectionKey;
 use crate::particles::ParticleSystem;
 use crate::render::{Gpu, Renderer};
 use crate::settings::Lighting;
-use crate::sky::BiomeFog;
+use crate::sky::{BiomeFog, CaveFog};
 use crate::world::ClientWorld;
 use glam::{DVec3, Vec3};
 use std::collections::HashMap;
@@ -29,6 +29,7 @@ pub struct WorldView {
     /// lighting thread together, so a column is copied at most once per frame.
     light_changes: HashMap<ColumnPos, Vec<(BlockPos, BlockId)>>,
     biome_fog: BiomeFog,
+    cave_fog: CaveFog,
     /// Off until given one (`with_particles`).
     pub particles: ParticleSystem,
     /// Block changes of this frame with the previous block, for the sounds.
@@ -50,6 +51,7 @@ impl WorldView {
             light_table,
             light_changes: HashMap::new(),
             biome_fog: BiomeFog::default(),
+            cave_fog: CaveFog::default(),
             particles: ParticleSystem::default(),
             block_changes: Vec::new(),
         };
@@ -123,6 +125,12 @@ impl WorldView {
     pub fn follow_biome_fog(&mut self, camera: DVec3, seconds: f32) -> Vec3 {
         let target = self.world.fog_tint_at(camera.x, camera.z);
         self.biome_fog.follow(target, seconds)
+    }
+
+    /// How open to the sky the eyes are (0 deep in a cave, 1 outside), eased over the frames.
+    pub fn follow_cave_fog(&mut self, camera: DVec3, seconds: f32) -> f32 {
+        let sky_light = self.world.sky_light_at_eyes(camera);
+        self.cave_fog.follow(sky_light, seconds)
     }
 
     pub fn insert(&mut self, column: Column, biomes: BiomeMap) {

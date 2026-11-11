@@ -2,9 +2,11 @@
 //! sky and day cycle, ready for the renderer. Also the world time the client shows.
 
 mod biome_fog;
+mod cave_fog;
 mod clock;
 
 pub use biome_fog::BiomeFog;
+pub use cave_fog::{CaveFog, sky_openness};
 pub use clock::DayClock;
 
 use crate::render::linear_rgb;
@@ -63,6 +65,8 @@ pub struct SkyFrame {
     pub glow_strength: f32,
     /// What the fog fades into: the horizon.
     pub fog: Vec3,
+    /// What the fog fades into deep under ground.
+    pub cave_fog: Vec3,
     /// Sky light reaching the world (uniform factor of the block shader).
     pub light: f32,
     /// Unit vector toward the sun; the moon is opposite.
@@ -117,6 +121,7 @@ impl SkyFrame {
             glow,
             glow_strength,
             fog: horizon.lerp(glow, glow_strength * TWILIGHT_FOG),
+            cave_fog: linear(sky.cave_fog),
             light: cycle.sky_factor(time),
             sun,
             across,
@@ -142,6 +147,26 @@ impl SkyFrame {
         Self {
             horizon: self.horizon * tint,
             fog: self.fog * tint,
+            ..self
+        }
+    }
+
+    /// The fog, and the sky seen beyond the drawn world, faded to the cave fog as the
+    /// eyes leave the sky (`openness` 0 deep under ground, 1 in the open). The sky light
+    /// of the world and the sun and moon are left alone.
+    pub fn under_ground(self, openness: f32) -> Self {
+        let open = openness.clamp(0.0, 1.0);
+        let fade = |color: Vec3| self.cave_fog.lerp(color, open);
+        Self {
+            zenith: fade(self.zenith),
+            horizon: fade(self.horizon),
+            glow_strength: self.glow_strength * open,
+            fog: fade(self.fog),
+            stars: self.stars * open,
+            clouds: self.clouds.map(|clouds| CloudFrame {
+                opacity: clouds.opacity * open,
+                ..clouds
+            }),
             ..self
         }
     }
@@ -209,5 +234,18 @@ mod tests {
         assert!(midnight.color.max_element() < 0.1);
         assert!(noon.height > 200.0 && noon.coverage > 0.0 && noon.coverage < 1.0);
         assert_ne!(noon.drift, midnight.drift, "they drift with time");
+    }
+
+    #[test]
+    fn the_fog_fades_to_the_cave_colour_under_ground() {
+        let (sky, cycle) = terra();
+        let noon = SkyFrame::at(&sky, &cycle, cycle.moment(Moment::Noon) as f64, true);
+        let cave = noon.under_ground(0.0);
+        assert_eq!(cave.fog, noon.cave_fog);
+        assert_eq!(cave.horizon, noon.cave_fog);
+        assert_eq!(cave.light, noon.light, "the world keeps its light");
+        assert_eq!(noon.under_ground(1.0), noon, "unchanged in the open");
+        let half = noon.under_ground(0.5).fog;
+        assert!(half.x > cave.fog.x && half.x < noon.fog.x);
     }
 }

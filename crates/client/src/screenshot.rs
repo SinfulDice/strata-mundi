@@ -7,7 +7,7 @@ use crate::render::{
     Target, TextureFiltering,
 };
 use crate::settings::{GraphicsSettings, Lighting, ParticleMode};
-use crate::sky::SkyFrame;
+use crate::sky::{SkyFrame, sky_openness};
 use crate::world::ClientWorld;
 use std::fs::File;
 use std::io::BufWriter;
@@ -133,7 +133,11 @@ pub fn render_image(
     renderer.options = RenderOptions::for_capture(&view.graphics);
     let position = view.camera.position;
     let fog_tint = world.fog_tint_at(position.x, position.z);
-    renderer.sky = view.sky.with_fog_tint(fog_tint.unwrap_or(glam::Vec3::ONE));
+    let openness = sky_openness(world.sky_light_at_eyes(position));
+    renderer.sky = view
+        .sky
+        .with_fog_tint(fog_tint.unwrap_or(glam::Vec3::ONE))
+        .under_ground(openness);
     renderer.models.library = ModelLibrary::from_content(content);
     renderer.models.entities = world.entity_models().collect();
     let table = BlockTable::from_content(content);

@@ -2,7 +2,8 @@
 // and sunset, its horizon glowing on the sun's side. Sizes and tilt are in degrees.
 // Clouds float above the hills but below the great peaks; `coverage` (0 to 1) is the
 // share of the sky they hide, `speed` in blocks per second, `direction` in degrees
-// (0 toward east, 90 toward south).
+// (0 toward east, 90 toward south). `cave_fog` is the fog far from the sky light, under
+// ground (the fog fades to it as the sky light at the eyes drops).
 Sky(
     day: (zenith: "#4f86e8", horizon: "#a9c8f5"),
     night: (zenith: "#03050f", horizon: "#121a36"),
@@ -12,6 +13,7 @@ Sky(
     sun_size: 6.0,
     moon_size: 5.0,
     path_tilt: 20.0,
+    cave_fog: "#0c0c12",
     stars: (density: 0.006, brightness: 0.9, twinkle: 0.35),
     clouds: (
         height: 300.0,

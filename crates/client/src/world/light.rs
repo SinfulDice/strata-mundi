@@ -75,6 +75,13 @@ impl ClientWorld {
         self.computed_light(pos).unwrap_or(PackedLight::OPEN_SKY)
     }
 
+    /// Sky light (0-15) at the eyes at `position`, which sets how deep the fog is in a cave.
+    pub fn sky_light_at_eyes(&self, position: DVec3) -> u8 {
+        let cell = position.floor();
+        self.light_at(BlockPos::new(cell.x as i32, cell.y as i32, cell.z as i32))
+            .sky()
+    }
+
     fn computed_light(&self, pos: BlockPos) -> Option<PackedLight> {
         if !pos.is_in_height_range() {
             return None;

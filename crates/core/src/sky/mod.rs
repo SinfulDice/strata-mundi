@@ -63,7 +63,13 @@ pub struct SkyDef {
     /// No cloud layer when absent.
     #[serde(default)]
     pub clouds: Option<CloudsDef>,
+    /// Colour the fog fades to under ground, away from the sky light.
+    #[serde(default)]
+    pub cave_fog: Option<HexColor>,
 }
+
+/// Cave fog of skies that do not set one: near black, a little blue.
+const DEFAULT_CAVE_FOG: Rgba = Rgba([0x0c, 0x0c, 0x12, 255]);
 
 /// A sky ready to draw: colors in sRGB, textures resolved.
 #[derive(Debug, Clone, PartialEq)]
@@ -79,6 +85,7 @@ pub struct Sky {
     pub path_tilt: f32,
     pub stars: StarsDef,
     pub clouds: Option<Clouds>,
+    pub cave_fog: Rgba,
 }
 
 impl Sky {
@@ -100,6 +107,7 @@ impl Sky {
                 twinkle: 0.0,
             },
             clouds: None,
+            cave_fog: DEFAULT_CAVE_FOG,
         }
     }
 
@@ -122,6 +130,7 @@ impl Sky {
                 twinkle: bounded(def.stars.twinkle, 0.0, 1.0),
             },
             clouds: def.clouds.as_ref().map(Clouds::resolve),
+            cave_fog: def.cave_fog.map_or(DEFAULT_CAVE_FOG, |color| color.0),
         }
     }
 }

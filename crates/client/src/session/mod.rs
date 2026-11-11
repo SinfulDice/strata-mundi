@@ -339,7 +339,11 @@ impl Session {
             self.applied.graphics.vertical_distance,
         );
         let fog_tint = view.follow_biome_fog(camera, frame_seconds);
-        self.renderer.sky = self.sky_frame().with_fog_tint(fog_tint);
+        let openness = view.follow_cave_fog(camera, frame_seconds);
+        self.renderer.sky = self
+            .sky_frame()
+            .with_fog_tint(fog_tint)
+            .under_ground(openness);
     }
 
     fn handle_system_actions(&mut self) -> Result<(), ClientError> {
