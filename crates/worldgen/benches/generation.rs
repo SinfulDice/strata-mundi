@@ -53,7 +53,7 @@ fn special_columns(c: &mut Criterion) {
     c.bench_function("generate_mountain_column", |b| {
         b.iter(|| generator.generate(black_box(mountain)))
     });
-    // A large cavern with an aquifer lake (screenshots/caves-42.png).
+    // A large cavern with an aquifer lake, under (-376, -376) in seed 42.
     let cavern = ColumnPos { x: -24, z: -24 };
     c.bench_function("generate_cavern_column", |b| {
         b.iter(|| generator.generate(black_box(cavern)))
