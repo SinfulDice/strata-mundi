@@ -114,7 +114,7 @@ cargo run -p strata-app --release -- --map carte.png --seed 42 --pos 0,0,0 --siz
 - Chaque biome a sa couleur (`map_color` dans son fichier), assombrie ou éclaircie selon la pente comme si la lumière venait du nord-ouest : les montagnes et les vallées ressortent en relief.
 - L'eau est en bleu, d'autant plus foncé qu'elle est profonde.
 
-La carte utilise la hauteur plate (sans les surplombs), ce qui la rend rapide. Le même code est prévu pour l'aperçu de l'écran de création de monde.
+La carte utilise la hauteur plate (sans les surplombs), ce qui la rend rapide. Le même code dessine l'aperçu de l'éditeur de génération, réparti sur plusieurs fils et interrompu dès qu'une carte plus récente est demandée (`map::render_with`, voir [Types de monde](types-de-monde.md)). Avec `--world-code`, la carte montre un type de monde.
 
 ### Les réglages du pack
 

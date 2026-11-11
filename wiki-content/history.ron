@@ -156,6 +156,11 @@
                 en: "Copper, and rare giant iron and copper deposits hinted at by coloured stones on the surface.",
                 lol: "COPPR, AN RARE BIG IRON AN COPPR STASHEZ. COLOR ROCKZ ON TEH GROUND SHOW WER.",
             )),
+            (version: "0.2.0", change: Changed(
+                fr: "Types de monde (normal, plat, amplifié, biome unique, archipel), éditeur de génération avec carte et codes partageables.",
+                en: "World types (normal, flat, amplified, single biome, archipelago), generation editor with a map and shareable codes.",
+                lol: "KINDZ OV WURLD (NORMUL, PANCAEK, SUPER BUMPY, WUN BIOME, ILANDZ), WURLD MAKER WIF TINY MAP AN CODEZ FOR FRENZ.",
+            )),
         ],
     },
 )

@@ -24,7 +24,7 @@ graph TD
 
 - **Écran titre** : un petit monde généré tourne lentement derrière le logo.
 - **Liste des mondes** : capture du monde (prise en le quittant), nom, date, mode et temps de jeu. Un monde d'une version incompatible est grisé.
-- **Nouveau monde** : nom, graine (vide = au hasard), bordure du monde (10 millions de blocs par défaut), mode de jeu (créatif seulement jusqu'à la v0.3).
+- **Nouveau monde** : nom, graine (vide = au hasard), bordure du monde (10 millions de blocs par défaut), mode de jeu (créatif seulement jusqu'à la v0.3), règles (fluides, cycle jour/nuit, feu) et **type de monde** ; « Personnaliser la génération… » ouvre l'éditeur, une seconde page du même menu (voir [Types de monde](types-de-monde.md)). Échap ou B y revient à la page principale.
 - **Pause** : le monde s'arrête. Dans les autres menus (inventaire…), le monde continue comme dans Minecraft, sauf si l'option « Pause dans tous les menus » est activée.
 - **Options** : six onglets (graphismes, interface, commandes, touches, jeu, packs), détaillés dans [Réglages](reglages.md).
 - **Éditeur de HUD** : on choisit un élément (viseur, barre, nom du bloc), puis on le déplace aux flèches, à la croix ou en le faisant glisser à la souris (Sprint : 8 pixels d'un coup). Chaque élément garde son ancrage (centre, bas…), donc la disposition suit toutes les tailles d'écran. « Défaut » remet tout en place.
@@ -54,7 +54,7 @@ Les textes peuvent contenir `<key:Inventory>` : l'interface affiche alors la tou
 |---|---|
 | Pile de menus, actions | `crates/client/src/screens/menu.rs` (`Menu`, `Effect`, `UiAction`) |
 | Entrées dans les menus | `crates/client/src/screens/handling.rs` |
-| Modèles des écrans | `crates/client/src/screens/{title,worlds,pause,editor,keyboard,inventory}.rs` |
+| Modèles des écrans | `crates/client/src/screens/{title,worlds,pause,editor,keyboard,inventory}.rs`, `screens/creation/` (nouveau monde) |
 | Écran titre, monde en cours | `crates/client/src/stage.rs`, `session.rs` |
 | Lanceur | `crates/client/src/launcher.rs` (trait), `crates/app/src/launcher.rs` (fichiers) |
 | Noms des touches | `crates/client/src/input/labels.rs` (`KeyNames`) |

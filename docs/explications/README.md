@@ -15,6 +15,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
    - [Relief](relief.md) : courbes du climat, densité 3D, falaises, plateaux, rivières, carte `--map`.
    - [Grottes](grottes.md) : spaghetti, nouilles, cavernes, ravins, aquifères, lave, toits sous les mers.
    - [Biomes et végétation](biomes-et-vegetation.md) : les 18 biomes, plantes en croix, touffes, formes d'arbres, strates des badlands.
+   - [Types de monde](types-de-monde.md) : éditeur de génération, carte calculée en fond, codes partageables.
 9. [Monde infini](monde-infini.md) : chargement autour du joueur, frustum.
 10. [Packs, registres et traductions](packs.md) : d'où vient tout le contenu. Pour les textures, voir aussi le [guide des textures](../guide-textures.md).
 11. [ECS](ecs.md) : entités et composants du serveur.
