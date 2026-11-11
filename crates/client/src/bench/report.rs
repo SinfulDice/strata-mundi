@@ -115,11 +115,6 @@ impl Report<'_> {
         for (name, value) in measures {
             let _ = writeln!(text, "| {name} | {value} |");
         }
-        let _ = writeln!(
-            text,
-            "\n> v0.1 : les profils règlent pour l'instant les distances de rendu, l'occlusion \
-             ambiante et les threads ; les autres réglages arrivent au jalon 8."
-        );
         text
     }
 }

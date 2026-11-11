@@ -3337,7 +3337,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "strata-app"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -3359,7 +3359,7 @@ dependencies = [
 
 [[package]]
 name = "strata-client"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arboard",
  "bytemuck",
@@ -3386,7 +3386,7 @@ dependencies = [
 
 [[package]]
 name = "strata-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "fluent-bundle",
@@ -3404,7 +3404,7 @@ dependencies = [
 
 [[package]]
 name = "strata-protocol"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "postcard",
  "serde",
@@ -3413,7 +3413,7 @@ dependencies = [
 
 [[package]]
 name = "strata-server"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "crossbeam-channel",
@@ -3431,7 +3431,7 @@ dependencies = [
 
 [[package]]
 name = "strata-worldgen"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "fastnoise-lite",
@@ -4405,7 +4405,7 @@ dependencies = [
 
 [[package]]
 name = "wikigen"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
