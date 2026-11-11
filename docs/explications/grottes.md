@@ -27,7 +27,7 @@ Comme les canyons de Minecraft, les ravins sont **rares** : on en croise un de t
 - les parois sont **presque verticales** : la largeur ne diminue vraiment que tout près du fond (30 % de la largeur en bas), avec de petites corniches d'une couche à l'autre ;
 - un ravin sur trois environ reste **caché** sous terre (entre y ≈ 0 et 80) ; les autres s'ouvrent à la surface.
 
-Pour qu'un ravin ouvert ne soit pas une « rigole verte », les colonnes situées dedans ou à moins d'un bloc et demi du bord perdent leur herbe et leur terre : elles deviennent la roche du biome (ou la pierre). Les arbres ne poussent pas à moins de 4 blocs du bord, pour qu'aucun ne penche au-dessus du vide.
+Pour qu'un ravin ouvert ne soit pas une « rigole verte », les colonnes situées dedans ou à moins d'un bloc et demi du bord perdent leur herbe et leur terre : elles deviennent la roche du biome (ou la pierre). Aucun tronc ni aucune feuille n'est à moins de 4 blocs du bord, pour qu'aucun arbre ne penche au-dessus du vide (la racine est d'autant plus loin que la couronne est large).
 
 ### La grille interpolée
 
@@ -73,7 +73,7 @@ Dans `assets/packs/strata/dimensions/terra.ron`, le bloc `caves: (...)`. Sans ce
 | `noodle_top` | `100` | hauteur max des nouilles |
 | `cheese` | `0.3` | seuil des cavernes : plus haut = moins de cavernes |
 | `cavern_top` | `140` | les cavernes se raréfient vers cette hauteur et cessent un tiers plus haut |
-| `ravines` | `3.5` | demi-largeur des ravins en leur milieu, en blocs (0 = aucun ravin) |
+| `ravines` | `3.5` | demi-largeur des ravins en leur milieu, en blocs (0 = aucun ravin). Avant la v0.2.1, c'était une largeur de bruit (0,03) : une valeur < 1 provoque un avertissement au chargement |
 | `ravine_spacing` | `320` | côté des carrés qui contiennent chacun un ravin : plus grand = plus rares |
 | `ravine_depth` | `(30, 80)` | profondeur minimale et maximale des ravins |
 | `aquifers` | `0.35` | part des régions avec une nappe |

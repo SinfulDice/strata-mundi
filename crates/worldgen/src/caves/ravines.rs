@@ -4,7 +4,7 @@
 //! hidden deep underground.
 
 use crate::Seed;
-use crate::content::Caves as Settings;
+use crate::content::{Caves as Settings, MAX_CROWN};
 use crate::rng::Rng;
 use std::f64::consts::{PI, TAU};
 use strata_core::coords::ColumnPos;
@@ -23,6 +23,10 @@ const PIECES: usize = 12;
 const ROUGHNESS: f64 = 0.15;
 /// Widest ravine, as a share of the `ravines` setting.
 const MAX_WIDTH: f64 = 1.25;
+/// Nothing grows closer than this to a ravine open at the surface, in blocks.
+pub const CLEARANCE: f64 = 4.0;
+/// Farthest from a ravine any question is asked: clearance plus the widest crown.
+pub const MAX_MARGIN: f64 = CLEARANCE + 1.5 * MAX_CROWN as f64;
 
 pub struct Ravines {
     seed: Seed,
@@ -31,7 +35,8 @@ pub struct Ravines {
     depths: (i32, i32),
 }
 
-/// Ravines near an area.
+/// Ravines near an area, found once for all its blocks.
+#[derive(Default)]
 pub struct Nearby(Vec<Ravine>);
 
 struct Ravine {
@@ -45,11 +50,14 @@ struct Ravine {
     bounds: (f64, f64, f64, f64),
 }
 
-/// Nearest ravine to one block column, if any.
+/// One ravine seen from one block column.
 #[derive(Debug, Clone, Copy)]
 pub struct Span {
     /// Horizontal distance to the ravine's edge in blocks, negative inside.
     gap: f64,
+    /// Distance to the center line minus the widest half-width: unlike `gap`, it never
+    /// changes faster than the position, so a margin on it also holds for a crown.
+    reach: f64,
     /// 0 on the center line, 1 on the edge.
     distance: f64,
     /// `None` for a ravine that opens at the surface (its top is the tunnel roof).
@@ -68,11 +76,11 @@ impl Ravines {
         }
     }
 
-    /// The ravines that may cross the blocks from `min` to `max` (inclusive), found once
-    /// for all of them.
+    /// The ravines that may come within `MAX_MARGIN` blocks of the blocks from `min` to
+    /// `max` (inclusive).
     pub fn around(&self, min: (i32, i32), max: (i32, i32)) -> Nearby {
         if self.width <= 0.0 {
-            return Nearby(Vec::new());
+            return Nearby::default();
         }
         let region = |c: i32| c.div_euclid(self.spacing);
         let area = (
@@ -82,10 +90,6 @@ impl Ravines {
         let regions = (region(min.1) - 1..=region(max.1) + 1)
             .flat_map(|rz| (region(min.0) - 1..=region(max.0) + 1).map(move |rx| (rx, rz)));
         Nearby(regions.filter_map(|r| self.ravine(r, area)).collect())
-    }
-
-    pub fn span(&self, x: i32, z: i32) -> Span {
-        self.around((x, z), (x, z)).span(x, z)
     }
 
     /// The ravine of a region, if it may come near `area` (`(min, max)` corners).
@@ -98,7 +102,7 @@ impl Ravines {
         );
         let angle = rng.unit() * TAU;
         let length = side * (LENGTH.0 + (LENGTH.1 - LENGTH.0) * rng.unit());
-        let reach = length * (1.0 + BEND) + self.width * 2.0 * MAX_WIDTH;
+        let reach = length * (1.0 + BEND) + self.width * MAX_WIDTH + MAX_MARGIN;
         let ((ax, az), (bx, bz)) = area;
         let far = start.0 + reach < ax
             || start.0 - reach > bx
@@ -123,35 +127,42 @@ impl Ravines {
             depth: rng.range(shallow, deep),
             hidden: rng.unit() < HIDDEN_SHARE,
             salt: rng.next_u64(),
-            bounds: bounds(&line),
+            bounds: Ravine::bounds(&line),
             line,
         })
     }
 }
 
 impl Nearby {
-    pub fn span(&self, x: i32, z: i32) -> Span {
+    /// Every ravine crossing `(x, z)`.
+    pub fn inside(&self, x: i32, z: i32) -> impl Iterator<Item = Span> + '_ {
+        self.spans(x, z).filter(Span::is_inside)
+    }
+
+    /// Whether the edge of a ravine open at the surface is within `margin` blocks.
+    pub fn surface_within(&self, x: i32, z: i32, margin: f64) -> bool {
+        self.spans(x, z)
+            .any(|span| span.top.is_none() && span.gap < margin)
+    }
+
+    /// Whether a ravine open at the surface is within `margin` blocks of its widest
+    /// edge: then it is within `margin + d` of anything `d` blocks away (a crown).
+    pub fn surface_reaches(&self, x: i32, z: i32, margin: f64) -> bool {
+        self.spans(x, z)
+            .any(|span| span.top.is_none() && span.reach < margin)
+    }
+
+    fn spans(&self, x: i32, z: i32) -> impl Iterator<Item = Span> + '_ {
         let point = (f64::from(x) + 0.5, f64::from(z) + 0.5);
-        self.0
-            .iter()
-            .filter_map(|ravine| ravine.span(point))
-            .min_by(|a, b| a.gap.total_cmp(&b.gap))
-            .unwrap_or(Span::NONE)
+        self.0.iter().filter_map(move |ravine| ravine.span(point))
     }
 }
 
-fn bounds(line: &[(f64, f64)]) -> (f64, f64, f64, f64) {
-    line.iter().fold(
-        (f64::MAX, f64::MAX, f64::MIN, f64::MIN),
-        |(ax, az, bx, bz), &(x, z)| (ax.min(x), az.min(z), bx.max(x), bz.max(z)),
-    )
-}
-
 impl Ravine {
-    /// The ravine seen from `point`, if `point` is no farther than its width from it.
+    /// The ravine seen from `point`, if `point` is within `MAX_MARGIN` of its edge.
     fn span(&self, point: (f64, f64)) -> Option<Span> {
         let (ax, az, bx, bz) = self.bounds;
-        let reach = self.width * 2.0;
+        let reach = self.width + MAX_MARGIN;
         let outside = point.0 < ax - reach
             || point.0 > bx + reach
             || point.1 < az - reach
@@ -166,6 +177,7 @@ impl Ravine {
         let depth = (f64::from(self.depth) * (0.5 + 0.5 * taper)) as i32;
         Some(Span {
             gap: distance - width,
+            reach: distance - self.width,
             distance: if width > 0.0 {
                 distance / width
             } else {
@@ -196,34 +208,25 @@ impl Ravine {
         }
         best
     }
+
+    fn bounds(line: &[(f64, f64)]) -> (f64, f64, f64, f64) {
+        line.iter().fold(
+            (f64::MAX, f64::MAX, f64::MIN, f64::MIN),
+            |(ax, az, bx, bz), &(x, z)| (ax.min(x), az.min(z), bx.max(x), bz.max(z)),
+        )
+    }
 }
 
 impl Span {
-    const NONE: Self = Self {
-        gap: f64::INFINITY,
-        distance: f64::INFINITY,
-        top: None,
-        depth: 0,
-        salt: 0,
-    };
-
     pub fn is_inside(&self) -> bool {
         self.distance < 1.0
     }
 
-    /// Whether a ravine opening at the surface is within `margin` blocks.
-    pub fn surface_within(&self, margin: f64) -> bool {
-        self.top.is_none() && self.gap < margin
-    }
-
     /// Whether the ravine is open at height `y`, below a tunnel roof at `roof`.
     pub fn carves(&self, y: i32, roof: i32) -> bool {
-        if self.distance >= 1.0 {
-            return false;
-        }
         let top = self.top.map_or(roof, |top| top.min(roof));
         let below_top = top - y;
-        if !(0..=self.depth).contains(&below_top) {
+        if self.distance >= 1.0 || !(0..=self.depth).contains(&below_top) {
             return false;
         }
         // Nearly vertical walls that only close in near the bottom.

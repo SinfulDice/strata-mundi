@@ -1,3 +1,4 @@
+use crate::caves::CLEARANCE;
 use crate::content::{Biome, Feature};
 use crate::generator::Generator;
 use strata_core::content::BlockId;
@@ -67,6 +68,7 @@ fn has_trees(generator: &Generator, biome: &Biome) -> bool {
 
 /// Whether a cave may open under the spot or around it, even a few blocks down.
 fn near_cave_entrance(generator: &Generator, x: i32, z: i32, height: i32) -> bool {
+    let ravines = generator.ravines_around((x - 1, z - 1), (x + 1, z + 1));
     (-1..=1)
         .flat_map(|dz| (-1..=1).map(move |dx| (x + dx, z + dz)))
         .any(|(nx, nz)| {
@@ -75,7 +77,8 @@ fn near_cave_entrance(generator: &Generator, x: i32, z: i32, height: i32) -> boo
             } else {
                 generator.surface_height(nx, nz)
             };
-            generator.cave_may_open(nx, nz, top - CAVE_MARGIN..=top)
+            ravines.surface_reaches(nx, nz, CLEARANCE)
+                || generator.tunnel_may_open(nx, nz, top - CAVE_MARGIN..=top)
         })
 }
 

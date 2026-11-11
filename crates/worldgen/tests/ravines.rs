@@ -4,10 +4,11 @@
 
 mod common;
 
-use common::caves::{Pair, TOP, blocks_of, column_of};
+use common::caves::{Pair, TOP, blocks_of, column_of, scan};
 use std::collections::BTreeSet;
 use strata_core::content::BlockId;
 use strata_core::coords::ColumnPos;
+use strata_worldgen::Feature;
 
 const SEEDS: [u64; 4] = [42, 7, 99, 1234];
 const SIDES: [(i32, i32, i32); 5] = [(1, 0, 0), (-1, 0, 0), (0, 0, 1), (0, 0, -1), (0, -1, 0)];
@@ -37,6 +38,63 @@ fn ravines_are_rare_but_present() {
             share * 100.0
         );
     }
+}
+
+/// Columns really carved by a ravine stay few on a 1000-block square.
+#[test]
+fn carved_ravines_are_rare() {
+    let mut total = 0;
+    for seed in [42, 7] {
+        let mut pair = Pair::new(seed);
+        let carved = scan().filter(|&pos| pair.has_ravine(pos)).count();
+        assert!(
+            carved <= 20,
+            "seed {seed}: {carved} of 256 columns hold a ravine"
+        );
+        total += carved;
+    }
+    assert!(total > 0, "no ravine carved at all");
+}
+
+/// No trunk, leaf or pillar stands within the clearance of a ravine open at the surface.
+#[test]
+fn nothing_grows_over_ravines() {
+    let mut near = 0;
+    for seed in [42, 7] {
+        let pair = Pair::new(seed);
+        let generator = &pair.caves;
+        let grown: BTreeSet<BlockId> = generator
+            .content()
+            .features
+            .iter()
+            .filter(|feature| matches!(feature, Feature::Tree(_) | Feature::Pillar { .. }))
+            .flat_map(Feature::surface_blocks)
+            .collect();
+        let chunks: BTreeSet<(i32, i32)> = ravine_chunks(&pair, 6)
+            .into_iter()
+            .flat_map(|pos| {
+                (-1..=1).flat_map(move |dz| (-1..=1).map(move |dx| (pos.x + dx, pos.z + dz)))
+            })
+            .collect();
+        for (cx, cz) in chunks {
+            let pos = ColumnPos { x: cx, z: cz };
+            let column = generator.generate(pos);
+            for (x, z) in blocks_of(pos) {
+                if !generator.near_open_ravine(x, z) {
+                    continue;
+                }
+                near += 1;
+                let (lx, lz) = (x.rem_euclid(16) as u32, z.rem_euclid(16) as u32);
+                for y in 1..TOP {
+                    assert!(
+                        !grown.contains(&column.get(lx, y, lz)),
+                        "seed {seed}: tree or pillar by a ravine at ({x}, {y}, {z})"
+                    );
+                }
+            }
+        }
+    }
+    assert!(near > 0, "no column near an open ravine was checked");
 }
 
 /// Chunks crossed by a ravine, found on a coarse grid.

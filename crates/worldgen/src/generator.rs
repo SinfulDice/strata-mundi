@@ -1,8 +1,8 @@
 use crate::Seed;
 use crate::SettingsError;
-use crate::caves::{Caves, Roofs};
+use crate::caves::{CLEARANCE, Caves, Nearby, Roofs};
 use crate::climate::{ClimateMaps, Sample};
-use crate::content::{Biome, Flat, WorldgenContent};
+use crate::content::{Biome, Flat, MAX_CROWN, WorldgenContent};
 use crate::deposits::{Deposits, Vein};
 use crate::features::{place_ores, place_surface_features};
 use crate::noise::Noise;
@@ -137,16 +137,22 @@ impl Generator {
             None => self.fill_relief(&mut column, &samples, &ring),
         };
         let terrain = &self.content.terrain;
+        // Wide enough for the trees rooted in the neighbouring columns.
+        let reach = MAX_CROWN as i32 + 1;
+        let ravines = self.ravines_around(
+            (origin.0 - reach, origin.1 - reach),
+            (origin.0 + 15 + reach, origin.1 + 15 + reach),
+        );
         if let (Some(caves), Some(settings)) = (&self.caves, &terrain.caves) {
             let roofs = self.cave_roofs(&tops, &ring.lowest);
             let keep = [terrain.bedrock, terrain.water, terrain.ice, settings.lava];
-            caves.carve(&mut column, &roofs, &keep);
-            self.bare_ravine_walls(caves, &mut column, &samples, &tops);
+            caves.carve(&mut column, &roofs, &keep, &ravines);
+            self.bare_ravine_walls(&mut column, &samples, &tops, &ravines);
         }
         place_ores(self, &mut column);
         let features = flat.is_none_or(|flat| flat.features);
         if features {
-            place_surface_features(self, &mut column);
+            place_surface_features(self, &mut column, &ravines);
         }
         // After trees, so that no trunk stands on a deposit's sign.
         self.deposits
@@ -188,17 +194,17 @@ impl Generator {
     /// biome's rock: no grass or dirt hanging over the void.
     fn bare_ravine_walls(
         &self,
-        caves: &Caves,
         column: &mut Column,
         samples: &ColumnSamples<'_>,
         tops: &[[i32; 16]; 16],
+        ravines: &Nearby,
     ) {
         let origin = (column.pos.x * SECTION_SIZE, column.pos.z * SECTION_SIZE);
         let stone = self.content.terrain.stone;
         // Own height, not the roof: a rim next to a ravine on dry land may itself be near
         // lower ground.
         let dry = self.content.terrain.sea_level + DRY_LAND;
-        let rims = caves.ravine_rims(origin);
+        let rims = Caves::ravine_rims(origin, ravines);
         for (lz, row) in samples.iter().enumerate() {
             for (lx, (_, biome)) in row.iter().enumerate() {
                 let top = tops[lz][lx];
@@ -308,16 +314,31 @@ impl Generator {
 
     /// Whether a ravine, open at the surface or hidden, passes under `(x, z)`.
     pub fn in_ravine(&self, x: i32, z: i32) -> bool {
-        self.caves
-            .as_ref()
-            .is_some_and(|caves| caves.in_ravine(x, z))
+        self.ravines_around((x, z), (x, z))
+            .inside(x, z)
+            .next()
+            .is_some()
     }
 
-    /// Whether caves may open a block of `ys` at `(x, z)`.
-    pub fn cave_may_open(&self, x: i32, z: i32, ys: RangeInclusive<i32>) -> bool {
+    /// Whether `(x, z)` is too close to a ravine open at the surface for anything to grow.
+    pub fn near_open_ravine(&self, x: i32, z: i32) -> bool {
+        self.ravines_around((x, z), (x, z))
+            .surface_reaches(x, z, CLEARANCE)
+    }
+
+    /// The ravines that may come near the blocks from `min` to `max` (inclusive).
+    pub(crate) fn ravines_around(&self, min: (i32, i32), max: (i32, i32)) -> Nearby {
         self.caves
             .as_ref()
-            .is_some_and(|caves| caves.may_open(x, z, ys))
+            .map(|caves| caves.ravines_around(min, max))
+            .unwrap_or_default()
+    }
+
+    /// Whether a tunnel may open a block of `ys` at `(x, z)`.
+    pub fn tunnel_may_open(&self, x: i32, z: i32, ys: RangeInclusive<i32>) -> bool {
+        self.caves
+            .as_ref()
+            .is_some_and(|caves| caves.tunnel_may_open(x, z, ys))
     }
 
     /// A welcoming place to start: a spawn biome (plains, forest) on dry land, with water

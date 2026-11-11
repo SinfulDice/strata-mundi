@@ -17,7 +17,8 @@ use crate::content::Caves as Settings;
 use crate::noise::Noise;
 use aquifers::{Aquifers, Table};
 use grid::CaveGrid;
-use ravines::Ravines;
+pub use ravines::{CLEARANCE, MAX_MARGIN, Nearby};
+use ravines::{Ravines, Span};
 use std::ops::RangeInclusive;
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
@@ -28,9 +29,6 @@ const LOWEST: i32 = 5;
 const TUNNEL_STRETCH: f64 = 1.6;
 const CAVERN_STRETCH: f64 = 1.8;
 const PILLAR_THRESHOLD: f64 = 0.55;
-/// Nothing stands closer than this to a ravine open at the surface, in blocks: no tree
-/// leaning over the void.
-const RAVINE_MARGIN: f64 = 4.0;
 /// Columns this close to a ravine open at the surface lose their soil, in blocks.
 const RAVINE_RIM: f64 = 1.5;
 
@@ -74,15 +72,15 @@ impl Caves {
     }
 
     /// Carves the column below `roofs`, never replacing a block of `keep`.
-    pub fn carve(&self, column: &mut Column, roofs: &Roofs, keep: &[BlockId]) {
+    /// `ravines` holds at least the ravines near the column.
+    pub fn carve(&self, column: &mut Column, roofs: &Roofs, keep: &[BlockId], ravines: &Nearby) {
         let top = roofs.tunnels.iter().flatten().copied().max().unwrap_or(0);
         let origin = (column.pos.x * SECTION_SIZE, column.pos.z * SECTION_SIZE);
         let grid = CaveGrid::sample(origin, top, |x, y, z| self.openness(x, y, z));
-        let ravines = self.ravines.around(origin, (origin.0 + 15, origin.1 + 15));
         for lz in 0..16 {
             for lx in 0..16 {
                 let (x, z) = (origin.0 + lx as i32, origin.1 + lz as i32);
-                let ravine = ravines.span(x, z);
+                let crossing: Vec<Span> = ravines.inside(x, z).collect();
                 let table = self.aquifers.table(x, z);
                 let (tunnel_roof, cavern_roof) = (roofs.tunnels[lz][lx], roofs.caverns[lz][lx]);
                 for y in LOWEST..=tunnel_roof {
@@ -91,7 +89,8 @@ impl Caves {
                     }
                     let open = grid.at(lx, y, lz);
                     let cave = open > 1.0 || (open > 0.0 && y <= cavern_roof);
-                    if !cave && !ravine.carves(y, tunnel_roof) {
+                    let ravine = || crossing.iter().any(|span| span.carves(y, tunnel_roof));
+                    if !cave && !ravine() {
                         continue;
                     }
                     let (cx, cz) = (lx as u32, lz as u32);
@@ -103,30 +102,27 @@ impl Caves {
         }
     }
 
-    /// Whether a tunnel may open a block of `ys` at `(x, z)`, or a surface ravine passes
-    /// nearby, for things that must not stand over a cave entrance (trees, spawn).
-    pub fn may_open(&self, x: i32, z: i32, ys: RangeInclusive<i32>) -> bool {
-        self.ravines.span(x, z).surface_within(RAVINE_MARGIN)
-            || ys
-                .into_iter()
-                .any(|y| grid::at_point(x, y, z, |x, y, z| self.openness(x, y, z)) > 1.0)
+    /// Whether a tunnel may open a block of `ys` at `(x, z)`, for things that must not
+    /// stand over a cave entrance (trees, spawn).
+    pub fn tunnel_may_open(&self, x: i32, z: i32, ys: RangeInclusive<i32>) -> bool {
+        ys.into_iter()
+            .any(|y| grid::at_point(x, y, z, |x, y, z| self.openness(x, y, z)) > 1.0)
+    }
+
+    /// The ravines that may come near the blocks from `min` to `max` (inclusive).
+    pub fn ravines_around(&self, min: (i32, i32), max: (i32, i32)) -> Nearby {
+        self.ravines.around(min, max)
     }
 
     /// Blocks of the column at `origin` on the rim of a ravine open at the surface, or
     /// inside it (their walls are bare rock), indexed `[z][x]`.
-    pub fn ravine_rims(&self, origin: (i32, i32)) -> [[bool; 16]; 16] {
-        let ravines = self.ravines.around(origin, (origin.0 + 15, origin.1 + 15));
+    pub fn ravine_rims(origin: (i32, i32), ravines: &Nearby) -> [[bool; 16]; 16] {
         std::array::from_fn(|lz| {
             std::array::from_fn(|lx| {
                 let (x, z) = (origin.0 + lx as i32, origin.1 + lz as i32);
-                ravines.span(x, z).surface_within(RAVINE_RIM)
+                ravines.surface_within(x, z, RAVINE_RIM)
             })
         })
-    }
-
-    /// Whether a ravine (open at the surface or hidden) passes under `(x, z)`.
-    pub fn in_ravine(&self, x: i32, z: i32) -> bool {
-        self.ravines.span(x, z).is_inside()
     }
 
     fn fill(&self, y: i32, table: Table) -> BlockId {

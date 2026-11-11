@@ -1,6 +1,7 @@
 //! Ore veins, trees and pillars. A column also places the parts of features rooted in
 //! its eight neighbours, so trees cross borders seamlessly whatever the loading order.
 
+use crate::caves::{CLEARANCE, MAX_MARGIN, Nearby};
 use crate::content::{Feature, MAX_CROWN, WorldgenContent};
 use crate::generator::Generator;
 use crate::rng::Rng;
@@ -53,7 +54,8 @@ pub fn place_ores(generator: &Generator, column: &mut Column) {
     }
 }
 
-pub fn place_surface_features(generator: &Generator, column: &mut Column) {
+/// `ravines` holds the ravines near the column and the trees that may reach it.
+pub fn place_surface_features(generator: &Generator, column: &mut Column, ravines: &Nearby) {
     let leaves = all_leaves(generator.content());
     for dz in -1..=1 {
         for dx in -1..=1 {
@@ -61,7 +63,7 @@ pub fn place_surface_features(generator: &Generator, column: &mut Column) {
                 x: column.pos.x + dx,
                 z: column.pos.z + dz,
             };
-            place_rooted_in(generator, source, column, &leaves);
+            place_rooted_in(generator, (source, ravines), column, &leaves);
         }
     }
 }
@@ -80,7 +82,7 @@ fn all_leaves(content: &WorldgenContent) -> Vec<BlockId> {
 
 fn place_rooted_in(
     generator: &Generator,
-    source: ColumnPos,
+    (source, ravines): (ColumnPos, &Nearby),
     column: &mut Column,
     leaves: &[BlockId],
 ) {
@@ -109,7 +111,10 @@ fn place_rooted_in(
             continue;
         };
         let height = generator.surface_height_at(&sample, x, z);
-        if height < content.terrain.sea_level || generator.cave_may_open(x, z, height..=height) {
+        let feature = &content.features[feature];
+        let over_cave = generator.tunnel_may_open(x, z, height..=height)
+            || near_ravine(feature, variant, (x, z), ravines);
+        if height < content.terrain.sea_level || over_cave {
             continue;
         }
         let ground = generator.ground_block(x, z, &sample, biome, height);
@@ -120,8 +125,31 @@ fn place_rooted_in(
             base: height + 1,
             leaves,
         };
-        place(&content.features[feature], ground, variant, &mut writer);
+        place(feature, ground, variant, &mut writer);
     }
+}
+
+/// Whether any block of the feature would stand within `CLEARANCE` of a ravine open at
+/// the surface: no tree leaning over the void.
+fn near_ravine(feature: &Feature, variant: u64, (x, z): (i32, i32), ravines: &Nearby) -> bool {
+    if !ravines.surface_reaches(x, z, MAX_MARGIN) {
+        return false;
+    }
+    let spread = match feature {
+        Feature::Tree(tree) => tree
+            .parts(variant)
+            .iter()
+            .map(|part| match part {
+                Part::Leaf((dx, _, dz))
+                | Part::Log((dx, _, dz))
+                | Part::Vine {
+                    top: (dx, _, dz), ..
+                } => f64::from(*dx).hypot(f64::from(*dz)),
+            })
+            .fold(0.0, f64::max),
+        _ => 0.0,
+    };
+    ravines.surface_reaches(x, z, CLEARANCE + spread)
 }
 
 /// Whether a feature rooted at `(x, z)` may write into the column at `pos`.

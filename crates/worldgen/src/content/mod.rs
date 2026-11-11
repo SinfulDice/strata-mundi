@@ -196,6 +196,7 @@ fn resolve_terrain(
         .clone()
         .filter(|caves| caves.enabled)
         .map(|caves| {
+            warn_old_ravine_width(&caves, source);
             let lava = r.block(&caves.lava);
             (caves, lava)
         });
@@ -284,6 +285,18 @@ pub(crate) fn bounded_relief(relief: &Relief) -> Relief {
         wetlands.bumps = wetlands.bumps.clamp(0.0, 16.0);
     }
     relief
+}
+
+/// `ravines` became a half-width in blocks in v0.2.1; older packs gave a noise width
+/// (0.03), which now makes ravines invisible.
+fn warn_old_ravine_width(caves: &CavesDef, source: &Path) {
+    if caves.ravines > 0.0 && caves.ravines < 1.0 {
+        tracing::warn!(
+            ravines = caves.ravines,
+            pack = %source.display(),
+            "`ravines` is a half-width in blocks since v0.2.1 (3.5 by default): values below 1 hide ravines"
+        );
+    }
 }
 
 /// Bounded so that pack data can't flood the world or make generation absurdly slow.
