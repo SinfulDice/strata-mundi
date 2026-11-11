@@ -3,15 +3,16 @@
 ## État
 
 - **Version en cours** : v0.2 — Monde vivant
-- **Jalon en cours** : 11 — Types de monde
-  - [x] Types et réglages de génération (worldgen + serveur) : normal, **plat personnalisable** (couches), **amplifié**, **biome unique**, **archipel d'îles** ; réglages taille des biomes, niveau de la mer, densité des grottes, fréquence des minerais (et place pour les structures) ; enregistrés dans `world.ron` ; **codes texte partageables** (encodage compact, validation, version) ; tests (déterminisme par type, codes aller-retour, valeurs bornées)
-  - [x] Écran de création : choix du type, **éditeur de génération** (curseurs, couches du monde plat), **aperçu en carte 2D** calculé hors du fil de rendu (taille réduite en DS), champ code à copier/coller, traductions ; captures de chaque type de monde
+- **Jalon en cours** : 12 — Clôture
+  - [ ] Captures de référence (grottes, falaises, nuit, lever de soleil ajoutées à `docs/screenshots.ron`) par `visual-tester`, ultra et DS
+  - [ ] Critères de fin vérifiés un par un, `perf-check` (bancs et mémoire), wiki complet en mode strict, rapport dans `docs/versions/v0.2.md`, allègement de `PROGRESS.md`, tag `v0.2.0` (à pousser par l'utilisateur si refusé)
 - **Dernière session** : 11/11/2026
 
 ## Fait
 
 ### v0.2
 
+- **Jalon 11 — Types de monde** : types du pack (normal, plat personnalisable, amplifié, biome unique, archipel), réglages de génération (taille des biomes, mer, grottes, minerais ; place pour les structures) bornés, vérifiés avant création, enregistrés dans `world.ron` ; **codes partageables** `S1-…` (somme de contrôle, version, erreurs traduites) ; écran de création avec **éditeur** (curseurs, couches, biome, code, presse-papiers `arboard`) et **aperçu 2D** en fond annulable (réglage détaillé/grossier/désactivé) ; test « golden » : le monde par défaut n'a pas changé.
 - **Jalon 10 — Audio** : synthèse procédurale pure (38 recettes du pack : pas par matériau, casse, pose, eau, nage, lave, feu, vent ; variations à chaque lecture), lecture `rodio` et mixage maison 3D (32 voix, catégories maître/blocs/ambiance/musique, sous-titres directionnels, `.ogg` remplaçables, sans carte son = silence), **ambiances** par biome et sous terre avec fondus, **réverbération** selon le lieu et **occlusion** (réglage audio spatial avancé/stéréo simple, DS en stéréo simple), **musique** calme façon C418 (thème de Terra, 5 morceaux pré-rendus en fond et mis en cache, fréquence réglable), `--render-sounds` et `--render-music` pour écouter ; fil audio sans allocation ni libération. Mixage : 155 µs (avancé) / 87 µs (stéréo) par bloc de 11,6 ms.
 - **Jalon 9 — Atmosphère** : carte des biomes envoyée avec chaque colonne (recalculée pour les colonnes sauvegardées), **teintes par biome** (herbe, feuilles, eau, brouillard) mélangées au maillage (sommet 12 octets, réglage « Mélange des biomes »), brouillard qui masque exactement le bord dessiné (le client demande sa distance + 2), teinté selon le biome et l'heure, nuits plus sombres ; **particules** (éclats de casse, gouttes et éclaboussures d'eau et de lave, bulles ; pool borné, un appel instancié, définies dans le pack, réglage désactivées/réduites/complètes). 2 000 particules : 0,41 ms par image.
 - **Jalon 8 — Feu et textures vivantes** : **feu** (propagation aux blocs inflammables avec valeurs du pack, extinction par l'eau et l'usure, reproductible par hachage avec la graine, replanifié au rechargement, budget partagé avec poids ×3), options `/fire spread|destroy` et à la création, briquet créatif ; **textures animées** (images du pack ou bandes PNG, choix par le shader), **connectées** (verre, bibliothèque), **variantes aléatoires** choisies dans le shader (fusion gloutonne intacte), portail d'essai, réglages « Textures animées » et « Variantes de textures » ; formats dans `docs/guide-textures.md`. Banc incendie de plaine : 35,8 ms pour 40 ticks.
