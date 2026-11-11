@@ -73,6 +73,16 @@ Dans une bande d'érosion moyenne (courbe `plateau`), le terrain est **surélev�
 
 Si un bloc de sol a un voisin plus haut ou plus bas d'**au moins 3 blocs**, la pente est jugée raide : sa surface devient de la **roche nue** au lieu de l'herbe, comme une vraie falaise. Chaque biome peut choisir le bloc utilisé (`steep`, pierre par défaut). Les sommets enneigés gardent leur neige.
 
+### Une pente ordinaire se monte en sautant
+
+Le joueur saute d'un bloc : une pente n'est praticable que si ses marches font au plus 1 bloc. Mesure de la v0.2.1 (12 fenêtres de 96 × 96 blocs en montagne par graine, graines 42, 7 et 99, hauteur réelle avec surplombs) :
+
+- **80 % des pas** d'un bloc au suivant montent ou descendent d'au plus 1 bloc (74 à 84 % selon la graine) ;
+- sur les **pentes ordinaires** (au plus 1 bloc de montée par bloc en moyenne sur 8 blocs, soit 60 à 70 % du terrain de montagne), seulement **4 %** des pas font 2 blocs ou plus (0,7 % sans le bruit des surplombs) : on contourne la marche ;
+- les marches de 2 blocs et plus se concentrent sur les flancs plus raides que 45° : ce sont les vraies falaises et les sommets escarpés, qu'il faut contourner ou gravir à l'outil.
+
+Les chaînes de montagnes sont plus larges depuis la v0.2.1 (`weirdness_scale` 1 000 blocs au lieu de 650, avec les biomes plus grands), ce qui adoucit un peu les flancs.
+
 ### Rivières
 
 Les rivières suivent la **ligne zéro** d'un bruit dédié : partout où ce bruit vaut presque exactement 0, il y a une rivière. Une ligne zéro de bruit forme naturellement de longs rubans sinueux qui ne s'arrêtent pas net, ce qui ressemble beaucoup à un réseau de rivières.

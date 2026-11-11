@@ -13,7 +13,7 @@ Acacia wood up high, red sand and stone within reach of your pickaxe, and fine v
 ## Behaviour
 
 - **Ground**: grass on the lower slopes, with dirt underneath.
-- **Altitude**: around 165 blocks, grass gives way to **red sand**, then around 200 blocks to **bare stone**; higher still (around 230 blocks), the **snowy peaks**.
+- **Altitude**: around 165 blocks, grass gives way to **red sand**, then around 200 blocks to **bare stone**, all the way to the top: no snow in the hot regions.
 - **Vegetation**: acacias, tall grass and bushes on the grass, dead bushes on the red sand.
 - **Shores**: gravel along the water.
 

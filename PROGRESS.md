@@ -5,7 +5,7 @@
 - **Version en cours** : v0.2.1 — Retours de test. Détail : `docs/versions/v0.2.1.md`. La v0.3 attend la fin de la v0.2.1.
 - **Jalon en cours** : 1 — Ravins plus rares et plus propres
   - [x] J1 Ravins rares (rareté en pack), étroits, parois verticales en pierre, pas d'herbe sur les parois ni d'arbre au bord ; tests (fréquence bornée, aucune herbe sur paroi)
-  - [ ] J2 Biomes 2-3× plus grands, continents massifs, règle de voisinage chaud/froid en pack, pentes ordinaires franchissables ; tests (aucun voisinage interdit, déterminisme)
+  - [x] J2 Biomes 2-3× plus grands, continents massifs, règle de voisinage chaud/froid en pack, pentes ordinaires franchissables ; tests (aucun voisinage interdit, déterminisme)
   - [ ] J3 Eau façon Minecraft (recherche du bas dans un rayon de 4, portée 7, paramètres en pack) ; tests
   - [ ] J4 Pose de blocs fiable (aucun clic perdu, prédiction client) ; tests
   - [ ] J5 Torches murales, lanternes suspendues (variantes, soutien) ; tests
@@ -55,8 +55,8 @@ Benchmarks CPU (cloud, `cargo bench --workspace --bench '*'`), dernière valeur 
 
 | Date | Opération | Temps | Source |
 |---|---|---|---|
-| 11/11/2026 | Génération d'une colonne (plaine / montagne / caverne / gisement) | 1,71 / 2,65 / 1,39 / 2,59 ms | `generate_*column` |
-| 11/11/2026 | Carte des biomes d'une colonne | 0,18 ms | `biome_map_column` |
+| 11/11/2026 | Génération d'une colonne (plaine / montagne / caverne / gisement ; colonnes déplacées par la v0.2.1 J2) | 1,81 / 2,19 / 1,91 / 1,44 ms | `generate_*column` |
+| 11/11/2026 | Carte des biomes d'une colonne | 0,19 ms | `biome_map_column` |
 | 11/11/2026 | Lumière d'une colonne générée / poser puis casser une torche | 0,78 / 0,44 ms | `light_*` |
 | 11/11/2026 | Maillage : section de surface / damier / eau qui coule / frontière de biomes | 0,26 / 2,07 / 0,35 / 0,26 ms | `mesh_section_*` |
 | 11/11/2026 | Teintes d'une colonne / voisinage | 8 / 42 µs | `column_tints_blend`, `neighborhood_build` |

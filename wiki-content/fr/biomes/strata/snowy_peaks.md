@@ -4,7 +4,7 @@ Le sommet des plus hautes montagnes : neige éternelle sur les replats comme sur
 
 ## Obtention
 
-Les pics enneigés coiffent les montagnes au-dessus d'environ 230 blocs de hauteur, quel que soit le climat en bas.
+Les pics enneigés coiffent les montagnes au-dessus d'environ 230 blocs de hauteur, partout sauf dans les régions chaudes, où les montagnes chaudes montent jusqu'au sommet.
 
 ## Utilisations
 

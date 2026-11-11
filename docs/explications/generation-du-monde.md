@@ -21,7 +21,7 @@ Quatre grandes « cartes » de bruit (des valeurs qui varient doucement d'un end
 
 - Mer à **y = 120**, côtes, plaines, collines, **plateaux en terrasses**, **rivières**, et des **montagnes** jusqu'à ~400 avec falaises et surplombs là où l'érosion est faible.
 - Depuis la v0.2, le relief vient de **courbes réglables dans le pack** et d'une **densité 3D** autour de la surface : tout est expliqué dans [Relief](relief.md).
-- Chaque biome est un point dans l'espace « température, humidité, continentalité, érosion » ; on prend le plus proche parmi ceux dont les conditions sont remplies (`min_height` / `max_height`, lit de rivière).
+- Chaque biome est un point dans l'espace « température, humidité, continentalité, érosion » ; on prend le plus proche parmi ceux autorisés dans la **bande de chaleur** de la colonne (`heat`, voir [Biomes et végétation](biomes-et-vegetation.md)) et dont les conditions sont remplies (`min_height` / `max_height`, lit de rivière).
 
 ### Les biomes
 

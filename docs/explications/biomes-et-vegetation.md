@@ -2,7 +2,7 @@
 
 ## À quoi ça sert
 
-Les **biomes** décident de l'aspect d'un endroit : sol, arbres, fleurs, couleurs des roches. Depuis le jalon 4 de la v0.2 il y en a **18**, et la végétation s'enrichit de **plantes en croix** (herbes, fleurs, champignons) et de nouvelles **formes d'arbres**. Tout est décrit dans le pack `strata` : on peut ajouter ou changer un biome sans toucher au code.
+Les **biomes** décident de l'aspect d'un endroit : sol, arbres, fleurs, couleurs des roches. Depuis le jalon 4 de la v0.2 il y en a **19**, et la végétation s'enrichit de **plantes en croix** (herbes, fleurs, champignons) et de nouvelles **formes d'arbres**. Tout est décrit dans le pack `strata` : on peut ajouter ou changer un biome sans toucher au code.
 
 ## Comment ça marche
 
@@ -14,20 +14,46 @@ Mais certaines conditions ne s'expriment pas bien en climat. Un biome peut donc 
 
 - **Plage** : continentalité côtière et `max_height: 121`, donc seulement sur les côtes basses (la mer est à 120).
 - **Océan profond** : continentalité très basse et `max_height: 100`.
-- **Montagnes** et **pics enneigés** ont le même climat ; l'altitude tranche : pics au-dessus de 230, montagnes en dessous ; les **montagnes chaudes** prennent leur place dans les régions chaudes et sèches.
+- **Montagnes** et **pics enneigés** ont le même climat ; l'altitude tranche : pics au-dessus de 230, montagnes en dessous ; les **montagnes chaudes** prennent leur place, jusqu'au sommet, dans les bandes chaudes (voir plus bas).
 - **Badlands** : chaud, sec, érosion moyenne et `min_height: 145`, donc seulement sur les plateaux surélevés ; en dessous, c'est désert ou savane.
 - **Champignons** : placés à un point « impossible » (humidité 1,1, érosion 1,0). Il n'est choisi que là où ces deux valeurs sont extrêmes, soit environ 0,4 % du monde : de petites taches isolées.
 
 Les biomes de terre ferme sont rangés sur une **grille température × humidité** : des voisins sur la carte climatique sont des voisins dans le monde, donc les transitions sont douces (toundra, taïga, forêt de bouleaux, plaines, prairie fleurie, forêt, savane, désert, jungle).
 
+### Bandes de chaleur : pas de désert contre la neige
+
+Le plus proche voisin seul ne suffit pas : en v0.2.0, un désert pouvait toucher une toundra, parce que l'érosion ou la continentalité comptaient autant que la température. Depuis la v0.2.1, la température découpe le monde en **bandes de chaleur**, comme les bandes de température de Minecraft :
+
+- `heat_bands` (dans `dimensions/terra.ron`) donne les températures qui séparent les bandes : `[-0.38, -0.13, 0.13, 0.38]`, soit 5 bandes, de 0 (glaciale) à 4 (brûlante).
+- Chaque biome dit dans quelles bandes il peut apparaître : `heat: Some((première, dernière))`. Sans `heat`, il va partout (océans, plages, rivières, champignons).
+- Une colonne ne choisit que parmi les biomes autorisés dans sa bande, puis garde le plus proche dans l'espace climat comme avant.
+
+La température change très lentement (quelques millièmes par bloc) : deux colonnes voisines sont toujours dans la même bande ou dans deux bandes qui se suivent. Donc **deux biomes dont les bandes sont écartées de plus d'une** (désert en bande 4, toundra en bande 0) ne peuvent jamais se toucher : il y a toujours entre eux une large zone de bandes intermédiaires, occupée par des biomes intermédiaires (plaines, forêt, savane…).
+
+| Bande | Biomes |
+|---|---|
+| 0 glaciale | toundra enneigée, taïga, pics enneigés, montagnes |
+| 1 froide | taïga, forêt de bouleaux, plaines, forêt, montagnes, pics |
+| 2 tempérée | forêt de bouleaux, plaines, forêt, prairie fleurie, marais, montagnes, pics |
+| 3 chaude | plaines, forêt, marais, savane, jungle, montagnes chaudes |
+| 4 brûlante | désert, badlands, montagnes chaudes |
+
+Les montagnes chaudes vont jusqu'au sommet (plus de limite à 230) : dans les bandes chaudes, il n'y a pas de pics enneigés.
+
 ```mermaid
 graph LR
-    C[Climat de la colonne + hauteur du sol] --> F[Biomes dont les conditions de hauteur sont remplies]
+    C[Climat de la colonne + hauteur du sol] --> H[Bande de chaleur de la température]
+    H --> A[Biomes autorisés dans la bande]
+    A --> F[Dont les conditions de hauteur sont remplies]
     F --> P[Le plus proche dans l'espace climat]
     P --> B[Biome : sol, strates, plantes, arbres]
 ```
 
-### Les 18 biomes
+### Taille des biomes
+
+La taille des formes de chaque carte de climat est dans le pack (`climate_sizes` de `terra.ron`) : température 2 200 blocs, humidité 2 000, continentalité 2 400, érosion 1 400 (2 à 2,5 fois la v0.2.0). Le curseur « Taille des biomes » de l'éditeur de monde multiplie ces tailles. Les cartes `docs/maquettes/v0.2.1/biomes-avant-*.png` et `biomes-apres-*.png` (graines 42, 7, 99, 4 096 blocs de côté) montrent la différence.
+
+### Les 19 biomes
 
 | Biome | Particularités |
 |---|---|
@@ -44,7 +70,7 @@ graph LR
 | Badlands | sable rouge, strates de terracotta colorées |
 | Montagnes | herbe puis roche, sapins |
 | Montagnes chaudes | herbe, sable rouge puis roche, acacias, buissons morts ; font la transition vers les badlands |
-| Pics enneigés | sommets au-dessus de 230 |
+| Pics enneigés | sommets au-dessus de 230, hors des bandes chaudes |
 | Océan | eau, sable et gravier |
 | Océan profond | fonds de l'océan |
 | Plage | sable des côtes basses |
@@ -99,11 +125,13 @@ Un arbre est la combinaison de deux choix indépendants, écrits dans le pack :
 
 Les couronnes déjà là (boule du chêne, cône du sapin) restent disponibles. On peut ajouter des **lianes** (`vines`) : elles pendent sous les feuilles les plus basses du bord et s'arrêtent au premier bloc non vide. L'arbre entier est calculé comme une liste de pièces (feuilles, puis bûches, puis lianes) ; chaque colonne n'écrit que sa part, comme pour les touffes. Le pack borne tout (portée ≤ 8 blocs, tronc ≤ 32) pour qu'un arbre ne déborde jamais plus loin que les colonnes voisines.
 
+Deux arbres proches se partagent l'espace : une bûche remplace les feuilles de **n'importe quel** arbre (un bouleau pousse à travers la couronne d'un chêne voisin au lieu de s'arrêter dedans), les feuilles ne remplacent que l'air. Les signes des gisements sont posés **après** les arbres, pour qu'aucun tronc ne pousse sur une pierre ferreuse.
+
 ## Où c'est dans le code
 
 | Quoi | Où |
 |---|---|
-| Choix du biome, relief des marais | `crates/worldgen/src/climate.rs` (`sink_wetlands`) |
+| Choix du biome, bandes de chaleur, relief des marais | `crates/worldgen/src/climate.rs` (`ClimateMaps::biome`, `sink_wetlands`), `crates/worldgen/src/content/biomes.rs` (`Biome::allows_heat`, `may_touch`) |
 | Définition des biomes, des features | `crates/worldgen/src/defs.rs`, `content.rs` |
 | Strates et pentes | `crates/worldgen/src/surface.rs` (`Ground::sloped`, `band`) |
 | Touffes de plantes | `crates/worldgen/src/plants.rs` (`place_plants`) |
@@ -111,7 +139,7 @@ Les couronnes déjà là (boule du chêne, cône du sapin) restent disponibles. 
 | Maillage des croix | `crates/client/src/mesher/cross.rs` (`mesh_crosses`) |
 | Boîte de visée | `crates/core/src/raycast.rs`, `crates/core/src/content/block.rs` (`hit_box`) |
 | Biomes, features et blocs du pack | `assets/packs/strata/biomes/`, `features/` |
-| Tests | `crates/worldgen/tests/plants.rs`, `trees.rs`, `generation.rs` |
+| Tests | `crates/worldgen/tests/plants.rs`, `trees.rs`, `generation.rs`, `biome_borders.rs` (aucun voisinage interdit sur 6 144 blocs de côté, graines 42, 7, 99) |
 
 <details><summary>Côté Rust</summary>
 

@@ -13,7 +13,7 @@ Du bois d'acacia en altitude, du sable rouge et de la pierre à portée de pioch
 ## Comportement
 
 - **Sol** : herbe sur les pentes basses, avec de la terre dessous.
-- **Altitude** : vers 165 blocs, l'herbe laisse place au **sable rouge**, puis vers 200 blocs à la **pierre nue** ; plus haut encore (vers 230 blocs), les **pics enneigés**.
+- **Altitude** : vers 165 blocs, l'herbe laisse place au **sable rouge**, puis vers 200 blocs à la **pierre nue**, jusqu'au sommet : pas de neige dans les régions chaudes.
 - **Végétation** : acacias, herbes hautes et buissons sur l'herbe, buissons morts sur le sable rouge.
 - **Rivages** : gravier le long de l'eau.
 

@@ -4,7 +4,7 @@ The top of the highest mountains: everlasting snow on ledges and slopes alike, b
 
 ## Obtaining
 
-Snowy peaks cap the mountains above about 230 blocks high, whatever the climate below.
+Snowy peaks cap the mountains above about 230 blocks high, everywhere but in the hot regions, where warm mountains rise all the way to the top.
 
 ## Usage
 
