@@ -170,3 +170,6 @@ ui-gen-preview-busy = Drawing…
 ui-gen-preview-legend = 2 km across
 ui-gen-help = <key:HotbarPrevious> <key:HotbarNext>: tabs
 ui-gen-done = Done
+ui-gen-preview-failed = Map failed (see the log)
+ui-gen-copied = Code copied.
+ui-gen-no-clipboard = Clipboard unavailable: copy the code by hand.

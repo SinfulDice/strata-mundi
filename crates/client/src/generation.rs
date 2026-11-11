@@ -40,11 +40,25 @@ pub struct MapRequest {
     pub scale: u32,
 }
 
-/// Why there is no map: a Fluent message and its `id` argument.
+/// Why settings cannot make a world (unknown type, biome or block, bad code…): a Fluent
+/// message and its `id` argument.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MapError {
+pub struct GenerationError {
     pub message: &'static str,
     pub id: Option<String>,
+}
+
+impl GenerationError {
+    pub fn new(message: &'static str) -> Self {
+        Self { message, id: None }
+    }
+
+    pub fn about(message: &'static str, id: &impl ToString) -> Self {
+        Self {
+            message,
+            id: Some(id.to_string()),
+        }
+    }
 }
 
 pub trait MapSource: Send + Sync {
@@ -53,5 +67,5 @@ pub trait MapSource: Send + Sync {
         &self,
         request: &MapRequest,
         cancelled: &(dyn Fn() -> bool + Sync),
-    ) -> Result<Option<Vec<[u8; 3]>>, MapError>;
+    ) -> Result<Option<Vec<[u8; 3]>>, GenerationError>;
 }

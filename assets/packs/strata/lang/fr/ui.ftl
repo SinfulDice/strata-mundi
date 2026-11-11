@@ -170,3 +170,6 @@ ui-gen-preview-busy = Calcul…
 ui-gen-preview-legend = 2 km de côté
 ui-gen-help = <key:HotbarPrevious> <key:HotbarNext> : onglets
 ui-gen-done = Terminé
+ui-gen-preview-failed = Carte impossible (voir le journal)
+ui-gen-copied = Code copié.
+ui-gen-no-clipboard = Presse-papiers indisponible : recopiez le code.

@@ -253,12 +253,18 @@ fn resolve_terrain(
 }
 
 impl Terrain {
-    /// Resolves the caves again with their density multiplied by `factor`.
+    /// Resolves the caves again with their density multiplied by `factor`; only a factor
+    /// of 0 (the player's slider) removes them entirely, a pack density of 0 keeps its
+    /// aquifers and lava as before.
     pub(crate) fn scale_caves(&mut self, factor: f64) {
-        self.caves = self.cave_def.as_ref().and_then(|(def, lava)| {
-            let density = def.density.clamp(0.0, 4.0) * factor;
-            bounded_caves(def, density, self.sea_level, self.water, *lava)
-        });
+        self.caves = self
+            .cave_def
+            .as_ref()
+            .filter(|_| factor > 0.0)
+            .map(|(def, lava)| {
+                let density = def.density.clamp(0.0, 4.0) * factor;
+                bounded_caves(def, density, self.sea_level, self.water, *lava)
+            });
     }
 }
 
@@ -366,23 +372,20 @@ pub(crate) fn bounded_relief(relief: &Relief) -> Relief {
 }
 
 /// Bounded so that pack data can't flood the world or make generation absurdly slow.
-/// `None` when the density leaves no cave at all.
 fn bounded_caves(
     def: &CavesDef,
     density: f64,
     sea_level: i32,
     water: BlockId,
     lava: BlockId,
-) -> Option<Caves> {
+) -> Caves {
     let density = density.clamp(0.0, 16.0);
-    if density <= 0.0 {
-        return None;
-    }
+    // Density 0 lifts the threshold out of the noise's range: no cavern at all.
     let width = |value: f64| (value * density).clamp(0.0, 0.5);
     let cheese = 1.0 - (1.0 - def.cheese.clamp(-1.0, 1.0)) * density;
     let (shallow, deep) = def.ravine_depth;
     let shallow = shallow.clamp(1, 256);
-    Some(Caves {
+    Caves {
         spaghetti: width(def.spaghetti),
         noodles: width(def.noodles),
         noodle_top: def.noodle_top.clamp(0, WORLD_HEIGHT),
@@ -397,7 +400,7 @@ fn bounded_caves(
         lava_level: def.lava_level.clamp(-1, 64),
         water,
         lava,
-    })
+    }
 }
 
 /// Lower thresholds would hollow out most of the underground.

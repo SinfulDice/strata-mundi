@@ -124,7 +124,7 @@ impl Session {
             UiAction::Delete(id) => {
                 match self.launcher.delete(&id) {
                     Ok(()) => self.screens.open_worlds(&self.gpu, self.launcher.worlds()),
-                    Err(error) => self.screens.show_notice(error.translation_key()),
+                    Err(error) => self.screens.show_error(&error),
                 }
                 return Ok(());
             }
@@ -157,7 +157,7 @@ impl Session {
         match started {
             Ok(running) => self.enter_world(running),
             Err(error) => {
-                self.screens.show_notice(error.translation_key());
+                self.screens.show_error(&error);
                 Ok(())
             }
         }

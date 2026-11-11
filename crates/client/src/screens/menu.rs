@@ -36,6 +36,8 @@ pub enum Menu {
     },
     Notice {
         key: &'static str,
+        /// The message's `id` argument (an unknown world type…).
+        id: Option<String>,
     },
     /// The game crashed last time: report it or not.
     Crash,
@@ -159,7 +161,7 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
             shared,
         }),
         Menu::HudEditor { selected } => Box::new(EditorModel { selected, shared }),
-        Menu::Notice { key } => Box::new(NoticeModel { key, shared }),
+        Menu::Notice { key, id } => Box::new(NoticeModel { key, id, shared }),
         Menu::Crash => Box::new(CrashModel { shared }),
         Menu::Console(state) => Box::new(ConsoleModel {
             state,

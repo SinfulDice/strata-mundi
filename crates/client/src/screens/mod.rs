@@ -207,7 +207,13 @@ impl Screens {
     }
 
     pub fn show_notice(&mut self, key: &'static str) {
-        self.stack.push(Menu::Notice { key });
+        self.stack.push(Menu::Notice { key, id: None });
+        self.reset_focus();
+    }
+
+    pub fn show_error(&mut self, error: &crate::launcher::LaunchError) {
+        let (key, id) = error.message();
+        self.stack.push(Menu::Notice { key, id });
         self.reset_focus();
     }
 
@@ -425,6 +431,9 @@ const CODE_KEYS: &[&str] = &[
     "ui-gen-preview-off",
     "ui-gen-preview-busy",
     "ui-gen-preview-legend",
+    "ui-gen-preview-failed",
+    "ui-gen-copied",
+    "ui-gen-no-clipboard",
 ];
 
 #[cfg(test)]

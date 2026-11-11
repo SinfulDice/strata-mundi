@@ -105,9 +105,11 @@ impl WorldsModel<'_> {
             }
             Some(world) if world.status == WorldStatus::Broken => Effect::Push(Menu::Notice {
                 key: "ui-error-broken",
+                id: None,
             }),
             Some(_) => Effect::Push(Menu::Notice {
                 key: "ui-error-incompatible",
+                id: None,
             }),
             None => return,
         };

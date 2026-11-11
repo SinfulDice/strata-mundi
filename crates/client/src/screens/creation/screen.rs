@@ -1,8 +1,9 @@
 //! The generation editor page: tabs of sliders, layers or biome, and the shareable code,
 //! beside the map of what they generate.
 
-use super::editor::{GenerationEditor, MAX_THICKNESS, Refused, Slider};
+use super::editor::{GenerationEditor, MAX_THICKNESS, Slider};
 use super::{CreateForm, Page};
+use crate::generation::GenerationError;
 use crate::screens::menu::{Effect, Shared};
 use crate::screens::worlds::edit;
 use crate::settings::MapPreview;
@@ -263,7 +264,7 @@ impl GenerationModel<'_> {
         }
     }
 
-    fn refusal(&self, refused: &Refused) -> String {
+    fn refusal(&self, refused: &GenerationError) -> String {
         let id = refused.id.clone().unwrap_or_default();
         self.shared.tr_with(refused.message, &[("id", id)])
     }

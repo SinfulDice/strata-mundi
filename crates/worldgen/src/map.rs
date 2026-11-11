@@ -40,7 +40,11 @@ pub fn render_with(
             .collect();
         workers
             .into_iter()
-            .map(|worker| worker.join().ok().flatten())
+            .map(|worker| {
+                worker
+                    .join()
+                    .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
+            })
             .collect()
     });
     let mut rows = vec![Vec::new(); height];

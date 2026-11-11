@@ -170,3 +170,6 @@ ui-gen-preview-busy = DRAWIN…
 ui-gen-preview-legend = 2 KM WIDE
 ui-gen-help = <key:HotbarPrevious> <key:HotbarNext>: TABZ
 ui-gen-done = DUN
+ui-gen-preview-failed = MAP BROKED (SEE TEH LOG)
+ui-gen-copied = CODE COPEED.
+ui-gen-no-clipboard = NO CLIPBORD: WRITE TEH CODE BY PAW.

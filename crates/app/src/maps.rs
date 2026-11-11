@@ -3,10 +3,11 @@
 
 use std::sync::Arc;
 use strata_client::generation::{
-    GenerationCatalog, MapError, MapRequest, MapSource, WorldTypeChoice,
+    GenerationCatalog, GenerationError, MapRequest, MapSource, WorldTypeChoice,
 };
+use strata_core::generation::WorldgenSettings;
 use strata_worldgen::map::{self, MapArea};
-use strata_worldgen::{Generator, Seed, WorldgenContent};
+use strata_worldgen::{Generator, Seed, SettingsError, WorldgenContent};
 
 pub fn catalog(worldgen: &WorldgenContent) -> GenerationCatalog {
     GenerationCatalog {
@@ -35,20 +36,30 @@ impl MapSource for GeneratorMaps {
         &self,
         request: &MapRequest,
         cancelled: &(dyn Fn() -> bool + Sync),
-    ) -> Result<Option<Vec<[u8; 3]>>, MapError> {
+    ) -> Result<Option<Vec<[u8; 3]>>, GenerationError> {
         let seed = Seed::from_text(&request.seed);
         let generator =
-            Generator::with_settings(seed, &self.worldgen, &request.settings).map_err(|e| {
-                MapError {
-                    message: e.message_id(),
-                    id: e.identifier().map(ToString::to_string),
-                }
-            })?;
+            Generator::with_settings(seed, &self.worldgen, &request.settings).map_err(explain)?;
         let area = MapArea {
             center: (0, 0),
             size: request.size,
             scale: request.scale,
         };
         Ok(map::render_with(&generator, area, self.threads, cancelled))
+    }
+}
+
+/// Whether the packs can make a world with `settings`, said to the player if not.
+pub fn check(
+    worldgen: &WorldgenContent,
+    settings: &WorldgenSettings,
+) -> Result<(), GenerationError> {
+    worldgen.with_settings(settings).map(drop).map_err(explain)
+}
+
+fn explain(error: SettingsError) -> GenerationError {
+    GenerationError {
+        message: error.message_id(),
+        id: error.identifier().map(ToString::to_string),
     }
 }

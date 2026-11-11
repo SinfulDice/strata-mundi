@@ -1,7 +1,7 @@
 //! The generation settings being edited: bounded sliders, layers of flat worlds, the one
 //! biome, and codes. Values equal to the world type's default are stored as "default".
 
-use crate::generation::{GenerationCatalog, WorldTypeChoice};
+use crate::generation::{GenerationCatalog, GenerationError, WorldTypeChoice};
 use std::ops::RangeInclusive;
 use std::sync::Arc;
 use strata_core::generation::{
@@ -35,22 +35,6 @@ impl Slider {
         match self {
             Self::SeaLevel => SEA_STEP,
             _ => PERCENT_STEP,
-        }
-    }
-}
-
-/// Why a code was refused: a Fluent message and its `id` argument.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Refused {
-    pub message: &'static str,
-    pub id: Option<String>,
-}
-
-impl Refused {
-    fn unknown(message: &'static str, id: &Identifier) -> Self {
-        Self {
-            message,
-            id: Some(id.to_string()),
         }
     }
 }
@@ -264,34 +248,34 @@ impl GenerationEditor {
     }
 
     /// Replaces the settings with those of `code`, if this game knows all it names.
-    pub fn apply_code(&mut self, code: &str) -> Result<(), Refused> {
-        let settings = WorldgenSettings::from_code(code).map_err(|e| Refused {
-            message: e.message_id(),
-            id: None,
-        })?;
+    pub fn apply_code(&mut self, code: &str) -> Result<(), GenerationError> {
+        let settings =
+            WorldgenSettings::from_code(code).map_err(|e| GenerationError::new(e.message_id()))?;
         let world_type = self
             .catalog
             .world_type(&settings.world_type)
-            .ok_or_else(|| Refused::unknown("world-settings-unknown-type", &settings.world_type))?;
+            .ok_or_else(|| {
+                GenerationError::about("world-settings-unknown-type", &settings.world_type)
+            })?;
         if let Some(biome) = settings
             .biome
             .as_ref()
             .filter(|b| !self.catalog.biomes.contains(b))
         {
-            return Err(Refused::unknown("world-settings-unknown-biome", biome));
+            return Err(GenerationError::about(
+                "world-settings-unknown-biome",
+                biome,
+            ));
         }
         let layers = settings.flat.iter().flat_map(|flat| &flat.layers);
         if let Some(layer) = layers.clone().find(|l| !self.is_known_block(&l.block)) {
-            return Err(Refused::unknown(
+            return Err(GenerationError::about(
                 "world-settings-unknown-block",
                 &layer.block,
             ));
         }
         if settings.flat.as_ref().is_some_and(|f| f.layers.is_empty()) {
-            return Err(Refused {
-                message: "world-settings-no-layers",
-                id: None,
-            });
+            return Err(GenerationError::new("world-settings-no-layers"));
         }
         let defaults = (world_type.biome.clone(), world_type.flat.clone());
         self.settings = settings;

@@ -1,7 +1,7 @@
 //! What the menus need from the program around the client: the saved worlds and a way
 //! to start a server for one. The client never touches the files itself.
 
-use crate::generation::{GenerationCatalog, MapSource};
+use crate::generation::{GenerationCatalog, GenerationError, MapSource};
 use crate::settings::Settings;
 use crate::ui::UiAssets;
 use crate::world::ClientWorld;
@@ -19,19 +19,23 @@ pub struct RunningWorld {
 }
 
 /// Why a world could not be started; each maps to a message on screen.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LaunchError {
     /// Saved by another, incompatible version of the game.
     Incompatible,
     /// Missing, unreadable, or the disk refused to write.
     Unavailable,
+    /// Generation settings the packs cannot make (a world type gone with its pack…).
+    Settings(GenerationError),
 }
 
 impl LaunchError {
-    pub fn translation_key(self) -> &'static str {
+    /// Fluent message and its `id` argument.
+    pub fn message(&self) -> (&'static str, Option<String>) {
         match self {
-            Self::Incompatible => "ui-error-incompatible",
-            Self::Unavailable => "ui-error-unavailable",
+            Self::Incompatible => ("ui-error-incompatible", None),
+            Self::Unavailable => ("ui-error-unavailable", None),
+            Self::Settings(error) => (error.message, error.id.clone()),
         }
     }
 }

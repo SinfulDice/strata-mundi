@@ -14,7 +14,6 @@ use super::worlds::{edit, mode_key};
 use crate::generation::{GenerationCatalog, MapRequest, MapSource};
 use crate::settings::MapPreview;
 use crate::ui::ScreenModel;
-use editor::Refused;
 use std::hash::{BuildHasher, RandomState};
 use std::sync::Arc;
 use strata_core::content::{Content, ItemKind};
@@ -60,8 +59,10 @@ pub struct CreateForm {
     pub page: Page,
     pub tab: usize,
     pub preview: Option<Preview>,
+    /// The preview thread could not start: not tried again.
+    preview_failed: bool,
     pub code_field: String,
-    pub code_status: Option<Result<(), Refused>>,
+    pub code_status: Option<Result<(), crate::generation::GenerationError>>,
     pub layer_scroll: usize,
     pub biome_scroll: usize,
 }
@@ -86,6 +87,7 @@ impl CreateForm {
             page: Page::Main,
             tab: 0,
             preview: None,
+            preview_failed: false,
             code_field: String::new(),
             code_status: None,
             layer_scroll: 0,
@@ -150,8 +152,9 @@ impl CreateForm {
             return None;
         }
         let request = self.map_request(quality)?;
-        if self.preview.is_none() {
+        if self.preview.is_none() && !self.preview_failed {
             self.preview = Preview::start(Arc::clone(maps?));
+            self.preview_failed = self.preview.is_none();
         }
         let preview = self.preview.as_mut()?;
         preview.request(request);
@@ -162,6 +165,11 @@ impl CreateForm {
     pub fn open_page(&mut self, page: Page, effects: &mut Vec<Effect>) {
         self.page = page;
         self.tab = 0;
+        if page == Page::Main
+            && let Some(preview) = &mut self.preview
+        {
+            preview.cancel();
+        }
         effects.push(Effect::ClearFocus);
     }
 }

@@ -1,10 +1,14 @@
 //! Map of the generation editor, drawn on a background thread: only the newest request
 //! counts, older ones are cancelled while they run and their results dropped.
 
-use crate::generation::{MapError, MapRequest, MapSource};
+use crate::generation::{GenerationError, MapRequest, MapSource};
 use crossbeam_channel::{Receiver, Sender, unbounded};
+use std::panic::{self, AssertUnwindSafe};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+
+/// Shown when drawing the map failed.
+pub const FAILED: &str = "ui-gen-preview-failed";
 
 /// A finished map.
 #[derive(Debug, Clone, PartialEq)]
@@ -15,7 +19,8 @@ pub struct PreviewImage {
     pub pixels: Vec<[u8; 3]>,
 }
 
-type Answer = (u64, Result<Vec<[u8; 3]>, MapError>);
+/// Request number, map size and pixels.
+type Answer = (u64, (u32, u32), Result<Vec<[u8; 3]>, GenerationError>);
 
 pub struct Preview {
     requests: Sender<(u64, MapRequest)>,
@@ -23,7 +28,7 @@ pub struct Preview {
     latest: Arc<AtomicU64>,
     asked: Option<MapRequest>,
     pub image: Option<PreviewImage>,
-    pub error: Option<MapError>,
+    pub error: Option<GenerationError>,
 }
 
 impl Preview {
@@ -62,18 +67,23 @@ impl Preview {
         }
     }
 
+    /// The map being drawn is no longer wanted (the editor was left).
+    pub fn cancel(&mut self) {
+        self.latest.fetch_add(1, Ordering::SeqCst);
+        self.asked = None;
+    }
+
     /// Takes the answers in; `true` if the image or the error changed.
     pub fn poll(&mut self) -> bool {
         let latest = self.latest.load(Ordering::SeqCst);
         let mut changed = false;
-        for (number, answer) in self.answers.try_iter() {
+        for (number, size, answer) in self.answers.try_iter() {
             if number != latest {
                 continue;
             }
             changed = true;
             match answer {
                 Ok(pixels) => {
-                    let size = self.asked.as_ref().map_or((0, 0), |r| r.size);
                     self.image = Some(PreviewImage {
                         request: number,
                         size,
@@ -94,6 +104,12 @@ impl Preview {
     }
 }
 
+impl Drop for Preview {
+    fn drop(&mut self) {
+        self.cancel();
+    }
+}
+
 /// Ends when the screen drops its `Preview`.
 fn work(
     source: &dyn MapSource,
@@ -107,12 +123,15 @@ fn work(
         }
         let (number, request) = job;
         let cancelled = || latest.load(Ordering::SeqCst) != number;
-        let answer = match source.render(&request, &cancelled) {
-            Ok(Some(pixels)) => Ok(pixels),
-            Ok(None) => continue,
-            Err(error) => Err(error),
+        // A bug in the generator must not leave the editor waiting forever.
+        let drawn = panic::catch_unwind(AssertUnwindSafe(|| source.render(&request, &cancelled)));
+        let answer = match drawn {
+            Ok(Ok(Some(pixels))) => Ok(pixels),
+            Ok(Ok(None)) => continue,
+            Ok(Err(error)) => Err(error),
+            Err(_) => Err(GenerationError::new(FAILED)),
         };
-        if replies.send((number, answer)).is_err() {
+        if replies.send((number, request.size, answer)).is_err() {
             return;
         }
     }

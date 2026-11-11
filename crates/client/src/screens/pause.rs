@@ -22,12 +22,16 @@ impl ScreenModel for PauseModel<'_> {
 /// A message with an OK button (a world that could not be opened…).
 pub struct NoticeModel<'a> {
     pub key: &'a str,
+    pub id: &'a Option<String>,
     pub shared: Shared<'a>,
 }
 
 impl ScreenModel for NoticeModel<'_> {
     fn text(&self, id: &str) -> Option<String> {
-        (id == "message").then(|| self.shared.tr(self.key))
+        (id == "message").then(|| {
+            let arg = self.id.clone().unwrap_or_default();
+            self.shared.tr_with(self.key, &[("id", arg)])
+        })
     }
 
     fn activate(&mut self, id: &str, _: usize) {
