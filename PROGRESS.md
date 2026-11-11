@@ -2,7 +2,16 @@
 
 ## État
 
-- **Version en cours** : v0.2.1 — Retours de test (validée le 11/11/2026, pas commencée). Détail : `docs/versions/v0.2.1.md`. Commence par le jalon 1. La v0.3 attend la fin de la v0.2.1.
+- **Version en cours** : v0.2.1 — Retours de test. Détail : `docs/versions/v0.2.1.md`. La v0.3 attend la fin de la v0.2.1.
+- **Jalon en cours** : 1 — Ravins plus rares et plus propres
+  - [ ] J1 Ravins rares (rareté en pack), étroits, parois verticales en pierre, pas d'herbe sur les parois ni d'arbre au bord ; tests (fréquence bornée, aucune herbe sur paroi)
+  - [ ] J2 Biomes 2-3× plus grands, continents massifs, règle de voisinage chaud/froid en pack, pentes ordinaires franchissables ; tests (aucun voisinage interdit, déterminisme)
+  - [ ] J3 Eau façon Minecraft (recherche du bas dans un rayon de 4, portée 7, paramètres en pack) ; tests
+  - [ ] J4 Pose de blocs fiable (aucun clic perdu, prédiction client) ; tests
+  - [ ] J5 Torches murales, lanternes suspendues (variantes, soutien) ; tests
+  - [ ] J6 Sons (variantes au chargement, lave audible, vent plus doux, curseur Ambiances) ; tests
+  - [ ] J7 Curseurs d'un clic, glisser, molette, répétition à l'appui maintenu ; tests
+  - [ ] J8 Clôture (captures avant/après, explications, rapport, tag `v0.2.1`)
 - **Dernière session** : 11/11/2026
 
 ## Fait
