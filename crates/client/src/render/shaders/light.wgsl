@@ -28,6 +28,8 @@ fn fogged(color: vec3<f32>, relative: vec3<f32>) -> vec3<f32> {
 
 // Torches and lava light things a little warmer than the sky.
 const WARM_LIGHT: vec3<f32> = vec3<f32>(1.0, 0.8, 0.56);
+// Moonlight is a little cooler, so a brighter night still reads as night.
+const MOON_LIGHT: vec3<f32> = vec3<f32>(0.78, 0.88, 1.15);
 
 // Minecraft's light curve, lifted towards 1 - (1 - x)^4 by the brightness setting. The
 // lift grows with the square of the setting: at the default 50 %, a quarter of it, so
@@ -46,5 +48,7 @@ fn light_color(sky: f32, block: f32) -> vec3<f32> {
     // The curve is meant for display values; render targets are linear.
     let value = pow(perceived, 2.2);
     let warmth = clamp((block - sky_level) * 2.0, 0.0, 1.0);
-    return value * mix(vec3<f32>(1.0), WARM_LIGHT, warmth);
+    let night = (1.0 - camera.light.x) * sky * (1.0 - warmth);
+    let tint = mix(mix(vec3<f32>(1.0), MOON_LIGHT, night), WARM_LIGHT, warmth);
+    return value * tint;
 }

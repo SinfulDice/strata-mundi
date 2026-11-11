@@ -180,7 +180,7 @@ mod tests {
         let midnight = SkyFrame::at(&sky, &cycle, cycle.moment(Moment::Midnight) as f64, true);
         assert_eq!((noon.light, noon.stars), (1.0, 0.0));
         assert!(noon.sun.y > 0.9 && midnight.sun.y < -0.9);
-        assert!(midnight.stars > 0.5 && midnight.light < 0.3);
+        assert!(midnight.stars > 0.5 && midnight.light < 0.5);
         assert!(midnight.zenith.length() < noon.zenith.length());
         assert!(noon.sun_size > 0.0 && noon.sun_layer != 0 && noon.moon_layer != 0);
         let no_stars = SkyFrame::at(&sky, &cycle, cycle.moment(Moment::Midnight) as f64, false);

@@ -52,7 +52,7 @@ fn default_twilight() -> f64 {
 }
 
 fn default_night_light() -> f32 {
-    0.1
+    0.4
 }
 
 /// A bounded day cycle. Time 0 is the first sunrise; the world time keeps counting days.
