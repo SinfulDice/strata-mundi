@@ -1,6 +1,7 @@
 // Hot, dry plateaus; their terraces show coloured strata.
 Biome(
     climate: (temperature: 0.55, humidity: -0.35, continentalness: 0.35, erosion: 0.55),
+    heat: Some((4, 4)),
     map_color: "#c8643a",
     min_height: 145,
     surface: "strata:red_sand",

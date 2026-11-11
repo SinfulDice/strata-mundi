@@ -144,10 +144,14 @@ impl Generator {
             self.bare_ravine_walls(caves, &mut column, &samples, &tops);
         }
         place_ores(self, &mut column);
+        let features = flat.is_none_or(|flat| flat.features);
+        if features {
+            place_surface_features(self, &mut column);
+        }
+        // After trees, so that no trunk stands on a deposit's sign.
         self.deposits
             .place(self.seed, &self.content, &mut column, &tops);
-        if flat.is_none_or(|flat| flat.features) {
-            place_surface_features(self, &mut column);
+        if features {
             place_plants(self, &mut column, &tops);
         }
         (column, biomes)

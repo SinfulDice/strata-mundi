@@ -1,6 +1,7 @@
 // Humid lowlands sunk to the sea level by the `wetlands` of the relief: mud pools, islets.
 Biome(
     climate: (temperature: 0.3, humidity: 0.45, continentalness: 0.1, erosion: 0.8),
+    heat: Some((2, 3)),
     map_color: "#4c6a3a",
     max_height: 124,
     surface: "strata:grass_block",

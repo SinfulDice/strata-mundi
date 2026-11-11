@@ -1,8 +1,8 @@
 // Mountains of the hot regions: acacias on the low slopes, red sand then bare stone higher up.
 Biome(
     climate: (temperature: 0.35, humidity: -0.2, continentalness: 0.45, erosion: -0.55),
+    heat: Some((3, 4)),
     map_color: "#9c7a5a",
-    max_height: 230,
     surface: "strata:grass_block",
     subsurface: "strata:dirt",
     underwater: "strata:gravel",

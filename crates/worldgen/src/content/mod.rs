@@ -1,18 +1,18 @@
+mod biomes;
 mod features;
 mod world_types;
 
+pub use biomes::{Bands, Biome};
 pub(crate) use features::bounded;
 pub use features::{Feature, MAX_CROWN, MAX_PATCH_RADIUS, Plants};
 pub use world_types::WorldType;
 
-use crate::defs::{
-    BandsDef, BiomeColors, BiomeDef, CavesDef, Climate, DimensionDef, Relief, TerrainDef,
-};
+use crate::defs::{CavesDef, ClimateSizes, DimensionDef, Relief, TerrainDef};
+use biomes::load_biomes;
 use features::load_features;
 use std::collections::HashMap;
 use std::path::Path;
-use strata_core::chunk::BiomeId;
-use strata_core::content::{BiomeTints, Block, BlockId, Registry, Tint};
+use strata_core::content::{Block, BlockId, Registry};
 use strata_core::coords::WORLD_HEIGHT;
 use strata_core::id::Identifier;
 use strata_core::pack::{PackError, PackSet, Sourced};
@@ -40,6 +40,9 @@ pub struct Terrain {
     pub water: BlockId,
     pub ice: BlockId,
     pub biome_scale: f64,
+    pub climate_sizes: ClimateSizes,
+    /// Sorted temperatures between heat bands.
+    pub heat_bands: Vec<f64>,
     /// `None` = no caves.
     pub caves: Option<Caves>,
     /// What `caves` was resolved from (with its lava), to scale it again.
@@ -92,42 +95,6 @@ pub struct Caves {
     pub lava_level: i32,
     pub water: BlockId,
     pub lava: BlockId,
-}
-
-#[derive(Debug, Clone)]
-pub struct Biome {
-    pub id: Identifier,
-    /// Position in `WorldgenContent::biomes`, as sent to clients.
-    pub index: BiomeId,
-    pub climate: Climate,
-    pub surface: BlockId,
-    pub subsurface: BlockId,
-    pub subsurface_depth: u32,
-    pub underwater: BlockId,
-    /// Highest ground, above the sea level, still covered with `underwater`.
-    pub shore_height: i32,
-    /// Sorted by height.
-    pub peaks: Vec<(i32, BlockId)>,
-    /// Surface of steep slopes; `None` = the dimension's stone.
-    pub steep: Option<BlockId>,
-    pub frozen: bool,
-    pub min_height: Option<i32>,
-    pub max_height: Option<i32>,
-    pub river: bool,
-    pub bands: Option<Bands>,
-    pub map_color: [u8; 3],
-    pub spawn: bool,
-    /// `(feature index, attempts per column)`.
-    pub features: Vec<(usize, f64)>,
-    pub tints: BiomeTints,
-}
-
-/// Layers by height: `blocks[y % len]`, shifted by a little noise.
-#[derive(Debug, Clone)]
-pub struct Bands {
-    pub blocks: Vec<BlockId>,
-    pub depth: i32,
-    pub waviness: f64,
 }
 
 /// Looks up identifiers, recording an error (with the file) for each unknown one.
@@ -241,6 +208,8 @@ fn resolve_terrain(
         water,
         ice: r.block(&def.ice),
         biome_scale: def.biome_scale.clamp(0.25, 16.0),
+        climate_sizes: def.climate_sizes.bounded(),
+        heat_bands: sorted_bands(&def.heat_bands),
         caves: None,
         cave_def,
         ores,
@@ -254,6 +223,16 @@ fn resolve_terrain(
 }
 
 impl Terrain {
+    /// Heat band of a temperature: 0 below the first threshold.
+    pub fn heat_band(&self, temperature: f64) -> u8 {
+        let warmer = self
+            .heat_bands
+            .iter()
+            .filter(|&&t| temperature >= t)
+            .count();
+        u8::try_from(warmer).unwrap_or(u8::MAX)
+    }
+
     /// Resolves the caves again with their density multiplied by `factor`; only a factor
     /// of 0 (the player's slider) removes them entirely, a pack density of 0 keeps its
     /// aquifers and lava as before.
@@ -269,80 +248,15 @@ impl Terrain {
     }
 }
 
-fn load_biomes(
-    packs: &PackSet,
-    blocks: &Registry<BlockId, Block>,
-    errors: &mut Vec<PackError>,
-    index_of: &dyn Fn(&Identifier) -> Option<usize>,
-) -> Vec<Biome> {
-    let defs = packs.layered::<BiomeDef>("biomes", errors);
-    defs.into_iter()
-        .enumerate()
-        .filter_map(|(index, (id, Sourced { value, source }))| {
-            let Ok(index) = u16::try_from(index) else {
-                let message = "too many biomes (65 536 at most): this one is ignored";
-                errors.push(PackError::invalid(&source, message));
-                return None;
-            };
-            let features = value
-                .features
-                .iter()
-                .filter_map(|placement| match index_of(&placement.feature) {
-                    Some(index) => Some((index, placement.per_column.clamp(0.0, 64.0))),
-                    None => {
-                        let message = format!("unknown feature `{}`", placement.feature);
-                        errors.push(PackError::invalid(&source, message));
-                        None
-                    }
-                })
-                .collect();
-            let mut r = Resolver {
-                blocks,
-                errors,
-                source: &source,
-            };
-            Some(Biome {
-                id,
-                index: BiomeId(index),
-                climate: value.climate,
-                surface: r.block(&value.surface),
-                subsurface: r.block(&value.subsurface),
-                subsurface_depth: value.subsurface_depth.min(16),
-                underwater: r.block(&value.underwater),
-                shore_height: value.shore_height.clamp(-8, 8),
-                peaks: sorted_peaks(&value.peaks, &mut r),
-                steep: value.steep.as_ref().map(|id| r.block(id)),
-                frozen: value.frozen,
-                min_height: value.min_height,
-                max_height: value.max_height,
-                river: value.river,
-                bands: value.bands.as_ref().and_then(|def| bands(def, &mut r)),
-                map_color: {
-                    let [r, g, b, _] = value.map_color.0.0;
-                    [r, g, b]
-                },
-                spawn: value.spawn,
-                features,
-                tints: biome_tints(&value.colors),
-            })
-        })
-        .collect()
-}
-
-fn biome_tints(colors: &BiomeColors) -> BiomeTints {
-    BiomeTints {
-        kinds: [colors.grass, colors.foliage, colors.water].map(Tint::from_factors),
-        fog: Tint::from_factors(colors.fog),
-    }
-}
-
-fn bands(def: &BandsDef, r: &mut Resolver<'_>) -> Option<Bands> {
-    let blocks = r.blocks(&def.blocks);
-    (!blocks.is_empty()).then(|| Bands {
-        blocks,
-        depth: def.depth.min(64) as i32,
-        waviness: def.waviness.clamp(0.0, 16.0),
-    })
+fn sorted_bands(thresholds: &[f64]) -> Vec<f64> {
+    let mut bands: Vec<f64> = thresholds
+        .iter()
+        .copied()
+        .filter(|t| t.is_finite())
+        .collect();
+    bands.sort_by(f64::total_cmp);
+    bands.truncate(usize::from(u8::MAX));
+    bands
 }
 
 /// Pack data must never make generation absurdly slow (huge overhangs scan many blocks).
@@ -407,9 +321,3 @@ fn bounded_caves(
 
 /// Lower thresholds would hollow out most of the underground.
 const MIN_CHEESE: f64 = 0.15;
-
-fn sorted_peaks(peaks: &[(i32, Identifier)], r: &mut Resolver<'_>) -> Vec<(i32, BlockId)> {
-    let mut resolved: Vec<_> = peaks.iter().map(|(y, id)| (*y, r.block(id))).collect();
-    resolved.sort_by_key(|(y, _)| *y);
-    resolved
-}

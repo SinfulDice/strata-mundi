@@ -1,6 +1,7 @@
 // Up to the snowy peaks, which take over above `max_height`.
 Biome(
     climate: (temperature: -0.05, humidity: 0.0, continentalness: 0.45, erosion: -0.6),
+    heat: Some((0, 2)),
     map_color: "#8a8a8a",
     max_height: 230,
     surface: "strata:grass_block",

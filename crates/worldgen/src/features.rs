@@ -1,7 +1,7 @@
 //! Ore veins, trees and pillars. A column also places the parts of features rooted in
 //! its eight neighbours, so trees cross borders seamlessly whatever the loading order.
 
-use crate::content::{Feature, MAX_CROWN};
+use crate::content::{Feature, MAX_CROWN, WorldgenContent};
 use crate::generator::Generator;
 use crate::rng::Rng;
 use crate::trees::{Part, Tree};
@@ -54,18 +54,36 @@ pub fn place_ores(generator: &Generator, column: &mut Column) {
 }
 
 pub fn place_surface_features(generator: &Generator, column: &mut Column) {
+    let leaves = all_leaves(generator.content());
     for dz in -1..=1 {
         for dx in -1..=1 {
             let source = ColumnPos {
                 x: column.pos.x + dx,
                 z: column.pos.z + dz,
             };
-            place_rooted_in(generator, source, column);
+            place_rooted_in(generator, source, column, &leaves);
         }
     }
 }
 
-fn place_rooted_in(generator: &Generator, source: ColumnPos, column: &mut Column) {
+/// Leaves of every tree: a trunk grows through the crown of a neighbouring tree.
+fn all_leaves(content: &WorldgenContent) -> Vec<BlockId> {
+    content
+        .features
+        .iter()
+        .filter_map(|feature| match feature {
+            Feature::Tree(tree) => Some(tree.leaves),
+            _ => None,
+        })
+        .collect()
+}
+
+fn place_rooted_in(
+    generator: &Generator,
+    source: ColumnPos,
+    column: &mut Column,
+    leaves: &[BlockId],
+) {
     let content = generator.content();
     let mut rng = Rng::for_column(generator.seed(), source, SURFACE_SALT);
     for _ in 0..ATTEMPTS {
@@ -100,6 +118,7 @@ fn place_rooted_in(generator: &Generator, source: ColumnPos, column: &mut Column
             x,
             z,
             base: height + 1,
+            leaves,
         };
         place(&content.features[feature], ground, variant, &mut writer);
     }
@@ -121,6 +140,7 @@ struct Writer<'a> {
     x: i32,
     z: i32,
     base: i32,
+    leaves: &'a [BlockId],
 }
 
 impl Writer<'_> {
@@ -132,14 +152,29 @@ impl Writer<'_> {
         ((0..16).contains(&lx) && (0..16).contains(&lz)).then_some((lx as u32, lz as u32))
     }
 
-    /// `(dx, dy, dz)` from the feature origin. Only replaces air (and leaves, for logs).
+    /// `(dx, dy, dz)` from the feature origin. Only replaces air (or `over`).
     fn put(&mut self, offset: (i32, i32, i32), block: BlockId, over: Option<BlockId>) {
+        self.put_over(offset, block, &|current| Some(current) == over);
+    }
+
+    /// A log replaces air and the leaves of any tree.
+    fn put_log(&mut self, offset: (i32, i32, i32), log: BlockId) {
+        let leaves = self.leaves;
+        self.put_over(offset, log, &|current| leaves.contains(&current));
+    }
+
+    fn put_over(
+        &mut self,
+        offset: (i32, i32, i32),
+        block: BlockId,
+        over: &dyn Fn(BlockId) -> bool,
+    ) {
         let Some((lx, lz)) = self.local(offset.0, offset.2) else {
             return;
         };
         let y = self.base + offset.1;
         let current = self.column.get(lx, y, lz);
-        if current == BlockId::AIR || Some(current) == over {
+        if current == BlockId::AIR || over(current) {
             self.column.set(lx, y, lz, block);
         }
     }
@@ -178,7 +213,7 @@ fn place_tree(tree: &Tree, variant: u64, writer: &mut Writer<'_>) {
         match (part, tree.vines) {
             // Leaves win over the vines of a neighbouring tree of the same kind.
             (Part::Leaf(offset), _) => writer.put(offset, tree.leaves, tree.vines),
-            (Part::Log(offset), _) => writer.put(offset, tree.log, Some(tree.leaves)),
+            (Part::Log(offset), _) => writer.put_log(offset, tree.log),
             (Part::Vine { top, length }, Some(vine)) => writer.hang(top, length, vine),
             (Part::Vine { .. }, None) => {}
         }

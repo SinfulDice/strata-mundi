@@ -1,8 +1,10 @@
 //! Generation content read from packs: `dimensions/`, `biomes/` and `features/`.
 
+mod climate;
 mod features;
 mod world_types;
 
+pub use climate::{Climate, ClimateSizes};
 pub use features::{Crown, FeatureDef, Trunk};
 pub use world_types::{FlatDef, ReliefChanges, WorldTypeDef};
 
@@ -35,6 +37,12 @@ pub struct TerrainDef {
     /// Multiplies the size of biomes (1 = default, 2 = twice as large).
     #[serde(default = "one")]
     pub biome_scale: f64,
+    #[serde(default)]
+    pub climate_sizes: ClimateSizes,
+    /// Temperatures splitting the world into heat bands, coldest first (see
+    /// `BiomeDef::heat`); empty = no band.
+    #[serde(default)]
+    pub heat_bands: Vec<f64>,
     /// `None` = no caves at all.
     #[serde(default)]
     pub caves: Option<CavesDef>,
@@ -182,16 +190,6 @@ pub struct Rivers {
     pub biome: f64,
 }
 
-/// Where a biome sits in climate space; the nearest biome wins.
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Climate {
-    pub temperature: f64,
-    pub humidity: f64,
-    pub continentalness: f64,
-    pub erosion: f64,
-}
-
 /// `biomes/<name>.ron`.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename = "Biome", deny_unknown_fields)]
@@ -224,6 +222,10 @@ pub struct BiomeDef {
     /// Only chosen on river beds (and never elsewhere).
     #[serde(default)]
     pub river: bool,
+    /// First and last heat band (0 = coldest) where the biome may appear; `None` = any.
+    /// Two biomes whose bands are more than one apart never touch.
+    #[serde(default)]
+    pub heat: Option<(u8, u8)>,
     #[serde(default)]
     pub bands: Option<BandsDef>,
     /// Color on the generation preview map.

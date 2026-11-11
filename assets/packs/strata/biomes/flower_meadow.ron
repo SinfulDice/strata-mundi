@@ -1,5 +1,6 @@
 Biome(
     climate: (temperature: 0.2, humidity: 0.05, continentalness: 0.2, erosion: 0.2),
+    heat: Some((2, 2)),
     map_color: "#a8c85a",
     surface: "strata:grass_block",
     subsurface: "strata:dirt",

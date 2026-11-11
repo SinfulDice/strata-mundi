@@ -230,7 +230,8 @@ fn trees_cross_column_borders_whole() {
 }
 
 /// Generates the 3×3 columns around `center` on separate threads, in reverse order, and
-/// checks every tree top on the border of `center` has leaves on its four sides.
+/// checks every tree top on the border of `center` has leaves (of any tree: mixed forests
+/// share crowns) on its four sides.
 fn check_border_trees(
     generator: &std::sync::Arc<strata_worldgen::Generator>,
     center: ColumnPos,
@@ -271,7 +272,7 @@ fn check_border_trees(
             let (x, z) = (center.x * 16 + lx, center.z * 16 + lz);
             for y in 100..320 {
                 let here = block(x, y, z);
-                let Some(&(log, leaves)) = trees.iter().find(|(l, _)| Some(*l) == here) else {
+                let Some(&(log, _)) = trees.iter().find(|(l, _)| Some(*l) == here) else {
                     continue;
                 };
                 if block(x, y + 1, z) == Some(log) {
@@ -280,7 +281,9 @@ fn check_border_trees(
                 for (dx, dz) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
                     let side = block(x + dx, y, z + dz);
                     assert!(
-                        side == Some(leaves) || trees.iter().any(|(l, _)| side == Some(*l)),
+                        trees
+                            .iter()
+                            .any(|&(l, leaves)| side == Some(l) || side == Some(leaves)),
                         "tree top at {x},{y},{z} lacks leaves"
                     );
                 }

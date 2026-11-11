@@ -18,6 +18,12 @@ Dimension(
         water: "strata:water",
         ice: "strata:ice",
         biome_scale: 1.0,
+        // Size of the shapes of each climate map, in blocks (multiplied by `biome_scale`).
+        climate_sizes: (temperature: 2200.0, humidity: 2000.0, continentalness: 2400.0, erosion: 1400.0),
+        // Temperatures splitting the world into heat bands, coldest first: a biome only
+        // appears in the bands of its `heat`, so a biome intermediate between two bands
+        // always separates biomes more than one band apart (no desert against snow).
+        heat_bands: [-0.38, -0.13, 0.13, 0.38],
         // Caves; `enabled: false` turns them off.
         caves: (
             enabled: true,
@@ -51,6 +57,8 @@ Dimension(
             plateau: [(0.25, 0.0), (0.35, 1.0), (0.55, 1.0), (0.65, 0.0)],
             plateau_lift: 26.0,
             terrace_step: 9.0,
+            // Size of mountain ranges, in blocks.
+            weirdness_scale: 1000.0,
             overhang: [(-0.8, 1.0), (-0.3, 0.55), (0.1, 0.12), (0.25, 0.0)],
             overhang_blocks: 22.0,
             rivers: Some((width: 0.022, banks: 0.06, depth: 5.0, highest: 45.0)),

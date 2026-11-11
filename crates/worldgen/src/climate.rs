@@ -37,12 +37,14 @@ pub struct Sample {
 impl ClimateMaps {
     pub fn new(seed: Seed, content: &WorldgenContent) -> Self {
         let scale = content.terrain.biome_scale;
+        let sizes = &content.terrain.climate_sizes;
         let r = &content.terrain.relief;
+        let continents = sizes.continentalness * scale * r.continent_scale;
         Self {
-            temperature: Noise::new(seed, 1, 1.0 / (900.0 * scale), 3),
-            humidity: Noise::new(seed, 2, 1.0 / (800.0 * scale), 3),
-            continentalness: Noise::new(seed, 3, 1.0 / (1100.0 * scale * r.continent_scale), 4),
-            erosion: Noise::new(seed, 4, 1.0 / (700.0 * scale), 3),
+            temperature: Noise::new(seed, 1, 1.0 / (sizes.temperature * scale), 3),
+            humidity: Noise::new(seed, 2, 1.0 / (sizes.humidity * scale), 3),
+            continentalness: Noise::new(seed, 3, 1.0 / continents, 4),
+            erosion: Noise::new(seed, 4, 1.0 / (sizes.erosion * scale), 3),
             weirdness: Noise::new(seed, 7, 1.0 / (r.weirdness_scale * scale), 3),
             detail: Noise::new(seed, 5, 1.0 / 64.0, 4),
             river: Noise::new(seed, 8, 1.0 / (r.river_scale * scale), 2),
@@ -162,8 +164,8 @@ impl ClimateMaps {
         land + (bed - land) * smoothstep(0.0, 0.85, river)
     }
 
-    /// Nearest biome in climate space among those whose height and river conditions hold.
-    /// A little per-block jitter dithers the borders.
+    /// Nearest biome in climate space among those allowed in the heat band and whose
+    /// height and river conditions hold. A little per-block jitter dithers the borders.
     pub fn biome<'a>(
         &self,
         content: &'a WorldgenContent,
@@ -187,6 +189,8 @@ impl ClimateMaps {
         let threshold = river_biome_threshold(&content.terrain.relief);
         let on_river = sample.river > threshold && sample.height < content.terrain.sea_level;
         let height = sample.height + (jitter * 40.0) as i32;
+        let band = content.terrain.heat_band(c.temperature + jitter);
+        let allowed = |b: &&Biome| b.allows_heat(band);
         let fits = |b: &&Biome| {
             b.river == on_river
                 && b.min_height.is_none_or(|min| height >= min)
@@ -196,7 +200,8 @@ impl ClimateMaps {
             list.min_by(|a, b| distance(a).total_cmp(&distance(b)))
         };
         // `WorldgenContent::load` never returns an empty biome list.
-        nearest(&mut biomes.iter().filter(fits))
+        nearest(&mut biomes.iter().filter(allowed).filter(fits))
+            .or_else(|| nearest(&mut biomes.iter().filter(allowed)))
             .or_else(|| nearest(&mut biomes.iter()))
             .unwrap_or(&biomes[0])
     }

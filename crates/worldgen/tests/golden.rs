@@ -9,8 +9,9 @@ use strata_core::coords::{ColumnPos, WORLD_HEIGHT};
 use strata_core::generation::WorldgenSettings;
 use strata_worldgen::{Generator, Seed};
 
-/// Changed by v0.2.1 milestone 1 (rare, narrow ravines with bare rock walls).
-const EXPECTED: u64 = 0x8f0a_d9ba_d4cf_19c0;
+/// Changed by v0.2.1 milestone 2 (larger climate shapes, heat bands, broader mountain
+/// ranges, trunks through neighbouring crowns, deposit signs after trees).
+const EXPECTED: u64 = 0x97c8_fde0_427c_6b22;
 
 fn fnv(hash: &mut u64, bytes: &[u8]) {
     for &byte in bytes {
