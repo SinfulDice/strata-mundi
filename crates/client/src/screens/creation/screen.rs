@@ -290,7 +290,7 @@ impl GenerationModel<'_> {
         let field = self.form.code_field.clone();
         let result = self.form.editor.apply_code(&field);
         if result.is_ok() {
-            self.form.tab = 0;
+            self.form.tab = self.tabs_list().len() - 1;
             self.form.layer_scroll = 0;
             self.form.biome_scroll = 0;
         }

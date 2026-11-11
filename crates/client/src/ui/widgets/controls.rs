@@ -116,8 +116,22 @@ pub(super) fn text_field(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         let cursor = if focused { "_" } else { "" };
         (format!("{content}{cursor}"), normal)
     };
-    d.painter.text(rect.x + 3, rect.y + 1, &text, color, shadow);
+    let text = tail_fitting(d, &text, rect.w.saturating_sub(6));
+    d.painter.text(rect.x + 3, rect.y + 1, text, color, shadow);
     d.hit(id, 0, rect, HitKind::TextField);
+}
+
+/// The end of `text` that fits in `width` (long text shows its last characters, as typed).
+fn tail_fitting<'t>(d: &Draw<'_, '_>, text: &'t str, width: u32) -> &'t str {
+    let mut used = 0;
+    let mut buffer = [0; 4];
+    for (start, ch) in text.char_indices().rev() {
+        used += d.painter.text_width(ch.encode_utf8(&mut buffer));
+        if used > width {
+            return &text[start + ch.len_utf8()..];
+        }
+    }
+    text
 }
 
 /// The model's picture, or an empty frame while there is none.
