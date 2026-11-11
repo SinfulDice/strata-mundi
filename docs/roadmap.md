@@ -12,6 +12,7 @@ Un Minecraft-like en pixel art 16×16 où l'équipement classique (jusqu'au diam
 |---|---|---|---|
 | [v0.1](versions/v0.1.md) | Fondations | Moteur, monde infini, créatif, sauvegarde, menus, réglages complets, manette, 3 langues, premier wiki | Prêt |
 | [v0.2](versions/v0.2.md) | Monde vivant | Grottes façon Caves & Cliffs, relief par biome, fluides, lumière, jour/nuit, atmosphère, sons, bateaux | Prêt |
+| [v0.2.1](versions/v0.2.1.md) | Retours de test | Ravins rares, biomes plus grands et cohérents, eau façon Minecraft, pose fiable, torches murales et lanternes suspendues, sons au démarrage, réglages à la souris | Prêt |
 | [v0.3](versions/v0.3.md) | Survie | Jauges, inventaire, craft, outils jusqu'au diamant, améliorations, mort, progrès, déco | Prêt |
 | [v0.4](versions/v0.4.md) | Créatures | Entités animées, IA comportementale, animaux, monstres, chevaux, 3e personne, skins | Prêt |
 | [v0.5](versions/v0.5.md) | Saisons et terroir | Météo, saisons, agriculture, pêche, cuisine, apiculture, élevage, ombres, reflets | Prêt |

@@ -2,10 +2,7 @@
 
 ## État
 
-- **Version en cours** : v0.2 — Monde vivant, **terminée** (11/11/2026) ; en attente de l'utilisateur (voir « En attente de l'utilisateur »). Ne commence pas la v0.3 sans son accord.
-- **Jalon 12 — Clôture** :
-  - [x] Captures de référence (grottes, falaises, nuit, lever de soleil ajoutées à `docs/screenshots.ron`) par `visual-tester`, ultra et DS
-  - [x] Critères de fin vérifiés un par un, `perf-check` (bancs et mémoire), wiki complet en mode strict, rapport dans `docs/versions/v0.2.md`, allègement de `PROGRESS.md`, tag `v0.2.0` (à pousser par l'utilisateur si refusé)
+- **Version en cours** : v0.2.1 — Retours de test (validée le 11/11/2026, pas commencée). Détail : `docs/versions/v0.2.1.md`. Commence par le jalon 1. La v0.3 attend la fin de la v0.2.1.
 - **Dernière session** : 11/11/2026
 
 ## Fait
@@ -34,7 +31,7 @@
 - Paquets système (`scripts/install-linux-deps.sh`) : déjà présents, sauf `libxkbcommon-x11-0` (requis par `winit` sous X11), ajouté.
 - **Rendu headless** : `--screenshot` fonctionne avec lavapipe (~0,3 s par capture). Fenêtre et `--bench-scene` testés sous **Xvfb** (`xvfb-run -a`, `XDG_RUNTIME_DIR` à définir).
 - `vulkaninfo --summary` : **lavapipe OK** — `llvmpipe (LLVM 20.1.2, 256 bits)`, Vulkan 1.4.318, Mesa 25.2.8.
-- Machine de jeu de l'utilisateur : PC Linux (carte graphique à renseigner par l'utilisateur).
+- Machine de jeu de l'utilisateur : PC portable Linux Mint 22.3, i5-1235U (12 fils), Intel Iris Xe intégré, 16 Go.
 - **Console DS pas encore construite** (29/10/2026). En attendant : mesures sur le PC de l'utilisateur avec `taskset -c 0-3 strata --bench-scene flyover --preset ds` (4 cœurs comme le N100). Valables pour la **mémoire** (≤ 2 Go) et la **tendance** d'une version à l'autre, **pas** pour les FPS du DS (GPU du N100 bien plus faible) : les rapports `perf-reports/` le précisent. Ne redemande pas de mesure ni d'essai manette sur le DS avant que l'utilisateur annonce la console prête ; la cible 30 FPS DS reste « à mesurer » (simulation documentée en v0.13 si besoin).
 - Manette : essais sur PC avec une manette quelconque (`gilrs`, même code que sur le DS) ; disposition des boutons du DS à vérifier plus tard.
 
@@ -42,6 +39,8 @@
 
 | Date | Machine | Profil | FPS moyen | 1 % low | Mémoire | Source |
 |---|---|---|---|---|---|---|
+| 11/11/2026 | PC utilisateur (i5-1235U, Iris Xe intégré) | ultra | 61,6 | 30,6 | 291 Mio | `perf-reports/2026-11-11-sinfuldice-njx0pu-ultra-flyover.md` |
+| 11/11/2026 | PC utilisateur, 4 cœurs (`taskset`) | DS | 343,5 | 48,9 | 179 Mio | `perf-reports/2026-11-11-sinfuldice-njx0pu-ds-flyover.md` (GPU ~3× plus puissant que le N100 : pas une mesure DS) |
 
 Benchmarks CPU (cloud, `cargo bench --workspace --bench '*'`), dernière valeur de chaque opération ; historique dans les rapports `docs/versions/v0.X.md` :
 
@@ -93,9 +92,6 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## En attente de l'utilisateur
 
-- **Pousser le tag `v0.2.0`** (refusé depuis le cloud) : `git fetch origin && git tag -a v0.2.0 -m "v0.2.0" origin/main && git push origin v0.2.0`.
-- **Écouter les sons et la musique** (`strata --render-sounds sons/`, `--render-music musique/`, ou en jeu) et dire lesquels ne conviennent pas.
-- **Valider ou non le repli CC0** pour les sons ratés (verre, lave, vent, oiseaux des ambiances).
-- **Mesures FPS sur PC** (`--bench-scene flyover --preset ultra`, puis `taskset -c 0-3 … --preset ds`) en attendant le DS (voir « Environnement ») ; committer les rapports de `perf-reports/`.
-- Donner le feu vert pour la v0.3.
+- Repli CC0 pour les sons : reporté à plus tard (l'utilisateur, 11/11/2026 : les sons conviennent pour l'instant).
+- Retester la v0.2.1 en jeu à sa fin.
 
