@@ -27,14 +27,14 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           if [ -n "$tag" ]; then
             git worktree add ../baseline "$tag"
-            (cd ../baseline && CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" cargo bench --workspace -- --save-baseline release)
+            (cd ../baseline && CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" cargo bench --workspace --benches -- --save-baseline release)
           fi
       - name: Current benchmarks
         run: |
           if [ -n "${{ steps.baseline.outputs.tag }}" ]; then
-            cargo bench --workspace -- --baseline release
+            cargo bench --workspace --benches -- --baseline-lenient release
           else
-            cargo bench --workspace
+            cargo bench --workspace --benches
           fi
       - name: Regression check (> 10 %)
         if: steps.baseline.outputs.tag != ''
