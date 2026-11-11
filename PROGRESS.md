@@ -2,27 +2,17 @@
 
 ## État
 
-- **Version en cours** : v0.2 — Monde vivant
-- **Jalon en cours** : 12 — Clôture
+- **Version en cours** : v0.2 — Monde vivant, **terminée** (11/11/2026) ; en attente de l'utilisateur (voir « En attente de l'utilisateur »). Ne commence pas la v0.3 sans son accord.
+- **Jalon 12 — Clôture** :
   - [x] Captures de référence (grottes, falaises, nuit, lever de soleil ajoutées à `docs/screenshots.ron`) par `visual-tester`, ultra et DS
-  - [ ] Critères de fin vérifiés un par un, `perf-check` (bancs et mémoire), wiki complet en mode strict, rapport dans `docs/versions/v0.2.md`, allègement de `PROGRESS.md`, tag `v0.2.0` (à pousser par l'utilisateur si refusé)
+  - [x] Critères de fin vérifiés un par un, `perf-check` (bancs et mémoire), wiki complet en mode strict, rapport dans `docs/versions/v0.2.md`, allègement de `PROGRESS.md`, tag `v0.2.0` (à pousser par l'utilisateur si refusé)
 - **Dernière session** : 11/11/2026
 
 ## Fait
 
 ### v0.2
 
-- **Jalon 11 — Types de monde** : types du pack (normal, plat personnalisable, amplifié, biome unique, archipel), réglages de génération (taille des biomes, mer, grottes, minerais ; place pour les structures) bornés, vérifiés avant création, enregistrés dans `world.ron` ; **codes partageables** `S1-…` (somme de contrôle, version, erreurs traduites) ; écran de création avec **éditeur** (curseurs, couches, biome, code, presse-papiers `arboard`) et **aperçu 2D** en fond annulable (réglage détaillé/grossier/désactivé) ; test « golden » : le monde par défaut n'a pas changé.
-- **Jalon 10 — Audio** : synthèse procédurale pure (38 recettes du pack : pas par matériau, casse, pose, eau, nage, lave, feu, vent ; variations à chaque lecture), lecture `rodio` et mixage maison 3D (32 voix, catégories maître/blocs/ambiance/musique, sous-titres directionnels, `.ogg` remplaçables, sans carte son = silence), **ambiances** par biome et sous terre avec fondus, **réverbération** selon le lieu et **occlusion** (réglage audio spatial avancé/stéréo simple, DS en stéréo simple), **musique** calme façon C418 (thème de Terra, 5 morceaux pré-rendus en fond et mis en cache, fréquence réglable), `--render-sounds` et `--render-music` pour écouter ; fil audio sans allocation ni libération. Mixage : 155 µs (avancé) / 87 µs (stéréo) par bloc de 11,6 ms.
-- **Jalon 9 — Atmosphère** : carte des biomes envoyée avec chaque colonne (recalculée pour les colonnes sauvegardées), **teintes par biome** (herbe, feuilles, eau, brouillard) mélangées au maillage (sommet 12 octets, réglage « Mélange des biomes »), brouillard qui masque exactement le bord dessiné (le client demande sa distance + 2), teinté selon le biome et l'heure, nuits plus sombres ; **particules** (éclats de casse, gouttes et éclaboussures d'eau et de lave, bulles ; pool borné, un appel instancié, définies dans le pack, réglage désactivées/réduites/complètes). 2 000 particules : 0,41 ms par image.
-- **Jalon 8 — Feu et textures vivantes** : **feu** (propagation aux blocs inflammables avec valeurs du pack, extinction par l'eau et l'usure, reproductible par hachage avec la graine, replanifié au rechargement, budget partagé avec poids ×3), options `/fire spread|destroy` et à la création, briquet créatif ; **textures animées** (images du pack ou bandes PNG, choix par le shader), **connectées** (verre, bibliothèque), **variantes aléatoires** choisies dans le shader (fusion gloutonne intacte), portail d'essai, réglages « Textures animées » et « Variantes de textures » ; formats dans `docs/guide-textures.md`. Banc incendie de plaine : 35,8 ms pour 40 ticks.
-- **Jalon 7 — Jour, nuit et ciel** : journée de 20 min (part du jour réglable dans le pack, prête pour les saisons), heure du serveur envoyée avec son cycle et interpolée côté client, `/time set|add|query`, `/daycycle`, option de monde ; facteur du ciel continu (nuit sans remailler) ; ciel en passe plein écran derrière le terrain : dégradé, lever/coucher orangés, soleil et lune pixel art, **8 phases de lune** (changent sous l'horizon), étoiles scintillantes (réglage) ; **nuages** en couches pixel art qui dérivent, colorés selon l'heure (réglage désactivés/simples/complets) ; `--time` pour les captures.
-- **Jalon 6 — Lumière** : moteur de lumière dans `core` (ciel 0-15 qui descend et se diffuse, lumière des blocs par flood fill, retrait/ajout incrémental à travers les colonnes), calculé côté client sur un thread dédié par lots bornés (donnée dérivée), torche, lanterne, pierre lumineuse, lave émissive ; **lumière lissée par sommet** combinée à l'AO, facteur du ciel en uniforme, courbe de luminosité avec minimum ambiant, teinte chaude des blocs, lumière provisoire à la casse, réglages éclairage lissé / complet-plat / luminosité. Tests obligatoires : torche posée puis cassée = état initial (aussi à cheval sur deux colonnes) ; 120 modifications aléatoires = recalcul complet. Lumière d'une colonne : 1,04 ms.
-- **Jalon 5 — Fluides** : eau et lave à 8 niveaux (variantes générées du pack), **file de blocs actifs** (chute puis pente la plus proche, sources d'eau renouvelables, budget par tick, sans allocation), eau + lave = pierre ou **obsidienne**, **mises à jour de voisinage** générales (plantes, lianes), eau générée inerte jusqu'à perturbation, réglage `/fluids` et option à la création ; rendu à **surface inclinée**, animation désactivable, brouillard sous l'eau/lave, **nage** (physique partagée), seaux créatifs ; **bateaux** en 5 essences (flottent, glissent sur la glace, sauvegardés, veille à l'arrêt) sur une base d'entités génériques (protocole, interpolation, modèles en boîtes du pack). Tests obligatoires : source dans un trou fermé stabilisée (200 ticks sans changement), aucune propagation infinie.
-- **Jalon 4 — Biomes supplémentaires** : **19 biomes** (marais, jungle, savane, forêt de bouleaux, taïga, plage, pics enneigés, prairie fleurie, badlands à strates, montagnes chaudes, océan profond, champignons géants en plus des 7 précédents), placement climatique avec conditions de hauteur, marais affaissés (`wetlands`, `shore_height`), strates des badlands (`bands`) ; **plantes en croix** (`RenderKind::Cross`, 11 plantes, touffes `Plants`, remplaçables, retirées avec leur sol, réglage `vegetation` complète/réduite/désactivée) ; **arbres** tronc × couronne (bouleau, jungle 2×2 à lianes, acacia penché, chêne des marais, champignons géants) ; 30 blocs. Tests : 19 biomes atteignables, chacun trouvé sur la graine 42, strates, marais, plantes sur leur sol, arbres entiers aux frontières, poser sur une herbe. Génération : 1,6 ms (plaine), 2,5 ms (montagne).
-- **Jalon 3 — Minerais et gisements** : cuivre (minerai normal et profond, petits filons), **grands gisements** de fer et de cuivre (veines de 40-80 blocs dans une roche colorée : `ferrous_rock`, `verdigris_rock`, une cellule de 256 blocs sur 0,4), **signes en surface** (5 % des blocs au-dessus), sels stables par hachage d'identifiant. Tests : gisements sur 3 graines, continuité entre colonnes, seule la pierre remplacée, signes au-dessus, bornes du pack. Génération : 1,9 ms (plaine), 2,8 ms (gisement), 3,0-3,3 ms (montagne, à remesurer).
-- **Jalon 2 — Grottes** : module `worldgen/caves` : tunnels spaghetti, nouilles, cavernes fromage à piliers (plus nombreuses en profondeur), ravins en V (surface ou profonds), aquifères par cellules à frontières sinueuses et niveau plat, lacs de lave sous y = 10 (bloc `lava`), entrées de grottes sur terre ferme, toits qui protègent mers et rivières, départ jamais au-dessus d'un trou ; réglages `caves` du pack (densité, largeurs, hauteurs). Tests : pas d'air creusé contre l'eau de mer/rivière, eau d'aquifère jamais suspendue, cavernes/ravins/aquifères/lave sur 3 graines, déterminisme. Génération : 1,83 ms (plaine), 2,86 ms (montagne), 1,37 ms (caverne).
-- **Jalon 1 — Relief avancé** : relief par **densité 3D** (`hauteur − y + surplomb × bruit3D`) sur grille alignée sur le monde (hauteur de surface exacte partout : `surface_height`), **courbes de climat** dans le pack (`relief` de `terra.ron` : continentalité, intérieur, érosion, pics et vallées, collines, plateaux, surplombs), plateaux en **terrasses**, **falaises** et pentes raides en roche nue, **arches et surplombs** en montagne, **rivières** (lit sous la mer, berges douces, vallées sèches en altitude) et biome `river`, conditions de hauteur des biomes (`min_height`/`max_height`), eau seulement à ciel ouvert, carte de prévisualisation `strata --map` (couleur `map_color` par biome), extension RON `implicit_some` pour les packs. Tests : déterminisme (montagnes et rivières comprises), surplombs et falaises sur 3 graines de référence, eau des rivières, hauteur de surface exacte. Génération : 1,8 ms par colonne.
+- v0.2 terminée : détail dans `docs/versions/v0.2.md` (rapport de fin de version).
 
 ### v0.1
 
@@ -53,44 +43,33 @@
 | Date | Machine | Profil | FPS moyen | 1 % low | Mémoire | Source |
 |---|---|---|---|---|---|---|
 
-Benchmarks CPU (cloud, `cargo bench`) :
+Benchmarks CPU (cloud, `cargo bench --workspace --bench '*'`), dernière valeur de chaque opération ; historique dans les rapports `docs/versions/v0.X.md` :
 
 | Date | Opération | Temps | Source |
 |---|---|---|---|
-| 23/10/2026 | Maillage d'une section de surface | 0,27 ms | `meshing/mesh_section_terrain` |
-| 23/10/2026 | Maillage pire cas (damier) | 1,32 ms | `meshing/mesh_section_checkerboard` |
-| 23/10/2026 | Génération d'une colonne | 2,08 ms | `generation/generate_column` |
-| 23/10/2026 (jalon 8) | Maillage d'une section de surface | 0,18 ms | `meshing/mesh_section_terrain` |
-| 23/10/2026 (jalon 8) | Maillage pire cas (damier) | 1,06 ms | `meshing/mesh_section_checkerboard` |
-| 23/10/2026 (jalon 8) | Génération d'une colonne | 2,27 ms (+9 %, bruit de VM partagée, sous le seuil de 10 %) | `generation/generate_column` |
-| 05/11/2026 (v0.2 j4, 18 biomes) | Génération d'une colonne (plaine / montagne / caverne / gisement) | 1,61 / 2,49 / 1,25 / 2,49 ms | `generation/*` |
-| 05/11/2026 (v0.2 j4, arbres) | Génération d'une colonne (plaine / montagne / caverne / gisement) | 1,56 / 2,37 / 1,18 / 2,70 ms | `generation/*` |
-| 04/11/2026 (v0.2 j1) | Génération d'une colonne (relief 3D) | 1,80 ms | `generation/generate_column` |
-| 05/11/2026 (v0.2 j5) | Grand écoulement (lac par une brèche de 32 blocs, jusqu'à stabilisation) | 5,93 ms | `fluids/large_flow_settles` |
-| 05/11/2026 (v0.2 j5, relecture) | Maillage surface / damier / eau qui coule / voisinage | 0,19 / 1,00 / 0,25 / 0,045 ms | `meshing/*` |
-| 05/11/2026 (v0.2 j6) | Maillage surface / damier / eau, lumière lissée | 0,21 / 1,44 / 0,31 ms | `meshing/*` (D046) |
-| 05/11/2026 (v0.2 j6) | Lumière initiale d'une colonne générée (voisines éclairées) | 1,20 ms | `light/light_generated_column` |
-| 05/11/2026 (v0.2 j6) | Poser puis casser une torche en plein air | 0,65 ms | `light/light_place_and_break_torch` |
-| 10/11/2026 (v0.2 j8) | Maillage d'une section de surface, 3 variantes (herbe, terre, pierre) | 0,28 ms (0,30 ms sans variantes, même session) | `meshing/mesh_section_terrain` |
-| 10/11/2026 (v0.2 j8) | Maillage pire cas (damier), avec variantes | 2,05 ms (1,90 ms sans variantes, même session) | `meshing/mesh_section_checkerboard` |
-| 10/11/2026 (v0.2 j8, relecture) | Incendie de plaine (97 × 97 herbes hautes allumées tous les 3 blocs, ~5 300 feux) : 40 ticks, 6 988 pas de feu | 35,8 ms (~0,9 ms par tick, ~5,1 µs le pas) | `fire/prairie_fire_40_ticks` |
-| 10/11/2026 (v0.2 j8, relecture) | Grand écoulement, même session (3 478 pas, ~1,8 µs le pas) | 6,31 ms | `fluids/large_flow_settles` |
-| 10/11/2026 (v0.2 j9) | Une image de particules : déplacer 2 000 particules et écrire leurs instances | 0,41 ms | `particles/frame_2000` |
-| 10/11/2026 (v0.2 j10) | Rendu d'un morceau de musique (Terra, 90 à 167 s, release) ; fichier de cache | 0,14 à 0,32 s ; 8 à 15 Mo (88 Ko/s) | `strata --render-music` (D055) |
+| 11/11/2026 | Génération d'une colonne (plaine / montagne / caverne / gisement) | 1,71 / 2,65 / 1,39 / 2,59 ms | `generate_*column` |
+| 11/11/2026 | Carte des biomes d'une colonne | 0,18 ms | `biome_map_column` |
+| 11/11/2026 | Lumière d'une colonne générée / poser puis casser une torche | 0,78 / 0,44 ms | `light_*` |
+| 11/11/2026 | Maillage : section de surface / damier / eau qui coule / frontière de biomes | 0,26 / 2,07 / 0,35 / 0,26 ms | `mesh_section_*` |
+| 11/11/2026 | Teintes d'une colonne / voisinage | 8 / 42 µs | `column_tints_blend`, `neighborhood_build` |
+| 11/11/2026 | Grand écoulement (lac par une brèche de 32 blocs) | 5,38 ms | `fluids/large_flow_settles` |
+| 11/11/2026 | Incendie de plaine, 40 ticks | 33,7 ms | `fire/prairie_fire_40_ticks` |
+| 11/11/2026 | Particules, une image à 2 000 | 0,38 ms | `particles/frame_2000` |
+| 11/11/2026 | Mixage audio d'un bloc de 11,6 ms, avancé / stéréo (forte variance de la VM : le code du jalon 10 donne la même valeur) | 1,1 ms / 12-21 µs | `audio/mix_block_32_voices_*` |
+| 10/11/2026 | Rendu d'un morceau de musique (release) ; fichier de cache | 0,14 à 0,32 s ; 8 à 15 Mo | `strata --render-music` (D055) |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 | Date | Profil | Mesure | Valeur | Source |
 |---|---|---|---|---|
-| 23/10/2026 | DS | Pic de mémoire (RSS), vol de 2 min | 201 Mio (cible ≤ 2 Go) | `--bench-scene flyover --preset ds` |
-| 23/10/2026 | DS | Lancement → carte graphique prête | 0,2 s (cible < 5 s) | journal |
-| 23/10/2026 | DS | Chargement initial du monde (distance 6) | ≈ 4 s (cible < 10 s) | durée totale − préchauffage − mesure |
-| 10/11/2026 (v0.2 j9, relecture) | DS | Pic RSS, vol de 2 min, avant / après la marge non dessinée demandée au serveur (distance 6 → disque de 8) | 218 → 234 Mio ; monde chargé en ~7,7 → ~12,3 s | `--bench-scene flyover --preset ds` (xvfb) |
-| 10/11/2026 (v0.2 j10) | Tous | Pic RSS de `--render-music` (5 morceaux entiers en mémoire tour à tour + images) ; en jeu, rendu par blocs de 4 096 échantillons et lecture 4 × 0,5 s d'avance | 74 Mio ; < 1 Mio | `/proc/<pid>/status` (D055) |
+| 11/11/2026 | DS | Pic de mémoire (RSS), vol de 2 min | 241 Mio (cible ≤ 2 Go) | `perf-reports/2026-11-11-cloud-ds-flyover.md` |
+| 11/11/2026 | DS | Lancement → carte graphique prête | 1,1 s (cible < 5 s) | journal |
+| 11/11/2026 | DS | Chargement initial du monde (distance 6, disque demandé de 8) | ≈ 9 s d'après le journal (cible < 10 s) ; 10,9 s en durée totale du processus | journal |
+| 10/11/2026 | Tous | Pic RSS de `--render-music` ; en jeu | 74 Mio ; < 1 Mio | `/proc/<pid>/status` (D055) |
 
 ## Limitations connues
 
-- CI et benchmarks verts sur GitHub ; `release.yml` répété à blanc avec succès (Linux, Flatpak, Windows `.zip`/`.msi`, wiki) avant le tag.
+- CI verte sur GitHub ; les benchmarks de la CI échouaient depuis le tag v0.1.0 (options de criterion passées aux tests unitaires), corrigé à la clôture de la v0.2 (`--bench '*'`, base de comparaison tolérante) : à confirmer au prochain passage. `release.yml` répété à blanc avec succès en v0.1.
 - Clavier à l'écran et navigation manette testés par tests unitaires seulement (pas de manette en session cloud).
 - « Progression » dans la liste des mondes : il n'y a pas encore de progrès (v0.2+) ; la liste montre date, mode et temps de jeu.
 - Capture d'un monde prise seulement en le quittant (pas aux sauvegardes automatiques).
@@ -98,15 +77,15 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 - Nom du bloc visé sans « outil requis » : les outils arrivent en v0.3.
 - Bateaux : retirés seulement en créatif (clic gauche), sans objet rendu ; hors créatif un bateau posé n'est pas récupérable tant que la survie (v0.3) n'existe pas. Seaux réservés au créatif pour la même raison.
 - Horodatage GPU indisponible sur lavapipe (« n/d » dans les rapports cloud).
-- Réglages sans système en v0.1, ajoutés avec leur système : distance de simulation (pas encore d'entités simulées), son.
+- Réglage sans système : distance de simulation (pas encore d'entités simulées).
 - Console : pas de saisie à la manette (règle du projet : « console exceptée ») ; `/gamemode survival` répond que la survie arrive en v0.3.
-- Wiki : images en PNG (pas de WebP sans dépendance C) ; la vue du biome montagnes montre une flèche de pierre très haute, fidèle à la génération actuelle (à revoir en fin de version).
-- Lumière (à mesurer) : un bloc changé copie la colonne entière (`Arc::make_mut`, 1 fois par colonne et par image) pour le thread de lumière ; la courbe de lumière est calculée par fragment dans le shader (une table serait moins chère). Une colonne renvoyée laisse chez ses voisines la lumière de ses anciens blocs.
-- Vérification de mise à jour : aucune release publiée avant le tag v0.1.0 (réponse 404, sans effet).
+- Wiki : images en PNG (pas de WebP sans dépendance C)  ; le biome rivière n'a pas de vue (aucune rivière près de l'origine pour `--render-biomes`).
+- Lumière : un bloc changé copie la colonne entière (`Arc::make_mut`, 1 fois par colonne et par image) pour le thread de lumière ; la courbe de lumière est calculée par fragment dans le shader (une table serait moins chère). Une colonne renvoyée laisse chez ses voisines la lumière de ses anciens blocs.
+- Sons : verre, lave et vent synthétisés à faire écouter ; pas de cris d'oiseaux (repli CC0 possible avec l'accord de l'utilisateur).
 
 ## À surveiller
 
-- DS (cloud, lavapipe) : chargement initial du monde ~12,3 s (cible < 10 s) depuis que le client demande sa distance + 2 (jalon 9) ; pic mémoire 234 Mio. À remesurer sur PC avant la fin de version.
+- DS (cloud, lavapipe) : chargement initial ≈ 9 s (cible < 10 s, de justesse) : le client demande sa distance + 2 (disque de rayon 8 au lieu de 6, ~1,8 fois plus de colonnes) ; en cloud le rendu logiciel prend du processeur à la génération. À remesurer sur PC ; piste si besoin : charger d'abord le disque dessiné.
 
 ## Blocages
 
@@ -114,5 +93,9 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## En attente de l'utilisateur
 
-- À chaque fin de version : mesure sur PC en attendant le DS (voir « Environnement »).
+- **Pousser le tag `v0.2.0`** (refusé depuis le cloud) : `git fetch origin && git tag -a v0.2.0 -m "v0.2.0" origin/main && git push origin v0.2.0`.
+- **Écouter les sons et la musique** (`strata --render-sounds sons/`, `--render-music musique/`, ou en jeu) et dire lesquels ne conviennent pas.
+- **Valider ou non le repli CC0** pour les sons ratés (verre, lave, vent, oiseaux des ambiances).
+- **Mesures FPS sur PC** (`--bench-scene flyover --preset ultra`, puis `taskset -c 0-3 … --preset ds`) en attendant le DS (voir « Environnement ») ; committer les rapports de `perf-reports/`.
+- Donner le feu vert pour la v0.3.
 
