@@ -50,4 +50,10 @@
     (name: "worldtype-amplified", seed: "42", world_code: "S1-15GPTW3CD5K6JSB4CG068S34000639R", pos: (330.0, 240.0, 290.0), look: (90.0, -12.0)),
     (name: "worldtype-single_biome", seed: "42", world_code: "S1-1HSPJVK7DHJNYRK9DXPPAS00CHJ68086CHJQ6SBJEG01V4G", look: (30.0, -15.0)),
     (name: "worldtype-archipelago", seed: "42", world_code: "S1-1DGQ4RV8D5R6AV31CXQP8034CHJ0002NMM", pos: (400.0, 220.0, -224.0), look: (90.0, -35.0)),
+    (name: "cave-air-42", seed: "42", pos: (177.5, 43.5, 102.5), look: (0.0, -5.0)),
+    (name: "cave-air-99", seed: "99", pos: (177.5, 31.5, -116.5), look: (90.0, -5.0)),
+    (name: "cliff-42", seed: "42", pos: (-1020.0, 165.0, -1592.0), look: (270.0, -20.0)),
+    (name: "cliff-7", seed: "7", pos: (-165.0, 195.0, -1592.0), look: (270.0, -15.0)),
+    (name: "cliff-sunrise-42", seed: "42", pos: (-1020.0, 165.0, -1592.0), look: (270.0, -20.0), time: 300),
+    (name: "cliff-night-42", seed: "42", pos: (-1020.0, 165.0, -1592.0), look: (270.0, -20.0), time: 15000),
 ]
