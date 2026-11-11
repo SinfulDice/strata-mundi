@@ -3,6 +3,7 @@
 (
     versions: [
         (id: "0.1.0", date: "2026-10-29"),
+        (id: "0.2.0", date: "2026-11-11"),
     ],
     entries: {
         "blocks/strata/bedrock": [(version: "0.1.0", change: Added)],
