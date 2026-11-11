@@ -32,9 +32,9 @@ step() {
 }
 
 step fmt cargo fmt --all
-step clippy cargo clippy --all-targets -- -D warnings
+step clippy cargo clippy --workspace --all-targets -- -D warnings
 if [ "${1:-}" != "--quick" ]; then
-  step clippy-release cargo clippy --release --all-targets -- -D warnings
+  step clippy-release cargo clippy --workspace --release --all-targets -- -D warnings
 fi
 step test cargo test --workspace
 exit $status

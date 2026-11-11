@@ -15,7 +15,7 @@
   ```
 
   (installe `mesa-vulkan-drivers vulkan-tools libvulkan-dev pkg-config libudev-dev libasound2-dev libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libx11-dev`).
-- **Windows** : un pilote graphique à jour suffit.
+- **Windows** : un pilote graphique à jour, et pour compiler les **Build Tools for Visual Studio** avec la charge de travail « Développement Desktop en C++ » (sinon : `linker link.exe not found`) : `winget install Microsoft.VisualStudio.2022.BuildTools --override "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive"`.
 
 ## Compiler et lancer
 
