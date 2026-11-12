@@ -6,7 +6,7 @@ Même en solo, Strata Mundi est découpé comme un jeu en ligne : un **serveur**
 
 ## Comment ça marche
 
-- Le client **n'écrit jamais dans le monde**. Quand le joueur casse un bloc, le client envoie une *intention* (« je veux casser le bloc en x, y, z ») ; le serveur vérifie que c'est possible (portée, place libre…), modifie le monde et prévient tous les clients avec `BlockChanged`.
+- Le client **n'écrit jamais dans le monde**. Quand le joueur casse un bloc, le client envoie une *intention* (« je veux casser le bloc en x, y, z ») ; le serveur vérifie que c'est possible (portée, place libre…), modifie le monde et prévient tous les clients avec `BlockChanged`. Pour que le jeu réagisse sans délai, le client **prédit** l'effet de ses clics sur son propre affichage, puis se range à l'avis du serveur quand celui-ci répond `ActionDone` (voir [Joueur et interaction](joueur-et-interaction.md)) : la prédiction n'est qu'un dessin local, jamais une écriture dans le monde du serveur.
 - Tout échange est un **message** défini dans la crate `protocol` : `ClientMessage` (client → serveur) et `ServerMessage` (serveur → client). Chaque message est **sérialisable** (transformable en octets), donc prêt à passer par le réseau.
 - En solo, les messages passent par des **canaux en mémoire** : `local_pair()` crée les deux bouts d'un tuyau, un pour le client (`ClientConnection`), un pour le serveur (`ServerConnection`).
 - Si un des deux côtés disparaît, l'autre le voit (`Disconnected`) et s'arrête proprement.
@@ -18,14 +18,14 @@ Messages actuels :
 | `ClientMessage::Input` | client → serveur | Les touches de déplacement d'un tick, numérotées (voir [Joueur et interaction](joueur-et-interaction.md)). |
 | `ClientMessage::MovementPreferences` | client → serveur | Options de déplacement : saut automatique, montée des demi-blocs. |
 | `ClientMessage::Teleport` | client → serveur | Placement initial (`--pos`) ; plus tard `/tp`. |
-| `ClientMessage::BreakBlock` / `PlaceBlock` | client → serveur | Intention de casser ou de poser un bloc. |
-| `ClientMessage::UseItem` | client → serveur | Utiliser l'objet en main : seau, bateau (voir [Fluides](fluides.md)). |
+| `ClientMessage::BlockAction { id, action }` | client → serveur | Clic numéroté sur un bloc : casser (`Break`), poser (`Place`), utiliser l'objet en main (`Use` : seau, bateau, voir [Fluides](fluides.md)). |
 | `ClientMessage::InteractEntity` / `AttackEntity` | client → serveur | Monter dans une entité, la retirer (voir [Bateaux et entités](bateaux-et-entites.md)). |
 | `ClientMessage::ViewDistance` | client → serveur | Distance de rendu souhaitée. |
 | `ClientMessage::Disconnect` | client → serveur | Le joueur quitte : le serveur s'arrête. |
 | `ServerMessage::Welcome` | serveur → client | Dimension, corps du joueur, règles de déplacement et liste des biomes (noms, couleurs). |
 | `ServerMessage::PlayerState` | serveur → client | Position officielle du joueur après l'entrée n° `sequence`. |
-| `ServerMessage::BlockChanged` | serveur → client | Un bloc a changé. |
+| `ServerMessage::BlockChanged` | serveur → client | Un bloc a changé (ou, après un clic refusé, son état réel). |
+| `ServerMessage::ActionDone(id)` | serveur → client | Le clic n° `id` est fait ou refusé : le client range sa prédiction. |
 | `ServerMessage::EntitySpawned` / `EntityMoved` / `EntityRemoved` | serveur → client | Une entité apparaît, bouge (seulement si position ou cap ont changé), disparaît. |
 | `ServerMessage::Mounted` | serveur → client | Le joueur est assis dans une entité, ou en est descendu. |
 | `ServerMessage::Tick { tick }` | serveur → client | Numéro du tick qui vient d'être simulé. |
@@ -35,7 +35,7 @@ Messages actuels :
 
 - `crates/protocol/src/messages.rs` : les messages.
 - `crates/protocol/src/local.rs` : le transport en mémoire.
-- `crates/protocol/src/lib.rs` : la version du protocole (7 depuis les biomes envoyés au client).
+- `crates/protocol/src/lib.rs` : la version du protocole (8 depuis les clics numérotés).
 - `crates/server/src/integrated.rs` : le serveur qui lit les messages du client à chaque tour.
 - `crates/client/src/session.rs` (`receive_messages`) : le client qui lit les messages du serveur ; `gameplay.rs` les applique.
 

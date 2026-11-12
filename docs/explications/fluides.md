@@ -50,7 +50,7 @@ Quand la boîte du joueur touche un liquide dont la surface dépasse ses pieds, 
 
 ### Le seau
 
-Un seau vide, clic droit sur une source : le serveur la retire (et l'écoulement se met à jour). Un seau plein, clic droit sur une case : le serveur pose une source. Le client envoie une simple intention `UseItem` ; en créatif le seau ne change pas.
+Un seau vide, clic droit sur une source : le serveur la retire (et l'écoulement se met à jour). Un seau plein, clic droit sur une case : le serveur pose une source. Le client envoie une simple intention `BlockAction { Use }` ; en créatif le seau ne change pas.
 
 ## Où c'est dans le code
 
