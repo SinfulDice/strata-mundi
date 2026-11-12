@@ -105,7 +105,15 @@ fn simulate(
     for edit in edits {
         let block = fill_block(path, content, edit)?;
         for (x, y, z) in edit.cells() {
-            updates.set_block(scene, BlockPos::new(x, y, z), block, &mut changes);
+            let pos = BlockPos::new(x, y, z);
+            if !scene.bounds.contains(pos) {
+                return Err(PackError::invalid(
+                    path,
+                    format!("edit at {x},{y},{z} outside the scene's fills"),
+                ));
+            }
+            updates.set_block(scene, pos, block, &mut changes);
+            changes.clear();
         }
     }
     for _ in 0..ticks {
@@ -113,36 +121,35 @@ fn simulate(
             break;
         }
         updates.tick(scene, &mut changes);
+        changes.clear();
     }
     Ok(())
 }
 
-/// Box holding every fill: liquids reaching its edge wait as at unloaded columns.
+type Corner = (i32, i32, i32);
+
+/// Box holding every fill (none before the first): liquids reaching its edge wait as at
+/// unloaded columns.
 #[derive(Default)]
-struct Bounds {
-    min: Option<(i32, i32, i32)>,
-    max: (i32, i32, i32),
-}
+struct Bounds(Option<(Corner, Corner)>);
 
 impl Bounds {
     fn include(&mut self, fill: &Fill) {
         let (a, b) = (fill.from, fill.to);
         let low = (a.0.min(b.0), a.1.min(b.1), a.2.min(b.2));
         let high = (a.0.max(b.0), a.1.max(b.1), a.2.max(b.2));
-        let min = self.min.unwrap_or(low);
-        self.min = Some((min.0.min(low.0), min.1.min(low.1), min.2.min(low.2)));
-        self.max = (
-            self.max.0.max(high.0),
-            self.max.1.max(high.1),
-            self.max.2.max(high.2),
-        );
+        let (min, max) = self.0.unwrap_or((low, high));
+        self.0 = Some((
+            (min.0.min(low.0), min.1.min(low.1), min.2.min(low.2)),
+            (max.0.max(high.0), max.1.max(high.1), max.2.max(high.2)),
+        ));
     }
 
     fn contains(&self, pos: BlockPos) -> bool {
-        self.min.is_some_and(|min| {
-            (min.0..=self.max.0).contains(&pos.x)
-                && (min.1..=self.max.1).contains(&pos.y)
-                && (min.2..=self.max.2).contains(&pos.z)
+        self.0.is_some_and(|(min, max)| {
+            (min.0..=max.0).contains(&pos.x)
+                && (min.1..=max.1).contains(&pos.y)
+                && (min.2..=max.2).contains(&pos.z)
         })
     }
 }
@@ -184,5 +191,24 @@ mod tests {
         assert!(wet(-9, 12, 0).is_some(), "the breach lets the lake out");
         assert!(wet(-6, 12, 0).is_some(), "the stream runs down the steps");
         assert!(wet(-6, 12, 3).is_none(), "without widening");
+    }
+
+    #[test]
+    fn bounds_start_at_the_first_fill() {
+        let fill = |from, to| Fill {
+            from,
+            to,
+            block: "strata:air".parse().unwrap(),
+        };
+        let mut bounds = Bounds::default();
+        assert!(!bounds.contains(BlockPos::new(0, 0, 0)));
+        bounds.include(&fill((5, 5, 5), (3, 6, 3)));
+        assert!(bounds.contains(BlockPos::new(4, 6, 5)));
+        assert!(
+            !bounds.contains(BlockPos::new(0, 0, 0)),
+            "not stretched to the origin"
+        );
+        bounds.include(&fill((-2, 5, 3), (-1, 5, 3)));
+        assert!(bounds.contains(BlockPos::new(0, 5, 4)));
     }
 }

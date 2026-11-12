@@ -432,5 +432,9 @@ fn a_large_flow_settles() {
         sim.set_block(&mut world, at(-1, GROUND, z), BlockId::AIR, &mut changes);
     }
     let (_, flowed) = settle(&mut sim, &mut world, 5000);
-    assert!(changes.len() + flowed.len() > 400);
+    let total = changes.len() + flowed.len();
+    assert!(
+        (400..1000).contains(&total),
+        "{total} changes: a stream per breach column, no widening"
+    );
 }

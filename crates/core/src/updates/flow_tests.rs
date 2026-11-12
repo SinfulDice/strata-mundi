@@ -3,7 +3,7 @@
 
 #![allow(clippy::unwrap_used)]
 
-use super::tests::{GROUND, Plane, at, id, level, settle, updates};
+use super::tests::{GROUND, Plane, at, content, id, level, settle, updates};
 use super::*;
 use crate::content::FluidLevel;
 
@@ -13,37 +13,52 @@ fn pour(world: &mut Plane, pos: BlockPos) -> BlockUpdates {
     sim
 }
 
-#[test]
-fn on_a_plateau_water_only_goes_to_a_hole_three_blocks_away() {
+/// Water poured at the origin of a plateau with a hole `distance` blocks east, settled.
+fn plateau_with_hole(distance: i32) -> Plane {
     let mut world = Plane::new();
-    world.put(at(3, GROUND - 1, 0), BlockId::AIR);
+    world.put(at(distance, GROUND - 1, 0), BlockId::AIR);
     let mut sim = pour(&mut world, at(0, GROUND, 0));
     settle(&mut sim, &mut world, 2000);
-    let cells = world.fluid_cells();
-    let expected: Vec<BlockPos> = vec![
-        at(0, GROUND, 0),
-        at(1, GROUND, 0),
-        at(2, GROUND, 0),
-        at(3, GROUND - 1, 0),
-        at(3, GROUND, 0),
-    ];
+    world
+}
+
+fn assert_only_towards_the_hole(distance: i32) {
+    let world = plateau_with_hole(distance);
+    let mut expected: Vec<BlockPos> = (0..=distance).map(|x| at(x, GROUND, 0)).collect();
+    expected.push(at(distance, GROUND - 1, 0));
+    expected.sort_by_key(|p| (p.x, p.y, p.z));
     assert_eq!(
-        cells, expected,
-        "a single line to the hole, nothing beside it"
+        world.fluid_cells(),
+        expected,
+        "hole {distance} blocks away: a single line to it, nothing beside it"
     );
     assert_eq!(
-        level(&world, at(3, GROUND - 1, 0)),
+        level(&world, at(distance, GROUND - 1, 0)),
         Some(FluidLevel::Falling)
     );
 }
 
 #[test]
-fn without_a_hole_within_four_blocks_water_widens() {
+fn on_a_plateau_water_only_goes_to_a_hole_three_blocks_away() {
+    assert_only_towards_the_hole(3);
+}
+
+/// `slope_search` (4) counts from the side next to the water: the search sees holes up
+/// to five blocks from it, as in Minecraft.
+#[test]
+fn the_search_reaches_holes_four_and_five_blocks_away() {
+    assert_only_towards_the_hole(4);
+    assert_only_towards_the_hole(5);
+}
+
+#[test]
+fn without_a_hole_within_reach_of_the_search_water_widens() {
     let mut world = Plane::new();
     world.put(at(6, GROUND - 1, 0), BlockId::AIR);
     let mut sim = pour(&mut world, at(0, GROUND, 0));
+    let water = content().fluids.get(&id("strata:water")).unwrap();
     let mut changes = Vec::new();
-    for _ in 0..5 {
+    for _ in 0..water.tick_rate {
         sim.tick(&mut world, &mut changes);
     }
     let mut first: Vec<BlockPos> = changes.iter().map(|(pos, _)| *pos).collect();
@@ -90,7 +105,8 @@ fn a_flow_down_a_staircase_stays_a_narrow_stream_and_settles() {
     let cells = world.fluid_cells();
     let wide = cells.iter().filter(|p| p.x < 36 && p.z != 0).count();
     assert_eq!(wide, 0, "each step leads straight to the next hole");
-    assert!(cells.iter().all(|p| p.x - p.z.abs() >= 29 || p.z == 0));
+    let in_the_stream_or_the_last_diamond = |p: &BlockPos| p.z == 0 || p.x - p.z.abs() >= 29;
+    assert!(cells.iter().all(in_the_stream_or_the_last_diamond));
     let mut more = Vec::new();
     for _ in 0..200 {
         sim.tick(&mut world, &mut more);
