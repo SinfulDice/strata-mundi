@@ -179,3 +179,95 @@ fn a_fire_read_back_with_its_column_burns_again() {
     wait(&mut w, 1_000);
     assert_eq!(w.loader.block(pos), Some(BlockId::AIR), "no fuel: it died");
 }
+
+#[test]
+fn torches_and_lanterns_take_the_variant_of_the_clicked_face() {
+    let mut w = world();
+    let cell = BlockPos::new(11, 62, 8);
+    assert!(w.loader.set_block(cell, BlockId::AIR));
+    let cases = [
+        (
+            cell.neighbour(Face::Down),
+            Face::Up,
+            "strata:torch",
+            "strata:torch",
+        ),
+        (
+            cell.neighbour(Face::West),
+            Face::East,
+            "strata:torch",
+            "strata:torch__west",
+        ),
+        (
+            cell.neighbour(Face::East),
+            Face::West,
+            "strata:torch",
+            "strata:torch__east",
+        ),
+        (
+            cell.neighbour(Face::North),
+            Face::South,
+            "strata:torch",
+            "strata:torch__north",
+        ),
+        (
+            cell.neighbour(Face::South),
+            Face::North,
+            "strata:torch",
+            "strata:torch__south",
+        ),
+        (
+            cell.neighbour(Face::Up),
+            Face::Down,
+            "strata:torch",
+            "strata:torch",
+        ),
+        (
+            cell.neighbour(Face::Up),
+            Face::Down,
+            "strata:lantern",
+            "strata:lantern__ceiling",
+        ),
+        (
+            cell.neighbour(Face::Down),
+            Face::Up,
+            "strata:lantern",
+            "strata:lantern",
+        ),
+    ];
+    for (against, face, item, expected) in cases {
+        let held = block(&w.content, item);
+        let changes = w.game.place_block(&mut w.loader, against, face, held);
+        assert_eq!(
+            changes,
+            vec![(cell, block(&w.content, expected))],
+            "{face:?} {item}"
+        );
+        assert!(w.loader.set_block(cell, BlockId::AIR));
+        wait(&mut w, 2);
+    }
+    let wall_torch = block(&w.content, "strata:torch__west");
+    assert!(
+        w.game
+            .place_block(&mut w.loader, cell, Face::East, wall_torch)
+            .is_empty(),
+        "variants have no item"
+    );
+}
+
+#[test]
+fn a_wall_torch_goes_with_its_wall() {
+    let mut w = world();
+    let torch = block(&w.content, "strata:torch");
+    let wall = BlockPos::new(11, 64, 8);
+    assert!(w.loader.set_block(wall, block(&w.content, "strata:stone")));
+    let placed = w.game.place_block(&mut w.loader, wall, Face::East, torch);
+    let target = wall.neighbour(Face::East);
+    assert_eq!(
+        placed,
+        vec![(target, block(&w.content, "strata:torch__west"))]
+    );
+    wait(&mut w, 2);
+    let changes = w.game.break_block(&mut w.loader, wall);
+    assert_eq!(changes, vec![(wall, BlockId::AIR), (target, BlockId::AIR)]);
+}

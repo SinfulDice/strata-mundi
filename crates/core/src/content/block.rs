@@ -1,3 +1,4 @@
+use super::attached::Attachment;
 use super::fire::{FireDef, Flammability};
 use super::fluid::{FluidDef, FluidState};
 use super::particle::{BlockParticles, ParticleTriggersDef};
@@ -99,12 +100,29 @@ impl Axis {
 }
 
 /// How a block turns when placed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
 pub enum Placement {
     #[default]
     Fixed,
     /// Lies along the axis of the clicked face, like logs. The pack describes it upright.
     Axis,
+    /// Held by the clicked block: on the floor, against a wall or under a ceiling
+    /// (torches, lanterns). It drops when its support goes.
+    Attached {
+        /// Stands on the block below (drawn as in the pack).
+        #[serde(default = "yes")]
+        floor: bool,
+        /// Leans against the side of a block (drawn tilted toward it).
+        #[serde(default)]
+        wall: bool,
+        /// Hangs under the block above.
+        #[serde(default)]
+        ceiling: bool,
+        /// Texture of the hanging variant (a lantern with its chain); the block's own if
+        /// absent.
+        #[serde(default)]
+        ceiling_texture: Option<Identifier>,
+    },
 }
 
 /// Member of a family of turned blocks; `variants` are indexed by `Axis`.
@@ -279,6 +297,7 @@ pub struct Block {
     pub max_stack: u16,
     pub cull_same: bool,
     pub orientation: Option<Orientation>,
+    pub attachment: Option<Attachment>,
     pub replaceable: bool,
     pub rooted: bool,
     pub hanging: bool,
@@ -305,6 +324,7 @@ impl Block {
             max_stack: 64,
             cull_same: true,
             orientation: None,
+            attachment: None,
             replaceable: false,
             rooted: false,
             hanging: false,
@@ -317,13 +337,25 @@ impl Block {
         }
     }
 
-    /// The block standing for its whole family (item, name): the upright variant, or the
-    /// source of a liquid.
+    /// The block standing for its whole family (item, name): the upright variant, the
+    /// floor one of a torch, or the source of a liquid.
     pub fn family(&self, id: BlockId) -> BlockId {
-        match (self.orientation, self.fluid) {
-            (Some(o), _) => o.along(Axis::Y),
-            (_, Some(fluid)) => fluid.source,
+        match (self.orientation, self.attachment, self.fluid) {
+            (Some(o), _, _) => o.along(Axis::Y),
+            (_, Some(a), _) => a.family().unwrap_or(id),
+            (_, _, Some(fluid)) => fluid.source,
             _ => id,
+        }
+    }
+
+    /// Side of the neighbour that must stay solid under it, and whether the same block may
+    /// stand in for it (vines hang from vines).
+    pub fn support(&self) -> Option<Support> {
+        match (self.attachment, self.rooted, self.hanging) {
+            (Some(a), _, _) => Some(Support::new(a.support, false)),
+            (None, true, _) => Some(Support::new(Face::Down, false)),
+            (None, false, true) => Some(Support::new(Face::Up, true)),
+            (None, false, false) => None,
         }
     }
 
@@ -340,7 +372,7 @@ impl Block {
     /// portals) and plants, not air or liquids.
     pub fn hit_box(&self) -> Option<HitBox> {
         match self.render {
-            RenderKind::Cross => Some(HitBox::PLANT),
+            RenderKind::Cross => Some(self.attachment.map_or(HitBox::PLANT, HitBox::attached)),
             RenderKind::Invisible => None,
             _ if self.solid || self.fluid.is_none() => Some(HitBox::FULL),
             _ => None,
@@ -365,4 +397,49 @@ impl HitBox {
         min: [0.125, 0.0, 0.125],
         max: [0.875, 0.8125, 0.875],
     };
+    /// Lantern under a ceiling, chain included.
+    pub const HANGING: Self = Self {
+        min: [0.3125, 0.1875, 0.3125],
+        max: [0.6875, 1.0, 0.6875],
+    };
+    /// Torch leaning on a north wall (-Z); the other walls turn it.
+    const WALL_NORTH: Self = Self {
+        min: [0.3125, 0.1875, 0.0],
+        max: [0.6875, 0.875, 0.5],
+    };
+
+    fn attached(attachment: Attachment) -> Self {
+        match attachment.support {
+            Face::Down => Self::PLANT,
+            Face::Up => Self::HANGING,
+            wall => Self::WALL_NORTH.turned_toward(wall),
+        }
+    }
+
+    /// The box turned about the vertical axis so that its north side faces `wall`.
+    fn turned_toward(self, wall: Face) -> Self {
+        let [x0, y0, z0] = self.min;
+        let [x1, y1, z1] = self.max;
+        let (min, max) = match wall {
+            Face::South => ([1.0 - x1, y0, 1.0 - z1], [1.0 - x0, y1, 1.0 - z0]),
+            Face::West => ([z0, y0, x0], [z1, y1, x1]),
+            Face::East => ([1.0 - z1, y0, 1.0 - x1], [1.0 - z0, y1, 1.0 - x0]),
+            _ => (self.min, self.max),
+        };
+        Self { min, max }
+    }
+}
+
+/// What holds a block up: the neighbour on `side` must be solid (or the same block when
+/// `chains`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Support {
+    pub side: Face,
+    pub chains: bool,
+}
+
+impl Support {
+    const fn new(side: Face, chains: bool) -> Self {
+        Self { side, chains }
+    }
 }

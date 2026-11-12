@@ -231,3 +231,44 @@ fn logs_lie_along_the_clicked_axis() {
     let keys = content.translation_keys();
     assert!(!keys.iter().any(|key| key.contains("__")), "{keys:#?}");
 }
+
+#[test]
+fn torches_and_lanterns_have_one_item_and_one_variant_per_side() {
+    let (content, _) = load(&game_packs());
+    let variants = |name: &str| {
+        let family = content.blocks.key(&id(name)).unwrap();
+        let attachment = content.blocks.get(family).unwrap().attachment.unwrap();
+        let sides: Vec<Face> = Face::ALL
+            .into_iter()
+            .filter(|&side| attachment.on(side).is_some())
+            .collect();
+        for side in &sides {
+            let variant = attachment.on(*side).unwrap();
+            let block = content.blocks.get(variant).unwrap();
+            assert_eq!(block.attachment.unwrap().support, *side);
+            assert_eq!(block.has_item, variant == family, "{name} {side:?}");
+            assert_eq!(content.block_name(variant), Some(&id(name)));
+            assert_eq!(
+                block.light_emission,
+                content.blocks.get(family).unwrap().light_emission
+            );
+        }
+        let items = content
+            .items
+            .iter()
+            .filter(|(_, item_id, _)| item_id.name().starts_with(id(name).name()))
+            .count();
+        assert_eq!(items, 1, "{name}");
+        sides
+    };
+    let walls = [Face::North, Face::South, Face::East, Face::West];
+    let torch: Vec<Face> = [Face::Down].into_iter().chain(walls).collect();
+    let mut torch_sides = variants("strata:torch");
+    torch_sides.sort_by_key(|f| f.index());
+    assert_eq!(torch_sides, torch);
+    assert_eq!(variants("strata:lantern"), vec![Face::Up, Face::Down]);
+    let hanging = content.blocks.key(&id("strata:lantern__ceiling")).unwrap();
+    let standing = content.blocks.key(&id("strata:lantern")).unwrap();
+    let texture = |block| content.blocks.get(block).unwrap().texture(Face::North);
+    assert_ne!(texture(hanging), texture(standing), "the chain shows");
+}

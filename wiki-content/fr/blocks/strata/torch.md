@@ -12,7 +12,7 @@ En créatif : onglet Construction de l'inventaire, ou `/give torch`. On ne la tr
 
 ## Comportement
 
-Donne une lumière de **niveau 14** (sur 15), qui baisse d'un niveau par bloc parcouru et contourne les obstacles. Elle traverse l'air, l'eau et le verre, mais pas la roche. Elle n'est pas solide et se pose **sur un bloc solide** : si on retire ce bloc, la torche tombe.
+Donne une lumière de **niveau 14** (sur 15), qui baisse d'un niveau par bloc parcouru et contourne les obstacles. Elle traverse l'air, l'eau et le verre, mais pas la roche. Elle n'est pas solide. Elle se pose **sur un bloc solide**, droite, ou **contre un mur**, penchée, selon la face visée ; sous un plafond, elle cherche le sol ou un mur voisin. Si on retire le bloc qui la tient, la torche tombe.
 
 ## Conseils
 

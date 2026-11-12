@@ -198,6 +198,7 @@ const UNKNOWN: MeshBlock = MeshBlock {
     lamp: false,
     varied: false,
     tint: None,
+    lean: None,
 };
 
 /// What the mesher needs to know about each block, indexed by `BlockId`.
@@ -222,6 +223,8 @@ pub struct MeshBlock {
     /// Some face has random variants or connects to its neighbours.
     pub varied: bool,
     pub tint: Option<BlockTint>,
+    /// Wall a plane-shaped block leans against (wall torches).
+    pub lean: Option<Face>,
 }
 
 /// How a face takes the biome colour.
@@ -282,6 +285,7 @@ impl BlockTable {
                 lamp: block.light_emission > 0,
                 varied: false,
                 tint: block.tint,
+                lean: block.attachment.and_then(|a| a.wall()),
                 fluid: block.fluid.map(|state| MeshFluid {
                     family: state.source,
                     height: surface_sixteenths(state.level),

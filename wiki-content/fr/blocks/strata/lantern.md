@@ -12,7 +12,7 @@ En créatif : onglet Construction de l'inventaire, ou `/give lantern`. On ne la 
 
 ## Comportement
 
-Donne la lumière la plus forte, **niveau 15**, qui baisse d'un niveau par bloc parcouru. Elle n'est pas solide et se pose **sur un bloc solide** : si on retire ce bloc, la lanterne tombe.
+Donne la lumière la plus forte, **niveau 15**, qui baisse d'un niveau par bloc parcouru. Elle n'est pas solide. Elle se pose **sur un bloc solide** ou se **suspend sous un bloc** par sa chaînette, selon la face visée. Si on retire le sol ou le plafond qui la tient, la lanterne tombe.
 
 ## Conseils
 

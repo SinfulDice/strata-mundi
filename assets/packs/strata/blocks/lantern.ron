@@ -7,5 +7,5 @@ Block(
     hardness: 3.5,
     sound: Some("strata:metal"),
     category: Some("strata:building"),
-    rooted: true,
+    placement: Attached(ceiling: true, ceiling_texture: Some("strata:lantern_hanging")),
 )

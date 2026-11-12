@@ -1,5 +1,6 @@
 //! Plants: two diagonal planes through the block, each drawn on both sides so back-face
 //! culling keeps them visible from anywhere. They hide nothing and nothing hides them.
+//! Wall torches use the same planes, lifted and sheared against their wall.
 
 use super::neighborhood::{BlockTable, Neighborhood, SIZE};
 use super::shading::FULL_AO;
@@ -32,6 +33,7 @@ pub fn mesh_crosses(
                         cell: [x, y, z],
                         layer: block.faces[Face::North.index()],
                         light,
+                        lean: block.lean,
                     };
                     push_cross(target, blocks, plant, tint);
                 }
@@ -62,6 +64,19 @@ struct Plant {
     cell: [u32; 3],
     layer: u16,
     light: PackedLight,
+    lean: Option<Face>,
+}
+
+/// Sixteenths a wall torch is lifted by (through the liquid `drop`: one block up, then
+/// lowered), and how far its foot and top move toward the wall: the top stays further
+/// out, so the torch leans away from the wall.
+const LEAN_LIFT: u8 = 3;
+const LEAN_FOOT: u8 = 7;
+const LEAN_TOP: u8 = 2;
+
+fn leaning(vertex: PackedVertex, wall: Face, up: u32) -> PackedVertex {
+    let nudge = if up == 0 { LEAN_FOOT } else { LEAN_TOP };
+    vertex.with_surface(16 - LEAN_LIFT, 0).leaning(wall, nudge)
 }
 
 /// Plants have no ambient occlusion and take the light of their own cell.
@@ -72,10 +87,15 @@ fn push_cross(target: &mut MeshData, blocks: &Neighborhood, plant: Plant, tint: 
             let color = tint.map_or(Tint::NEUTRAL, |kind| {
                 blocks.tint(kind, (x as i32, z as i32), (cx as i32, cz as i32))
             });
-            let position = [cx, y + up, cz];
-            PackedVertex::new(position, CROSS_FACE, FULL_AO, [u, 1 - up], plant.layer)
+            let lift = u32::from(plant.lean.is_some());
+            let position = [cx, y + up + lift, cz];
+            let vertex = PackedVertex::new(position, CROSS_FACE, FULL_AO, [u, 1 - up], plant.layer)
                 .with_light(plant.light)
-                .with_tint(color, false)
+                .with_tint(color, false);
+            match plant.lean {
+                Some(wall) => leaning(vertex, wall, up),
+                None => vertex,
+            }
         };
         let front = [
             corner(from, 0, 0),

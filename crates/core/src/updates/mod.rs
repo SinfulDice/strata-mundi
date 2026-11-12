@@ -12,6 +12,8 @@ mod flow_tests;
 mod fluid;
 mod rules;
 #[cfg(test)]
+mod support_tests;
+#[cfg(test)]
 mod tests;
 
 pub use fire::FireSettings;
@@ -194,9 +196,9 @@ impl BlockUpdates {
         if !self.rules.has_support_rule(block) {
             return None;
         }
-        let below = cell(world, pos.neighbour(Face::Down));
-        let above = cell(world, pos.neighbour(Face::Up));
-        let supported = self.rules.is_supported(block, below, above)?;
+        let supported = self
+            .rules
+            .is_supported(block, |side| cell(world, pos.neighbour(side)))?;
         (!supported && world.set_block(pos, BlockId::AIR)).then_some(BlockId::AIR)
     }
 

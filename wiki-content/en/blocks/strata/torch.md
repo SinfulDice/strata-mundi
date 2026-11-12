@@ -12,7 +12,7 @@ Lighting a cave, a mine tunnel, a house or a path. Leaving a trail of them behin
 
 ## Behaviour
 
-Gives off light of **level 14** (out of 15), which drops by one level per block travelled and goes around obstacles. It passes through air, water and glass, but not rock. It isn't solid and stands **on a solid block**: remove that block and the torch drops.
+Gives off light of **level 14** (out of 15), which drops by one level per block travelled and goes around obstacles. It passes through air, water and glass, but not rock. It isn't solid. It stands upright **on a solid block**, or leans **against a wall**, depending on the face you aim at; under a ceiling, it looks for the floor or a nearby wall. Remove the block holding it and the torch drops.
 
 ## Tips
 

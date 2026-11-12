@@ -1,7 +1,5 @@
 use std::sync::Arc;
-use strata_core::content::{
-    BlockId, Content, EntityType, EntityTypeId, Face, ItemAction, ItemId, Orientation,
-};
+use strata_core::content::{BlockId, Content, EntityType, EntityTypeId, ItemAction, ItemId};
 use strata_core::physics::LiquidCell;
 use strata_core::updates::UpdateRules;
 
@@ -12,7 +10,6 @@ pub struct BlockRules {
     solid: Vec<bool>,
     placeable: Vec<bool>,
     breakable: Vec<bool>,
-    orientation: Vec<Option<Orientation>>,
     replaceable: Vec<bool>,
     item_count: usize,
     actions: Vec<Option<ItemAction>>,
@@ -52,11 +49,6 @@ impl BlockRules {
                 .entities
                 .iter()
                 .map(|(_, _, entity)| entity.clone())
-                .collect(),
-            orientation: content
-                .blocks
-                .iter()
-                .map(|(_, _, block)| block.orientation)
                 .collect(),
             replaceable: content
                 .blocks
@@ -122,14 +114,6 @@ impl BlockRules {
     /// Outside creative, blocks with a negative hardness (bedrock) cannot be broken.
     pub fn is_breakable(&self, block: BlockId) -> bool {
         flag(&self.breakable, block)
-    }
-
-    /// The variant actually set when `block` is placed against `face` (logs lie down).
-    pub fn placed_against(&self, block: BlockId, face: Face) -> BlockId {
-        match self.orientation.get(usize::from(block.0)) {
-            Some(Some(o)) => o.along(face.axis()),
-            _ => block,
-        }
     }
 }
 

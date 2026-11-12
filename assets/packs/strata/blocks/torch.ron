@@ -7,5 +7,5 @@ Block(
     hardness: 0.0,
     sound: Some("strata:wood"),
     category: Some("strata:building"),
-    rooted: true,
+    placement: Attached(wall: true),
 )

@@ -1,4 +1,7 @@
-use crate::content::{BlockId, Content, FireDef, Flammability, Fluid, FluidLevel, FluidState};
+use crate::content::{
+    Attachment, BlockId, Content, Face, FireDef, Flammability, Fluid, FluidLevel, FluidState,
+    Orientation, Support,
+};
 use std::collections::BTreeMap;
 
 /// What block updates need to know about each block, indexed by `BlockId`.
@@ -11,8 +14,9 @@ pub struct UpdateRules {
 #[derive(Debug, Clone, Copy, Default)]
 struct Traits {
     solid: bool,
-    rooted: bool,
-    hanging: bool,
+    support: Option<Support>,
+    orientation: Option<Orientation>,
+    attachment: Option<Attachment>,
     /// A liquid may flow into it, sweeping it away (air, plants).
     open: bool,
     fluid: Option<FluidState>,
@@ -39,12 +43,13 @@ impl UpdateRules {
             .iter()
             .map(|(id, _, block)| Traits {
                 solid: block.solid,
-                rooted: block.rooted,
-                hanging: block.hanging,
+                support: block.support(),
+                orientation: block.orientation,
+                attachment: block.attachment,
                 open: id == BlockId::AIR
                     || (!block.solid
                         && block.fluid.is_none()
-                        && (block.replaceable || block.rooted || block.hanging)),
+                        && (block.replaceable || block.support().is_some())),
                 fluid: block.fluid,
                 flammability: block.flammability,
                 fire: block.fire,
@@ -81,15 +86,41 @@ impl UpdateRules {
         self.fluids.get(&source)
     }
 
-    /// Whether `block` can stand at `pos` given what is below and above it: rooted plants
-    /// need a solid block beneath, hanging ones a solid or identical block above.
-    /// `None` when a support is not loaded.
-    pub fn is_supported(&self, block: BlockId, below: Cell, above: Cell) -> Option<bool> {
+    /// Whether `block` can stand where `neighbour` describes its surroundings: rooted
+    /// plants need a solid block beneath, hanging ones a solid or identical block above,
+    /// torches their wall. `None` when the support is not loaded.
+    pub fn is_supported(&self, block: BlockId, neighbour: impl Fn(Face) -> Cell) -> Option<bool> {
+        let Some(support) = self.traits(block).support else {
+            return Some(true);
+        };
+        let cell = neighbour(support.side);
+        if support.chains && cell == Cell::Block(block) {
+            return Some(true);
+        }
+        self.cell_is_solid(cell)
+    }
+
+    /// The variant set when `block` is placed against the `clicked` face of a block, if it
+    /// can stand there: logs lie along the face's axis; torches lean on the clicked block,
+    /// or else on the first other side able to hold them. `None` when nothing holds it or a
+    /// support is not loaded.
+    pub fn placed_variant(
+        &self,
+        block: BlockId,
+        clicked: Face,
+        neighbour: impl Fn(Face) -> Cell,
+    ) -> Option<BlockId> {
         let traits = self.traits(block);
-        let ground = !traits.rooted || self.cell_is_solid(below)?;
-        let ceiling =
-            !traits.hanging || above == Cell::Block(block) || self.cell_is_solid(above)?;
-        Some(ground && ceiling)
+        if let Some(attachment) = traits.attachment {
+            return attachment
+                .candidates(clicked.opposite())
+                .map(|(_, variant)| variant)
+                .find(|&variant| self.is_supported(variant, &neighbour) == Some(true));
+        }
+        let variant = traits
+            .orientation
+            .map_or(block, |o| o.along(clicked.axis()));
+        (self.is_supported(variant, neighbour)?).then_some(variant)
     }
 
     pub(super) fn cell_is_solid(&self, cell: Cell) -> Option<bool> {
@@ -131,7 +162,6 @@ impl UpdateRules {
     }
 
     pub(super) fn has_support_rule(&self, block: BlockId) -> bool {
-        let traits = self.traits(block);
-        traits.rooted || traits.hanging
+        self.traits(block).support.is_some()
     }
 }

@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use strata_core::content::Tint;
+use strata_core::content::{Face, Tint};
 use strata_core::light::PackedLight;
 
 /// Value of the face field for plant planes, after the six cube faces.
@@ -16,16 +16,21 @@ pub struct PackedVertex {
     /// layer:16 drop:4 animation:2 free:2 block_light:4 sky_light:4. `drop` lowers the
     /// vertex by sixteenths of a block (liquid surfaces).
     pub texture: u32,
-    /// r:8 g:8 b:8 (`Tint` factors, 128 = ×1) masked:1 free:7. `masked`: pixels with alpha
-    /// `UNTINTED_ALPHA` keep their colour (grass fringe on the sides).
+    /// r:8 g:8 b:8 (`Tint` factors, 128 = ×1) masked:1 lean:3 nudge:4. `masked`: pixels
+    /// with alpha `UNTINTED_ALPHA` keep their colour (grass fringe on the sides). The vertex
+    /// moves `nudge` sixteenths toward the wall `lean` (a `Face` index, 0 = none).
     pub tint: u32,
 }
 
 const NEUTRAL_TINT: u32 = 0x0080_8080;
 const MASKED: u32 = 1 << 24;
+const COLOR_BITS: u32 = 0x00ff_ffff;
+const LEAN_SHIFT: u32 = 25;
 
 /// Lowest a vertex can be pushed down, in sixteenths.
 pub const MAX_DROP: u8 = 15;
+/// Highest coordinate in a section: 16, plus one for planes lifted above their cell.
+const MAX_POSITION: u32 = 17;
 const SURFACE_BITS: u32 = 0x003f_0000;
 const LIGHT_BITS: u32 = 0xff00_0000;
 
@@ -37,7 +42,13 @@ impl PackedVertex {
     };
 
     pub fn new(position: [u32; 3], face: usize, ao: u8, uv: [u32; 2], layer: u16) -> Self {
-        debug_assert!(position.iter().chain(&uv).all(|&c| c <= 16) && ao < 4 && face <= CROSS_FACE);
+        // A leaning plane may reach one block above its cell (`MAX_POSITION`).
+        debug_assert!(
+            position.iter().all(|&c| c <= MAX_POSITION)
+                && uv.iter().all(|&c| c <= 16)
+                && ao < 4
+                && face <= CROSS_FACE
+        );
         let geometry = position[0]
             | (position[1] << 5)
             | (position[2] << 10)
@@ -54,10 +65,28 @@ impl PackedVertex {
 
     pub fn with_tint(self, tint: Tint, masked: bool) -> Self {
         let [r, g, b] = tint.0.map(u32::from);
+        let lean = self.tint & !(COLOR_BITS | MASKED);
         Self {
-            tint: r | (g << 8) | (b << 16) | if masked { MASKED } else { 0 },
+            tint: r | (g << 8) | (b << 16) | if masked { MASKED } else { 0 } | lean,
             ..self
         }
+    }
+
+    /// Moves the vertex `sixteenths` toward `wall` (one of the four sides).
+    pub fn leaning(self, wall: Face, sixteenths: u8) -> Self {
+        debug_assert!(sixteenths < 16 && !matches!(wall, Face::Up | Face::Down));
+        let lean = (wall.index() as u32) | (u32::from(sixteenths.min(15)) << 3);
+        Self {
+            tint: (self.tint & (COLOR_BITS | MASKED)) | (lean << LEAN_SHIFT),
+            ..self
+        }
+    }
+
+    /// The wall the vertex leans toward and by how many sixteenths.
+    pub fn lean(self) -> Option<(Face, u8)> {
+        let lean = self.tint >> LEAN_SHIFT;
+        let wall = Face::ALL.get((lean & 7) as usize).copied()?;
+        (lean & 7 != 0).then_some((wall, (lean >> 3) as u8))
     }
 
     pub fn tint(self) -> (Tint, bool) {
@@ -168,5 +197,13 @@ mod tests {
         let tinted = lit.with_tint(Tint([1, 200, 255]), true);
         assert_eq!(tinted.tint(), (Tint([1, 200, 255]), true));
         assert_eq!(tinted.light(), PackedLight::new(12, 5));
+        let leaning = tinted.leaning(Face::West, 7);
+        assert_eq!(leaning.lean(), Some((Face::West, 7)));
+        assert_eq!(leaning.tint(), (Tint([1, 200, 255]), true));
+        assert_eq!(
+            leaning.with_tint(Tint::NEUTRAL, false).lean(),
+            Some((Face::West, 7))
+        );
+        assert_eq!(tinted.lean(), None);
     }
 }

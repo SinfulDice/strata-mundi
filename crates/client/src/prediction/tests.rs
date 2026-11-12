@@ -291,3 +291,37 @@ fn placements_follow_the_face_the_support_and_the_player() {
     };
     assert_eq!(predict(&s, used, None), None, "items wait for the server");
 }
+
+#[test]
+fn torches_and_lanterns_are_predicted_on_every_face() {
+    let s = scene();
+    let place = |against, face, block| WorldAction::Place {
+        against,
+        face,
+        block,
+    };
+    let ground = BlockPos::new(3, 63, 3);
+    let (torch, lantern) = (s.block("strata:torch"), s.block("strata:lantern"));
+    let cases = [
+        (ground, Face::Up, torch, "strata:torch"),
+        (FLOATING, Face::East, torch, "strata:torch__west"),
+        (FLOATING, Face::West, torch, "strata:torch__east"),
+        (FLOATING, Face::North, torch, "strata:torch__south"),
+        (FLOATING, Face::South, torch, "strata:torch__north"),
+        (FLOATING, Face::Down, lantern, "strata:lantern__ceiling"),
+        (ground, Face::Up, lantern, "strata:lantern"),
+    ];
+    for (against, face, held, expected) in cases {
+        let predicted = predict(&s, place(against, face, held), None);
+        let target = against.neighbour(face);
+        assert_eq!(
+            predicted,
+            Some((target, s.block(expected))),
+            "{face:?} {expected}"
+        );
+    }
+    let under = predict(&s, place(FLOATING, Face::Down, torch), None);
+    assert_eq!(under, None, "no ceiling torch and nothing else to lean on");
+    let beside = predict(&s, place(FLOATING, Face::East, lantern), None);
+    assert_eq!(beside, None, "no wall lantern");
+}

@@ -245,7 +245,8 @@ impl Game {
 
     /// Validated placement into a free (non-solid) cell that no player stands in: next to
     /// a solid block, or in place of a replaceable one (plants). Turned blocks (logs)
-    /// follow the clicked face; plants need their support (ground, or a ceiling for vines).
+    /// follow the clicked face, attached ones (torches) lean on the clicked block; plants
+    /// and torches need their support.
     pub fn place_block(
         &mut self,
         loader: &mut ColumnLoader,
@@ -260,17 +261,16 @@ impl Game {
             loader,
             border: self.border,
         };
-        let supported = self.rules.updates().is_supported(
-            block,
-            cell(&world, target.neighbour(Face::Down)),
-            cell(&world, target.neighbour(Face::Up)),
-        );
+        let variant = self
+            .rules
+            .updates()
+            .placed_variant(block, face, |side| cell(&world, target.neighbour(side)));
         let allowed = self.rules.is_placeable(block)
-            && supported == Some(true)
             && self.in_reach(target)
             && !self.blocks_a_player(target, block)
+            && variant.is_some()
             && self.take_action();
-        let block = self.rules.placed_against(block, face);
+        let block = variant.unwrap_or(block);
         let mut changes = Vec::new();
         if allowed {
             self.set_block(loader, target, block, &mut changes);

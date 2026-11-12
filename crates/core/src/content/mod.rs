@@ -1,5 +1,6 @@
 //! Game content loaded from packs: blocks, items, textures, translations and cinematics.
 
+mod attached;
 mod block;
 mod entity;
 mod fire;
@@ -11,9 +12,11 @@ mod png_file;
 mod registry;
 mod textures;
 mod tint;
+mod turned;
 
+pub use attached::{AttachedSides, Attachment};
 pub use block::{
-    Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind,
+    Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind, Support,
 };
 pub use entity::{EntityDef, EntityType, ModelBox};
 pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
@@ -246,6 +249,13 @@ fn load_blocks(
             ));
         }
         let placement = value.placement;
+        let ceiling_texture = attached::ceiling_layer(&placement, textures, &source, errors);
+        if value.rooted && value.hanging {
+            errors.push(PackError::invalid(
+                &source,
+                "a block cannot be both rooted and hanging",
+            ));
+        }
         let block_particles =
             particle::block_particles(&value.particles, particles, &source, &mut *errors);
         let fluid_def = value.fluid;
@@ -262,6 +272,7 @@ fn load_blocks(
             max_stack: value.max_stack.max(1),
             cull_same: value.cull_same,
             orientation: None,
+            attachment: None,
             replaceable: value.replaceable,
             rooted: value.rooted,
             hanging: value.hanging,
@@ -272,58 +283,43 @@ fn load_blocks(
             tint: value.tint,
             particles: block_particles,
         };
-        let inserted = match (fluid_def, placement) {
+        let inserted = match (fluid_def, &placement) {
             (Some(def), Placement::Fixed) => {
                 let pending = fluid::insert_fluid(&mut blocks, &id, block, def, &source, errors);
                 let inserted = pending.is_some();
                 fluids.extend(pending);
                 inserted
             }
-            (Some(_), Placement::Axis) => false,
+            (Some(_), _) => false,
             (None, Placement::Fixed) => blocks.insert(id, block).is_some(),
-            (None, Placement::Axis) => insert_turned(&mut blocks, &id, block),
+            (None, Placement::Axis) => turned::insert_turned(&mut blocks, &id, block),
+            (
+                None,
+                &Placement::Attached {
+                    floor,
+                    wall,
+                    ceiling,
+                    ..
+                },
+            ) => {
+                let sides = AttachedSides {
+                    floor,
+                    wall,
+                    ceiling,
+                };
+                attached::insert_attached(&mut blocks, &id, block, sides, ceiling_texture)
+            }
         };
         if !inserted {
             errors.push(PackError::invalid(
                 &source,
-                "too many blocks (65 536 at most), a variant name (`__x`, `__1`, `__falling`…) \
-                 is taken, or a fluid has `placement: Axis`",
+                "too many blocks (65 536 at most), a variant name (`__x`, `__north`, `__1`…) \
+                 is taken, a fluid is turned or attached, or an attached block allows no side",
             ));
         }
     }
     let fluids = fluid::resolve(&blocks, fluids, errors);
     (blocks, fluids)
-}
-
-/// Registers the upright block and its two lying variants `<name>__x` and `<name>__z`,
-/// which have no item and share the upright block's name.
-fn insert_turned(blocks: &mut Registry<BlockId, Block>, id: &Identifier, upright: Block) -> bool {
-    let variant_id = |axis: Axis| match axis {
-        Axis::Y => Some(id.clone()),
-        Axis::X => Identifier::new(id.namespace(), &format!("{}__x", id.name())).ok(),
-        Axis::Z => Identifier::new(id.namespace(), &format!("{}__z", id.name())).ok(),
-    };
-    let Some(ids) = Axis::ALL
-        .map(variant_id)
-        .into_iter()
-        .collect::<Option<Vec<_>>>()
-        .filter(|ids| ids.iter().all(|id| blocks.key(id).is_none()))
-        .filter(|_| blocks.len() + 3 <= usize::from(u16::MAX) + 1)
-    else {
-        return false;
-    };
-    let first = blocks.len() as u16;
-    let variants = [BlockId(first), BlockId(first + 1), BlockId(first + 2)];
-    for (axis, id) in Axis::ALL.into_iter().zip(ids) {
-        let block = Block {
-            faces: Face::ALL.map(|face| upright.texture(axis.source_face(face))),
-            has_item: upright.has_item && axis == Axis::Y,
-            orientation: Some(Orientation { axis, variants }),
-            ..upright.clone()
-        };
-        blocks.insert(id, block);
-    }
-    true
 }
 
 /// What items may refer to.

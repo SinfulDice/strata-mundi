@@ -1,6 +1,8 @@
 //! Turns sections of blocks into GPU-ready meshes.
 
 mod cross;
+#[cfg(test)]
+mod cross_tests;
 mod face_key;
 mod fluid;
 mod greedy;

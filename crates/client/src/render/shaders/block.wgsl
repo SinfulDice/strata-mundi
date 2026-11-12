@@ -126,11 +126,14 @@ fn vs_main(
 ) -> VertexOutput {
     // Liquid surfaces are lowered by `drop` sixteenths; sides keep their texture scale.
     let drop = f32((texture >> 16u) & 15u) / 16.0;
+    // Wall torches: planes moved `nudge` sixteenths toward the wall `lean` (a face).
+    let lean = (tint >> 25u) & 7u;
+    let nudge = face_normal(select(6u, lean, lean != 0u)) * f32(tint >> 28u) / 16.0;
     let position = vec3<f32>(
         f32(geometry & 31u),
         f32((geometry >> 5u) & 31u) - drop,
         f32((geometry >> 10u) & 31u),
-    );
+    ) + nudge;
     let face = (geometry >> 15u) & 7u;
     let ao = (geometry >> 18u) & 3u;
     let speed = surface_speed((texture >> 20u) & 3u);

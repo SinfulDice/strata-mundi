@@ -127,22 +127,12 @@ fn predicted_placement(
         true => Cell::Block(world.block_at(pos)),
         false => Cell::Unloaded,
     };
-    let supported = info.updates.is_supported(
-        block,
-        cell_at(target.neighbour(Face::Down)),
-        cell_at(target.neighbour(Face::Up)),
-    );
+    let variant = info
+        .updates
+        .placed_variant(block, face, |side| cell_at(target.neighbour(side)));
     let in_player = info.is_solid(block) && player.is_some_and(|body| overlaps(body, target));
-    let allowed = placed.has_item
-        && block != BlockId::AIR
-        && supported == Some(true)
-        && world.is_loaded(target)
-        && !in_player;
-    let variant = match placed.orientation {
-        Some(orientation) => orientation.along(face.axis()),
-        None => block,
-    };
-    allowed.then_some((target, variant))
+    let allowed = placed.has_item && block != BlockId::AIR && world.is_loaded(target) && !in_player;
+    variant.filter(|_| allowed).map(|variant| (target, variant))
 }
 
 fn overlaps(body: &Body, pos: BlockPos) -> bool {

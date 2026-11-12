@@ -12,7 +12,7 @@ Lighting houses, squares and bridges, where a torch would look too humble.
 
 ## Behaviour
 
-Gives off the strongest light, **level 15**, which drops by one level per block travelled. It isn't solid and stands **on a solid block**: remove that block and the lantern drops.
+Gives off the strongest light, **level 15**, which drops by one level per block travelled. It isn't solid. It stands **on a solid block** or **hangs under a block** from its little chain, depending on the face you aim at. Remove the floor or ceiling holding it and the lantern drops.
 
 ## Tips
 
