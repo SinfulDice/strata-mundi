@@ -25,7 +25,9 @@ graph LR
 
 - L'eau générée avec le monde est **inerte** : rien n'est planifié tant qu'un voisin ne change pas. Casser le bloc qui retenait un lac suffit à tout réveiller.
 - À chaque réveil, on calcule le niveau voulu : liquide au-dessus = chute ; sinon 1 + le niveau le plus plein parmi les 4 côtés ; au-delà de 7 blocs (3 pour la lave) le liquide s'assèche.
-- Le liquide cherche le **trou le plus proche** (jusqu'à 4 blocs pour l'eau) et coule dans cette direction plutôt qu'au hasard.
+- Un liquide qui a du vide dessous **tombe** et ne s'étale pas. En bas, la chute redevient pleine (niveau 1) et repart selon la même règle.
+- Sinon, il cherche le **trou le plus proche** (jusqu'à 4 blocs pour l'eau, `slope_search`) et ne coule **que** dans la ou les directions les plus courtes vers ce trou ; s'il n'en voit aucun, il s'élargit dans les 4 directions. Les côtés déjà mouillés comptent dans ce choix : une fois le chemin plein, l'eau ne se rabat pas sur les autres côtés. Une brèche dans un lac donne donc un filet qui descend, pas une nappe (scène de capture `--scene breach`).
+- Vitesse (`tick_rate`), portée (`spread`) et rayon de recherche (`slope_search`) se règlent par liquide dans le pack.
 - Deux sources voisines au-dessus d'un sol créent une nouvelle source : un étang se remplit tout seul (« renouvelable »).
 - Lave et eau qui se touchent : la source de lave devient de l'**obsidienne**, la lave qui coule devient de la **pierre**.
 - Un budget (2048 blocs par tick) borne le travail ; le reste attend le tick suivant. Le réglage de monde `fluids: (flow, updates_per_tick)` permet de figer les liquides (`flow: false`) ; il se choisit à la création du monde (bouton « Fluides ») et se change en jeu avec `/fluids on`, `/fluids off` ou `/fluids <budget>`.
@@ -60,7 +62,8 @@ Un seau vide, clic droit sur une source : le serveur la retire (et l'écoulement
 | Seau | `crates/server/src/game/bucket.rs` |
 | Nage | `crates/core/src/physics/swim.rs` (`immersion`, `steer`, `sink`, `climb_out`), trait `Terrain` dans `physics/mod.rs` |
 | Maillage des liquides | `crates/client/src/mesher/`, `crates/client/src/render/shaders/block.wgsl` |
-| Tests (dont coût d'un gros écoulement) | `crates/core/src/updates/tests.rs` |
+| Tests (dont coût d'un gros écoulement) | `crates/core/src/updates/tests.rs`, `flow_tests.rs` (choix de la direction) |
+| Scènes de capture simulées (`edits`, `ticks`) | `crates/client/src/preview.rs`, `assets/scenes/breach.ron` |
 
 <details><summary>Côté Rust</summary>
 

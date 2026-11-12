@@ -1,6 +1,6 @@
 ## Principle
 
-Water and lava **flow**. Each liquid has **sources** (the water of seas and lakes, the lava lakes of the depths) and thinner and thinner **flows**: downwards first, then sideways, heading for the nearest slope. Water spreads up to 7 blocks on flat ground, lava only 3, and much more slowly. Removing the source makes the flow go away. Water and lava touching each other give **stone** or **obsidian**.
+Water and lava **flow**. Each liquid has **sources** (the water of seas and lakes, the lava lakes of the depths) and thinner and thinner **flows**: downwards first, then sideways, heading for the nearest slope. Water that sees a hole 4 blocks away or less flows **only** towards it: a breach in a lake makes a stream running down step by step, not a sheet; with no hole in sight, it widens in all 4 directions. At the foot of a fall, water is full again and sets off anew. Two neighbouring sources above ground or a source make a third one. Water spreads up to 7 blocks on flat ground, lava only 3, and much more slowly. Removing the source makes the flow go away. Water and lava touching each other give **stone** or **obsidian**.
 
 ## What you see
 

@@ -6,7 +6,7 @@
 - **Jalon en cours** : 1 — Ravins plus rares et plus propres
   - [x] J1 Ravins rares (rareté en pack), étroits, parois verticales en pierre, pas d'herbe sur les parois ni d'arbre au bord ; tests (fréquence bornée, aucune herbe sur paroi)
   - [x] J2 Biomes 2-3× plus grands, continents massifs, règle de voisinage chaud/froid en pack, pentes ordinaires franchissables ; tests (aucun voisinage interdit, déterminisme)
-  - [ ] J3 Eau façon Minecraft (recherche du bas dans un rayon de 4, portée 7, paramètres en pack) ; tests
+  - [x] J3 Eau façon Minecraft (recherche du bas dans un rayon de 4, portée 7, paramètres en pack) ; tests
   - [ ] J4 Pose de blocs fiable (aucun clic perdu, prédiction client) ; tests
   - [ ] J5 Torches murales, lanternes suspendues (variantes, soutien) ; tests
   - [ ] J6 Sons (variantes au chargement, lave audible, vent plus doux, curseur Ambiances) ; tests
@@ -60,7 +60,7 @@ Benchmarks CPU (cloud, `cargo bench --workspace --bench '*'`), dernière valeur 
 | 11/11/2026 | Lumière d'une colonne générée / poser puis casser une torche | 0,78 / 0,44 ms | `light_*` |
 | 11/11/2026 | Maillage : section de surface / damier / eau qui coule / frontière de biomes | 0,26 / 2,07 / 0,35 / 0,26 ms | `mesh_section_*` |
 | 11/11/2026 | Teintes d'une colonne / voisinage | 8 / 42 µs | `column_tints_blend`, `neighborhood_build` |
-| 11/11/2026 | Grand écoulement (lac par une brèche de 32 blocs) | 5,38 ms | `fluids/large_flow_settles` |
+| 12/11/2026 | Grand écoulement (lac par une brèche de 32 blocs), avant / après v0.2.1 J3 | 5,57 / 6,05 ms | `fluids/large_flow_settles` |
 | 11/11/2026 | Incendie de plaine, 40 ticks | 33,7 ms | `fire/prairie_fire_40_ticks` |
 | 11/11/2026 | Particules, une image à 2 000 | 0,38 ms | `particles/frame_2000` |
 | 11/11/2026 | Mixage audio d'un bloc de 11,6 ms, avancé / stéréo (forte variance de la VM : le code du jalon 10 donne la même valeur) | 1,1 ms / 12-21 µs | `audio/mix_block_32_voices_*` |

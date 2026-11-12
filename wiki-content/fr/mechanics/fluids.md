@@ -1,6 +1,6 @@
 ## Principe
 
-L'eau et la lave **coulent**. Chaque liquide a des **sources** (l'eau des mers et des lacs, les lacs de lave des profondeurs) et des **écoulements** de plus en plus minces : vers le bas d'abord, puis sur les côtés, en filant vers la pente la plus proche. L'eau s'étend jusqu'à 7 blocs sur un sol plat, la lave seulement 3, et bien plus lentement. Retirer la source fait disparaître l'écoulement. L'eau et la lave qui se touchent donnent de la **pierre** ou de l'**obsidienne**.
+L'eau et la lave **coulent**. Chaque liquide a des **sources** (l'eau des mers et des lacs, les lacs de lave des profondeurs) et des **écoulements** de plus en plus minces : vers le bas d'abord, puis sur les côtés, en filant vers la pente la plus proche. Une eau qui voit un trou à 4 blocs ou moins ne coule **que** vers lui : une brèche dans un lac donne un filet qui descend marche après marche, pas une nappe ; sans trou en vue, elle s'élargit dans les 4 directions. Au pied d'une chute, l'eau redevient pleine et repart. Deux sources voisines au-dessus d'un sol ou d'une source en créent une troisième. L'eau s'étend jusqu'à 7 blocs sur un sol plat, la lave seulement 3, et bien plus lentement. Retirer la source fait disparaître l'écoulement. L'eau et la lave qui se touchent donnent de la **pierre** ou de l'**obsidienne**.
 
 ## À voir
 
