@@ -1,0 +1,28 @@
+// A lake on a plateau above a staircase of four-block steps (`--scene breach`): its east
+// bank is broken, and `ticks` lets the water flow before the capture. As in Minecraft,
+// it runs straight to the next step down instead of spreading everywhere.
+(
+    fills: [
+        (from: (-20, 0, -16), to: (24, 0, 16), block: "strata:bedrock"),
+        (from: (-20, 1, -16), to: (24, 3, 16), block: "strata:stone"),
+        (from: (-20, 4, -16), to: (24, 4, 16), block: "strata:grass_block"),
+        (from: (-20, 5, -16), to: (-9, 11, 16), block: "strata:stone"),
+        (from: (-20, 12, -16), to: (-9, 12, 16), block: "strata:grass_block"),
+        (from: (-8, 5, -16), to: (-5, 10, 16), block: "strata:stone"),
+        (from: (-8, 11, -16), to: (-5, 11, 16), block: "strata:grass_block"),
+        (from: (-4, 5, -16), to: (-1, 9, 16), block: "strata:stone"),
+        (from: (-4, 10, -16), to: (-1, 10, 16), block: "strata:grass_block"),
+        (from: (0, 5, -16), to: (3, 8, 16), block: "strata:stone"),
+        (from: (0, 9, -16), to: (3, 9, 16), block: "strata:grass_block"),
+        (from: (4, 5, -16), to: (7, 7, 16), block: "strata:stone"),
+        (from: (4, 8, -16), to: (7, 8, 16), block: "strata:grass_block"),
+        (from: (8, 5, -16), to: (11, 6, 16), block: "strata:stone"),
+        (from: (8, 7, -16), to: (11, 7, 16), block: "strata:grass_block"),
+        (from: (-18, 10, -5), to: (-10, 12, 5), block: "strata:water"),
+        (from: (-20, 13, -16), to: (24, 24, 16), block: "strata:air"),
+    ],
+    edits: [
+        (from: (-9, 12, 0), to: (-9, 12, 0), block: "strata:air"),
+    ],
+    ticks: 1200,
+)
