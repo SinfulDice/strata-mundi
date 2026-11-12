@@ -1,10 +1,12 @@
 use super::super::tests::{World, block, wait, world};
 use super::*;
+use strata_core::chunk::Column;
 use strata_core::content::BlockId;
+use strata_core::coords::ColumnPos;
 
 fn place(w: &mut World, id: u32, against: BlockPos) -> Vec<BlockChange> {
     let planks = block(&w.content, "strata:oak_planks");
-    let action = BlockAction::Place {
+    let action = WorldAction::Place {
         against,
         face: Face::Up,
         block: planks,
@@ -61,7 +63,7 @@ fn queued_clicks_are_still_validated() {
     let mut w = world();
     assert_eq!(place(&mut w, 1, BlockPos::new(10, 63, 8)).len(), 1);
     let far = BlockPos::new(15, 63, 15);
-    let action = BlockAction::Break { pos: far };
+    let action = WorldAction::Break { pos: far };
     assert!(
         w.game
             .request_action(&mut w.loader, ActionId(2), action)
@@ -79,19 +81,42 @@ fn queued_clicks_are_still_validated() {
 }
 
 #[test]
-fn a_full_queue_answers_at_once() {
+fn a_full_queue_still_answers_in_the_order_of_the_clicks() {
     let mut w = world();
-    let ground: Vec<BlockPos> = (0..10).map(|x| BlockPos::new(4 + x, 63, 6)).collect();
-    for (id, &pos) in (1..).zip(&ground) {
+    let planks = block(&w.content, "strata:oak_planks");
+    let ground: Vec<BlockPos> = [6, 10]
+        .into_iter()
+        .flat_map(|z| (4..13).map(move |x| BlockPos::new(x, 63, z)))
+        .collect();
+    let clicks = 1 + 2 * MAX_PENDING_ACTIONS as u32;
+    for (id, &pos) in (1..=clicks).zip(&ground) {
         place(&mut w, id, pos);
     }
-    let answered = acknowledged(&w.game.take_messages());
+    let mut answered = acknowledged(&w.game.take_messages());
+    assert_eq!(answered, vec![1]);
+    wait(&mut w, 2 * MAX_PENDING_ACTIONS as u32);
+    answered.extend(acknowledged(&w.game.take_messages()));
+    assert_eq!(answered, (1..=clicks).collect::<Vec<_>>());
+    let placed = |pos: &&BlockPos| w.loader.block(pos.neighbour(Face::Up)) == Some(planks);
+    let count = ground.iter().take(clicks as usize).filter(placed).count();
     assert_eq!(
-        answered,
-        vec![1, 10],
-        "the first ran, the tenth found no room"
+        count,
+        1 + MAX_PENDING_ACTIONS,
+        "the clicks past the queue are refused"
     );
-    wait(&mut w, 2 * MAX_QUEUED_ACTIONS as u32);
-    let answered = acknowledged(&w.game.take_messages());
-    assert_eq!(answered, (2..10).collect::<Vec<_>>(), "in order, none lost");
+}
+
+#[test]
+fn a_refusal_tells_only_about_cells_the_player_sees() {
+    let mut w = world();
+    let stone = block(&w.content, "strata:stone");
+    let mut column = Column::empty(ColumnPos { x: 5, z: 0 });
+    column.set(0, 63, 0, stone);
+    w.loader.insert(column);
+    let far = BlockPos::new(16 * 5, 63, 0);
+    assert_eq!(w.loader.block(far), Some(stone), "loaded on the server");
+    let action = WorldAction::Break { pos: far };
+    w.game.request_action(&mut w.loader, ActionId(1), action);
+    let messages = w.game.take_messages();
+    assert_eq!(messages, vec![ServerMessage::ActionDone(ActionId(1))]);
 }

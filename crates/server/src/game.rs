@@ -17,7 +17,7 @@ use strata_core::dimension::DimensionId;
 use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
 use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings, cell};
-use strata_protocol::{GameMode, HotbarState, ServerMessage};
+use strata_protocol::{GameMode, HotbarState, MIN_VIEW_DISTANCE, ServerMessage};
 
 /// Farthest a player may break or place, measured from the eyes to the block centre
 /// (a little more than the client's reach, for rounding).
@@ -33,6 +33,8 @@ pub struct Game {
     pub rules: BlockRules,
     /// Half-width of the world, in blocks.
     pub border: i32,
+    /// Columns the player's client has around them (refusals tell only about those).
+    view_distance: u32,
     updates: BlockUpdates,
     tick: u64,
     /// News for the clients (entities, action answers), taken by the server after each
@@ -59,6 +61,7 @@ impl Game {
             player,
             rules,
             border,
+            view_distance: MIN_VIEW_DISTANCE,
             updates,
             tick: 0,
             messages: Vec::new(),
@@ -188,7 +191,7 @@ impl Game {
         };
         let moved = boat_movement(&mut self.ecs, &self.rules, &terrain);
         self.report_moves(&moved);
-        let mut changes = self.run_queued_action(loader);
+        let mut changes = self.run_queued_actions(loader);
         for pos in loader.take_arrived() {
             if let Some(column) = loader.column(pos) {
                 self.updates.wake_fires(column);
@@ -301,7 +304,19 @@ impl Game {
         if let Some(control) = self.ecs.controls.get_mut(self.player) {
             control.mode = mode;
             control.movement.can_fly = mode == GameMode::Creative;
+            self.messages.push(ServerMessage::Mode(mode));
         }
+    }
+
+    pub fn mode(&self) -> GameMode {
+        self.ecs
+            .controls
+            .get(self.player)
+            .map_or(GameMode::Creative, |c| c.mode)
+    }
+
+    pub fn set_view_distance(&mut self, distance: u32) {
+        self.view_distance = distance;
     }
 
     pub fn is_creative(&self) -> bool {

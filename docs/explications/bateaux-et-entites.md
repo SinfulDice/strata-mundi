@@ -24,7 +24,7 @@ Elle est dans `core` et sans carte graphique, donc testable partout.
 sequenceDiagram
     participant C as Client
     participant S as Serveur
-    C->>S: InteractEntity(bateau)
+    C->>S: Action(Interact(bateau))
     S-->>C: Mounted(Some(bateau))
     C->>S: Input (avancer, tourner)
     S->>S: le joueur assis pilote le bateau
@@ -59,7 +59,7 @@ Les bateaux sont écrits dans `entities/<espace>/<dimension>.ron` (type par iden
 | Pose, montée, descente, retrait, sauvegarde | `crates/server/src/game/boat.rs` |
 | Système des bateaux et des joueurs assis | `crates/server/src/systems.rs` (`boat_movement`, `player_movement`, `wake_boats`) |
 | Fichier de sauvegarde des entités | `crates/server/src/save/entities.rs` |
-| Messages | `crates/protocol/src/messages.rs` (`EntitySpawned`, `EntityMoved`, `EntityRemoved`, `Mounted`, `InteractEntity`, `AttackEntity`) |
+| Messages | `crates/protocol/src/messages.rs` (`EntitySpawned`, `EntityMoved`, `EntityRemoved`, `Mounted`, `WorldAction::Interact`, `WorldAction::Attack`) |
 | Entités côté client, interpolation | `crates/client/src/entities.rs` (`ClientEntities`) |
 | Bibliothèque de modèles | `crates/client/src/models.rs` (`ModelLibrary`) |
 | Dessin | `crates/client/src/render/model_pipeline.rs`, `shaders/model.wgsl` |

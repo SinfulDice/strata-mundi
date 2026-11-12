@@ -11,7 +11,7 @@ use strata_core::content::{BlockId, Content, HitBox, ItemAction, ItemId, ItemKin
 use strata_core::physics::{Aabb, LiquidCell};
 use strata_core::raycast::{RayHit, ray_box, raycast};
 use strata_core::updates::UpdateRules;
-use strata_protocol::{BlockAction, ClientMessage, NetEntity};
+use strata_protocol::{NetEntity, WorldAction};
 
 /// Creative reach, in blocks from the eyes.
 const REACH: f64 = 5.0;
@@ -105,15 +105,6 @@ impl BlockInfo {
     }
 }
 
-/// What a frame of interaction asks the server for.
-#[derive(Debug, PartialEq)]
-pub enum Intent {
-    /// Entities: sent as is.
-    Send(ClientMessage),
-    /// A click on a block: numbered and predicted before it is sent.
-    Block(BlockAction),
-}
-
 #[derive(Default)]
 pub struct Interaction {
     pub target: Option<RayHit>,
@@ -133,7 +124,7 @@ impl Interaction {
         info: &BlockInfo,
         input: &InputState,
         hotbar: &mut Hotbar,
-    ) -> Option<Intent> {
+    ) -> Option<WorldAction> {
         self.target = aim(camera, world, |block| info.hit_box(block));
         self.entity = aim_entity(camera, world, info, self.target, self.mount);
         if self.entity.is_some() {
@@ -141,7 +132,7 @@ impl Interaction {
         }
         self.cooldown = (self.cooldown - dt).max(0.0);
         if let Some(message) = self.entity_action(input) {
-            return Some(Intent::Send(message));
+            return Some(message);
         }
         let triggered =
             |action| input.just_pressed(action) || (input.is_held(action) && self.cooldown == 0.0);
@@ -152,7 +143,7 @@ impl Interaction {
             if action.is_some() {
                 self.cooldown = REPEAT_DELAY;
             }
-            return action.map(Intent::Block);
+            return action;
         }
         let target = self.target?;
         if input.just_pressed(Action::PickBlock) {
@@ -162,10 +153,10 @@ impl Interaction {
             return None;
         }
         let action = if triggered(Action::Attack) {
-            Some(BlockAction::Break { pos: target.block })
+            Some(WorldAction::Break { pos: target.block })
         } else if triggered(Action::Use) {
             let block = hotbar.selected().and_then(|item| info.block_of(item))?;
-            Some(BlockAction::Place {
+            Some(WorldAction::Place {
                 against: target.block,
                 face: target.face,
                 block,
@@ -176,18 +167,18 @@ impl Interaction {
         if action.is_some() {
             self.cooldown = REPEAT_DELAY;
         }
-        action.map(Intent::Block)
+        action
     }
 }
 
 impl Interaction {
     /// Right click gets into the aimed boat, left click takes it away (creative).
-    fn entity_action(&mut self, input: &InputState) -> Option<ClientMessage> {
+    fn entity_action(&mut self, input: &InputState) -> Option<WorldAction> {
         let entity = self.entity?;
         let message = if input.just_pressed(Action::Use) {
-            ClientMessage::InteractEntity(entity)
+            WorldAction::Interact(entity)
         } else if input.just_pressed(Action::Attack) {
-            ClientMessage::AttackEntity(entity)
+            WorldAction::Attack(entity)
         } else {
             return None;
         };
@@ -243,7 +234,7 @@ fn use_item(
     info: &BlockInfo,
     item: ItemId,
     action: ItemAction,
-) -> Option<BlockAction> {
+) -> Option<WorldAction> {
     let target = match action {
         ItemAction::PlaceFluid(_) | ItemAction::Ignite(_) => {
             aim(camera, world, |block| info.hit_box(block))
@@ -251,7 +242,7 @@ fn use_item(
         ItemAction::TakeFluid => aim(camera, world, |block| info.bucket_hit_box(block)),
         ItemAction::PlaceEntity(_) => aim(camera, world, |block| info.boat_hit_box(block)),
     }?;
-    Some(BlockAction::Use {
+    Some(WorldAction::Use {
         item,
         against: target.block,
         face: target.face,

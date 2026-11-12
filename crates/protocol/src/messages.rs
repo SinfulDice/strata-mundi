@@ -1,3 +1,4 @@
+use crate::GameMode;
 use crate::commands::Feedback;
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::{BiomeMap, Column};
@@ -24,13 +25,10 @@ pub enum ClientMessage {
     MovementPreferences { auto_jump: bool, step_up: bool },
     /// Creative only: move the player instantly (benchmarks, `/tp` from milestone 8).
     Teleport { feet: [f64; 3] },
-    /// A click on a block, numbered: the server answers each one with `ActionDone`,
-    /// once it is done or refused, so the client can drop its prediction.
-    BlockAction { id: ActionId, action: BlockAction },
-    /// Right click on an entity (get into a boat).
-    InteractEntity(NetEntity),
-    /// Left click on an entity (creative: takes a boat away).
-    AttackEntity(NetEntity),
+    /// A click in the world, numbered: the server answers each one with `ActionDone`,
+    /// in the order of the numbers, once it is done or refused, so the client can drop
+    /// its prediction.
+    Action { id: ActionId, action: WorldAction },
     /// The hotbar changed (creative: the client picks any item; kept with the world).
     Hotbar(HotbarState),
     /// Stop or resume the world (pause menu; any menu if the player asked for it).
@@ -43,13 +41,18 @@ pub enum ClientMessage {
     Command(String),
 }
 
-/// Number of a block action, counting up from 1 for each client.
+/// Clicks the server keeps waiting for their turn; the client predicts no more clicks
+/// than this without an answer.
+pub const MAX_PENDING_ACTIONS: usize = 8;
+
+/// Number of a click in the world, counting up from 1 for each client.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ActionId(pub u32);
 
-/// What a click on a block asks for.
+/// What a click in the world asks for. Entities share the numbering and the queue so
+/// that no click is lost, whatever it aims at.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum BlockAction {
+pub enum WorldAction {
     Break {
         pos: BlockPos,
     },
@@ -65,6 +68,10 @@ pub enum BlockAction {
         against: BlockPos,
         face: Face,
     },
+    /// Right click on an entity (get into a boat).
+    Interact(NetEntity),
+    /// Left click on an entity (creative: takes a boat away).
+    Attack(NetEntity),
 }
 
 /// An entity as the network names it: stable while it lives, never reused by another.
@@ -119,6 +126,7 @@ pub enum ServerMessage {
         /// Half-width of the world, in blocks.
         border: i32,
         hotbar: HotbarState,
+        mode: GameMode,
         /// Yaw and pitch, in radians.
         look: [f32; 2],
         day: DayState,
@@ -165,6 +173,8 @@ pub enum ServerMessage {
     EntityRemoved(NetEntity),
     /// The player now rides this entity (a boat), or walks again (`None`).
     Mounted(Option<NetEntity>),
+    /// The game mode changed (`/gamemode`).
+    Mode(GameMode),
     /// Answer to `ClientMessage::Save`: everything is on disk.
     Saved,
     /// The server changed the hotbar (`/give`).
@@ -251,11 +261,17 @@ mod tests {
             assert_eq!(&round_trip(message), message);
         }
         for message in [
-            ClientMessage::InteractEntity(id),
-            ClientMessage::AttackEntity(id),
-            ClientMessage::BlockAction {
+            ClientMessage::Action {
+                id: ActionId(3),
+                action: WorldAction::Interact(id),
+            },
+            ClientMessage::Action {
+                id: ActionId(4),
+                action: WorldAction::Attack(id),
+            },
+            ClientMessage::Action {
                 id: ActionId(9),
-                action: BlockAction::Place {
+                action: WorldAction::Place {
                     against: BlockPos::new(1, 2, 3),
                     face: Face::East,
                     block: BlockId(4),

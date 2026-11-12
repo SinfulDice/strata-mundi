@@ -5,7 +5,7 @@ use crate::camera::Camera;
 use crate::cinematic::PlayingShot;
 use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
-use crate::interaction::{BlockInfo, Intent, Interaction};
+use crate::interaction::{BlockInfo, Interaction};
 use crate::look::apply_look;
 use crate::player::LocalPlayer;
 use crate::prediction::predicted_change;
@@ -22,7 +22,7 @@ use strata_core::physics::{Body, EYE_HEIGHT, MoveInput, Terrain, TerrainFns, sol
 use strata_core::sky::DayCycle;
 use strata_protocol::commands::Feedback;
 use strata_protocol::{
-    BiomeInfo, BlockAction, ClientConnection, ClientMessage, HotbarState, ServerMessage,
+    BiomeInfo, ClientConnection, ClientMessage, GameMode, HotbarState, ServerMessage, WorldAction,
 };
 
 /// Field of view widening while sprinting, and how fast it eases in and out (per second).
@@ -50,6 +50,8 @@ pub struct Gameplay {
     pub day_cycle: Option<DayCycle>,
     /// The server's biomes, indexed by `BiomeId`.
     pub biomes: Vec<BiomeInfo>,
+    /// Told by the server (creative breaks anything).
+    mode: GameMode,
     player: Option<LocalPlayer>,
     border: i32,
     /// Last hotbar sent to the server, to send only changes.
@@ -77,6 +79,7 @@ impl Gameplay {
             day: None,
             day_cycle: None,
             biomes: Vec::new(),
+            mode: GameMode::Creative,
             player: None,
             border: DEFAULT_WORLD_BORDER,
             sent_hotbar: HotbarState::default(),
@@ -96,10 +99,12 @@ impl Gameplay {
                 mut movement,
                 border,
                 hotbar,
+                mode,
                 look,
                 day,
                 biomes,
             } => {
+                self.mode = mode;
                 let tints = biomes.iter().map(|biome| biome.tints).collect();
                 self.view.world.set_biome_tints(tints);
                 self.biomes = biomes;
@@ -138,6 +143,7 @@ impl Gameplay {
                 self.view.world.entities.moved(id, position, yaw);
             }
             ServerMessage::EntityRemoved(id) => self.view.world.entities.remove(id),
+            ServerMessage::Mode(mode) => self.mode = mode,
             ServerMessage::Mounted(mount) => {
                 self.interaction.mount = mount;
                 if let Some(player) = &mut self.player {
@@ -197,12 +203,8 @@ impl Gameplay {
             input,
             &mut self.hotbar,
         );
-        match intent {
-            Some(Intent::Send(message)) => {
-                connection.send(message);
-            }
-            Some(Intent::Block(action)) => self.send_block_action(action, connection),
-            None => {}
+        if let Some(action) = intent {
+            self.send_action(action, connection);
         }
     }
 
@@ -217,21 +219,23 @@ impl Gameplay {
     }
 
     /// Numbers the click, shows what it should change, and sends it.
-    fn send_block_action(&mut self, action: BlockAction, connection: &ClientConnection) {
+    fn send_action(&mut self, action: WorldAction, connection: &ClientConnection) {
         let id = self.view.predictions.next_id();
         let body = self.player_body();
-        let creative = self.player.as_ref().is_some_and(|p| p.movement.can_fly);
-        let change = predicted_change(
-            &self.info,
-            &self.view.world,
-            action,
-            body.as_ref(),
-            creative,
-        );
-        if let Some((pos, block)) = change {
+        let creative = self.mode == GameMode::Creative;
+        let change = self.view.predictions.may_predict(id).then(|| {
+            predicted_change(
+                &self.info,
+                &self.view.world,
+                action,
+                body.as_ref(),
+                creative,
+            )
+        });
+        if let Some((pos, block)) = change.flatten() {
             self.view.predict(id, pos, block);
         }
-        connection.send(ClientMessage::BlockAction { id, action });
+        connection.send(ClientMessage::Action { id, action });
     }
 
     /// Sitting in a boat, the eyes follow the boat as drawn, so both move as one.

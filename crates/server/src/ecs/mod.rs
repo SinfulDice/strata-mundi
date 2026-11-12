@@ -11,7 +11,7 @@ pub use storage::Storage;
 use std::collections::VecDeque;
 use strata_core::content::EntityTypeId;
 use strata_core::physics::{BoatBody, BoatControls, Body, MoveInput, MovementSettings};
-use strata_protocol::{ActionId, BlockAction, GameMode, HotbarState};
+use strata_protocol::{ActionId, GameMode, HotbarState, WorldAction};
 
 /// Every component storage of the simulation.
 #[derive(Debug, Default)]
@@ -67,10 +67,19 @@ pub struct PlayerControl {
     pub look: [f32; 2],
     /// Tick of the last block broken or placed (rate limit).
     pub last_action: Option<u64>,
-    /// Block clicks that came too soon after the last action, run one per allowed tick.
-    pub actions: VecDeque<(ActionId, BlockAction)>,
+    /// Clicks that came too soon after the last action, answered in their order.
+    pub actions: VecDeque<Queued>,
     /// Sneak was held in the last input: getting off a boat needs a new press.
     pub sneaking: bool,
+}
+
+/// A click waiting for its turn.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Queued {
+    /// Run when the rate limit allows.
+    Run(ActionId, WorldAction),
+    /// Too many clicks wait already: refused, but answered in its turn.
+    Refuse(ActionId, WorldAction),
 }
 
 impl PlayerControl {

@@ -10,7 +10,7 @@ use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::physics::{Aabb, Body};
 use strata_core::updates::Cell;
-use strata_protocol::{ActionId, BlockAction};
+use strata_protocol::{ActionId, MAX_PENDING_ACTIONS, WorldAction};
 
 struct Pending {
     /// The latest click that predicted this cell.
@@ -22,6 +22,8 @@ struct Pending {
 #[derive(Default)]
 pub struct BlockPredictions {
     last_id: u32,
+    /// The server answers in the order of the clicks: this one and all before it.
+    last_answered: u32,
     pending: HashMap<BlockPos, Pending>,
 }
 
@@ -29,6 +31,13 @@ impl BlockPredictions {
     pub fn next_id(&mut self) -> ActionId {
         self.last_id = self.last_id.wrapping_add(1);
         ActionId(self.last_id)
+    }
+
+    /// Whether click `id` may be predicted: past `MAX_PENDING_ACTIONS` clicks without an
+    /// answer, the server refuses them, so they are not shown before it answers.
+    pub fn may_predict(&self, id: ActionId) -> bool {
+        let waiting = id.0.wrapping_sub(self.last_answered);
+        waiting as usize <= MAX_PENDING_ACTIONS
     }
 
     /// Click `action` shows a new block at `pos`, which the server says holds `server`.
@@ -51,12 +60,13 @@ impl BlockPredictions {
         }
     }
 
-    /// The server finished `action` (and every earlier click): the cells it covered get
-    /// the server's block back.
+    /// The server finished `action`: the cells it was the last to predict get the
+    /// server's block back (a cell predicted again waits for the later answer).
     pub fn acknowledge(&mut self, action: ActionId) -> Vec<(BlockPos, BlockId)> {
+        self.last_answered = action.0;
         let mut settled = Vec::new();
         self.pending.retain(|&pos, pending| {
-            let done = pending.action <= action;
+            let done = pending.action == action;
             if done {
                 settled.push((pos, pending.server));
             }
@@ -76,23 +86,23 @@ impl BlockPredictions {
 pub fn predicted_change(
     info: &BlockInfo,
     world: &ClientWorld,
-    action: BlockAction,
+    action: WorldAction,
     player: Option<&Body>,
     creative: bool,
 ) -> Option<(BlockPos, BlockId)> {
     match action {
-        BlockAction::Break { pos } => {
+        WorldAction::Break { pos } => {
             let current = world.block_at(pos);
             let breakable = creative || info.content.blocks.get(current)?.hardness >= 0.0;
             (world.is_loaded(pos) && current != BlockId::AIR && breakable)
                 .then_some((pos, BlockId::AIR))
         }
-        BlockAction::Place {
+        WorldAction::Place {
             against,
             face,
             block,
         } => predicted_placement(info, world, against, face, block, player),
-        BlockAction::Use { .. } => None,
+        WorldAction::Use { .. } | WorldAction::Interact(_) | WorldAction::Attack(_) => None,
     }
 }
 

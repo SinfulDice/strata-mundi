@@ -152,6 +152,42 @@ fn unpredicted_changes_show_at_once_with_their_effects() {
 }
 
 #[test]
+fn past_the_server_queue_clicks_wait_for_the_answer_and_play_once() {
+    let mut view = view();
+    let cells: Vec<BlockPos> = (0..12).map(|x| BlockPos::new(x, 1, 0)).collect();
+    let ids: Vec<ActionId> = cells
+        .iter()
+        .map(|&pos| {
+            let id = view.predictions.next_id();
+            if view.predictions.may_predict(id) {
+                view.predict(id, pos, STONE);
+            }
+            id
+        })
+        .collect();
+    assert_eq!(
+        view.block_changes.len(),
+        MAX_PENDING_ACTIONS,
+        "the queue's worth"
+    );
+    let accepted = MAX_PENDING_ACTIONS + 1;
+    for (i, (&pos, &id)) in cells.iter().zip(&ids).enumerate() {
+        let block = if i < accepted { STONE } else { AIR };
+        view.receive_block(pos, block);
+        view.acknowledge(id);
+    }
+    for (i, &pos) in cells.iter().enumerate() {
+        let expected = if i < accepted { STONE } else { AIR };
+        assert_eq!(view.world.block_at(pos), expected);
+    }
+    assert_eq!(
+        view.block_changes.len(),
+        accepted,
+        "one sound per block, none twice"
+    );
+}
+
+#[test]
 fn a_reloaded_column_drops_its_predictions() {
     let mut predictions = BlockPredictions::default();
     let id = predictions.next_id();
@@ -196,7 +232,7 @@ fn scene() -> Scene {
 
 fn predict(
     scene: &Scene,
-    action: BlockAction,
+    action: WorldAction,
     player: Option<&Body>,
 ) -> Option<(BlockPos, BlockId)> {
     predicted_change(&scene.info, &scene.world, action, player, false)
@@ -206,9 +242,9 @@ fn predict(
 fn breaks_are_predicted_like_the_server_judges_them() {
     let s = scene();
     let stone = BlockPos::new(3, 63, 3);
-    let action = BlockAction::Break { pos: stone };
+    let action = WorldAction::Break { pos: stone };
     assert_eq!(predict(&s, action, None), Some((stone, AIR)));
-    let bedrock = BlockAction::Break {
+    let bedrock = WorldAction::Break {
         pos: BlockPos::new(3, 0, 3),
     };
     assert_eq!(
@@ -218,7 +254,7 @@ fn breaks_are_predicted_like_the_server_judges_them() {
     );
     let creative = predicted_change(&s.info, &s.world, bedrock, None, true);
     assert!(creative.is_some());
-    let air = BlockAction::Break {
+    let air = WorldAction::Break {
         pos: BlockPos::new(3, 64, 3),
     };
     assert_eq!(predict(&s, air, None), None);
@@ -227,7 +263,7 @@ fn breaks_are_predicted_like_the_server_judges_them() {
 #[test]
 fn placements_follow_the_face_the_support_and_the_player() {
     let s = scene();
-    let place = |against, face, block| BlockAction::Place {
+    let place = |against, face, block| WorldAction::Place {
         against,
         face,
         block,
@@ -248,7 +284,7 @@ fn placements_follow_the_face_the_support_and_the_player() {
     let into_player = predict(&s, place(ground, Face::Up, stone), Some(&body));
     assert_eq!(into_player, None, "never inside the player");
     let item = s.info.item_of(stone).unwrap();
-    let used = BlockAction::Use {
+    let used = WorldAction::Use {
         item,
         against: ground,
         face: Face::Up,

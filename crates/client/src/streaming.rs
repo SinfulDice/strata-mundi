@@ -156,9 +156,10 @@ impl WorldView {
         }
     }
 
-    /// The server changed a block: shown at once unless a click predicted the cell.
+    /// The server changed a block: shown at once unless a click predicted the cell. The
+    /// state of a cell that did not change (after a refusal) plays nothing.
     pub fn receive_block(&mut self, pos: BlockPos, block: BlockId) {
-        if self.predictions.server_block(pos, block) {
+        if self.predictions.server_block(pos, block) && self.world.block_at(pos) != block {
             self.set_block(pos, block);
         }
     }

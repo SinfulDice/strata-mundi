@@ -8,8 +8,8 @@ mod worlds;
 
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{
-    ActionId, BiomeInfo, BlockAction, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,
-    HotbarState, NetEntity, ServerMessage,
+    ActionId, BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState, HotbarState,
+    MAX_PENDING_ACTIONS, NetEntity, ServerMessage, WorldAction,
 };
 pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};
 

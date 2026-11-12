@@ -18,14 +18,14 @@ Messages actuels :
 | `ClientMessage::Input` | client → serveur | Les touches de déplacement d'un tick, numérotées (voir [Joueur et interaction](joueur-et-interaction.md)). |
 | `ClientMessage::MovementPreferences` | client → serveur | Options de déplacement : saut automatique, montée des demi-blocs. |
 | `ClientMessage::Teleport` | client → serveur | Placement initial (`--pos`) ; plus tard `/tp`. |
-| `ClientMessage::BlockAction { id, action }` | client → serveur | Clic numéroté sur un bloc : casser (`Break`), poser (`Place`), utiliser l'objet en main (`Use` : seau, bateau, voir [Fluides](fluides.md)). |
-| `ClientMessage::InteractEntity` / `AttackEntity` | client → serveur | Monter dans une entité, la retirer (voir [Bateaux et entités](bateaux-et-entites.md)). |
+| `ClientMessage::Action { id, action }` | client → serveur | Clic numéroté : casser (`Break`), poser (`Place`), utiliser l'objet en main (`Use` : seau, bateau, voir [Fluides](fluides.md)), monter dans une entité ou la retirer (`Interact`, `Attack`, voir [Bateaux et entités](bateaux-et-entites.md)). |
 | `ClientMessage::ViewDistance` | client → serveur | Distance de rendu souhaitée. |
 | `ClientMessage::Disconnect` | client → serveur | Le joueur quitte : le serveur s'arrête. |
 | `ServerMessage::Welcome` | serveur → client | Dimension, corps du joueur, règles de déplacement et liste des biomes (noms, couleurs). |
 | `ServerMessage::PlayerState` | serveur → client | Position officielle du joueur après l'entrée n° `sequence`. |
 | `ServerMessage::BlockChanged` | serveur → client | Un bloc a changé (ou, après un clic refusé, son état réel). |
-| `ServerMessage::ActionDone(id)` | serveur → client | Le clic n° `id` est fait ou refusé : le client range sa prédiction. |
+| `ServerMessage::ActionDone(id)` | serveur → client | Le clic n° `id` est fait ou refusé (réponses dans l'ordre des clics) : le client range sa prédiction. |
+| `ServerMessage::Mode` | serveur → client | Le mode de jeu a changé (il est aussi dans `Welcome`). |
 | `ServerMessage::EntitySpawned` / `EntityMoved` / `EntityRemoved` | serveur → client | Une entité apparaît, bouge (seulement si position ou cap ont changé), disparaît. |
 | `ServerMessage::Mounted` | serveur → client | Le joueur est assis dans une entité, ou en est descendu. |
 | `ServerMessage::Tick { tick }` | serveur → client | Numéro du tick qui vient d'être simulé. |

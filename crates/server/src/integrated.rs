@@ -88,6 +88,7 @@ impl IntegratedServer {
                 movement,
                 border: game.border,
                 hotbar: game.hotbar(),
+                mode: game.mode(),
                 look: game.look(),
                 day: DayState {
                     time: meta.day_time,
@@ -106,6 +107,7 @@ impl IntegratedServer {
             None => RegionStore::in_memory(names),
         };
         let workers = GenerationWorkers::spawn(config.generation_threads, config.generator)?;
+        game.set_view_distance(config.view_distance);
         let server = Self {
             connection,
             loader: ColumnLoader::new(workers, store),
@@ -159,6 +161,7 @@ impl IntegratedServer {
             ClientMessage::Input { sequence, input } => self.game.queue_input(sequence, input),
             ClientMessage::ViewDistance(distance) => {
                 self.view_distance = distance.clamp(MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE);
+                self.game.set_view_distance(self.view_distance);
             }
             ClientMessage::MovementPreferences { auto_jump, step_up } => {
                 self.game.set_preferences(auto_jump, step_up);
@@ -166,15 +169,9 @@ impl IntegratedServer {
             ClientMessage::Teleport { feet } => {
                 self.game.teleport(feet);
             }
-            ClientMessage::BlockAction { id, action } => {
+            ClientMessage::Action { id, action } => {
                 let changes = self.game.request_action(&mut self.loader, id, action);
                 self.broadcast_changes(changes);
-            }
-            ClientMessage::InteractEntity(id) => {
-                self.game.interact_entity(id);
-            }
-            ClientMessage::AttackEntity(id) => {
-                self.game.attack_entity(&self.loader, id);
             }
             ClientMessage::Hotbar(hotbar) => {
                 self.game.set_hotbar(hotbar);
