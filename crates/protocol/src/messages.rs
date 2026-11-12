@@ -16,37 +16,17 @@ pub const DAY_TIME_PERIOD: u64 = 20;
 pub enum ClientMessage {
     /// What the player wants during one tick, numbered so the client can match the
     /// server's answer to its own prediction.
-    Input {
-        sequence: u32,
-        input: MoveInput,
-    },
+    Input { sequence: u32, input: MoveInput },
     /// Columns to keep loaded around the player, in each direction
     /// (`MIN_VIEW_DISTANCE..=MAX_VIEW_DISTANCE`).
     ViewDistance(u32),
     /// Comfort options from the client's settings.
-    MovementPreferences {
-        auto_jump: bool,
-        step_up: bool,
-    },
+    MovementPreferences { auto_jump: bool, step_up: bool },
     /// Creative only: move the player instantly (benchmarks, `/tp` from milestone 8).
-    Teleport {
-        feet: [f64; 3],
-    },
-    BreakBlock {
-        pos: BlockPos,
-    },
-    /// Put `block` against `face` of the block at `against`.
-    PlaceBlock {
-        against: BlockPos,
-        face: Face,
-        block: BlockId,
-    },
-    /// Use `item` (held in the hotbar) on `face` of the block at `against` (buckets).
-    UseItem {
-        item: ItemId,
-        against: BlockPos,
-        face: Face,
-    },
+    Teleport { feet: [f64; 3] },
+    /// A click on a block, numbered: the server answers each one with `ActionDone`,
+    /// once it is done or refused, so the client can drop its prediction.
+    BlockAction { id: ActionId, action: BlockAction },
     /// Right click on an entity (get into a boat).
     InteractEntity(NetEntity),
     /// Left click on an entity (creative: takes a boat away).
@@ -56,15 +36,35 @@ pub enum ClientMessage {
     /// Stop or resume the world (pause menu; any menu if the player asked for it).
     Pause(bool),
     /// Save now, with a capture of the screen for the world list.
-    Save {
-        icon: Option<Vec<u8>>,
-    },
+    Save { icon: Option<Vec<u8>> },
     /// The player leaves: the server saves (with this capture) and stops.
-    Disconnect {
-        icon: Option<Vec<u8>>,
-    },
+    Disconnect { icon: Option<Vec<u8>> },
     /// A console line for the server (`tp 0 80 0`, without the `/`).
     Command(String),
+}
+
+/// Number of a block action, counting up from 1 for each client.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct ActionId(pub u32);
+
+/// What a click on a block asks for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BlockAction {
+    Break {
+        pos: BlockPos,
+    },
+    /// Put `block` against `face` of the block at `against`.
+    Place {
+        against: BlockPos,
+        face: Face,
+        block: BlockId,
+    },
+    /// Use `item` (held in the hotbar) on `face` of the block at `against` (buckets).
+    Use {
+        item: ItemId,
+        against: BlockPos,
+        face: Face,
+    },
 }
 
 /// An entity as the network names it: stable while it lives, never reused by another.
@@ -151,6 +151,9 @@ pub enum ServerMessage {
         pos: BlockPos,
         block: BlockId,
     },
+    /// Block action `id` is done or refused; the `BlockChanged` it caused (or, when
+    /// refused, the actual state of the cells it aimed at) came before.
+    ActionDone(ActionId),
     /// An entity came into existence (or is already there when the player arrives).
     EntitySpawned(EntityState),
     /// An entity moved or turned during the last tick.
@@ -242,6 +245,7 @@ mod tests {
             ServerMessage::EntityRemoved(id),
             ServerMessage::Mounted(Some(id)),
             ServerMessage::Mounted(None),
+            ServerMessage::ActionDone(ActionId(u32::MAX)),
         ];
         for message in &server {
             assert_eq!(&round_trip(message), message);
@@ -249,6 +253,14 @@ mod tests {
         for message in [
             ClientMessage::InteractEntity(id),
             ClientMessage::AttackEntity(id),
+            ClientMessage::BlockAction {
+                id: ActionId(9),
+                action: BlockAction::Place {
+                    against: BlockPos::new(1, 2, 3),
+                    face: Face::East,
+                    block: BlockId(4),
+                },
+            },
         ] {
             assert_eq!(round_trip(&message), message);
         }

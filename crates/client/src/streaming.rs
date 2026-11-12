@@ -7,6 +7,7 @@ use crate::lighting::{LightResult, LightWorker};
 use crate::mesh_scheduler::MeshScheduler;
 use crate::mesher::SectionKey;
 use crate::particles::ParticleSystem;
+use crate::prediction::BlockPredictions;
 use crate::render::{Gpu, Renderer};
 use crate::settings::Lighting;
 use crate::sky::{BiomeFog, CaveFog};
@@ -18,6 +19,7 @@ use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE, WORLD_HEIGHT};
 use strata_core::light::LightTable;
+use strata_protocol::ActionId;
 
 pub struct WorldView {
     pub world: ClientWorld,
@@ -34,6 +36,8 @@ pub struct WorldView {
     pub particles: ParticleSystem,
     /// Block changes of this frame with the previous block, for the sounds.
     pub block_changes: Vec<(BlockPos, BlockId, BlockId)>,
+    /// Block clicks drawn before the server's answer.
+    pub predictions: BlockPredictions,
 }
 
 impl WorldView {
@@ -54,6 +58,7 @@ impl WorldView {
             cave_fog: CaveFog::default(),
             particles: ParticleSystem::default(),
             block_changes: Vec::new(),
+            predictions: BlockPredictions::default(),
         };
         match mode {
             Lighting::Full => view.start_lighting()?,
@@ -135,6 +140,7 @@ impl WorldView {
 
     pub fn insert(&mut self, column: Column, biomes: BiomeMap) {
         let pos = column.pos;
+        self.predictions.forget_column(pos);
         self.world.insert(column, biomes);
         self.light_changes.remove(&pos);
         match (&mut self.lighting, self.world.shared_column(pos)) {
@@ -150,9 +156,37 @@ impl WorldView {
         }
     }
 
-    /// A block changed (server decision): every section whose mesh can see it is redone,
-    /// including neighbours across section borders (faces and corner shading), with a
-    /// guessed light for the cell until the lighting thread answers.
+    /// The server changed a block: shown at once unless a click predicted the cell.
+    pub fn receive_block(&mut self, pos: BlockPos, block: BlockId) {
+        if self.predictions.server_block(pos, block) {
+            self.set_block(pos, block);
+        }
+    }
+
+    /// Click `action` should turn `pos` into `block`: shown now, with its particles and
+    /// sound, until the server answers.
+    pub fn predict(&mut self, action: ActionId, pos: BlockPos, block: BlockId) {
+        let current = self.world.block_at(pos);
+        if self.world.is_loaded(pos) && current != block {
+            self.predictions.predict(action, pos, current);
+            self.set_block(pos, block);
+        }
+    }
+
+    /// The server answered click `action`: the cells it predicted show the server's
+    /// block again, silently (the effects were played with the prediction, a refusal
+    /// plays none).
+    pub fn acknowledge(&mut self, action: ActionId) {
+        for (pos, block) in self.predictions.acknowledge(action) {
+            if self.world.is_loaded(pos) && self.world.block_at(pos) != block {
+                self.change_block(pos, block);
+            }
+        }
+    }
+
+    /// A block changed: every section whose mesh can see it is redone, including
+    /// neighbours across section borders (faces and corner shading), with a guessed light
+    /// for the cell until the lighting thread answers.
     pub fn set_block(&mut self, pos: BlockPos, block: BlockId) {
         if !self.world.is_loaded(pos) {
             return;
@@ -160,6 +194,12 @@ impl WorldView {
         let old = self.world.block_at(pos);
         self.particles.block_changed(pos, old, block, &self.world);
         self.block_changes.push((pos, old, block));
+        self.change_block(pos, block);
+    }
+
+    /// `set_block` without particles nor sound.
+    fn change_block(&mut self, pos: BlockPos, block: BlockId) {
+        let old = self.world.block_at(pos);
         self.world.set_block(pos.x, pos.y, pos.z, block);
         if self.lighting.is_some() {
             self.world.guess_light(pos, &self.light_table);
@@ -179,6 +219,7 @@ impl WorldView {
     }
 
     pub fn remove(&mut self, pos: ColumnPos, renderer: &mut Renderer) {
+        self.predictions.forget_column(pos);
         self.world.remove(pos);
         self.light_changes.remove(&pos);
         if let Some(lighting) = &mut self.lighting {

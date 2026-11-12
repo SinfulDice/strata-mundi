@@ -1,5 +1,6 @@
 //! The authoritative game state: players (ECS entities) and the blocks around them.
 
+mod actions;
 mod boat;
 mod bucket;
 mod terrain;
@@ -34,8 +35,9 @@ pub struct Game {
     pub border: i32,
     updates: BlockUpdates,
     tick: u64,
-    /// Entity news for the clients, taken by the server after each tick or action.
-    entity_messages: Vec<ServerMessage>,
+    /// News for the clients (entities, action answers), taken by the server after each
+    /// tick or message, after the block changes.
+    messages: Vec<ServerMessage>,
 }
 
 impl Game {
@@ -59,7 +61,7 @@ impl Game {
             border,
             updates,
             tick: 0,
-            entity_messages: Vec::new(),
+            messages: Vec::new(),
         }
     }
 
@@ -186,12 +188,12 @@ impl Game {
         };
         let moved = boat_movement(&mut self.ecs, &self.rules, &terrain);
         self.report_moves(&moved);
+        let mut changes = self.run_queued_action(loader);
         for pos in loader.take_arrived() {
             if let Some(column) = loader.column(pos) {
                 self.updates.wake_fires(column);
             }
         }
-        let mut changes = Vec::new();
         let mut world = Bounded { loader, border };
         self.updates.tick(&mut world, &mut changes);
         wake_boats(&mut self.ecs, &self.rules, &changes);

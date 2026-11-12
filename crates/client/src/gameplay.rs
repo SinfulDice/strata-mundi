@@ -5,9 +5,10 @@ use crate::camera::Camera;
 use crate::cinematic::PlayingShot;
 use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
-use crate::interaction::{BlockInfo, Interaction};
+use crate::interaction::{BlockInfo, Intent, Interaction};
 use crate::look::apply_look;
 use crate::player::LocalPlayer;
+use crate::prediction::predicted_change;
 use crate::render::Renderer;
 use crate::settings::ControlSettings;
 use crate::sky::DayClock;
@@ -20,7 +21,9 @@ use strata_core::dimension::DimensionId;
 use strata_core::physics::{Body, EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
 use strata_core::sky::DayCycle;
 use strata_protocol::commands::Feedback;
-use strata_protocol::{BiomeInfo, ClientConnection, ClientMessage, HotbarState, ServerMessage};
+use strata_protocol::{
+    BiomeInfo, BlockAction, ClientConnection, ClientMessage, HotbarState, ServerMessage,
+};
 
 /// Field of view widening while sprinting, and how fast it eases in and out (per second).
 const SPRINT_ZOOM: f32 = 1.1;
@@ -123,7 +126,8 @@ impl Gameplay {
             }
             ServerMessage::Column { column, biomes } => self.view.insert(*column, biomes),
             ServerMessage::UnloadColumn(pos) => self.view.remove(pos, renderer),
-            ServerMessage::BlockChanged { pos, block } => self.view.set_block(pos, block),
+            ServerMessage::BlockChanged { pos, block } => self.view.receive_block(pos, block),
+            ServerMessage::ActionDone(id) => self.view.acknowledge(id),
             ServerMessage::Hotbar(hotbar) => {
                 self.hotbar.restore(&hotbar);
                 self.sent_hotbar = hotbar;
@@ -181,17 +185,11 @@ impl Gameplay {
             toggle_flight: false,
         };
         self.ease_sprint_zoom(dt, move_input.sprint && move_input.wish != [0.0; 2]);
-        let terrain = terrain(&self.view.world, &self.info, self.border);
-        if let Some(player) = &mut self.player {
-            for (sequence, input) in player.advance(f64::from(dt), move_input, &terrain) {
-                connection.send(ClientMessage::Input { sequence, input });
-            }
-            self.camera.position = player.eyes();
-        }
+        self.advance_player(dt, move_input, connection);
         if let Some(eyes) = self.riding_eyes() {
             self.camera.position = eyes;
         }
-        let message = self.interaction.update(
+        let intent = self.interaction.update(
             dt,
             &self.camera,
             &self.view.world,
@@ -199,9 +197,41 @@ impl Gameplay {
             input,
             &mut self.hotbar,
         );
-        if let Some(message) = message {
-            connection.send(message);
+        match intent {
+            Some(Intent::Send(message)) => {
+                connection.send(message);
+            }
+            Some(Intent::Block(action)) => self.send_block_action(action, connection),
+            None => {}
         }
+    }
+
+    fn advance_player(&mut self, dt: f32, input: MoveInput, connection: &ClientConnection) {
+        let terrain = terrain(&self.view.world, &self.info, self.border);
+        if let Some(player) = &mut self.player {
+            for (sequence, input) in player.advance(f64::from(dt), input, &terrain) {
+                connection.send(ClientMessage::Input { sequence, input });
+            }
+            self.camera.position = player.eyes();
+        }
+    }
+
+    /// Numbers the click, shows what it should change, and sends it.
+    fn send_block_action(&mut self, action: BlockAction, connection: &ClientConnection) {
+        let id = self.view.predictions.next_id();
+        let body = self.player_body();
+        let creative = self.player.as_ref().is_some_and(|p| p.movement.can_fly);
+        let change = predicted_change(
+            &self.info,
+            &self.view.world,
+            action,
+            body.as_ref(),
+            creative,
+        );
+        if let Some((pos, block)) = change {
+            self.view.predict(id, pos, block);
+        }
+        connection.send(ClientMessage::BlockAction { id, action });
     }
 
     /// Sitting in a boat, the eyes follow the boat as drawn, so both move as one.

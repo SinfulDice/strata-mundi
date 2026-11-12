@@ -25,7 +25,7 @@ impl Game {
         }
         let entity = self.ecs.entities.spawn();
         let boat = Boat::new(kind, body);
-        self.entity_messages
+        self.messages
             .push(ServerMessage::EntitySpawned(state(entity, &boat)));
         self.ecs.boats.insert(entity, boat);
         Some(entity)
@@ -86,7 +86,7 @@ impl Game {
             self.dismount(loader, pilot);
         }
         self.ecs.despawn(entity);
-        self.entity_messages
+        self.messages
             .push(ServerMessage::EntityRemoved(NetEntity(entity.to_bits())));
         true
     }
@@ -103,7 +103,7 @@ impl Game {
             body.flying = false;
             body.velocity = DVec3::ZERO;
         }
-        self.entity_messages
+        self.messages
             .push(ServerMessage::Mounted(Some(NetEntity(boat.to_bits()))));
     }
 
@@ -113,7 +113,7 @@ impl Game {
         if let Some(seat) = self.ecs.boats.get_mut(boat) {
             seat.pilot = None;
         }
-        self.entity_messages.push(ServerMessage::Mounted(None));
+        self.messages.push(ServerMessage::Mounted(None));
         Some(boat)
     }
 
@@ -158,8 +158,8 @@ impl Game {
     }
 
     /// Spawn, move, removal and riding messages since the last call.
-    pub fn take_entity_messages(&mut self) -> Vec<ServerMessage> {
-        std::mem::take(&mut self.entity_messages)
+    pub fn take_messages(&mut self) -> Vec<ServerMessage> {
+        std::mem::take(&mut self.messages)
     }
 
     /// Boats to save, and which one the player sits in (index in the list).
@@ -194,7 +194,7 @@ impl Game {
     pub(super) fn report_moves(&mut self, moved: &[Entity]) {
         for &entity in moved {
             if let Some(boat) = self.ecs.boats.get(entity) {
-                self.entity_messages.push(ServerMessage::EntityMoved {
+                self.messages.push(ServerMessage::EntityMoved {
                     id: NetEntity(entity.to_bits()),
                     position: boat.body.position.to_array(),
                     yaw: boat.body.yaw,

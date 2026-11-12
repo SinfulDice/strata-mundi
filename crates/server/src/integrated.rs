@@ -96,7 +96,7 @@ impl IntegratedServer {
                 },
                 biomes: biome_infos(&config.generator),
             });
-            for message in game.take_entity_messages() {
+            for message in game.take_messages() {
                 connection.send(message);
             }
         }
@@ -146,7 +146,7 @@ impl IntegratedServer {
                 return true;
             };
             let running = self.handle(message);
-            self.send_entity_messages();
+            self.send_game_messages();
             if !running {
                 return false;
             }
@@ -166,26 +166,8 @@ impl IntegratedServer {
             ClientMessage::Teleport { feet } => {
                 self.game.teleport(feet);
             }
-            ClientMessage::BreakBlock { pos } => {
-                let changes = self.game.break_block(&mut self.loader, pos);
-                self.broadcast_changes(changes);
-            }
-            ClientMessage::PlaceBlock {
-                against,
-                face,
-                block,
-            } => {
-                let changes = self
-                    .game
-                    .place_block(&mut self.loader, against, face, block);
-                self.broadcast_changes(changes);
-            }
-            ClientMessage::UseItem {
-                item,
-                against,
-                face,
-            } => {
-                let changes = self.game.use_item(&mut self.loader, item, against, face);
+            ClientMessage::BlockAction { id, action } => {
+                let changes = self.game.request_action(&mut self.loader, id, action);
                 self.broadcast_changes(changes);
             }
             ClientMessage::InteractEntity(id) => {
@@ -246,8 +228,8 @@ impl IntegratedServer {
             .save(&self.game, &mut self.loader, &self.dimension, icon);
     }
 
-    fn send_entity_messages(&mut self) {
-        for message in self.game.take_entity_messages() {
+    fn send_game_messages(&mut self) {
+        for message in self.game.take_messages() {
             self.connection.send(message);
         }
     }
@@ -264,7 +246,7 @@ impl IntegratedServer {
         self.tick += 1;
         let changes = self.game.tick(&mut self.loader);
         self.broadcast_changes(changes);
-        self.send_entity_messages();
+        self.send_game_messages();
         if self.persistence.count_tick() {
             self.save(None);
         }

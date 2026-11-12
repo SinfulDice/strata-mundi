@@ -21,6 +21,7 @@ pub mod mesher;
 pub mod models;
 pub mod particles;
 mod player;
+mod prediction;
 pub mod preview;
 pub mod render;
 mod screens;

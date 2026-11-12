@@ -11,7 +11,7 @@ pub use storage::Storage;
 use std::collections::VecDeque;
 use strata_core::content::EntityTypeId;
 use strata_core::physics::{BoatBody, BoatControls, Body, MoveInput, MovementSettings};
-use strata_protocol::{GameMode, HotbarState};
+use strata_protocol::{ActionId, BlockAction, GameMode, HotbarState};
 
 /// Every component storage of the simulation.
 #[derive(Debug, Default)]
@@ -67,6 +67,8 @@ pub struct PlayerControl {
     pub look: [f32; 2],
     /// Tick of the last block broken or placed (rate limit).
     pub last_action: Option<u64>,
+    /// Block clicks that came too soon after the last action, run one per allowed tick.
+    pub actions: VecDeque<(ActionId, BlockAction)>,
     /// Sneak was held in the last input: getting off a boat needs a new press.
     pub sneaking: bool,
 }
@@ -82,6 +84,7 @@ impl PlayerControl {
             idle_ticks: 0,
             look: [0.0; 2],
             last_action: None,
+            actions: VecDeque::new(),
             sneaking: false,
         }
     }

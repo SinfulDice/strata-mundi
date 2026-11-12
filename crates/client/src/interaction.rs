@@ -1,5 +1,5 @@
 //! Aiming, breaking, placing and picking blocks, getting into boats. The client only
-//! sends intents; the world changes when the server answers.
+//! sends intents; the server decides (block clicks are predicted, see `prediction`).
 
 use crate::camera::Camera;
 use crate::hotbar::Hotbar;
@@ -10,7 +10,8 @@ use std::sync::Arc;
 use strata_core::content::{BlockId, Content, HitBox, ItemAction, ItemId, ItemKind};
 use strata_core::physics::{Aabb, LiquidCell};
 use strata_core::raycast::{RayHit, ray_box, raycast};
-use strata_protocol::{ClientMessage, NetEntity};
+use strata_core::updates::UpdateRules;
+use strata_protocol::{BlockAction, ClientMessage, NetEntity};
 
 /// Creative reach, in blocks from the eyes.
 const REACH: f64 = 5.0;
@@ -25,6 +26,8 @@ pub struct BlockInfo {
     items: Vec<Option<ItemId>>,
     liquids: Vec<Option<LiquidCell>>,
     sources: Vec<bool>,
+    /// Which blocks need support, to predict placements as the server judges them.
+    pub updates: UpdateRules,
 }
 
 impl BlockInfo {
@@ -47,6 +50,7 @@ impl BlockInfo {
             .map(|(key, _, block)| block.fluid.is_some_and(|state| state.source == key))
             .collect();
         Self {
+            updates: UpdateRules::new(&content),
             content,
             solid,
             hit_boxes,
@@ -101,6 +105,15 @@ impl BlockInfo {
     }
 }
 
+/// What a frame of interaction asks the server for.
+#[derive(Debug, PartialEq)]
+pub enum Intent {
+    /// Entities: sent as is.
+    Send(ClientMessage),
+    /// A click on a block: numbered and predicted before it is sent.
+    Block(BlockAction),
+}
+
 #[derive(Default)]
 pub struct Interaction {
     pub target: Option<RayHit>,
@@ -120,7 +133,7 @@ impl Interaction {
         info: &BlockInfo,
         input: &InputState,
         hotbar: &mut Hotbar,
-    ) -> Option<ClientMessage> {
+    ) -> Option<Intent> {
         self.target = aim(camera, world, |block| info.hit_box(block));
         self.entity = aim_entity(camera, world, info, self.target, self.mount);
         if self.entity.is_some() {
@@ -128,18 +141,18 @@ impl Interaction {
         }
         self.cooldown = (self.cooldown - dt).max(0.0);
         if let Some(message) = self.entity_action(input) {
-            return Some(message);
+            return Some(Intent::Send(message));
         }
         let triggered =
             |action| input.just_pressed(action) || (input.is_held(action) && self.cooldown == 0.0);
         let held = hotbar.selected();
         let action = held.and_then(|item| info.content.items.get(item)?.action);
         if let (Some(item), Some(action), true) = (held, action, triggered(Action::Use)) {
-            let message = use_item(camera, world, info, item, action);
-            if message.is_some() {
+            let action = use_item(camera, world, info, item, action);
+            if action.is_some() {
                 self.cooldown = REPEAT_DELAY;
             }
-            return message;
+            return action.map(Intent::Block);
         }
         let target = self.target?;
         if input.just_pressed(Action::PickBlock) {
@@ -148,11 +161,11 @@ impl Interaction {
             }
             return None;
         }
-        let message = if triggered(Action::Attack) {
-            Some(ClientMessage::BreakBlock { pos: target.block })
+        let action = if triggered(Action::Attack) {
+            Some(BlockAction::Break { pos: target.block })
         } else if triggered(Action::Use) {
             let block = hotbar.selected().and_then(|item| info.block_of(item))?;
-            Some(ClientMessage::PlaceBlock {
+            Some(BlockAction::Place {
                 against: target.block,
                 face: target.face,
                 block,
@@ -160,10 +173,10 @@ impl Interaction {
         } else {
             None
         };
-        if message.is_some() {
+        if action.is_some() {
             self.cooldown = REPEAT_DELAY;
         }
-        message
+        action.map(Intent::Block)
     }
 }
 
@@ -230,7 +243,7 @@ fn use_item(
     info: &BlockInfo,
     item: ItemId,
     action: ItemAction,
-) -> Option<ClientMessage> {
+) -> Option<BlockAction> {
     let target = match action {
         ItemAction::PlaceFluid(_) | ItemAction::Ignite(_) => {
             aim(camera, world, |block| info.hit_box(block))
@@ -238,7 +251,7 @@ fn use_item(
         ItemAction::TakeFluid => aim(camera, world, |block| info.bucket_hit_box(block)),
         ItemAction::PlaceEntity(_) => aim(camera, world, |block| info.boat_hit_box(block)),
     }?;
-    Some(ClientMessage::UseItem {
+    Some(BlockAction::Use {
         item,
         against: target.block,
         face: target.face,

@@ -54,7 +54,7 @@ fn drive(w: &mut World, input: MoveInput, ticks: u32) {
 fn a_boat_put_on_water_floats_at_the_surface() {
     let mut w = harbour();
     let boat = put_boat(&mut w);
-    let messages = w.game.take_entity_messages();
+    let messages = w.game.take_messages();
     assert!(matches!(messages[..], [ServerMessage::EntitySpawned(_)]));
     wait(&mut w, 60);
     let body = w.game.ecs.boats.get(boat).unwrap().body;
@@ -65,7 +65,7 @@ fn a_boat_put_on_water_floats_at_the_surface() {
     );
     assert!(
         w.game
-            .take_entity_messages()
+            .take_messages()
             .iter()
             .all(|m| matches!(m, ServerMessage::EntityMoved { .. }))
     );
@@ -79,7 +79,7 @@ fn the_pilot_steers_the_boat_and_gets_off_onto_the_shore() {
     assert!(w.game.interact_entity(net(boat)));
     assert!(
         w.game
-            .take_entity_messages()
+            .take_messages()
             .contains(&ServerMessage::Mounted(Some(net(boat))))
     );
     let start = w.game.ecs.boats.get(boat).unwrap().body.position;
@@ -105,7 +105,7 @@ fn the_pilot_steers_the_boat_and_gets_off_onto_the_shore() {
     assert!(w.game.ecs.mounts.get(w.game.player).is_none());
     assert!(
         w.game
-            .take_entity_messages()
+            .take_messages()
             .contains(&ServerMessage::Mounted(None))
     );
     let feet = w.game.player_body().unwrap().position;
@@ -140,7 +140,7 @@ fn creative_players_take_boats_away_and_forged_ids_find_nothing() {
     assert!(w.game.attack_entity(&w.loader, net(boat)));
     assert!(w.game.ecs.boats.get(boat).is_none());
     assert!(w.game.ecs.mounts.get(w.game.player).is_none());
-    let messages = w.game.take_entity_messages();
+    let messages = w.game.take_messages();
     assert!(messages.contains(&ServerMessage::EntityRemoved(net(boat))));
 }
 

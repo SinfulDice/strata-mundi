@@ -8,8 +8,8 @@ mod worlds;
 
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{
-    BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState, HotbarState, NetEntity,
-    ServerMessage,
+    ActionId, BiomeInfo, BlockAction, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,
+    HotbarState, NetEntity, ServerMessage,
 };
 pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};
 
@@ -25,4 +25,4 @@ pub fn in_view_disc(dx: i32, dz: i32, view_distance: u32) -> bool {
 }
 
 /// Bumped whenever a message changes in an incompatible way.
-pub const PROTOCOL_VERSION: u32 = 7;
+pub const PROTOCOL_VERSION: u32 = 8;
