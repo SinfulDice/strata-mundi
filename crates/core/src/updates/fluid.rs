@@ -48,10 +48,6 @@ impl Targets {
         }
     }
 
-    fn clear(&mut self) {
-        self.len = 0;
-    }
-
     fn as_slice(&self) -> &[(BlockPos, BlockId)] {
         &self.items[..self.len]
     }
@@ -210,28 +206,31 @@ impl<W: BlockAccess> View<'_, W> {
         }
     }
 
+    /// Sides already wet still count when choosing the way: once the path to the hole is
+    /// full, the flow must not turn to the other sides (it would widen as it goes down).
     fn downhill_sides(&self, pos: BlockPos, level: FluidLevel, block: BlockId) -> Option<Targets> {
         let mut nearest = u8::MAX;
-        let mut sides = Targets::default();
-        for face in SIDES {
+        let mut sides = [None; 4];
+        for (slot, face) in sides.iter_mut().zip(SIDES) {
             let side = pos.neighbour(face);
             let target = self.cell(side);
             if target == Cell::Unloaded {
                 return None;
             }
-            if !self.can_enter(target, level) {
+            if !self.is_passable(target) {
                 continue;
             }
             let distance = self.slope_distance(pos, side);
-            if distance < nearest {
-                nearest = distance;
-                sides.clear();
-            }
-            if distance == nearest {
-                sides.push(side, block);
+            nearest = nearest.min(distance);
+            *slot = Some((side, target, distance));
+        }
+        let mut targets = Targets::default();
+        for (side, target, distance) in sides.into_iter().flatten() {
+            if distance == nearest && self.can_enter(target, level) {
+                targets.push(side, block);
             }
         }
-        Some(sides)
+        Some(targets)
     }
 
     /// Steps from `start` to the nearest place where the liquid could fall, searching

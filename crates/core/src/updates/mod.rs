@@ -7,6 +7,8 @@
 mod fire;
 #[cfg(test)]
 mod fire_tests;
+#[cfg(test)]
+mod flow_tests;
 mod fluid;
 mod rules;
 #[cfg(test)]
