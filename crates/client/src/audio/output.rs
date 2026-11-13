@@ -18,7 +18,8 @@ const STEREO: usize = 2;
 
 /// An open device; dropping it stops the sound.
 pub struct Output {
-    _sink: MixerDeviceSink,
+    /// `None` only for tests, which read the commands themselves.
+    _sink: Option<MixerDeviceSink>,
     commands: Sender<Command>,
     controls: Arc<Controls>,
     trash: Receiver<Garbage>,
@@ -44,11 +45,25 @@ impl Output {
         sink.mixer().add(source);
         tracing::info!(rate = rate.get(), "audio device open");
         Some(Self {
-            _sink: sink,
+            _sink: Some(sink),
             commands,
             controls,
             trash,
         })
+    }
+
+    /// No device: the commands come out of the returned channel.
+    #[cfg(test)]
+    pub fn detached() -> (Self, Receiver<Command>) {
+        let (commands, receiver) = crossbeam_channel::bounded(QUEUE);
+        let (_, trash) = crossbeam_channel::unbounded();
+        let output = Self {
+            _sink: None,
+            commands,
+            controls: Arc::new(Controls::new(Volumes::default(), false)),
+            trash,
+        };
+        (output, receiver)
     }
 
     /// Frees what the audio thread let go.

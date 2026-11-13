@@ -10,7 +10,7 @@ use strata_core::content::SoundId;
 use strata_core::id::Identifier;
 use strata_core::pack::PackSet;
 
-fn content() -> &'static Content {
+pub(super) fn content() -> &'static Content {
     static CONTENT: OnceLock<Content> = OnceLock::new();
     CONTENT.get_or_init(|| {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
@@ -24,7 +24,7 @@ fn sound_id(name: &str) -> SoundId {
     content().sounds.registry.key(&id).unwrap()
 }
 
-fn block(name: &str) -> BlockId {
+pub(super) fn block(name: &str) -> BlockId {
     let id = Identifier::new("strata", name).unwrap();
     content().blocks.key(&id).unwrap()
 }
@@ -42,7 +42,7 @@ fn voice(category: SoundCategory, at: Option<DVec3>) -> Voice {
     }
 }
 
-fn hearing<'a>(
+pub(super) fn hearing<'a>(
     listener: Listener,
     player: Option<&'a Body>,
     world: &'a ClientWorld,

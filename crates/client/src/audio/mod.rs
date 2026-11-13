@@ -5,6 +5,8 @@
 
 mod ambience;
 mod bank;
+#[cfg(test)]
+mod bank_tests;
 mod beds;
 mod controls;
 mod decode;
@@ -58,6 +60,22 @@ use strata_protocol::BiomeInfo;
 pub const MAX_STARTS: usize = 16;
 /// The same sound started this close in one frame is heard once.
 const GROUP_BLOCKS: f64 = 4.0;
+/// A sound whose buffer was not made yet is started when it is, if it waited less than
+/// this (later it would not match what is seen).
+pub const MAX_LATE: f32 = 0.1;
+
+/// A sound waiting for its buffer.
+struct Late {
+    cue: Cue,
+    muffle: f32,
+    waited: f32,
+}
+
+enum Start {
+    Started,
+    NotReady,
+    Silent,
+}
 
 pub struct Audio {
     output: Option<Output>,
@@ -73,6 +91,7 @@ pub struct Audio {
     cues: Vec<Cue>,
     /// The cues of this frame with their muffling (kept to reuse its memory).
     heard: Vec<(Cue, f32)>,
+    late: Vec<Late>,
     next_voice: u32,
     music: MusicPlayer,
 }
@@ -124,11 +143,20 @@ impl Audio {
             rng: Rng::new(0x50_17D5),
             cues: Vec::new(),
             heard: Vec::new(),
+            late: Vec::new(),
             next_voice: 0,
             music: MusicPlayer::new(music_cache, content.sounds.themes.clone()),
         };
         audio.apply_settings(settings);
+        audio.prepare_sounds();
         audio
+    }
+
+    /// With a device, every buffer is made at once in the background.
+    fn prepare_sounds(&mut self) {
+        if self.output.is_some() {
+            self.bank.prepare_all();
+        }
     }
 
     pub fn has_device(&self) -> bool {
@@ -141,6 +169,8 @@ impl Audio {
         self.table = SoundTable::from_content(content);
         self.environment.set_content(&content.sounds);
         self.music.set_themes(content.sounds.themes.clone());
+        self.late.clear();
+        self.prepare_sounds();
     }
 
     pub fn apply_settings(&mut self, settings: &SoundSettings) {
@@ -167,6 +197,7 @@ impl Audio {
             output.empty_trash();
         }
         self.bank.collect();
+        self.start_late(seconds);
         self.listener = listener;
         self.send(Command::Listener(listener));
         if let Some(body) = hearing.player {
@@ -229,7 +260,7 @@ impl Audio {
         let Some(sound) = self.bank.sound(cue.sound) else {
             return;
         };
-        let (category, range) = (sound.def.category, sound.def.range);
+        let range = sound.def.range;
         let heard = self.listener.position.distance(cue.at) < f64::from(range);
         if self.settings.subtitles
             && cue.subtitled
@@ -239,11 +270,44 @@ impl Audio {
             let direction = Direction::of(&self.listener, cue.at);
             self.subtitles.heard(key, direction);
         }
+        let start = self.start_voice(cue, muffle);
+        if matches!(start, Start::NotReady) && self.late.len() < MAX_STARTS {
+            self.late.push(Late {
+                cue,
+                muffle,
+                waited: 0.0,
+            });
+        }
+    }
+
+    /// Starts the sounds whose buffer came in time, forgets those too late.
+    fn start_late(&mut self, seconds: f32) {
+        let mut late = std::mem::take(&mut self.late);
+        late.retain_mut(|waiting| {
+            waiting.waited += seconds;
+            waiting.waited <= MAX_LATE
+                && matches!(
+                    self.start_voice(waiting.cue, waiting.muffle),
+                    Start::NotReady
+                )
+        });
+        self.late = late;
+    }
+
+    fn start_voice(&mut self, cue: Cue, muffle: f32) -> Start {
+        let Some(sound) = self.bank.sound(cue.sound) else {
+            return Start::Silent;
+        };
+        let (category, range) = (sound.def.category, sound.def.range);
         if self.output.is_none() || self.settings.gain(category) <= 0.0 {
-            return;
+            return Start::Silent;
         }
         let Some(pick) = self.bank.pick(cue.sound, &mut self.rng) else {
-            return;
+            return if self.bank.is_coming(cue.sound) {
+                Start::NotReady
+            } else {
+                Start::Silent
+            };
         };
         self.next_voice = self.next_voice.wrapping_add(1);
         let seconds = pick.buffer.len() as f32 / SAMPLE_RATE as f32 / pick.pitch.max(0.01);
@@ -261,6 +325,7 @@ impl Audio {
             self.environment
                 .track(self.next_voice, cue.at, seconds, muffle);
         }
+        Start::Started
     }
 
     /// Starts, fades or lets go the ambience beds (buffers made on first use).
