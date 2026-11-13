@@ -6,3 +6,6 @@
 *.swp
 .DS_Store
 /wiki-images/
+# Music rendered by tests or a run without --data-dir.
+/crates/**/strata-*.wav
+*.part
