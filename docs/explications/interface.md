@@ -24,7 +24,7 @@ Screen(
 - **Éléments disponibles** : `Shade` (assombrit le fond), `Panel` (fenêtre avec enfants), `Label` (avec `size` pour les titres, comme le logo), `Button`, `TextField`, `Slider` (curseur), `List` (lignes avec image, comme la liste des mondes), `KeyGrid` (clavier à l'écran), `Tabs`, `ItemGrid`, `Slots`, `Crosshair`.
 - **Texte riche** : dans les traductions, `<key:Inventory>` affiche la touche associée dans une petite case, `<c:accent>…</c>` colore le texte.
 - **Textes** : une clé de traduction (`ui-search`) ou `@nom` pour un texte fourni par l'écran (le nom du bloc visé). Un test vérifie que chaque clé existe en fr, en et lol.
-- **Thème** : `assets/ui/theme.ron` donne toutes les couleurs. Le thème actuel est provisoire ; des maquettes seront proposées en fin de v0.1.
+- **Thème** : `assets/ui/theme.ron` donne toutes les couleurs. Le thème actuel est provisoire ; des maquettes seront proposées en fin de v0.1. `gauge` colore la partie remplie des jauges d'options.
 
 ### Dessin
 
@@ -38,7 +38,7 @@ Screen(
 - **Souris** : survol = focus, clic = action, molette.
 - **Curseurs et jauges** (options, création et éditeur de monde) : un clic met directement la valeur sous le pointeur, arrondie au cran le plus proche (les deux bouts sont atteignables, un clic au-delà donne le minimum ou le maximum) ; en gardant le bouton appuyé, la valeur suit le pointeur, même s'il sort du curseur. Le réglage est écrit sur le disque au relâchement.
 - **Listes de choix** (‹ valeur ›) : clic sur ‹ ou › pour reculer ou avancer ; un clic ailleurs sur la ligne fait comme avant (valeur suivante, bascule). La **molette** au-dessus de la valeur (ou d'un curseur) la change ; au-dessus du nom du réglage, elle fait défiler la liste.
-- **Appui maintenu** : garder ← → (touches, croix ou stick gauche de la manette) sur un curseur ou une ligne d'options fait défiler les valeurs : un cran tout de suite, puis après 0,4 s une répétition toutes les 0,15 s qui accélère jusqu'à 0,03 s ; tout s'arrête au relâchement. Les valeurs sont des constantes de `ui/repeat.rs`.
+- **Appui maintenu** : garder ← → (touches, croix ou stick gauche de la manette) sur un curseur ou une jauge fait défiler les valeurs : un cran tout de suite, puis après 0,4 s une répétition toutes les 0,15 s qui accélère jusqu'à 0,03 s ; tout s'arrête au relâchement, et l'élément suivant attend de nouveau le délai. Les bascules et listes de choix (langue, préréglage, packs…) changent d'un cran par appui. Sur un réglage, ← → ne déplacent jamais le focus. Dans l'éditeur de HUD, les flèches maintenues déplacent l'élément de la même façon. Les réglages sont écrits au relâchement. Les valeurs sont des constantes de `ui/repeat.rs`.
 - **Clavier et manette** : les flèches ou la croix déplacent le **focus** vers l'élément le plus proche dans cette direction (en préférant ceux bien alignés) ; Entrée/A valide, Échap/B revient. Le focus est toujours visible (cadre clair).
 - **Saisie de texte** : au clavier, on tape directement dans le champ ; à la manette, un clavier à l'écran s'ouvre (voir [Menus](menus.md)).
 - **Taille** : automatique (le plus grand facteur entier qui tient) ou choisie dans les options (×1 à ×6).

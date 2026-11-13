@@ -12,5 +12,6 @@ Theme(
     slot_border: "#5a554c",
     focus: "#f2efe8",
     field: "#151412",
+    gauge: "#8a7444",
     shade: "#00000080",
 )

@@ -110,7 +110,7 @@ pub(super) fn options(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
             let filled = (gauge.clamp(0.0, 1.0) * bar.w as f32).round() as u32;
             d.painter.fill(bar, field);
             d.painter
-                .fill(Rect::new(bar.x, bar.y, filled, bar.h), theme_bar(d));
+                .fill(Rect::new(bar.x, bar.y, filled, bar.h), d.theme().gauge.0);
         } else if row.arrows {
             arrows(d, zones.previous, zones.next, value_color);
             value_x = zones.value.center().0 - value_width / 2;
@@ -132,10 +132,6 @@ fn arrows(d: &mut Draw<'_, '_>, previous: Rect, next: Rect, color: Rgba) {
                 .fill(Rect::new(x, cy - height / 2, 1, height as u32), color);
         }
     }
-}
-
-fn theme_bar(d: &Draw<'_, '_>) -> strata_core::texture::Rgba {
-    d.theme().panel.0
 }
 
 /// As many of the newest lines as fit, over a shade, bottom-aligned.

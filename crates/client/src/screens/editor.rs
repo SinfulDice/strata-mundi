@@ -3,8 +3,8 @@
 //! window size or ratio.
 
 use super::Screens;
-use super::handling::MOVES;
 use super::menu::{Effect, Menu, Shared};
+use super::pointer::editor_moves;
 use crate::input::{Action, InputState};
 use crate::settings::InterfaceSettings;
 use crate::ui::{HitKind, ScreenDef, ScreenModel};
@@ -52,7 +52,12 @@ pub fn move_element(
 impl Screens {
     /// HUD editor: once an element is selected, arrows and mouse drags move it.
     /// Returns whether the input was used.
-    pub(super) fn handle_editor(&mut self, input: &InputState, cursor: Option<(i32, i32)>) -> bool {
+    pub(super) fn handle_editor(
+        &mut self,
+        input: &InputState,
+        cursor: Option<(i32, i32)>,
+        frame_seconds: f32,
+    ) -> bool {
         let Some(Menu::HudEditor { selected }) = self.stack.last_mut() else {
             return false;
         };
@@ -69,6 +74,7 @@ impl Screens {
             self.focus = Some(hit.clone());
         }
         let Some(id) = selected.clone() else {
+            self.editor_repeat = Default::default();
             return false;
         };
         if input.just_pressed(Action::MenuBack) || input.just_pressed(Action::MenuConfirm) {
@@ -80,13 +86,8 @@ impl Screens {
         } else {
             STEP
         };
-        let mut delta = (0, 0);
-        for (action, direction) in MOVES {
-            if input.just_pressed(action) {
-                let (dx, dy) = direction.offset();
-                delta = (delta.0 + dx * speed, delta.1 + dy * speed);
-            }
-        }
+        let (dx, dy) = editor_moves(&mut self.editor_repeat, input, frame_seconds);
+        let mut delta = (dx * speed, dy * speed);
         if input.is_held(Action::Attack)
             && self.dragging.as_ref().is_some_and(|d| d.id == id)
             && let (Some(now), Some(before)) = (cursor, self.last_cursor)

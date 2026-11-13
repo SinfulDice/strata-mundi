@@ -29,6 +29,7 @@ pub use creation::GenerationSources;
 use draw::key_rows;
 use keyboard::{Keyboard, KeyboardModel};
 use menu::{Effect, Menu, Shared};
+use pointer::ValueRepeat;
 use std::path::PathBuf;
 use strata_core::content::Content;
 use strata_protocol::WorldSummary;
@@ -69,7 +70,9 @@ pub struct Screens {
     /// Slider or HUD element followed by the mouse while the button is held.
     dragging: Option<Hit>,
     /// ← → held on a value.
-    repeat: HoldRepeat,
+    repeat: ValueRepeat,
+    /// Arrows held in the HUD editor (x, y).
+    editor_repeat: [HoldRepeat; 2],
     last_cursor: Option<(i32, i32)>,
     effects: Vec<Effect>,
     /// Settings changed but not written yet (see `handle`).
@@ -124,7 +127,8 @@ impl Screens {
             worlds: Vec::new(),
             icons: Vec::new(),
             dragging: None,
-            repeat: HoldRepeat::default(),
+            repeat: ValueRepeat::default(),
+            editor_repeat: Default::default(),
             last_cursor: None,
             effects: Vec::new(),
             settings_dirty: false,

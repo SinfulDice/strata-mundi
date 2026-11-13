@@ -5,6 +5,7 @@ use super::console::ConsoleState;
 use super::keyboard::Keyboard;
 use super::menu::{Effect, Menu};
 use super::options::bind_captured;
+use super::pointer::held_arrows;
 use super::{Screens, UiAction};
 use crate::gameplay::Gameplay;
 use crate::input::{Action, Binding, InputDevice, InputState};
@@ -57,7 +58,6 @@ impl Screens {
         frame_seconds: f32,
     ) -> Handled {
         self.device = input.last_device();
-        let steps = self.held_steps(input, frame_seconds);
         self.refresh_labels(content);
         if self.in_world && self.stack.is_empty() {
             if let Some(game) = game.as_deref_mut().filter(|g| g.cinematic.is_some()) {
@@ -82,10 +82,10 @@ impl Screens {
             self.handle_keyboard(input, game.as_deref_mut(), content);
         } else if self.editing.is_some() {
             if self.handle_typing(input, game.as_deref_mut(), content) {
-                self.handle_menu(input, game.as_deref_mut(), content, steps);
+                self.handle_menu(input, game.as_deref_mut(), content, frame_seconds);
             }
         } else {
-            self.handle_menu(input, game.as_deref_mut(), content, steps);
+            self.handle_menu(input, game.as_deref_mut(), content, frame_seconds);
         }
         let (actions, clip) = self.apply_effects();
         match clip {
@@ -98,8 +98,8 @@ impl Screens {
             }
             None => {}
         }
-        // Written once the change is over, not at every frame of a drag.
-        if self.settings_dirty && !input.is_held(Action::Attack) {
+        // Written once the change is over, not at every frame of a drag or held arrow.
+        if self.settings_dirty && !input.is_held(Action::Attack) && held_arrows(input) == (0, 0) {
             self.settings.save(&self.settings_path);
             self.settings_dirty = false;
         }
@@ -109,20 +109,19 @@ impl Screens {
         }
     }
 
-    /// `steps`: ← → for the focused value this frame (taps and held repeats).
     fn handle_menu(
         &mut self,
         input: &InputState,
         mut game: Option<&mut Gameplay>,
         content: &Content,
-        steps: i32,
+        frame_seconds: f32,
     ) {
         if self.capture_binding(input) {
             return;
         }
         let cursor = self.cursor(input);
         self.follow_mouse(input, cursor);
-        if self.handle_editor(input, cursor) {
+        if self.handle_editor(input, cursor, frame_seconds) {
             return;
         }
         let closes_inventory = input.just_pressed(Action::Inventory)
@@ -138,26 +137,28 @@ impl Screens {
             return;
         }
         let focus = self.focus.clone();
-        let slider = focus
+        let value = focus
             .clone()
             .filter(|f| matches!(f.kind, HitKind::Slider | HitKind::Option));
-        match (&slider, steps) {
-            (Some(slider), step) if step != 0 => {
-                self.with_model(game.as_deref_mut(), content, |m| {
-                    m.adjust(&slider.id, slider.index, step, None)
-                });
-            }
-            _ => self.navigate_or_scroll(input, game.as_deref_mut(), content),
+        let steps = self.value_steps(input, frame_seconds, game.as_deref_mut(), content);
+        if let Some(value) = &value
+            && steps != 0
+        {
+            self.with_model(game.as_deref_mut(), content, |m| {
+                m.adjust(&value.id, value.index, steps, None)
+            });
         }
+        // On a value, ← → only change it: they never move the focus away.
+        self.navigate_or_scroll(input, game.as_deref_mut(), content, value.is_none());
         self.scroll_and_tabs(input, cursor, game.as_deref_mut(), content);
-        self.drag_value(input, cursor, game.as_deref_mut(), content);
+        self.follow_drag(input, cursor, game.as_deref_mut(), content);
         let clicked = input
             .just_pressed(Action::Attack)
             .then(|| cursor.and_then(|at| Some((at, self.hit_at(at.0, at.1)?))))
             .flatten();
         if let Some((at, hit)) = &clicked {
             self.focus = Some(hit.clone());
-            if self.click_value(game.as_deref_mut(), content, hit, *at) {
+            if self.click_on_value(game.as_deref_mut(), content, hit, *at) {
                 return;
             }
         }
@@ -234,13 +235,14 @@ impl Screens {
         content: &Content,
     ) {
         let steps = input.scroll_steps();
-        if steps != 0 && !self.wheel_value(game.as_deref_mut(), content, cursor, steps) {
+        if steps != 0 && !self.wheel_on_value(game.as_deref_mut(), content, cursor, steps) {
             let id = self
                 .focus
                 .as_ref()
                 .map(|f| f.id.clone())
                 .unwrap_or_default();
             self.with_model(game.as_deref_mut(), content, |m| m.scroll(&id, -steps));
+            self.drop_row_drag();
         }
         let tabs = i32::from(input.just_pressed(Action::HotbarNext))
             - i32::from(input.just_pressed(Action::HotbarPrevious));
@@ -287,15 +289,18 @@ impl Screens {
     }
 
     /// Moves the focus; at the edge of a list or grid, scrolls it instead (gamepads and
-    /// keyboards reach every row, not only the visible ones).
+    /// keyboards reach every row, not only the visible ones). `sideways`: whether ← →
+    /// move the focus too.
     fn navigate_or_scroll(
         &mut self,
         input: &InputState,
         mut game: Option<&mut Gameplay>,
         content: &Content,
+        sideways: bool,
     ) {
         for (action, direction) in MOVES {
-            if !input.just_pressed(action) {
+            let horizontal = matches!(direction, Direction::Left | Direction::Right);
+            if !input.just_pressed(action) || (horizontal && !sideways) {
                 continue;
             }
             let next = navigate(&self.hits, self.focus.as_ref(), direction);
@@ -315,6 +320,7 @@ impl Screens {
                     let before =
                         self.with_model(game.as_deref_mut(), content, |m| m.rows(&focus.id));
                     self.with_model(game.as_deref_mut(), content, |m| m.scroll(&focus.id, rows));
+                    self.drop_row_drag();
                     let after =
                         self.with_model(game.as_deref_mut(), content, |m| m.rows(&focus.id));
                     // Nothing left to scroll: the focus may leave the list.

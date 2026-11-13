@@ -16,5 +16,7 @@ pub struct Theme {
     pub slot_border: HexColor,
     pub focus: HexColor,
     pub field: HexColor,
+    /// Filled part of an options gauge.
+    pub gauge: HexColor,
     pub shade: HexColor,
 }
