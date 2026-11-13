@@ -21,7 +21,9 @@ pub fn track_fraction(track: Rect, knob: u32, x: i32) -> f32 {
 /// The right-hand part of an options row: its gauge, or its value between ‹ ›.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RowZones {
+    /// Clickable: from the gauge's start to the end of the row (margins included).
     pub value: Rect,
+    /// Drawn bar, and the track a click or drag on `value` is measured on.
     pub gauge: Rect,
     pub previous: Rect,
     pub next: Rect,
@@ -30,13 +32,13 @@ pub struct RowZones {
 pub fn row_zones(line: Rect) -> RowZones {
     let width = (line.w / 3).max(10);
     let x = line.x + line.w as i32 - width as i32 - 2;
-    let value = Rect::new(x, line.y, width, line.h);
+    let clickable = width + 2;
     let arrow = ARROW_WIDTH.min(width / 2);
     RowZones {
-        value,
+        value: Rect::new(x, line.y, clickable, line.h),
         gauge: Rect::new(x, line.y + 1, width, line.h.saturating_sub(2)),
         previous: Rect::new(x, line.y, arrow, line.h),
-        next: Rect::new(x + (width - arrow) as i32, line.y, arrow, line.h),
+        next: Rect::new(x + (clickable - arrow) as i32, line.y, arrow, line.h),
     }
 }
 
@@ -53,7 +55,7 @@ pub enum RowPart {
 
 pub fn row_part(line: Rect, row: &OptionRow, (x, y): (i32, i32)) -> RowPart {
     let zones = row_zones(line);
-    if row.gauge.is_some() && zones.gauge.contains(x, y) {
+    if row.gauge.is_some() && zones.value.contains(x, y) {
         return RowPart::Gauge(track_fraction(zones.gauge, 1, x));
     }
     if row.arrows && zones.previous.contains(x, y) {
@@ -117,6 +119,8 @@ mod tests {
         );
         let last = zones.gauge.x + zones.gauge.w as i32 - 1;
         assert_eq!(row_part(line, &gauge, (last, y)), RowPart::Gauge(1.0));
+        let row_end = line.x + line.w as i32 - 1;
+        assert_eq!(row_part(line, &gauge, (row_end, 0)), RowPart::Gauge(1.0));
         assert_eq!(row_part(line, &gauge, (4, y)), RowPart::Body);
         let choice = row(None, true);
         assert_eq!(

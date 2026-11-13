@@ -10,7 +10,7 @@
   - [x] J4 Pose de blocs fiable (aucun clic perdu, prédiction client) ; tests
   - [x] J5 Torches murales, lanternes suspendues (variantes, soutien) ; tests
   - [x] J6 Sons (variantes au chargement, lave audible, vent plus doux, curseur Ambiances) ; tests
-  - [ ] J7 Curseurs d'un clic, glisser, molette, répétition à l'appui maintenu ; tests
+  - [x] J7 Curseurs d'un clic, glisser, molette, répétition à l'appui maintenu ; tests
   - [ ] J8 Clôture (captures avant/après, explications, rapport, tag `v0.2.1`)
 - **Dernière session** : 11/11/2026
 

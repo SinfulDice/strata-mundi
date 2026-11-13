@@ -36,6 +36,9 @@ Screen(
 ### Navigation
 
 - **Souris** : survol = focus, clic = action, molette.
+- **Curseurs et jauges** (options, création et éditeur de monde) : un clic met directement la valeur sous le pointeur, arrondie au cran le plus proche (les deux bouts sont atteignables, un clic au-delà donne le minimum ou le maximum) ; en gardant le bouton appuyé, la valeur suit le pointeur, même s'il sort du curseur. Le réglage est écrit sur le disque au relâchement.
+- **Listes de choix** (‹ valeur ›) : clic sur ‹ ou › pour reculer ou avancer ; un clic ailleurs sur la ligne fait comme avant (valeur suivante, bascule). La **molette** au-dessus de la valeur (ou d'un curseur) la change ; au-dessus du nom du réglage, elle fait défiler la liste.
+- **Appui maintenu** : garder ← → (touches, croix ou stick gauche de la manette) sur un curseur ou une ligne d'options fait défiler les valeurs : un cran tout de suite, puis après 0,4 s une répétition toutes les 0,15 s qui accélère jusqu'à 0,03 s ; tout s'arrête au relâchement. Les valeurs sont des constantes de `ui/repeat.rs`.
 - **Clavier et manette** : les flèches ou la croix déplacent le **focus** vers l'élément le plus proche dans cette direction (en préférant ceux bien alignés) ; Entrée/A valide, Échap/B revient. Le focus est toujours visible (cadre clair).
 - **Saisie de texte** : au clavier, on tape directement dans le champ ; à la manette, un clavier à l'écran s'ouvre (voir [Menus](menus.md)).
 - **Taille** : automatique (le plus grand facteur entier qui tient) ou choisie dans les options (×1 à ×6).
@@ -51,6 +54,7 @@ Screen(
 | Atlas, icônes | `crates/client/src/ui/atlas.rs`, `crates/core/src/texture/isometric.rs` |
 | Police | `crates/core/src/font.rs`, `assets/packs/strata/fonts/pixel.ron` |
 | Navigation au focus | `crates/client/src/ui/focus.rs` |
+| Clic, glisser et molette sur les valeurs ; appui maintenu | `crates/client/src/ui/pointer.rs`, `ui/repeat.rs`, `screens/pointer.rs` |
 | Comportement des écrans (HUD, inventaire) | `crates/client/src/screens/` |
 | Passe de rendu | `crates/client/src/render/ui_pipeline.rs`, `shaders/ui.wgsl` |
 
