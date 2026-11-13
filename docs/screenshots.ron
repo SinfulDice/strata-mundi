@@ -19,6 +19,8 @@
     (name: "biome-snowy_peaks-42", seed: "42", pos: (-454.0, 357.0, 89.0), look: (135.0, -30.0)),
     (name: "fluids-fall", scene: "fluids", pos: (13.0, 11.0, 15.0), look: (-40.0, -20.0)),
     (name: "fluids-underwater", scene: "fluids", pos: (-12.5, 4.3, 0.5), look: (150.0, 8.0)),
+    // A lake breached above a staircase: the water runs to the nearest step down (v0.2.1).
+    (name: "breach", scene: "breach", pos: (2.0, 34.0, 34.0), look: (-4.0, -40.0)),
     (name: "boat", scene: "fluids", pos: (-6.0, 8.5, 9.5), look: (-38.0, -24.0)),
     (name: "light-cave", scene: "light", pos: (-9.5, 6.5, 0.5), look: (90.0, -12.0)),
     (name: "light-tunnel", scene: "light", pos: (-9.0, 5.6, 4.5), look: (180.0, -5.0)),
