@@ -176,6 +176,9 @@ impl Footsteps {
 const AMBIENT_SAMPLES: f32 = 300.0;
 const AMBIENT_REACH: (i32, i32) = (12, 8);
 const MAX_AMBIENT_PER_SECOND: f32 = 4.0;
+/// An ambient sound comes from just above its block's centre, in the cell above: the
+/// lava it bubbles in does not muffle it.
+const SURFACE: f64 = 0.6;
 
 /// Lava bubbling, fire crackling: blocks picked at random around the listener. Only the
 /// top of a body sounds (a lava block under another one is silent): bubbles pop at the
@@ -221,7 +224,7 @@ impl AmbientBlocks {
                 self.allowance -= 1.0;
                 cues.push(Cue {
                     sound,
-                    at: centre(pos),
+                    at: centre(pos) + DVec3::Y * SURFACE,
                     subtitled: true,
                 });
             }
