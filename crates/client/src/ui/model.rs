@@ -55,7 +55,8 @@ pub trait ScreenModel {
     }
     /// Clicked, or confirmed with Enter / the A button.
     fn activate(&mut self, _id: &str, _index: usize) {}
-    /// Left/right on a focused slider or option row (or a click at `fraction` of its width).
+    /// Left/right on a focused slider or option row, or the pointer at `fraction` of its
+    /// track (click or drag; `step` is then 0).
     fn adjust(&mut self, _id: &str, _index: usize, _step: i32, _fraction: Option<f32>) {}
     /// Wheel or page keys over a list or grid.
     fn scroll(&mut self, _id: &str, _rows: i32) {}
@@ -102,6 +103,8 @@ pub struct OptionRow {
     pub value: String,
     /// Position of a range setting (0 to 1), drawn as a bar.
     pub gauge: Option<f32>,
+    /// Left/right step through the values: drawn between ‹ › arrows that can be clicked.
+    pub arrows: bool,
     /// Waiting for something (a key to bind).
     pub highlight: bool,
 }

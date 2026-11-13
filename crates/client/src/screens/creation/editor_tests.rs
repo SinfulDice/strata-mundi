@@ -77,6 +77,12 @@ fn sliders_stay_in_their_ranges() {
     assert_eq!(editor.value(Slider::Ores), 0);
     editor.set_fraction(Slider::BiomeSize, 0.5);
     assert_eq!(editor.value(Slider::BiomeSize) % 25, 0);
+    editor.set_fraction(Slider::BiomeSize, 1.0);
+    assert_eq!(editor.value(Slider::BiomeSize), 400);
+    editor.set_fraction(Slider::SeaLevel, 0.0);
+    assert_eq!(editor.settings.sea_level, Some(48));
+    editor.set_fraction(Slider::SeaLevel, 0.52);
+    assert_eq!(editor.settings.sea_level, Some(48 + 25 * 4));
     editor.step(Slider::SeaLevel, 1000);
     assert_eq!(editor.settings.sea_level, Some(240));
     assert!((editor.fraction(Slider::SeaLevel) - 1.0).abs() < 1e-6);

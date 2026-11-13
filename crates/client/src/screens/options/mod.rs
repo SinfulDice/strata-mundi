@@ -2,6 +2,7 @@
 //! description of what it does to performance. Changes apply at once.
 
 mod packs;
+mod ranges;
 mod values;
 
 use super::menu::{Effect, Menu, Shared};
@@ -9,8 +10,8 @@ use crate::input::{Action, Binding};
 use crate::settings::Settings;
 use crate::ui::{OptionRow, ScreenModel};
 use values::{
-    CONTROLS, GAME, GRAPHICS, INTERFACE, SOUND, Setting, kebab_key, setting_key, step_setting,
-    value,
+    CONTROLS, GAME, GRAPHICS, INTERFACE, SOUND, Setting, kebab_key, set_setting_fraction,
+    setting_key, step_setting, value,
 };
 
 /// Rows visible at once (matches `options.ron`).
@@ -133,6 +134,7 @@ impl OptionsModel<'_> {
                     label: self.shared.tr(&action_key(action)),
                     value: format!("{keyboard} | {pad}"),
                     gauge: None,
+                    arrows: false,
                     highlight: self.state.capturing == Some(action),
                 }
             }
@@ -140,6 +142,7 @@ impl OptionsModel<'_> {
                 let (value, gauge) = value(setting, self.shared.settings, &self.shared);
                 OptionRow {
                     label: self.shared.tr(&setting_key(setting)),
+                    arrows: gauge.is_none() && !value.is_empty(),
                     value,
                     gauge,
                     highlight: false,
@@ -202,14 +205,18 @@ impl ScreenModel for OptionsModel<'_> {
         self.state.scroll = (self.state.scroll as i32 + rows).clamp(0, max) as usize;
     }
 
-    fn adjust(&mut self, _: &str, index: usize, step: i32, _: Option<f32>) {
-        match self.row_at(index) {
-            Some(Row::Setting(setting))
+    fn adjust(&mut self, _: &str, index: usize, step: i32, fraction: Option<f32>) {
+        match (self.row_at(index), fraction) {
+            (Some(Row::Setting(setting)), Some(fraction)) => {
+                set_setting_fraction(setting, self.shared.settings, fraction);
+                self.shared.effects.push(Effect::SettingsChanged);
+            }
+            (Some(Row::Setting(setting)), None)
                 if !matches!(setting, Setting::EditHud | Setting::ResetKeys) =>
             {
                 self.change(setting, step);
             }
-            Some(Row::Pack(name)) => {
+            (Some(Row::Pack(name)), None) => {
                 packs::reorder(&mut self.shared.settings.game.resource_packs, &name, step);
                 self.shared.effects.push(Effect::SettingsChanged);
             }

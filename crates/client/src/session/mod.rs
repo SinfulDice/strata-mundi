@@ -226,7 +226,9 @@ impl Session {
             let feedback = std::mem::take(&mut game.feedback);
             self.screens.print_feedback(&feedback, &self.content);
         }
-        let handled = self.screens.handle(&self.input, game, &self.content);
+        let handled = self
+            .screens
+            .handle(&self.input, game, &self.content, frame_seconds);
         for action in handled.actions {
             self.perform(action)?;
         }

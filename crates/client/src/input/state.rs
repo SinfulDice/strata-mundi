@@ -152,6 +152,11 @@ impl InputState {
         self.mouse_delta
     }
 
+    /// Left stick, y up (also ← → in menus).
+    pub fn move_stick(&self) -> Vec2 {
+        self.left_stick
+    }
+
     pub fn look_stick(&self) -> Vec2 {
         self.right_stick
     }

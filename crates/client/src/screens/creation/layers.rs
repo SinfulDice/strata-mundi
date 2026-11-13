@@ -38,6 +38,7 @@ impl GenerationModel<'_> {
                         &[("count", layer.thickness.to_string())],
                     ),
                     gauge: None,
+                    arrows: true,
                     highlight: index == editor.layer,
                 }
             })
@@ -56,6 +57,7 @@ impl GenerationModel<'_> {
                 label: self.shared.tr(&biome.translation_key("biome")),
                 value: String::new(),
                 gauge: None,
+                arrows: false,
                 highlight: Some(biome) == chosen,
             })
             .collect()

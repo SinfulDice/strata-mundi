@@ -1,7 +1,7 @@
 //! Every setting of the options screen: how its value reads and how a step changes it.
 
 use super::super::menu::Shared;
-use crate::settings::MAX_SCALE;
+use super::ranges::range_slot;
 use crate::settings::{
     ANISOTROPY, BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE,
     SENSITIVITY, VERTICAL_DISTANCE, VOLUME,
@@ -126,7 +126,7 @@ pub const GAME: &[Setting] = &[
 ];
 
 const FPS_LIMITS: [u32; 6] = [0, 30, 60, 120, 144, 240];
-const BACKUPS: (u32, u32) = (0, 10);
+pub(super) const BACKUPS: (u32, u32) = (0, 10);
 const AUTOSAVE: [u32; 7] = [0, 1, 2, 5, 10, 15, 30];
 
 pub fn setting_key(setting: Setting) -> String {
@@ -291,9 +291,32 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
 }
 
 pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
+    match range_slot(setting, s) {
+        Some(slot) => slot.step(step),
+        None => step_choice(setting, s, step),
+    }
+    after_change(setting, s);
+}
+
+/// The pointer at `fraction` of a range setting's gauge: the nearest step.
+pub fn set_setting_fraction(setting: Setting, s: &mut Settings, fraction: f32) {
+    if let Some(slot) = range_slot(setting, s) {
+        slot.set_fraction(fraction);
+        after_change(setting, s);
+    }
+}
+
+fn after_change(setting: Setting, s: &mut Settings) {
     // Brightness is a taste, kept by every preset.
     let graphics_changed =
         !matches!(setting, Setting::Preset | Setting::Brightness) && GRAPHICS.contains(&setting);
+    if graphics_changed {
+        s.preset = None;
+    }
+}
+
+/// Settings that are not ranges: toggles and lists of choices.
+fn step_choice(setting: Setting, s: &mut Settings, step: i32) {
     let cores = default_worker_threads() + 2;
     let (g, i, c, game) = (
         &mut s.graphics,
@@ -306,20 +329,14 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
             let next = cycle(&Preset::ALL, s.preset.unwrap_or(Preset::High), step);
             s.apply_preset(next);
         }
-        Setting::RenderDistance => range(&mut g.render_distance, RENDER_DISTANCE, 1, step),
-        Setting::VerticalDistance => range(&mut g.vertical_distance, VERTICAL_DISTANCE, 1, step),
-        Setting::RenderScale => range(&mut g.render_scale, RENDER_SCALE, 10, step),
         Setting::FpsLimit => g.fps_limit = cycle(&FPS_LIMITS, g.fps_limit, step),
         Setting::Vsync => g.vsync = !g.vsync,
-        Setting::Fov => range(&mut g.fov, FOV, 5, step),
         Setting::AmbientOcclusion => g.ambient_occlusion = !g.ambient_occlusion,
         Setting::Lighting => g.lighting = cycle(&Lighting::ALL, g.lighting, step),
         Setting::SmoothLighting => g.smooth_lighting = !g.smooth_lighting,
-        Setting::Brightness => range(&mut g.brightness, BRIGHTNESS, 10, step),
         Setting::Fog => g.fog = !g.fog,
         Setting::AnimatedTextures => g.animated_textures = !g.animated_textures,
         Setting::TextureVariants => g.texture_variants = !g.texture_variants,
-        Setting::BiomeBlend => range(&mut g.biome_blend, BIOME_BLEND, 1, step),
         Setting::Stars => g.stars = !g.stars,
         Setting::Clouds => g.clouds = cycle(&CloudMode::ALL, g.clouds, step),
         Setting::Mipmaps => g.mipmaps = !g.mipmaps,
@@ -331,10 +348,6 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::WorldThreads => {
             g.generation_threads = cycle_threads(g.generation_threads, cores, step)
         }
-        Setting::MasterVolume
-        | Setting::BlocksVolume
-        | Setting::AmbientVolume
-        | Setting::MusicVolume => range(volume_of(setting, s), VOLUME, 10, step),
         Setting::MusicFrequency => {
             s.sound.music_frequency = cycle(&MusicFrequency::ALL, s.sound.music_frequency, step);
         }
@@ -344,7 +357,6 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
             s.preset = None;
         }
         Setting::Language => i.cycle_language(),
-        Setting::Scale => range(&mut i.scale, (0, MAX_SCALE), 1, step),
         Setting::Font => {
             i.font = match i.font {
                 FontChoice::Pixel => FontChoice::Readable,
@@ -355,37 +367,15 @@ pub fn step_setting(setting: Setting, s: &mut Settings, step: i32) {
         Setting::ReduceCamera => i.reduce_camera_effects = !i.reduce_camera_effects,
         Setting::PauseInMenus => i.pause_in_menus = !i.pause_in_menus,
         Setting::BlockName => c.show_block_name = !c.show_block_name,
-        Setting::MouseSensitivity => range(&mut c.mouse_sensitivity, SENSITIVITY, 10, step),
-        Setting::StickSensitivity => range(&mut c.stick_sensitivity, SENSITIVITY, 10, step),
         Setting::InvertY => c.invert_y = !c.invert_y,
-        Setting::DeadZone => range(&mut c.dead_zone, DEAD_ZONE, 5, step),
         Setting::AutoJump => c.auto_jump = !c.auto_jump,
         Setting::StepUp => c.step_up = !c.step_up,
         Setting::CheckUpdates => game.check_updates = !game.check_updates,
         Setting::Autosave => game.autosave_minutes = cycle(&AUTOSAVE, game.autosave_minutes, step),
-        Setting::Backups => range(&mut game.backups_kept, BACKUPS, 1, step),
         Setting::IdleUnfocused => game.idle_when_unfocused = !game.idle_when_unfocused,
-        Setting::EditHud | Setting::ResetKeys => {}
+        // Ranges go through `range_slot`.
+        _ => {}
     }
-    if graphics_changed {
-        s.preset = None;
-    }
-}
-
-/// The volume a slider row stands for (the master for any other row).
-fn volume_of(setting: Setting, s: &mut Settings) -> &mut u32 {
-    let sound = &mut s.sound;
-    match setting {
-        Setting::BlocksVolume => &mut sound.blocks,
-        Setting::AmbientVolume => &mut sound.ambient,
-        Setting::MusicVolume => &mut sound.music,
-        _ => &mut sound.master,
-    }
-}
-
-fn range(value: &mut u32, (min, max): (u32, u32), unit: u32, step: i32) {
-    let next = *value as i64 + i64::from(step) * i64::from(unit);
-    *value = next.clamp(i64::from(min), i64::from(max)) as u32;
 }
 
 /// The next (or previous) value of `choices`, wrapping; an unknown value restarts at the first.

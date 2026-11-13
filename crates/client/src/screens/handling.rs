@@ -54,8 +54,10 @@ impl Screens {
         input: &InputState,
         mut game: Option<&mut Gameplay>,
         content: &Content,
+        frame_seconds: f32,
     ) -> Handled {
         self.device = input.last_device();
+        let steps = self.held_steps(input, frame_seconds);
         self.refresh_labels(content);
         if self.in_world && self.stack.is_empty() {
             if let Some(game) = game.as_deref_mut().filter(|g| g.cinematic.is_some()) {
@@ -80,10 +82,10 @@ impl Screens {
             self.handle_keyboard(input, game.as_deref_mut(), content);
         } else if self.editing.is_some() {
             if self.handle_typing(input, game.as_deref_mut(), content) {
-                self.handle_menu(input, game.as_deref_mut(), content);
+                self.handle_menu(input, game.as_deref_mut(), content, steps);
             }
         } else {
-            self.handle_menu(input, game.as_deref_mut(), content);
+            self.handle_menu(input, game.as_deref_mut(), content, steps);
         }
         let (actions, clip) = self.apply_effects();
         match clip {
@@ -107,11 +109,13 @@ impl Screens {
         }
     }
 
+    /// `steps`: ← → for the focused value this frame (taps and held repeats).
     fn handle_menu(
         &mut self,
         input: &InputState,
         mut game: Option<&mut Gameplay>,
         content: &Content,
+        steps: i32,
     ) {
         if self.capture_binding(input) {
             return;
@@ -137,9 +141,7 @@ impl Screens {
         let slider = focus
             .clone()
             .filter(|f| matches!(f.kind, HitKind::Slider | HitKind::Option));
-        let step = i32::from(input.just_pressed(Action::MenuRight))
-            - i32::from(input.just_pressed(Action::MenuLeft));
-        match (&slider, step) {
+        match (&slider, steps) {
             (Some(slider), step) if step != 0 => {
                 self.with_model(game.as_deref_mut(), content, |m| {
                     m.adjust(&slider.id, slider.index, step, None)
@@ -147,16 +149,22 @@ impl Screens {
             }
             _ => self.navigate_or_scroll(input, game.as_deref_mut(), content),
         }
-        self.scroll_and_tabs(input, game.as_deref_mut(), content);
-        self.drag_slider(input, cursor, game.as_deref_mut(), content);
+        self.scroll_and_tabs(input, cursor, game.as_deref_mut(), content);
+        self.drag_value(input, cursor, game.as_deref_mut(), content);
         let clicked = input
             .just_pressed(Action::Attack)
-            .then(|| cursor.and_then(|(x, y)| self.hit_at(x, y)))
+            .then(|| cursor.and_then(|at| Some((at, self.hit_at(at.0, at.1)?))))
             .flatten();
+        if let Some((at, hit)) = &clicked {
+            self.focus = Some(hit.clone());
+            if self.click_value(game.as_deref_mut(), content, hit, *at) {
+                return;
+            }
+        }
+        let clicked = clicked.map(|(_, hit)| hit);
         let target = clicked.or(focus.filter(|_| input.just_pressed(Action::MenuConfirm)));
         if let Some(hit) = target {
-            let fraction = cursor.map(|(x, _)| (x - hit.rect.x) as f32 / hit.rect.w.max(1) as f32);
-            self.activate(input, game.as_deref_mut(), content, &hit, fraction);
+            self.activate(input, game.as_deref_mut(), content, &hit);
         }
         if let Some(focus) = self.focus.clone() {
             for (slot, action) in Action::HOTBAR.into_iter().enumerate() {
@@ -201,7 +209,6 @@ impl Screens {
         game: Option<&mut Gameplay>,
         content: &Content,
         hit: &Hit,
-        fraction: Option<f32>,
     ) {
         self.focus = Some(hit.clone());
         match hit.kind {
@@ -211,12 +218,7 @@ impl Screens {
             }
             HitKind::TextField => self.editing = Some(hit.id.clone()),
             HitKind::Slider => {
-                let by_mouse = input.just_pressed(Action::Attack);
-                if by_mouse {
-                    self.dragging = Some(hit.clone());
-                }
-                let fraction = fraction.filter(|_| by_mouse);
-                self.with_model(game, content, |m| m.adjust(&hit.id, hit.index, 1, fraction));
+                self.with_model(game, content, |m| m.adjust(&hit.id, hit.index, 1, None));
             }
             _ => {
                 self.with_model(game, content, |m| m.activate(&hit.id, hit.index));
@@ -227,11 +229,12 @@ impl Screens {
     fn scroll_and_tabs(
         &mut self,
         input: &InputState,
+        cursor: Option<(i32, i32)>,
         mut game: Option<&mut Gameplay>,
         content: &Content,
     ) {
         let steps = input.scroll_steps();
-        if steps != 0 {
+        if steps != 0 && !self.wheel_value(game.as_deref_mut(), content, cursor, steps) {
             let id = self
                 .focus
                 .as_ref()
@@ -248,28 +251,6 @@ impl Screens {
                     let current = m.selected("tabs").unwrap_or(0) as i32;
                     m.activate("tabs", (current + tabs).rem_euclid(count) as usize);
                 }
-            });
-        }
-    }
-
-    fn drag_slider(
-        &mut self,
-        input: &InputState,
-        cursor: Option<(i32, i32)>,
-        game: Option<&mut Gameplay>,
-        content: &Content,
-    ) {
-        if !input.is_held(Action::Attack) {
-            self.dragging = None;
-            return;
-        }
-        let Some((drag, (x, _))) = self.dragging.clone().zip(cursor) else {
-            return;
-        };
-        if drag.kind == HitKind::Slider && input.cursor_moved() {
-            let fraction = (x - drag.rect.x) as f32 / drag.rect.w.max(1) as f32;
-            self.with_model(game, content, |m| {
-                m.adjust(&drag.id, drag.index, 0, Some(fraction))
             });
         }
     }
@@ -362,7 +343,7 @@ impl Screens {
         }
     }
 
-    fn hit_at(&self, x: i32, y: i32) -> Option<Hit> {
+    pub(super) fn hit_at(&self, x: i32, y: i32) -> Option<Hit> {
         self.hits
             .iter()
             .rev()

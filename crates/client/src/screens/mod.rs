@@ -11,6 +11,7 @@ mod keyboard;
 mod menu;
 mod options;
 mod pause;
+mod pointer;
 mod system;
 mod title;
 mod worlds;
@@ -22,7 +23,7 @@ use crate::gameplay::Gameplay;
 use crate::input::{Action, InputDevice, KeyNames};
 use crate::render::{Gpu, UiPipeline};
 use crate::settings::{FontChoice, Settings};
-use crate::ui::{Hit, Rect, ScreenModel, UiAssets, UiAtlas};
+use crate::ui::{Hit, HoldRepeat, Rect, ScreenModel, UiAssets, UiAtlas};
 use console::ConsoleLog;
 pub use creation::GenerationSources;
 use draw::key_rows;
@@ -67,6 +68,8 @@ pub struct Screens {
     icons: Vec<Option<Rect>>,
     /// Slider or HUD element followed by the mouse while the button is held.
     dragging: Option<Hit>,
+    /// ← → held on a value.
+    repeat: HoldRepeat,
     last_cursor: Option<(i32, i32)>,
     effects: Vec<Effect>,
     /// Settings changed but not written yet (see `handle`).
@@ -121,6 +124,7 @@ impl Screens {
             worlds: Vec::new(),
             icons: Vec::new(),
             dragging: None,
+            repeat: HoldRepeat::default(),
             last_cursor: None,
             effects: Vec::new(),
             settings_dirty: false,

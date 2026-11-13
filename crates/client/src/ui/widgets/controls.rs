@@ -1,5 +1,6 @@
 use super::text::{draw_rich, rich_width};
 use super::{Draw, HitKind, Node, Rect};
+use crate::ui::pointer::SLIDER_KNOB;
 
 pub(super) fn label(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     let Node::Label {
@@ -235,7 +236,7 @@ pub(super) fn slider(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     let (text, shadow) = (theme.text.0, theme.text_shadow.0);
     d.painter.fill(rect, field);
     d.painter.bevel(rect, dark, light);
-    let knob_w = 6;
+    let knob_w = SLIDER_KNOB;
     let travel = rect.w.saturating_sub(knob_w) as f32;
     let knob_x = rect.x + (value.clamp(0.0, 1.0) * travel).round() as i32;
     d.painter

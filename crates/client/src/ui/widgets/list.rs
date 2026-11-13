@@ -1,5 +1,7 @@
 use super::{Draw, HitKind, Node, Rect};
 use crate::ui::model::Tone;
+use crate::ui::pointer::row_zones;
+use strata_core::texture::Rgba;
 
 /// Rows of `row_height` pixels: icon on the left (16:9), title and detail beside it.
 pub(super) fn list(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
@@ -100,24 +102,35 @@ pub(super) fn options(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         d.painter.fill(line, fill);
         let text_y = y + (*row_height as i32 - d.painter.line_height() as i32) / 2;
         d.painter.text(line.x + 4, text_y, &row.label, text, shadow);
+        let zones = row_zones(line);
         let value_width = d.painter.text_width(&row.value) as i32;
-        let value_x = line.x + line.w as i32 - value_width - 4;
+        let mut value_x = line.x + line.w as i32 - value_width - 4;
         if let Some(gauge) = row.gauge {
-            let bar_w = (line.w / 3).max(10);
-            let bar = Rect::new(
-                line.x + line.w as i32 - bar_w as i32 - 2,
-                y + 1,
-                bar_w,
-                row_height - 3,
-            );
+            let bar = zones.gauge;
             let filled = (gauge.clamp(0.0, 1.0) * bar.w as f32).round() as u32;
             d.painter.fill(bar, field);
             d.painter
                 .fill(Rect::new(bar.x, bar.y, filled, bar.h), theme_bar(d));
+        } else if row.arrows {
+            arrows(d, zones.previous, zones.next, value_color);
+            value_x = zones.value.center().0 - value_width / 2;
         }
         d.painter
             .text(value_x, text_y, &row.value, value_color, shadow);
         d.hit(id, index, line, HitKind::Option);
+    }
+}
+
+/// Small ‹ › triangles, 3 pixels wide, centred in their click areas.
+fn arrows(d: &mut Draw<'_, '_>, previous: Rect, next: Rect, color: Rgba) {
+    for (area, left) in [(previous, true), (next, false)] {
+        let (cx, cy) = area.center();
+        for column in 0..3 {
+            let height = if left { 1 + 2 * column } else { 5 - 2 * column };
+            let x = cx - 1 + column;
+            d.painter
+                .fill(Rect::new(x, cy - height / 2, 1, height as u32), color);
+        }
     }
 }
 

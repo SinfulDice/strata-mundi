@@ -126,10 +126,9 @@ impl GenerationEditor {
     /// Clicked or dragged to `fraction` of its width: the nearest step.
     pub fn set_fraction(&mut self, slider: Slider, fraction: f32) {
         let range = slider.range();
-        let raw =
-            *range.start() as f32 + fraction.clamp(0.0, 1.0) * (range.end() - range.start()) as f32;
-        let snapped = ((raw / slider.step() as f32).round() as i32) * slider.step();
-        self.set(slider, snapped);
+        let offset = fraction.clamp(0.0, 1.0) * (range.end() - range.start()) as f32;
+        let steps = (offset / slider.step() as f32).round() as i32;
+        self.set(slider, range.start() + steps * slider.step());
     }
 
     fn set(&mut self, slider: Slider, value: i32) {
