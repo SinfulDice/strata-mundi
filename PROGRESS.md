@@ -93,7 +93,7 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## Blocages
 
-- Envoi des tags refusé (HTTP 403) par la passerelle Git de la session cloud ; les branches passent. Contournement : l'utilisateur pousse le tag de fin de version.
+- Envoi des tags refusé (HTTP 403) par la passerelle Git de la session cloud ; les branches passent. Contournement : l'utilisateur pousse le tag de fin de version. Encore le cas pour `v0.2.1` le 13/11/2026 (connexion coupée par la passerelle à chaque essai) : tag créé localement seulement.
 
 ## En attente de l'utilisateur
 
