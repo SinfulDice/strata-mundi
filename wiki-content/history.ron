@@ -4,6 +4,7 @@
     versions: [
         (id: "0.1.0", date: "2026-10-29"),
         (id: "0.2.0", date: "2026-11-11"),
+        (id: "0.2.1", date: "2026-11-13"),
     ],
     entries: {
         "blocks/strata/bedrock": [(version: "0.1.0", change: Added)],
@@ -37,7 +38,10 @@
         "blocks/strata/oak_log": [(version: "0.1.0", change: Added)],
         "blocks/strata/oak_planks": [(version: "0.1.0", change: Added)],
         "blocks/strata/lava": [(version: "0.2.0", change: Added)],
-        "blocks/strata/lantern": [(version: "0.2.0", change: Added)],
+        "blocks/strata/lantern": [
+            (version: "0.2.0", change: Added),
+            (version: "0.2.1", change: Changed(fr: "Se suspend aussi sous un bloc, et tombe si on casse ce bloc.", en: "Can also hang under a block, and drops if that block is broken.", lol: "CAN ALSO HANG UNDR A BLOK, AN FALLZ IF U BREAK TEH BLOK.")),
+        ],
         "blocks/strata/sand": [(version: "0.1.0", change: Added)],
         "blocks/strata/sandstone": [(version: "0.1.0", change: Added)],
         "blocks/strata/snow_block": [(version: "0.1.0", change: Added)],
@@ -73,7 +77,10 @@
         "blocks/strata/mushroom_stem": [(version: "0.2.0", change: Added)],
         "blocks/strata/vine": [(version: "0.2.0", change: Added)],
         "blocks/strata/red_sand": [(version: "0.2.0", change: Added)],
-        "blocks/strata/torch": [(version: "0.2.0", change: Added)],
+        "blocks/strata/torch": [
+            (version: "0.2.0", change: Added),
+            (version: "0.2.1", change: Changed(fr: "Se pose aussi contre un mur, et tombe si on casse ce mur.", en: "Can also be placed against a wall, and drops if that wall is broken.", lol: "CAN ALSO STIK ON WALLZ, AN FALLZ IF U BREAK TEH WALL.")),
+        ],
         "blocks/strata/fire": [(version: "0.2.0", change: Added)],
         "blocks/strata/portal": [(version: "0.2.0", change: Added)],
         "blocks/strata/bookshelf": [(version: "0.2.0", change: Added)],
@@ -134,7 +141,10 @@
             )),
         ],
         "mechanics/fire": [(version: "0.2.0", change: Added)],
-        "mechanics/fluids": [(version: "0.2.0", change: Added)],
+        "mechanics/fluids": [
+            (version: "0.2.0", change: Added),
+            (version: "0.2.1", change: Changed(fr: "L'eau file vers le trou le plus proche (4 blocs au plus) au lieu de s'étaler partout ; portée de 7 blocs.", en: "Water heads for the nearest hole (4 blocks at most) instead of spreading everywhere; it reaches 7 blocks.", lol: "WATUR GOEZ TO TEH CLOSEST HOLE (4 BLOKZ MAX) INSTED OV SPREDDIN EVRYWAER; IT GOEZ 7 BLOKZ.")),
+        ],
         "mechanics/game-modes": [(version: "0.1.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
         "mechanics/sounds": [
@@ -144,6 +154,7 @@
                 en: "Calm and rare music, composed by the game: Terra's theme, adjustable frequency.",
                 lol: "CALM RAER MUZIK, GAEM MAEKZ IT: TERRA THEEM, U PICK HOW OFTEN.",
             )),
+            (version: "0.2.1", change: Changed(fr: "Tous les sons sont prêts dès le chargement ; la lave s'entend, le vent est plus doux ; curseur Ambiances.", en: "Every sound is ready from loading; lava can be heard, the wind is softer; Ambiences slider.", lol: "ALL TEH NOIZEZ R REDY WEN LOADIN; U CAN HEER TEH HOT JUICE, TEH WINDZ R SOFTR; BAKGROUND NOIZEZ SLIDR.")),
         ],
         "mechanics/world-generation": [
             (version: "0.1.0", change: Added),
@@ -162,6 +173,7 @@
                 en: "World types (normal, flat, amplified, single biome, archipelago), generation editor with a map and shareable codes.",
                 lol: "KINDZ OV WURLD (NORMUL, PANCAEK, SUPER BUMPY, WUN BIOME, ILANDZ), WURLD MAKER WIF TINY MAP AN CODEZ FOR FRENZ.",
             )),
+            (version: "0.2.1", change: Changed(fr: "Biomes deux à trois fois plus grands ; un biome chaud et sec ne touche plus un biome enneigé ; ravins rares, étroits, aux parois de roche nue.", en: "Biomes two to three times larger; a hot and dry biome no longer touches a snowy one; rare, narrow ravines with bare rock walls.", lol: "BIOMZ 2 OR 3 TIMEZ BIGGR; HOT DRY BIOMZ NEVR TUCH SNOWY WONZ; RARE SKINNY BIG CRAKZ WIF BARE ROCK WALLZ.")),
         ],
     },
 )
