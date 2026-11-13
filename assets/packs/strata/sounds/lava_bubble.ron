@@ -2,7 +2,8 @@
 Sound(
     category: Blocks,
     subtitle: "subtitle-lava-bubbles",
-    volume: 0.45,
+    volume: 0.7,
+    range: 24.0,
     pitch: (0.85, 1.1),
     variants: 4,
     duration: 1.2,

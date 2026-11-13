@@ -1,7 +1,7 @@
 // Wind over open land, looping: a steady breath with slow gusts and a faint whistle.
 Sound(
     category: Ambient,
-    volume: 0.5,
+    volume: 0.3,
     variants: 1,
     duration: 9.0,
     range: 256.0,

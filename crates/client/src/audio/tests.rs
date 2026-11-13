@@ -19,7 +19,7 @@ pub(super) fn content() -> &'static Content {
     })
 }
 
-fn sound_id(name: &str) -> SoundId {
+pub(super) fn sound_id(name: &str) -> SoundId {
     let id = Identifier::new("strata", name).unwrap();
     content().sounds.registry.key(&id).unwrap()
 }

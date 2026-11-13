@@ -2,7 +2,7 @@
 Sound(
     category: Ambient,
     subtitle: "subtitle-wind",
-    volume: 0.4,
+    volume: 0.22,
     pitch: (0.9, 1.1),
     variants: 3,
     duration: 7.0,

@@ -4,6 +4,8 @@
 //! same, silently (and no music is rendered).
 
 mod ambience;
+#[cfg(test)]
+mod ambience_tests;
 mod bank;
 #[cfg(test)]
 mod bank_tests;

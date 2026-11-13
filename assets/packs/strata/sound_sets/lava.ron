@@ -1,5 +1,6 @@
-// Sounds of lava: it bubbles now and then.
+// Sounds of lava: its surface bubbles (chance of a surface block picked around the player;
+// on the shore of a lake, about one bubble a second).
 SoundSet(
     ambient: "strata:lava_bubble",
-    ambient_chance: 0.04,
+    ambient_chance: 0.3,
 )

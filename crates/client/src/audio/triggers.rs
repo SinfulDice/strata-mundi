@@ -177,7 +177,9 @@ const AMBIENT_SAMPLES: f32 = 300.0;
 const AMBIENT_REACH: (i32, i32) = (12, 8);
 const MAX_AMBIENT_PER_SECOND: f32 = 4.0;
 
-/// Lava bubbling, fire crackling: blocks picked at random around the listener.
+/// Lava bubbling, fire crackling: blocks picked at random around the listener. Only the
+/// top of a body sounds (a lava block under another one is silent): bubbles pop at the
+/// surface, where they are heard.
 #[derive(Debug, Default)]
 pub struct AmbientBlocks {
     samples_due: f32,
@@ -211,6 +213,10 @@ impl AmbientBlocks {
             let Some(sound) = set.ambient else {
                 continue;
             };
+            let above = table.get(world.block_at(BlockPos::new(pos.x, pos.y + 1, pos.z)));
+            if above.set.ambient == Some(sound) {
+                continue;
+            }
             if self.allowance >= 1.0 && rng.unit() < set.ambient_chance {
                 self.allowance -= 1.0;
                 cues.push(Cue {
