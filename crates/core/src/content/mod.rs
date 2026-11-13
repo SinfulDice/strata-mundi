@@ -5,6 +5,7 @@ mod block;
 mod entity;
 mod fire;
 mod fluid;
+mod hit_box;
 mod item;
 mod liquid;
 mod particle;
@@ -15,14 +16,13 @@ mod tint;
 mod turned;
 
 pub use attached::{AttachedSides, Attachment};
-pub use block::{
-    Axis, Block, BlockDef, BlockTextures, Face, HitBox, Orientation, Placement, RenderKind, Support,
-};
+pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
 pub use entity::{EntityDef, EntityType, ModelBox};
 pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
 pub use fluid::{
     Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SLOPE_SEARCH, MAX_SPREAD,
 };
+pub use hit_box::{HitBox, Support};
 pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
 pub use particle::{

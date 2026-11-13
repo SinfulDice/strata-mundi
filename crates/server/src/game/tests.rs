@@ -246,12 +246,21 @@ fn torches_and_lanterns_take_the_variant_of_the_clicked_face() {
         assert!(w.loader.set_block(cell, BlockId::AIR));
         wait(&mut w, 2);
     }
+    let wall = cell.neighbour(Face::West);
     let wall_torch = block(&w.content, "strata:torch__west");
     assert!(
         w.game
-            .place_block(&mut w.loader, cell, Face::East, wall_torch)
+            .place_block(&mut w.loader, wall, Face::East, wall_torch)
             .is_empty(),
         "variants have no item"
+    );
+    wait(&mut w, 2);
+    let torch = block(&w.content, "strata:torch");
+    let placed = w.game.place_block(&mut w.loader, wall, Face::East, torch);
+    assert_eq!(
+        placed,
+        vec![(cell, wall_torch)],
+        "the same click with the item"
     );
 }
 

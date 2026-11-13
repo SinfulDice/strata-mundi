@@ -76,10 +76,12 @@ fn a_torch_needs_a_support() {
         variant(&world, "strata:torch", Face::Down, in_the_air),
         None
     );
-    let under_nothing = at(0, GROUND + 3, 0);
+    let mut edge = Plane::new();
+    edge.loaded = 1;
     assert_eq!(
-        variant(&world, "strata:torch", Face::North, under_nothing),
-        None
+        variant(&edge, "strata:torch", Face::West, at(0, GROUND, 0)),
+        None,
+        "the clicked wall is not loaded: no guess on another side"
     );
     assert_eq!(
         variant(&world, "strata:torch", Face::Down, at(0, GROUND, 0)),

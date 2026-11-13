@@ -25,7 +25,7 @@ pub(super) fn id(name: &str) -> BlockId {
 pub(super) struct Plane {
     pub(super) blocks: HashMap<BlockPos, BlockId>,
     pub(super) stone: BlockId,
-    loaded: i32,
+    pub(super) loaded: i32,
 }
 
 impl Plane {

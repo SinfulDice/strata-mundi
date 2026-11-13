@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use std::path::{Path, PathBuf};
-use strata_core::content::{BlockId, Content, Face, ItemKind, RenderKind, TextureId};
+use strata_core::content::{BlockId, Content, Face, HitBox, ItemKind, RenderKind, TextureId};
 use strata_core::id::Identifier;
 use strata_core::lang::LANGUAGES;
 use strata_core::pack::{PackError, PackSet};
@@ -256,7 +256,12 @@ fn torches_and_lanterns_have_one_item_and_one_variant_per_side() {
         let items = content
             .items
             .iter()
-            .filter(|(_, item_id, _)| item_id.name().starts_with(id(name).name()))
+            .filter(|(_, item_id, _)| {
+                let family = id(name);
+                item_id.namespace() == family.namespace()
+                    && (item_id.name() == family.name()
+                        || item_id.name().starts_with(&format!("{}__", family.name())))
+            })
             .count();
         assert_eq!(items, 1, "{name}");
         sides
@@ -271,4 +276,44 @@ fn torches_and_lanterns_have_one_item_and_one_variant_per_side() {
     let standing = content.blocks.key(&id("strata:lantern")).unwrap();
     let texture = |block| content.blocks.get(block).unwrap().texture(Face::North);
     assert_ne!(texture(hanging), texture(standing), "the chain shows");
+}
+
+#[test]
+fn attached_variants_are_aimed_where_they_are_drawn() {
+    let (content, _) = load(&game_packs());
+    let aim = |name: &str| {
+        let key = content.blocks.key(&id(name)).unwrap();
+        content.blocks.get(key).unwrap().hit_box().unwrap()
+    };
+    assert_eq!(aim("strata:torch"), HitBox::PLANT);
+    let hanging = aim("strata:lantern__ceiling");
+    assert_eq!(hanging.max[1], 1.0, "reaches the ceiling");
+    assert!(hanging.min[1] > 0.0);
+    for (name, axis, wall_at_max) in [
+        ("strata:torch__north", 2, false),
+        ("strata:torch__south", 2, true),
+        ("strata:torch__west", 0, false),
+        ("strata:torch__east", 0, true),
+    ] {
+        let hit = aim(name);
+        let touching = if wall_at_max {
+            hit.max[axis]
+        } else {
+            hit.min[axis]
+        };
+        let far = if wall_at_max {
+            hit.min[axis]
+        } else {
+            hit.max[axis]
+        };
+        assert_eq!(
+            touching,
+            if wall_at_max { 1.0 } else { 0.0 },
+            "{name} touches its wall"
+        );
+        assert_eq!(far, 0.5, "{name} stops at mid-block");
+        let other = 2 - axis;
+        assert!(hit.min[other] > 0.0 && hit.max[other] < 1.0, "{name}");
+        assert!((0..3).all(|i| hit.min[i] < hit.max[i]), "{name}");
+    }
 }

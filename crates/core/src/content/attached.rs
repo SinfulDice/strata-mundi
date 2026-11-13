@@ -137,11 +137,18 @@ pub(super) fn ceiling_layer(
 ) -> Option<TextureId> {
     let Placement::Attached {
         ceiling_texture: Some(texture),
+        ceiling,
         ..
     } = placement
     else {
         return None;
     };
+    if !ceiling {
+        errors.push(PackError::invalid(
+            source,
+            "`ceiling_texture` without `ceiling: true`",
+        ));
+    }
     let layer = textures.layer(texture);
     if layer.is_none() {
         errors.push(PackError::invalid(

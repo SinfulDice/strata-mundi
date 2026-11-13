@@ -112,10 +112,12 @@ impl UpdateRules {
     ) -> Option<BlockId> {
         let traits = self.traits(block);
         if let Some(attachment) = traits.attachment {
-            return attachment
-                .candidates(clicked.opposite())
-                .map(|(_, variant)| variant)
-                .find(|&variant| self.is_supported(variant, &neighbour) == Some(true));
+            for (_, variant) in attachment.candidates(clicked.opposite()) {
+                if self.is_supported(variant, &neighbour)? {
+                    return Some(variant);
+                }
+            }
+            return None;
         }
         let variant = traits
             .orientation

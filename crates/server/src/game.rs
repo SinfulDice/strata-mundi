@@ -270,10 +270,9 @@ impl Game {
             && !self.blocks_a_player(target, block)
             && variant.is_some()
             && self.take_action();
-        let block = variant.unwrap_or(block);
         let mut changes = Vec::new();
-        if allowed {
-            self.set_block(loader, target, block, &mut changes);
+        if let (true, Some(variant)) = (allowed, variant) {
+            self.set_block(loader, target, variant, &mut changes);
         }
         changes
     }
