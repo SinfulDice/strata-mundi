@@ -1,0 +1,19 @@
+// Torches and lanterns for captures (`--scene torches`): a closed cave whose walls hold
+// torches and whose ceiling holds lanterns, with a standing torch and lantern for scale.
+(
+    fills: [
+        (from: (-14, 0, -14), to: (14, 0, 14), block: "strata:bedrock"),
+        (from: (-14, 1, -14), to: (14, 15, 14), block: "strata:stone"),
+        (from: (-8, 4, -5), to: (8, 9, 5), block: "strata:air"),
+        (from: (-4, 6, -5), to: (-4, 6, -5), block: "strata:torch__north"),
+        (from: (4, 6, -5), to: (4, 6, -5), block: "strata:torch__north"),
+        (from: (-8, 6, -1), to: (-8, 6, -1), block: "strata:torch__west"),
+        (from: (8, 6, -1), to: (8, 6, -1), block: "strata:torch__east"),
+        (from: (0, 6, 5), to: (0, 6, 5), block: "strata:torch__south"),
+        (from: (-2, 9, -2), to: (-2, 9, -2), block: "strata:lantern__ceiling"),
+        (from: (2, 9, -3), to: (2, 9, -3), block: "strata:lantern__ceiling"),
+        (from: (0, 4, -4), to: (0, 4, -4), block: "strata:lantern"),
+        (from: (6, 4, -4), to: (6, 4, -4), block: "strata:torch"),
+        (from: (-5, 4, -3), to: (-5, 4, -3), block: "strata:iron_ore"),
+    ],
+)

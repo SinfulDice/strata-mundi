@@ -22,6 +22,8 @@
     (name: "boat", scene: "fluids", pos: (-6.0, 8.5, 9.5), look: (-38.0, -24.0)),
     (name: "light-cave", scene: "light", pos: (-9.5, 6.5, 0.5), look: (90.0, -12.0)),
     (name: "light-tunnel", scene: "light", pos: (-9.0, 5.6, 4.5), look: (180.0, -5.0)),
+    (name: "torches-cave", scene: "torches", pos: (0.5, 5.8, 4.0), look: (0.0, 12.0)),
+    (name: "torches-wall", scene: "torches", pos: (5.5, 6.3, 0.5), look: (-60.0, -8.0)),
     (name: "light-surface", scene: "light", pos: (-13.0, 24.0, 13.0), look: (45.0, -30.0)),
     (name: "fire-night", scene: "fire", pos: (0.5, 21.0, 9.5), look: (0.0, -18.0), time: 15000),
     (name: "fire-dusk", scene: "fire", pos: (-9.0, 19.5, 4.0), look: (60.0, -8.0), time: 12500),
