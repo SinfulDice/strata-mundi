@@ -4,7 +4,7 @@
 
 Jeu voxel sandbox inspiré de Minecraft, en Rust, moteur maison sur `wgpu` (Vulkan). Projet au long cours : privilégie toujours une base solide et extensible plutôt qu'un raccourci.
 
-**Version en cours : v0.2.1 (retours de test, validée, à faire avant la v0.3).** Le lore validé est dans `docs/lore/fondations.md` (Viator, Aedificatores, Vinculum…), le contenu chiffré dans `docs/regles/equilibrage.md`.
+**Version en cours : v0.2.1 (terminée, en attente de validation).** Le lore validé est dans `docs/lore/fondations.md` (Viator, Aedificatores, Vinculum…), le contenu chiffré dans `docs/regles/equilibrage.md`.
 
 ## Où trouver quoi
 

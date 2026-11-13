@@ -2,19 +2,15 @@
 
 ## État
 
-- **Version en cours** : v0.2.1 — Retours de test. Détail : `docs/versions/v0.2.1.md`. La v0.3 attend la fin de la v0.2.1.
-- **Jalon en cours** : 1 — Ravins plus rares et plus propres
-  - [x] J1 Ravins rares (rareté en pack), étroits, parois verticales en pierre, pas d'herbe sur les parois ni d'arbre au bord ; tests (fréquence bornée, aucune herbe sur paroi)
-  - [x] J2 Biomes 2-3× plus grands, continents massifs, règle de voisinage chaud/froid en pack, pentes ordinaires franchissables ; tests (aucun voisinage interdit, déterminisme)
-  - [x] J3 Eau façon Minecraft (recherche du bas dans un rayon de 4, portée 7, paramètres en pack) ; tests
-  - [x] J4 Pose de blocs fiable (aucun clic perdu, prédiction client) ; tests
-  - [x] J5 Torches murales, lanternes suspendues (variantes, soutien) ; tests
-  - [x] J6 Sons (variantes au chargement, lave audible, vent plus doux, curseur Ambiances) ; tests
-  - [x] J7 Curseurs d'un clic, glisser, molette, répétition à l'appui maintenu ; tests
-  - [ ] J8 Clôture (captures avant/après, explications, rapport, tag `v0.2.1`)
-- **Dernière session** : 11/11/2026
+- **Version en cours** : v0.2.1 — Retours de test, **terminée** (13/11/2026), en attente de l'utilisateur. Détail et rapport : `docs/versions/v0.2.1.md`. La v0.3 attend sa validation.
+  - [x] J1 Ravins rares · [x] J2 Biomes plus grands, bandes de chaleur · [x] J3 Eau façon Minecraft · [x] J4 Pose de blocs fiable · [x] J5 Torches murales, lanternes suspendues · [x] J6 Sons · [x] J7 Curseurs · [x] J8 Clôture (captures, rapport, version 0.2.1, tag `v0.2.1` à pousser par l'utilisateur)
+- **Dernière session** : 13/11/2026
 
 ## Fait
+
+### v0.2.1
+
+- v0.2.1 terminée : détail dans `docs/versions/v0.2.1.md` (rapport de fin de version).
 
 ### v0.2
 
@@ -51,28 +47,28 @@
 | 11/11/2026 | PC utilisateur (i5-1235U, Iris Xe intégré) | ultra | 61,6 | 30,6 | 291 Mio | `perf-reports/2026-11-11-sinfuldice-njx0pu-ultra-flyover.md` |
 | 11/11/2026 | PC utilisateur, 4 cœurs (`taskset`) | DS | 343,5 | 48,9 | 179 Mio | `perf-reports/2026-11-11-sinfuldice-njx0pu-ds-flyover.md` (GPU ~3× plus puissant que le N100 : pas une mesure DS) |
 
-Benchmarks CPU (cloud, `cargo bench --workspace --bench '*'`), dernière valeur de chaque opération ; historique dans les rapports `docs/versions/v0.X.md` :
+Benchmarks CPU (cloud, `cargo bench --workspace --bench '*'`), dernière valeur de chaque opération ; historique dans les rapports `docs/versions/v0.X.md`. La VM a ralenti après son redémarrage du 13/11 : la v0.2.0 remesurée ce jour-là sert de référence (tableau complet dans le rapport de la v0.2.1).
 
 | Date | Opération | Temps | Source |
 |---|---|---|---|
-| 11/11/2026 | Génération d'une colonne (plaine / montagne / caverne / gisement ; colonnes déplacées par la v0.2.1 J2) | 1,81 / 2,19 / 1,91 / 1,44 ms | `generate_*column` |
-| 11/11/2026 | Carte des biomes d'une colonne | 0,19 ms | `biome_map_column` |
-| 11/11/2026 | Lumière d'une colonne générée / poser puis casser une torche | 0,78 / 0,44 ms | `light_*` |
-| 11/11/2026 | Maillage : section de surface / damier / eau qui coule / frontière de biomes | 0,26 / 2,07 / 0,35 / 0,26 ms | `mesh_section_*` |
-| 11/11/2026 | Teintes d'une colonne / voisinage | 8 / 42 µs | `column_tints_blend`, `neighborhood_build` |
-| 12/11/2026 | Grand écoulement (lac par une brèche de 32 blocs), avant / après v0.2.1 J3 | 5,57 / 6,05 ms | `fluids/large_flow_settles` |
-| 11/11/2026 | Incendie de plaine, 40 ticks | 33,7 ms | `fire/prairie_fire_40_ticks` |
-| 11/11/2026 | Particules, une image à 2 000 | 0,38 ms | `particles/frame_2000` |
-| 11/11/2026 | Mixage audio d'un bloc de 11,6 ms, avancé / stéréo (forte variance de la VM : le code du jalon 10 donne la même valeur) | 1,1 ms / 12-21 µs | `audio/mix_block_32_voices_*` |
+| 13/11/2026 | Génération d'une colonne (plaine / montagne / caverne / gisement) | 2,10 / 2,50 / 1,95 / 1,66 ms | `generate_*column` |
+| 13/11/2026 | Carte des biomes d'une colonne | 0,21 ms | `biome_map_column` |
+| 13/11/2026 | Lumière d'une colonne générée / poser puis casser une torche | 1,04 / 0,50 ms | `light_*` |
+| 13/11/2026 | Maillage : section de surface / damier / eau qui coule / frontière de biomes | 0,32 / 2,35 / 0,45 / 0,28 ms | `mesh_section_*` |
+| 13/11/2026 | Teintes d'une colonne / voisinage | 9,6 / 49 µs | `column_tints_blend`, `neighborhood_build` |
+| 13/11/2026 | Grand écoulement (lac par une brèche de 32 blocs) | 7,30 ms (v0.2.0 le même jour : 6,48) | `fluids/large_flow_settles` |
+| 13/11/2026 | Incendie de plaine, 40 ticks | 42,0 ms | `fire/prairie_fire_40_ticks` |
+| 13/11/2026 | Particules, une image à 2 000 | 0,45 ms | `particles/frame_2000` |
+| 13/11/2026 | Mixage audio d'un bloc de 11,6 ms, avancé / stéréo | 0,81 ms / 26 µs | `audio/mix_block_32_voices_*` |
 | 10/11/2026 | Rendu d'un morceau de musique (release) ; fichier de cache | 0,14 à 0,32 s ; 8 à 15 Mo | `strata --render-music` (D055) |
 
 Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 | Date | Profil | Mesure | Valeur | Source |
 |---|---|---|---|---|
-| 11/11/2026 | DS | Pic de mémoire (RSS), vol de 2 min | 241 Mio (cible ≤ 2 Go) | `perf-reports/2026-11-11-cloud-ds-flyover.md` |
-| 11/11/2026 | DS | Lancement → carte graphique prête | 1,1 s (cible < 5 s) | journal |
-| 11/11/2026 | DS | Chargement initial du monde (distance 6, disque demandé de 8) | ≈ 9 s d'après le journal (cible < 10 s) ; 10,9 s en durée totale du processus | journal |
+| 13/11/2026 | DS | Pic de mémoire (RSS), vol de 2 min | 301 Mio (cible ≤ 2 Go) | `perf-reports/2026-11-13-cloud-ds-flyover.md` |
+| 13/11/2026 | DS | Lancement → carte graphique prête | 0,5 s (cible < 5 s) | journal |
+| 13/11/2026 | DS | Chargement initial du monde | ≈ 10,3 s d'après le journal (cible < 10 s ; VM plus lente ce jour-là) | journal |
 | 10/11/2026 | Tous | Pic RSS de `--render-music` ; en jeu | 74 Mio ; < 1 Mio | `/proc/<pid>/status` (D055) |
 
 ## Limitations connues
@@ -87,13 +83,13 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 - Horodatage GPU indisponible sur lavapipe (« n/d » dans les rapports cloud).
 - Réglage sans système : distance de simulation (pas encore d'entités simulées).
 - Console : pas de saisie à la manette (règle du projet : « console exceptée ») ; `/gamemode survival` répond que la survie arrive en v0.3.
-- Wiki : images en PNG (pas de WebP sans dépendance C)  ; le biome rivière n'a pas de vue (aucune rivière près de l'origine pour `--render-biomes`).
+- Wiki : images en PNG (pas de WebP sans dépendance C).
 - Lumière : un bloc changé copie la colonne entière (`Arc::make_mut`, 1 fois par colonne et par image) pour le thread de lumière ; la courbe de lumière est calculée par fragment dans le shader (une table serait moins chère). Une colonne renvoyée laisse chez ses voisines la lumière de ses anciens blocs.
 - Sons : verre, lave et vent synthétisés à faire écouter ; pas de cris d'oiseaux (repli CC0 possible avec l'accord de l'utilisateur).
 
 ## À surveiller
 
-- DS (cloud, lavapipe) : chargement initial ≈ 9 s (cible < 10 s, de justesse) : le client demande sa distance + 2 (disque de rayon 8 au lieu de 6, ~1,8 fois plus de colonnes) ; en cloud le rendu logiciel prend du processeur à la génération. À remesurer sur PC ; piste si besoin : charger d'abord le disque dessiné.
+- DS (cloud, lavapipe) : chargement initial ≈ 10,3 s le 13/11 (≈ 9 s le 11/11 ; cible < 10 s, VM plus lente ce jour-là) : le client demande sa distance + 2 (disque de rayon 8 au lieu de 6, ~1,8 fois plus de colonnes) ; en cloud le rendu logiciel prend du processeur à la génération. À remesurer sur PC ; piste si besoin : charger d'abord le disque dessiné.
 
 ## Blocages
 
@@ -101,6 +97,8 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## En attente de l'utilisateur
 
+- **Pousser le tag** `v0.2.1` (refus 403 en cloud) : `git fetch origin && git tag -a v0.2.1 -m "v0.2.1" origin/main && git push origin v0.2.1`.
+- **Essayer la v0.2.1 en jeu** (ravins, biomes, eau, pose rapide, torches et lanternes, sons, curseurs ; molette sur les listes de choix à vérifier) ; écouter lave et vent.
+- **Mesures FPS sur PC** (ultra et DS sur 4 cœurs) pour fermer le critère de performances : commandes dans le rapport de la v0.2.1.
+- **Historique Git** : 52 Mo de musique commités par erreur puis retirés restent dans l'historique ; le garder ou le réécrire (irréversible) : à décider.
 - Repli CC0 pour les sons : reporté à plus tard (l'utilisateur, 11/11/2026 : les sons conviennent pour l'instant).
-- Retester la v0.2.1 en jeu à sa fin.
-
