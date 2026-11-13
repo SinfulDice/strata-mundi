@@ -9,7 +9,7 @@
   - [x] J3 Eau façon Minecraft (recherche du bas dans un rayon de 4, portée 7, paramètres en pack) ; tests
   - [x] J4 Pose de blocs fiable (aucun clic perdu, prédiction client) ; tests
   - [x] J5 Torches murales, lanternes suspendues (variantes, soutien) ; tests
-  - [ ] J6 Sons (variantes au chargement, lave audible, vent plus doux, curseur Ambiances) ; tests
+  - [x] J6 Sons (variantes au chargement, lave audible, vent plus doux, curseur Ambiances) ; tests
   - [ ] J7 Curseurs d'un clic, glisser, molette, répétition à l'appui maintenu ; tests
   - [ ] J8 Clôture (captures avant/après, explications, rapport, tag `v0.2.1`)
 - **Dernière session** : 11/11/2026

@@ -7,7 +7,7 @@ Tous les sons du jeu sont **fabriqués par le jeu lui-même** à partir de recet
 - **Pas** : leur son dépend du bloc sous les pieds (pierre, terre, herbe, sable, gravier, neige, bois, verre et glace, feuilles, métal) et leur rythme de la vitesse : on entend courir.
 - **Blocs cassés et posés** : chaque matière a les siens ; le verre se brise en éclats.
 - **Eau** : un plouf quand on y tombe, des brassées quand on nage.
-- **Lave** : elle bouillonne de temps en temps.
+- **Lave** : sa surface bouillonne ; au bord d'un lac de lave, on l'entend à peu près chaque seconde.
 - **Feu** : il crépite.
 
 Les sons viennent **de leur position** : plus faibles au loin, à gauche ou à droite selon l'endroit où l'on regarde, un peu étouffés quand ils viennent de derrière.
@@ -16,11 +16,11 @@ Les sons viennent **de leur position** : plus faibles au loin, à gauche ou à d
 
 Chaque lieu a son fond sonore, qui se mêle doucement au suivant quand on change de biome :
 
-- **Plaines et prairies** : le vent, plus fort en hauteur, avec une rafale de temps en temps.
+- **Plaines et prairies** : un vent léger, un peu plus fort en hauteur, avec une rafale de loin en loin.
 - **Forêts** : les feuilles qui bruissent.
 - **Jungle** : feuilles et insectes, plus bruyants la nuit.
 - **Marais** : la nuit, insectes et grenouilles.
-- **Montagnes et neige** : un vent fort, très fort près des sommets.
+- **Montagnes et neige** : le vent, plus fort près des sommets, et quelques rafales.
 - **Mer, océan et plages** : les vagues, qu'on entend déjà depuis la terre proche.
 - **Désert et badlands** : un vent sec et du sable soulevé.
 - **Sous terre** : un grondement sourd et des gouttes qui tombent au loin.
@@ -35,7 +35,7 @@ De temps en temps, un **morceau calme** s'élève : du piano sur des accords dou
 
 ## Réglages
 
-Onglet **Son** des options : volume général, puis volumes des **blocs**, de l'**ambiance** et de la **musique**, que les préréglages ne changent pas, et la **fréquence de la musique** (*rare*, *normale* ou *souvent*) ; un volume de musique à 0 la coupe. **Audio spatial** : *avancé* (écho et sons étouffés) ou *stéréo simple* (distance et gauche/droite seulement, un peu moins de calcul) ; les préréglages **DS** et **très bas** passent en stéréo simple. Sans carte son, le jeu tourne normalement, en silence.
+Onglet **Son** des options : volume général, puis volumes des **blocs** (pas, casse, pose, eau, lave, feu), des **ambiances** (fonds sonores des lieux : vent, feuilles, vagues, insectes, gouttes) et de la **musique**, que les préréglages ne changent pas, et la **fréquence de la musique** (*rare*, *normale* ou *souvent*) ; un volume de musique à 0 la coupe. **Audio spatial** : *avancé* (écho et sons étouffés) ou *stéréo simple* (distance et gauche/droite seulement, un peu moins de calcul) ; les préréglages **DS** et **très bas** passent en stéréo simple. Sans carte son, le jeu tourne normalement, en silence.
 
 ## Sous-titres
 

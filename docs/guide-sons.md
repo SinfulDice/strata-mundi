@@ -25,12 +25,12 @@ SoundSet(
     enter: "strata:water_splash",    // tomber dedans (liquides)
     swim: "strata:swim",             // nager dedans (liquides)
     ambient: "strata:lava_bubble",   // le bloc fait du bruit tout seul (lave, feu)
-    ambient_chance: 0.05,            // chance quand le bloc est tiré au sort autour du joueur
+    ambient_chance: 0.3,             // chance quand le bloc est tiré au sort (défaut 0.05)
     density: 1.0,                    // ce qu'il étouffe des sons qui le traversent, 0 à 1
 )
 ```
 
-Les blocs voisins du joueur sont tirés au sort quelques centaines de fois par seconde ; au plus 4 sons d'ambiance de blocs démarrent par seconde.
+Les blocs voisins du joueur (±12 blocs à l'horizontale, ±8 en hauteur) sont tirés au sort 300 fois par seconde ; au plus 4 sons d'ambiance de blocs démarrent par seconde. Seul le **dessus** d'une masse sonne (un bloc sous un bloc au même son ambiant est muet) et le son part juste au-dessus du bloc : une bulle de lave n'est pas étouffée par la lave. Ordre de grandeur : avec `ambient_chance: 0.3` (lave de `strata`), le bord d'un lac de 12 × 12 donne environ une bulle par seconde ; prévoir une portée (`range`) de 24 blocs pour entendre tout ce qui est tiré.
 
 ## Une recette
 
@@ -52,7 +52,7 @@ Sound(
 )
 ```
 
-Un couple `(a, b)` est une **plage** : chaque variante tire sa valeur entre les deux. Les variantes sont fabriquées la première fois qu'elles sont jouées, puis gardées en mémoire ; la même recette donne toujours les mêmes variantes. Une lecture ne rejoue jamais la variante précédente.
+Un couple `(a, b)` est une **plage** : chaque variante tire sa valeur entre les deux. Toutes les variantes de tous les sons sont fabriquées au chargement, en tâche de fond (les plus courtes d'abord), puis gardées en mémoire (~20 Mo pour `strata`) ; un son demandé avant d'être prêt part dès qu'il l'est s'il a moins de 100 ms de retard ; la même recette donne toujours les mêmes variantes. Une lecture ne rejoue jamais la variante précédente.
 
 Les couches sont additionnées, puis le tout est ramené à la crête `volume` et adouci à la fin.
 
@@ -78,16 +78,16 @@ Les valeurs hors limites sont ramenées dans les limites et signalées dans le j
 Une ambiance (`ambiences/<nom>.ron`) dit ce qu'on entend dans un groupe de biomes, ou sous terre :
 
 ```ron
-// Plaines : vent qui forcit en altitude, une rafale de temps en temps.
+// Plaines : vent qui forcit en altitude, une rafale rare.
 Ambience(
     biomes: ["strata:plains", "strata:flower_meadow"],   // ou `underground: true`
     beds: [   // fonds en boucle (recettes `looped: true`), 8 au plus
-        (sound: "strata:ambient_wind", volume: 0.5,
-         altitude: (from: 130, to: 220, gain: (0.7, 1.4)),  // facultatif
+        (sound: "strata:ambient_wind", volume: 0.35,
+         altitude: (from: 130, to: 220, gain: (0.7, 1.2)),  // facultatif
          time: Any),                                        // Any, Day ou Night
     ],
     events: [ // sons ponctuels (sous-titrés), 8 au plus
-        (sound: "strata:wind", every: (25.0, 60.0), distance: (8.0, 16.0), time: Any),
+        (sound: "strata:wind", every: (60.0, 150.0), distance: (8.0, 16.0), time: Any),
     ],
 )
 ```
@@ -96,6 +96,7 @@ Ambience(
 - Le jeu regarde 25 points autour de l'auditeur (tous les 8 blocs, jusqu'à 16) : chaque ambiance pèse la part des points dans ses biomes (on entend la mer depuis la plage). **Sous terre** : peu de lumière du ciel à la tête (moins de 12, tout à fait sous 6) et du sol plein au-dessus (à partir de 3 blocs, tout à fait à 8) ; une maison n'est donc pas « sous terre ».
 - `volume` × part × moment de la journée (`Day` suit la lumière du jour, `Night` l'inverse) × `altitude` (gain selon la hauteur de l'auditeur, linéaire entre `from` et `to`) ; deux fonds identiques s'additionnent (2 au plus).
 - Les fonds changent de volume d'au plus 1 en **3 secondes** : passer d'un biome à l'autre ou entrer dans une grotte fait un fondu enchaîné.
+- Tous les sons d'une ambiance doivent être de catégorie `Ambient` : ils suivent alors le curseur **Ambiances** (les sons de blocs suivent **Blocs**). Restez discret : un fond permanent lasse vite (le vent de `strata` ne dépasse pas 0,2 de crête, une rafale au plus toutes les 35 s).
 - `every` : secondes entre deux sons (compte à rebours ralenti si l'ambiance ne pèse qu'une part, ou selon `time`) ; le son part d'un point au hasard à `distance` blocs, un peu au-dessus ou au-dessous.
 
 ## Audio spatial

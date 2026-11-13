@@ -22,11 +22,11 @@ graph LR
 
 Une recette empile des **couches** : du bruit coloré filtré (frottements, souffles), des grains (cliquetis), des modes résonants (un « toc » de pierre ou de bois) et des bulles. Chaque couche a une enveloppe (le son monte vite puis s'éteint). Le résultat est un tampon de nombres, un par 1/44 100 s, ramené à un volume maximal. Exemple : le pas sur la pierre est un claquement bref (mode résonant grave) posé sur un court bruit filtré.
 
-Chaque recette a plusieurs **variantes**, chacune avec sa graine (même recette = mêmes variantes, toujours). À chaque lecture, le jeu tire une variante différente de la précédente et une hauteur légèrement variable : deux pas ne sonnent jamais pareil. Les variantes sont fabriquées à la première lecture puis gardées. Les **fonds d'ambiance** sont des boucles : la dernière seconde est fondue dans le début pour qu'on n'entende pas la couture.
+Chaque recette a plusieurs **variantes**, chacune avec sa graine (même recette = mêmes variantes, toujours). À chaque lecture, le jeu tire une variante différente de la précédente et une hauteur légèrement variable : deux pas ne sonnent jamais pareil. Toutes les variantes de tous les sons sont fabriquées **au chargement**, en tâche de fond (les plus courtes d'abord : pas et casses sont prêts en quelques millisecondes, tout le pack en environ 0,3 s pour ~20 Mo), puis gardées. Avant la v0.2.1, une variante n'était fabriquée qu'à sa première demande et ce son-là était perdu : les casses manquaient les premières minutes. Un son demandé avant d'être prêt passe en priorité, attend et part dès qu'il l'est, s'il n'a pas plus de 100 ms de retard (au-delà il ne collerait plus à l'image, il est abandonné). Les **fonds d'ambiance** sont des boucles : la dernière seconde est fondue dans le début pour qu'on n'entende pas la couture.
 
 ### Mixage : additionner des voix
 
-Le jeu ne joue pas les sons un par un : une seule source stéréo infinie est confiée à la carte son, qui réclame régulièrement un petit bloc de 512 échantillons (~12 ms). Le **mixeur** additionne alors toutes les voix en cours (32 au plus : une nouvelle remplace la plus faible si elle est plus forte). Les volumes (général × catégorie : blocs, ambiance, musique) sont **rampés** d'un bloc à l'autre, sinon chaque changement ferait un « clic ». Le jeu parle au mixeur par un canal de commandes, sans verrou.
+Le jeu ne joue pas les sons un par un : une seule source stéréo infinie est confiée à la carte son, qui réclame régulièrement un petit bloc de 512 échantillons (~12 ms). Le **mixeur** additionne alors toutes les voix en cours (32 au plus : une nouvelle remplace la plus faible si elle est plus forte). Les volumes (général × catégorie : blocs, ambiances, musique) sont **rampés** d'un bloc à l'autre, sinon chaque changement ferait un « clic ». Le jeu parle au mixeur par un canal de commandes, sans verrou.
 
 ### Le son en 3D
 
@@ -44,7 +44,7 @@ Pour un son lointain, le jeu suit la ligne droite entre lui et l'oreille et addi
 
 ### Ambiances
 
-Toutes les 0,25 s, le jeu échantillonne les biomes autour du joueur et mesure s'il est sous terre. Chaque ambiance (plaines, forêt, mer, sous terre…) reçoit une part, et ses fonds en boucle sont fondus doucement (un tiers par seconde au plus). Elle lance aussi des sons ponctuels (goutte, grenouille…) à des endroits tirés au hasard, donc spatialisés et étouffés comme les autres.
+Toutes les 0,25 s, le jeu échantillonne les biomes autour du joueur et mesure s'il est sous terre. Chaque ambiance (plaines, forêt, mer, sous terre…) reçoit une part, et ses fonds en boucle sont fondus doucement (un tiers par seconde au plus). Elle lance aussi des sons ponctuels (goutte, grenouille, rafale…) à des endroits tirés au hasard, donc spatialisés et étouffés comme les autres. Tout cela suit le curseur **Ambiances** ; les blocs qui font du bruit tout seuls (lave, feu) suivent **Blocs** : le jeu tire au sort 300 blocs par seconde autour du joueur, seul le dessus d'une masse sonne, et le son part juste au-dessus (sinon la lave étoufferait ses propres bulles, ce qui la rendait inaudible avant la v0.2.1). Le vent a été nettement adouci en v0.2.1 (environ −10 dB, rafales deux à trois fois plus rares).
 
 ### Musique : composée, rendue, mise en cache
 
@@ -61,7 +61,7 @@ La musique est **rare** : écran titre après 2 à 5 s, puis en jeu toutes les 1
 |---|---|
 | principal (le jeu) | décide des sons, envoie des commandes, vide la poubelle du mixeur |
 | sortie audio (créé par `rodio`) | demande des blocs au mixeur, ne doit jamais attendre |
-| `sound-bank` | synthétise les variantes et décode les `.ogg` à la première demande |
+| `sound-bank` | synthétise les variantes et décode les `.ogg` au chargement ; une file prioritaire pour un son attendu |
 | `music-render` | compose et rend un morceau à la fois, un seul pour toute la session |
 | `music-read` | lit le WAV (ou un `.ogg`) et envoie des blocs de 0,5 s au mixeur |
 
@@ -69,7 +69,7 @@ La règle d'or : **le fil audio ne bloque jamais**. Un bloc de musique en retard
 
 ### Réglages et sous-titres
 
-Onglet **Son** : volumes (général, blocs, ambiance, musique), sous-titres, fréquence de la musique, **audio spatial**. Voir [Réglages](reglages.md). Les sous-titres affichent la direction du son (← → ↑ ↓) dans le HUD.
+Onglet **Son** : volumes (général, blocs, ambiances, musique), sous-titres, fréquence de la musique, **audio spatial**. Voir [Réglages](reglages.md). Les sous-titres affichent la direction du son (← → ↑ ↓) dans le HUD.
 
 ## Où c'est dans le code
 

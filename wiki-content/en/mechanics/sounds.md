@@ -7,7 +7,7 @@ Every sound in the game is **made by the game itself** from recipes: filtered no
 - **Footsteps**: their sound depends on the block underfoot (stone, dirt, grass, sand, gravel, snow, wood, glass and ice, leaves, metal) and their pace on your speed: you can hear running.
 - **Broken and placed blocks**: each material has its own; glass shatters.
 - **Water**: a splash when you fall in, strokes as you swim.
-- **Lava**: it bubbles now and then.
+- **Lava**: its surface bubbles; on the shore of a lava lake you hear it about every second.
 - **Fire**: it crackles.
 
 Sounds come **from where they happen**: quieter far away, left or right depending on where you look, a little duller from behind.
@@ -16,11 +16,11 @@ Sounds come **from where they happen**: quieter far away, left or right dependin
 
 Each place has its own background, which slowly blends into the next one as you change biome:
 
-- **Plains and meadows**: the wind, stronger up high, with a gust now and then.
+- **Plains and meadows**: a light wind, a little stronger up high, with a rare gust.
 - **Forests**: rustling leaves.
 - **Jungle**: leaves and insects, louder at night.
 - **Swamp**: at night, insects and frogs.
-- **Mountains and snow**: a strong wind, very strong near the summits.
+- **Mountains and snow**: the wind, stronger near the summits, and a few gusts.
 - **Sea, ocean and beaches**: the waves, already heard from the land nearby.
 - **Desert and badlands**: a dry wind and blowing sand.
 - **Underground**: a deep rumble and drops of water falling far away.
@@ -35,7 +35,7 @@ Now and then, a **calm piece** rises: piano over soft chords, with plenty of sil
 
 ## Settings
 
-**Sound** tab of the options: master volume, then **blocks**, **ambience** and **music** volumes, which presets never change, and the **music frequency** (*rare*, *normal* or *often*); a music volume of 0 turns it off. **Spatial audio**: *advanced* (echo and muffled sounds) or *simple stereo* (distance and left/right only, a little less work); the **DS** and **very low** presets switch to simple stereo. Without a sound card the game runs normally, silently.
+**Sound** tab of the options: master volume, then **blocks** (steps, breaking, placing, water, lava, fire), **ambiences** (background sounds of places: wind, leaves, waves, insects, drips) and **music** volumes, which presets never change, and the **music frequency** (*rare*, *normal* or *often*); a music volume of 0 turns it off. **Spatial audio**: *advanced* (echo and muffled sounds) or *simple stereo* (distance and left/right only, a little less work); the **DS** and **very low** presets switch to simple stereo. Without a sound card the game runs normally, silently.
 
 ## Subtitles
 
