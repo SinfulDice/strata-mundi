@@ -13,6 +13,7 @@ mod beds;
 mod controls;
 mod decode;
 mod environment;
+mod late;
 mod mixer;
 mod muffles;
 mod music;
@@ -36,6 +37,7 @@ mod triggers;
 pub use ambience::{AmbiencePlayer, AmbienceTable, FADE_SECONDS, Place, bed_targets};
 pub use beds::{BedVolume, MAX_BEDS};
 pub use environment::{Environment, Moment};
+pub use late::MAX_LATE;
 pub use mixer::{Command, MAX_VOICES, Mixer, Voice, Volumes};
 pub use music::{MusicMoment, MusicPlace, MusicPlayer, MusicSchedule, TITLE_WAIT};
 pub use reverb::{Reverb, Room, Rooms};
@@ -50,9 +52,10 @@ use crate::settings::SoundSettings;
 use crate::world::ClientWorld;
 use bank::SoundBank;
 use glam::DVec3;
+use late::Late;
 use output::Output;
 use std::path::PathBuf;
-use strata_core::audio::{Rng, SAMPLE_RATE, SoundCategory};
+use strata_core::audio::{Rng, SoundCategory};
 use strata_core::content::{BlockId, Content};
 use strata_core::coords::BlockPos;
 use strata_core::physics::Body;
@@ -62,23 +65,6 @@ use strata_protocol::BiomeInfo;
 pub const MAX_STARTS: usize = 16;
 /// The same sound started this close in one frame is heard once.
 const GROUP_BLOCKS: f64 = 4.0;
-/// A sound whose buffer was not made yet is started when it is, if it waited less than
-/// this (later it would not match what is seen).
-pub const MAX_LATE: f32 = 0.1;
-
-/// A sound waiting for its buffer.
-struct Late {
-    cue: Cue,
-    muffle: f32,
-    waited: f32,
-}
-
-enum Start {
-    Started,
-    NotReady,
-    Silent,
-}
-
 pub struct Audio {
     output: Option<Output>,
     bank: SoundBank,
@@ -272,62 +258,7 @@ impl Audio {
             let direction = Direction::of(&self.listener, cue.at);
             self.subtitles.heard(key, direction);
         }
-        let start = self.start_voice(cue, muffle);
-        if matches!(start, Start::NotReady) && self.late.len() < MAX_STARTS {
-            self.late.push(Late {
-                cue,
-                muffle,
-                waited: 0.0,
-            });
-        }
-    }
-
-    /// Starts the sounds whose buffer came in time, forgets those too late.
-    fn start_late(&mut self, seconds: f32) {
-        let mut late = std::mem::take(&mut self.late);
-        late.retain_mut(|waiting| {
-            waiting.waited += seconds;
-            waiting.waited <= MAX_LATE
-                && matches!(
-                    self.start_voice(waiting.cue, waiting.muffle),
-                    Start::NotReady
-                )
-        });
-        self.late = late;
-    }
-
-    fn start_voice(&mut self, cue: Cue, muffle: f32) -> Start {
-        let Some(sound) = self.bank.sound(cue.sound) else {
-            return Start::Silent;
-        };
-        let (category, range) = (sound.def.category, sound.def.range);
-        if self.output.is_none() || self.settings.gain(category) <= 0.0 {
-            return Start::Silent;
-        }
-        let Some(pick) = self.bank.pick(cue.sound, &mut self.rng) else {
-            return if self.bank.is_coming(cue.sound) {
-                Start::NotReady
-            } else {
-                Start::Silent
-            };
-        };
-        self.next_voice = self.next_voice.wrapping_add(1);
-        let seconds = pick.buffer.len() as f32 / SAMPLE_RATE as f32 / pick.pitch.max(0.01);
-        let sent = self.send(Command::Play(Voice {
-            id: self.next_voice,
-            buffer: pick.buffer,
-            category,
-            gain: 1.0,
-            pitch: pick.pitch,
-            at: Some(cue.at),
-            range,
-            muffle,
-        }));
-        if sent {
-            self.environment
-                .track(self.next_voice, cue.at, seconds, muffle);
-        }
-        Start::Started
+        self.start_or_wait(cue, muffle);
     }
 
     /// Starts, fades or lets go the ambience beds (buffers made on first use).

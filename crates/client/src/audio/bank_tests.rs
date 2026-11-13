@@ -2,7 +2,7 @@
 
 use super::bank::SoundBank;
 use super::output::Output;
-use super::tests::{block, content, hearing};
+use super::tests::{block, content, hearing, sound_id};
 use super::*;
 use std::time::{Duration, Instant};
 use strata_core::audio::Rng;
@@ -14,11 +14,11 @@ fn no_sound_is_missing_after_loading() {
     bank.wait_ready();
     let megabytes = bank.cached_samples() as f32 * 4.0 / 1e6;
     assert!(bank.is_complete());
-    assert!(megabytes < 64.0, "{megabytes} MB");
+    assert!(megabytes < 24.0, "{megabytes} MB");
     let mut rng = Rng::new(5);
     for (id, _, sound) in content().sounds.registry.iter() {
         for _ in 0..sound.def.variants * 4 {
-            assert!(bank.pick(id, &mut rng).is_some(), "{id:?}");
+            assert!(bank.pick(id, &mut rng).is_ok(), "{id:?}");
         }
     }
 }
@@ -26,8 +26,7 @@ fn no_sound_is_missing_after_loading() {
 #[test]
 fn a_sound_asked_on_the_first_frame_is_played() {
     let (output, commands) = Output::detached();
-    let settings = SoundSettings::default();
-    let mut audio = Audio::with_output(Some(output), content(), &settings, Default::default());
+    let mut audio = Audio::with_output(Some(output), content(), &quiet(), Default::default());
     let world = ClientWorld::default();
     let ears = listener_at(DVec3::new(0.5, 70.5, 0.5), 0.0);
     audio.block_changed(BlockPos::new(2, 70, 0), block("stone"), BlockId::AIR);
@@ -49,11 +48,15 @@ fn a_sound_asked_on_the_first_frame_is_played() {
 #[test]
 fn a_sound_too_late_is_dropped() {
     let (output, commands) = Output::detached();
-    let settings = SoundSettings::default();
-    let mut audio = Audio::with_output(Some(output), content(), &settings, Default::default());
+    let mut audio = Audio::with_output(Some(output), content(), &quiet(), Default::default());
     let world = ClientWorld::default();
     let ears = listener_at(DVec3::new(0.5, 70.5, 0.5), 0.0);
-    audio.block_changed(BlockPos::new(2, 70, 0), block("stone"), BlockId::AIR);
+    // The longest sound, made last: not ready yet.
+    audio.play(Cue {
+        sound: sound_id("wind"),
+        at: DVec3::new(3.5, 70.5, 0.5),
+        subtitled: true,
+    });
     audio.update(0.0, &hearing(ears, None, &world));
     let first = commands
         .try_iter()
@@ -67,5 +70,14 @@ fn a_sound_too_late_is_dropped() {
         .filter(|c| matches!(c, Command::Play(_)))
         .count();
     assert!(audio.late.is_empty());
-    assert!(first + later <= 1, "played at most once");
+    assert_eq!(first, 0, "not ready on the first frame");
+    assert_eq!(later, 0, "too late: dropped");
+}
+
+/// No music: an empty cache path renders none, and its volume is 0 anyway.
+pub(super) fn quiet() -> SoundSettings {
+    SoundSettings {
+        music: 0,
+        ..SoundSettings::default()
+    }
 }

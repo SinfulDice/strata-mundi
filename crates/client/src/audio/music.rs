@@ -120,14 +120,22 @@ pub struct MusicPlayer {
     next: Option<Next>,
     playing: Option<Arc<AtomicBool>>,
     last: Option<Next>,
-    /// A render failed (disk full, folder not writable): no more tries this session.
+    /// No cache folder, or a render failed (disk full, folder not writable): no more
+    /// tries this session.
     broken: bool,
     rng: Rng,
 }
 
 impl MusicPlayer {
+    #[cfg(test)]
+    pub fn has_render_thread(&self) -> bool {
+        self.worker.is_some()
+    }
+
+    /// An empty `cache` path means no music at all (never written in the current folder).
     pub fn new(cache: PathBuf, themes: Vec<Theme>) -> Self {
         Self {
+            broken: cache.as_os_str().is_empty(),
             cache,
             themes,
             schedule: MusicSchedule::new(TITLE_WAIT, 0x4D55_531C),
@@ -137,7 +145,6 @@ impl MusicPlayer {
             next: None,
             playing: None,
             last: None,
-            broken: false,
             rng: Rng::new(0x7E_77A),
         }
     }

@@ -132,7 +132,7 @@ fn a_lava_shore_in_the_wind_can_be_listened_to() {
         tints: BiomeTints::default(),
     }];
     let (output, commands) = Output::detached();
-    let settings = SoundSettings::default();
+    let settings = super::bank_tests::quiet();
     let mut audio = Audio::with_output(Some(output), content(), &settings, Default::default());
     audio.bank.wait_ready();
     let ears = listener_at(DVec3::new(-3.0, 22.6, 6.0), std::f32::consts::FRAC_PI_2);

@@ -5,6 +5,7 @@ use crate::settings::MusicFrequency;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
+use strata_core::audio::SAMPLE_RATE;
 use strata_core::audio::music::Theme;
 use strata_core::id::Identifier;
 use strata_core::pack::PackSet;
@@ -310,4 +311,14 @@ fn a_reload_keeps_the_one_render_thread() {
         "the same thread renders for the new packs"
     );
     drop(wait_for_start(&mut player, &MusicPlace::Title));
+}
+
+#[test]
+fn an_empty_cache_path_renders_nothing() {
+    let mut player = MusicPlayer::new(PathBuf::new(), vec![terra_short()]);
+    let place = MusicPlace::Title;
+    for _ in 0..600 {
+        player.update(&moment(1.0, &place, true), &mut |_| true);
+    }
+    assert!(!player.has_render_thread(), "nothing written");
 }

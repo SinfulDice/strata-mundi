@@ -62,6 +62,8 @@ pub struct SoundBank {
     sounds: Sounds,
     entries: Vec<Entry>,
     worker: Option<Worker>,
+    /// The thread could not be started: buffers are made in place, on demand only.
+    no_thread: bool,
     /// Every buffer is being made, not only those asked; since when, until all are.
     preparing: bool,
     preparing_since: Option<std::time::Instant>,
@@ -81,14 +83,19 @@ impl SoundBank {
             sounds,
             entries,
             worker: None,
+            no_thread: false,
             preparing: false,
             preparing_since: None,
         }
     }
 
     /// Asks every buffer now, the shortest sounds first (steps and breaks are ready
-    /// within a few milliseconds, the long ambience beds last).
+    /// within a few milliseconds, the long ambience beds last). Without a thread nothing
+    /// is done: the whole pack is never made at once on the caller's thread.
     pub fn prepare_all(&mut self) {
+        if !self.has_worker() {
+            return;
+        }
         self.preparing = true;
         self.preparing_since = Some(std::time::Instant::now());
         let mut ids: Vec<SoundId> = self.sounds.registry.iter().map(|(id, _, _)| id).collect();
@@ -128,6 +135,7 @@ impl SoundBank {
     }
 
     /// A buffer of the sound is on its way (asked and not made yet).
+    #[cfg(test)]
     pub fn is_coming(&self, id: SoundId) -> bool {
         self.entries.get(id.index()).is_some_and(|entry| {
             entry
@@ -138,16 +146,18 @@ impl SoundBank {
         })
     }
 
-    /// Every buffer of every sound is made (or its recording failed and the recipe is).
+    /// Every buffer of every sound is done, made or failed (a failed recording counts
+    /// once the recipe is done).
     pub fn is_complete(&self) -> bool {
         self.sounds.registry.iter().all(|(id, _, sound)| {
             let Some(entry) = self.entries.get(id.index()) else {
                 return false;
             };
-            let ready = |slot: &Slot| matches!(slot, Slot::Ready(_));
+            let done = |slot: &Slot| matches!(slot, Slot::Ready(_) | Slot::Failed);
             match (&sound.ogg, &entry.recording) {
                 (Some(_), Slot::Ready(_)) => true,
-                _ => entry.variants.iter().all(ready),
+                (Some(_), Slot::Failed) | (None, _) => entry.variants.iter().all(done),
+                (Some(_), _) => false,
             }
         })
     }
@@ -156,27 +166,46 @@ impl SoundBank {
         self.sounds.get(id)
     }
 
-    /// A buffer and a pitch for one play, never the same variant twice in a row; `None`
-    /// while the buffer is being made.
-    pub fn pick(&mut self, id: SoundId, rng: &mut Rng) -> Option<Pick> {
-        let sound = self.sounds.get(id)?;
-        let pitch = rng.range(sound.def.pitch);
-        let entry = self.entries.get(id.index())?;
+    /// A buffer and a pitch for one play, never the same variant twice in a row. A
+    /// buffer not made yet is hurried: `Err(Some(variant))` (to ask again with
+    /// [`Self::pick_ready`]); `Err(None)` if it never will be.
+    pub fn pick(&mut self, id: SoundId, rng: &mut Rng) -> Result<Pick, Option<usize>> {
+        let entry = self.entries.get(id.index()).ok_or(None)?;
         let count = entry.variants.len();
         let mut index = (rng.next_u64() % count.max(1) as u64) as usize;
         if count > 1 && entry.last_variant == Some(index) {
             index = (index + 1) % count;
         }
-        let buffer = self.buffer(id, index)?;
+        if self.buffer(id, index, true).is_none() && self.is_asked(id, index) {
+            return Err(Some(index));
+        }
+        self.pick_ready(id, index, rng).ok_or(None)
+    }
+
+    /// Variant `index` if it is made, without asking it.
+    pub fn pick_ready(&mut self, id: SoundId, index: usize, rng: &mut Rng) -> Option<Pick> {
+        let sound = self.sounds.get(id)?;
+        let pitch = rng.range(sound.def.pitch);
+        let (_, slot) = self.part(id, index)?;
+        let Slot::Ready(buffer) = slot else {
+            return None;
+        };
+        let buffer = Arc::clone(buffer);
         if let Some(entry) = self.entries.get_mut(id.index()) {
             entry.last_variant = Some(index);
         }
         Some(Pick { buffer, pitch })
     }
 
-    /// The buffer of a looping bed (its first variant, or its recording).
+    /// The buffer of variant `index` (or the recording) is on its way.
+    pub fn is_asked(&self, id: SoundId, index: usize) -> bool {
+        matches!(self.part(id, index), Some((_, Slot::Asked { .. })))
+    }
+
+    /// The buffer of a looping bed (its first variant, or its recording); not hurried,
+    /// it is asked again each frame until made.
     pub fn bed(&mut self, id: SoundId) -> Option<Arc<[f32]>> {
-        self.buffer(id, 0)
+        self.buffer(id, 0, false)
     }
 
     /// Keeps the buffers made since the last call.
@@ -198,21 +227,36 @@ impl SoundBank {
     }
 
     /// The pack's recording if it has a readable one, else variant `index` of the recipe.
-    fn buffer(&mut self, id: SoundId, index: usize) -> Option<Arc<[f32]>> {
+    fn part(&self, id: SoundId, index: usize) -> Option<(Part, &Slot)> {
         let sound = self.sounds.get(id)?;
         let entry = self.entries.get(id.index())?;
-        let (part, slot) = match (&sound.ogg, &entry.recording) {
-            (Some(_), slot) if !matches!(slot, Slot::Failed) => (Part::Recording, slot),
-            _ => (Part::Variant(index), entry.variants.get(index)?),
-        };
+        match (&sound.ogg, &entry.recording) {
+            (Some(_), slot) if !matches!(slot, Slot::Failed) => Some((Part::Recording, slot)),
+            _ => Some((Part::Variant(index), entry.variants.get(index)?)),
+        }
+    }
+
+    /// The buffer if made; else asks it (`hurried`: before those made in advance).
+    fn buffer(&mut self, id: SoundId, index: usize, hurried: bool) -> Option<Arc<[f32]>> {
+        let (part, slot) = self.part(id, index)?;
         match slot {
             Slot::Ready(buffer) => Some(Arc::clone(buffer)),
-            Slot::Asked { hurried: true } | Slot::Failed => None,
-            Slot::Missing | Slot::Asked { hurried: false } => {
-                self.ask(id, part, true);
+            Slot::Failed | Slot::Asked { hurried: true } => None,
+            Slot::Asked { hurried: false } if !hurried => None,
+            Slot::Missing | Slot::Asked { .. } => {
+                self.ask(id, part, hurried);
                 None
             }
         }
+    }
+
+    /// The thread, started the first time; `false` if it could not be (remembered).
+    fn has_worker(&mut self) -> bool {
+        if self.worker.is_none() && !self.no_thread {
+            self.worker = spawn_worker();
+            self.no_thread = self.worker.is_none();
+        }
+        self.worker.is_some()
     }
 
     /// Asks a buffer; `hurried` when a play waits for it (it may then be made twice, the
@@ -221,9 +265,7 @@ impl SoundBank {
         let Some(sound) = self.sounds.get(id).cloned() else {
             return;
         };
-        if self.worker.is_none() {
-            self.worker = spawn_worker();
-        }
+        self.has_worker();
         let job = Job { id, part, sound };
         let job = match &self.worker {
             Some(worker) => match worker.queue(hurried).send(job) {
