@@ -155,6 +155,7 @@ pub fn edit(field: &mut String, text: &str, max: usize, allowed: impl Fn(char) -
 pub fn mode_key(mode: GameMode) -> &'static str {
     match mode {
         GameMode::Creative => "ui-mode-creative",
+        GameMode::Survival => "ui-mode-survival",
     }
 }
 

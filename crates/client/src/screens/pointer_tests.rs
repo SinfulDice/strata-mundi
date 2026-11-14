@@ -57,6 +57,7 @@ impl Fixture {
             worlds: &[],
             icons: &[],
             hotbar: None,
+            container: None,
             focus: None,
             key_labels: &key_labels,
             newer_version: None,
@@ -79,6 +80,7 @@ impl Fixture {
             key_label: &key_label,
             offsets: None,
             editing: false,
+            pointer: None,
         };
         let def = self.menu.def(&self.ui.screens);
         let key_labels = |_| (String::new(), String::new());
@@ -88,6 +90,7 @@ impl Fixture {
             worlds: &[],
             icons: &[],
             hotbar: None,
+            container: None,
             focus: None,
             key_labels: &key_labels,
             newer_version: None,

@@ -1,6 +1,8 @@
-//! `entities/<namespace>/<dimension>.ron`: the entities of one dimension (boats).
+//! `entities/<namespace>/<dimension>.ron`: the entities of one dimension (boats, items
+//! on the ground).
 //! A world saved before entities existed simply has no such file.
 
+use super::stacks::SavedStack;
 use super::{SaveError, WorldFolder, write_atomic};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -12,6 +14,18 @@ use strata_core::id::Identifier;
 pub struct EntitiesData {
     #[serde(default)]
     pub boats: Vec<SavedBoat>,
+    #[serde(default)]
+    pub items: Vec<SavedDrop>,
+}
+
+/// Items lying on the ground, with their age (they keep ageing after a reload).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename = "Item")]
+pub struct SavedDrop {
+    pub stack: SavedStack,
+    pub position: [f64; 3],
+    #[serde(default)]
+    pub age: u32,
 }
 
 /// A boat by type identifier, so a world survives packs being added or reordered.

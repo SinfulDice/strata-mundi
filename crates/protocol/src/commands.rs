@@ -31,7 +31,7 @@ pub struct CommandSpec {
     pub name: &'static str,
     pub args: &'static [Arg],
     pub runs: Runs,
-    /// Changes the world in a way that would be cheating: creative only.
+    /// Changes the world in a way that would be cheating: only where commands are allowed.
     pub cheat: bool,
 }
 
@@ -63,7 +63,7 @@ pub const COMMANDS: [CommandSpec; 10] = [
     },
     CommandSpec {
         name: "give",
-        args: &[Arg::Item],
+        args: &[Arg::Item, Arg::Number],
         runs: Runs::Server,
         cheat: true,
     },

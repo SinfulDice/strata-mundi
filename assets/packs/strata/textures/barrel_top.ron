@@ -1,0 +1,29 @@
+// The lid of a barrel: boards inside an iron hoop.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'w': ("oak_wood", 0),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        'i': ("iron", 0),
+        'I': ("iron", 1),
+    },
+    rows: [
+        "IIIIIIIIIIIIIIII",
+        "IiiiiiiiiiiiiiiI",
+        "IiDDDDDDDDDDDDiI",
+        "IiDLWWWWWWWWwDiI",
+        "IiDLWWWWWWWWwDiI",
+        "IiDwwwwwwwwwwDiI",
+        "IiDLWWWWWWWWwDiI",
+        "IiDLWWWDDWWWwDiI",
+        "IiDLWWWDDWWWwDiI",
+        "IiDLWWWWWWWWwDiI",
+        "IiDwwwwwwwwwwDiI",
+        "IiDLWWWWWWWWwDiI",
+        "IiDLWWWWWWWWwDiI",
+        "IiDDDDDDDDDDDDiI",
+        "IiiiiiiiiiiiiiiI",
+        "IIIIIIIIIIIIIIII",
+    ],
+)

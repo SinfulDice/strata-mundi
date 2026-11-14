@@ -1,0 +1,9 @@
+// Twenty-seven slots, never joined with its neighbours.
+Block(
+    textures: Column(end: "strata:barrel_top", side: "strata:barrel_side"),
+    hardness: 2.5,
+    sound: Some("strata:wood"),
+    category: Some("strata:storage"),
+    container: Some(Container(rows: 3)),
+    flammability: Some((catch: 5, burn: 20)),
+)

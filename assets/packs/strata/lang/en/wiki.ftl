@@ -86,5 +86,6 @@ wiki-mechanic-sounds = Sounds
 wiki-mechanic-boats = Boats
 wiki-mechanic-saving = Saving
 wiki-mechanic-game-modes = Game modes
+wiki-mechanic-inventory = Inventory
 wiki-unbreakable = unbreakable
 wiki-fact-item = Item

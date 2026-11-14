@@ -1,0 +1,31 @@
+// A wooden chest seen from the side: a dark frame, the lid's seam and an iron latch.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'w': ("oak_wood", 0),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        'H': ("oak_wood", 3),
+        'i': ("iron", 1),
+        'I': ("iron", 2),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "DHLLLLLLLLLLLLWD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWiiWWWWWwD",
+        "DdddddddIIdddddD",
+        "DDDDDDDiIIDDDDDD",
+        "DHLLLLLiIILLLLWD",
+        "DLWWWWWWiWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLwwwwwwwwwwwwwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DwwwwwwwwwwwwwwD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

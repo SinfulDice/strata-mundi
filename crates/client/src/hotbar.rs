@@ -1,101 +1,183 @@
-use strata_core::content::ItemId;
-use strata_protocol::HotbarState;
+use strata_core::content::{Item, ItemId, Registry};
+use strata_core::inventory::{Area, Click, HOTBAR, ItemStack, PlayerInventory, SlotRef, SortOrder};
+use strata_protocol::InventoryRequest;
 
-pub const SLOTS: usize = 9;
+pub const SLOTS: usize = HOTBAR.end;
 
-/// The nine quick slots at the bottom of the screen. In creative they hold any item;
-/// survival inventories (v0.3) will live on the server.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+/// The client's copy of the player's inventory, as the server last sent it. The hand's
+/// slot is chosen here (and told to the server); every other change is a request the
+/// server answers with the new inventory.
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Hotbar {
-    slots: [Option<ItemId>; SLOTS],
-    selected: usize,
+    inventory: PlayerInventory,
+    /// Creative: any item may be put in a slot.
+    pub creative: bool,
+    outbox: Vec<InventoryRequest>,
 }
 
 impl Hotbar {
     pub fn selected_index(&self) -> usize {
-        self.selected
+        self.inventory.selected_index()
     }
 
     pub fn selected(&self) -> Option<ItemId> {
-        self.slots[self.selected]
+        self.inventory.selected_stack().map(|stack| stack.item)
     }
 
     pub fn slot(&self, index: usize) -> Option<ItemId> {
-        self.slots.get(index).copied().flatten()
+        self.stack(index).map(|stack| stack.item)
+    }
+
+    pub fn stack(&self, index: usize) -> Option<&ItemStack> {
+        self.inventory.slots.get(index)
+    }
+
+    pub fn inventory(&self) -> &PlayerInventory {
+        &self.inventory
     }
 
     pub fn select(&mut self, index: usize) {
-        self.selected = index.min(SLOTS - 1);
+        let index = index.min(SLOTS - 1);
+        if index != self.selected_index() {
+            self.inventory.selected = index as u8;
+            self.outbox.push(InventoryRequest::Select(index as u8));
+        }
     }
 
     /// Scrolls through the slots, wrapping around (`steps` > 0 = to the right).
     pub fn scroll(&mut self, steps: i32) {
-        self.selected = (self.selected as i32 + steps).rem_euclid(SLOTS as i32) as usize;
-    }
-
-    pub fn set(&mut self, index: usize, item: Option<ItemId>) {
-        if let Some(slot) = self.slots.get_mut(index) {
-            *slot = item;
+        if steps != 0 {
+            self.select((self.selected_index() as i32 + steps).rem_euclid(SLOTS as i32) as usize);
         }
     }
 
-    /// As exchanged with the server (which keeps it with the world).
-    pub fn state(&self) -> HotbarState {
-        HotbarState {
-            slots: self.slots.to_vec(),
-            selected: self.selected as u8,
-        }
-    }
-
-    /// Same content as `state`, without building one.
-    pub fn matches(&self, state: &HotbarState) -> bool {
-        state.slots.len() == SLOTS
-            && state.slots.iter().zip(&self.slots).all(|(a, b)| a == b)
-            && usize::from(state.selected) == self.selected
-    }
-
-    pub fn restore(&mut self, state: &HotbarState) {
-        self.slots = std::array::from_fn(|i| state.slots.get(i).copied().flatten());
-        self.selected = usize::from(state.selected).min(SLOTS - 1);
-    }
-
-    /// Middle click: select the item if already in the hotbar, otherwise put it in the
-    /// selected slot (or the first empty one).
-    pub fn pick(&mut self, item: ItemId) {
-        if let Some(index) = self.slots.iter().position(|&s| s == Some(item)) {
-            self.selected = index;
+    /// Creative: puts one `item` in slot `index` (or empties it).
+    pub fn set(&mut self, index: usize, item: Option<ItemId>, items: &Registry<ItemId, Item>) {
+        if !self.creative {
             return;
         }
-        if self.slots[self.selected].is_some()
-            && let Some(empty) = self.slots.iter().position(Option::is_none)
-        {
-            self.selected = empty;
+        let stack = item.map(|item| ItemStack::new(item, 1, items));
+        if let Some(slot) = self.inventory.slots.slots.get_mut(index) {
+            slot.clone_from(&stack);
+            self.outbox.push(InventoryRequest::CreativeSet {
+                index: index as u16,
+                stack,
+            });
         }
-        self.slots[self.selected] = Some(item);
+    }
+
+    /// The server's inventory; the hand stays where the player put it meanwhile.
+    pub fn receive(&mut self, inventory: PlayerInventory) {
+        let selected = self.inventory.selected;
+        self.inventory = inventory;
+        self.inventory.selected = selected;
+    }
+
+    /// On arrival: the hand as saved.
+    pub fn restore(&mut self, inventory: PlayerInventory) {
+        self.inventory = inventory;
+        self.inventory.normalize();
+    }
+
+    /// Middle click: select the item if already in the hotbar; in creative, otherwise put
+    /// it in the selected slot (or the first empty one).
+    pub fn pick(&mut self, item: ItemId, items: &Registry<ItemId, Item>) {
+        if let Some(index) = HOTBAR.clone().find(|&i| self.slot(i) == Some(item)) {
+            self.select(index);
+            return;
+        }
+        if !self.creative {
+            return;
+        }
+        if self.selected().is_some()
+            && let Some(empty) = HOTBAR.clone().find(|&i| self.slot(i).is_none())
+        {
+            self.select(empty);
+        }
+        self.set(self.selected_index(), Some(item), items);
+    }
+
+    pub fn click(&mut self, slot: SlotRef, click: Click) {
+        self.outbox.push(InventoryRequest::Click { slot, click });
+    }
+
+    pub fn sort(&mut self, area: Area, order: SortOrder, language: &str) {
+        self.outbox.push(InventoryRequest::Sort {
+            area,
+            order,
+            language: language.to_owned(),
+        });
+    }
+
+    pub fn request(&mut self, request: InventoryRequest) {
+        self.outbox.push(request);
+    }
+
+    /// Requests to send to the server, oldest first.
+    pub fn take_requests(&mut self) -> Vec<InventoryRequest> {
+        std::mem::take(&mut self.outbox)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use strata_core::content::{ItemKind, TextureId};
 
-    #[test]
-    fn picking_reuses_existing_slots_then_empty_ones() {
-        let mut hotbar = Hotbar::default();
-        hotbar.pick(ItemId(4));
-        assert_eq!(hotbar.selected(), Some(ItemId(4)));
-        hotbar.pick(ItemId(7));
-        assert_eq!(hotbar.selected_index(), 1);
-        hotbar.pick(ItemId(4));
-        assert_eq!(hotbar.selected_index(), 0);
+    fn items() -> Registry<ItemId, Item> {
+        let mut items = Registry::default();
+        for name in ["a", "b"] {
+            let item = Item {
+                max_stack: 64,
+                category: None,
+                kind: ItemKind::Flat(TextureId::MISSING),
+                action: None,
+                durability: None,
+                equip: None,
+            };
+            items.insert(
+                format!("strata:{name}")
+                    .parse()
+                    .unwrap_or_else(|_| unreachable!()),
+                item,
+            );
+        }
+        items
     }
 
     #[test]
-    fn scrolling_wraps() {
+    fn picking_reuses_existing_slots_then_empty_ones() {
+        let items = items();
+        let mut hotbar = Hotbar {
+            creative: true,
+            ..Hotbar::default()
+        };
+        hotbar.pick(ItemId(0), &items);
+        assert_eq!(hotbar.selected(), Some(ItemId(0)));
+        hotbar.pick(ItemId(1), &items);
+        assert_eq!(hotbar.selected_index(), 1);
+        hotbar.pick(ItemId(0), &items);
+        assert_eq!(hotbar.selected_index(), 0);
+        assert_eq!(hotbar.take_requests().len(), 4, "two sets, two selections");
+    }
+
+    #[test]
+    fn survival_only_selects_what_it_has() {
+        let items = items();
+        let mut hotbar = Hotbar::default();
+        hotbar.pick(ItemId(0), &items);
+        assert_eq!(hotbar.selected(), None);
+        assert!(hotbar.take_requests().is_empty());
+    }
+
+    #[test]
+    fn scrolling_wraps_and_the_hand_survives_server_updates() {
         let mut hotbar = Hotbar::default();
         hotbar.scroll(-1);
         assert_eq!(hotbar.selected_index(), 8);
         hotbar.scroll(2);
+        assert_eq!(hotbar.selected_index(), 1);
+        hotbar.receive(PlayerInventory::default());
         assert_eq!(hotbar.selected_index(), 1);
     }
 }

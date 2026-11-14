@@ -26,6 +26,43 @@ pub struct EntityDef {
     /// Makes it a boat with this handling.
     #[serde(default)]
     pub boat: Option<BoatHandling>,
+    /// Makes it the entity of items lying on the ground.
+    #[serde(default)]
+    pub dropped_item: Option<DroppedItemDef>,
+}
+
+/// How items lying on the ground behave.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(rename = "DroppedItem", deny_unknown_fields)]
+pub struct DroppedItemDef {
+    /// Seconds before an item left on the ground disappears; 0 = never.
+    #[serde(default = "five_minutes")]
+    pub lifetime: u32,
+    /// Ticks before a thrown item can be picked up again.
+    #[serde(default = "pickup_delay")]
+    pub pickup_delay: u32,
+    /// Distance from the player's feet within which items are picked up, in blocks.
+    #[serde(default = "pickup_radius")]
+    pub pickup_radius: f64,
+    /// Equal stacks closer than this join, in blocks.
+    #[serde(default = "merge_radius")]
+    pub merge_radius: f64,
+}
+
+fn five_minutes() -> u32 {
+    300
+}
+
+fn pickup_delay() -> u32 {
+    40
+}
+
+fn pickup_radius() -> f64 {
+    1.5
+}
+
+fn merge_radius() -> f64 {
+    0.75
 }
 
 /// `models/<name>.ron`: boxes in sixteenths of a block, around the entity's origin
@@ -61,6 +98,7 @@ pub struct EntityType {
     pub texture: TextureId,
     pub size: BoxSize,
     pub boat: Option<BoatHandling>,
+    pub dropped_item: Option<DroppedItemDef>,
 }
 
 pub(super) fn load_entities(
@@ -118,6 +156,18 @@ fn entity_type(
         boat: def
             .boat
             .filter(|handling| valid_handling(handling, source, errors)),
+        dropped_item: def.dropped_item.filter(|item| {
+            let valid = [item.pickup_radius, item.merge_radius]
+                .iter()
+                .all(|r| r.is_finite() && (0.0..=8.0).contains(r));
+            if !valid {
+                errors.push(PackError::invalid(
+                    source,
+                    "dropped item: radii between 0 and 8",
+                ));
+            }
+            valid
+        }),
     })
 }
 

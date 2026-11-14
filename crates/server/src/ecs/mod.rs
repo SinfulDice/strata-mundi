@@ -8,10 +8,12 @@ mod storage;
 pub use entity::{Entities, Entity};
 pub use storage::Storage;
 
+use crate::game::OpenWindow;
 use std::collections::VecDeque;
 use strata_core::content::EntityTypeId;
-use strata_core::physics::{BoatBody, BoatControls, Body, MoveInput, MovementSettings};
-use strata_protocol::{ActionId, GameMode, HotbarState, WorldAction};
+use strata_core::inventory::{ItemStack, PlayerInventory};
+use strata_core::physics::{BoatBody, BoatControls, Body, ItemBody, MoveInput, MovementSettings};
+use strata_protocol::{ActionId, GameMode, WorldAction};
 
 /// Every component storage of the simulation.
 #[derive(Debug, Default)]
@@ -19,10 +21,26 @@ pub struct Ecs {
     pub entities: Entities,
     pub bodies: Storage<Body>,
     pub controls: Storage<PlayerControl>,
-    pub hotbars: Storage<HotbarState>,
+    pub inventories: Storage<PlayerInventory>,
     pub boats: Storage<Boat>,
     /// What each riding player sits in.
     pub mounts: Storage<Entity>,
+    pub drops: Storage<DroppedItem>,
+    /// The container each player has open.
+    pub windows: Storage<OpenWindow>,
+}
+
+/// Items lying on the ground.
+#[derive(Debug, Clone)]
+pub struct DroppedItem {
+    pub stack: ItemStack,
+    pub body: ItemBody,
+    /// Ticks on the ground.
+    pub age: u32,
+    /// Ticks left before it can be picked up (just thrown).
+    pub pickup_delay: u32,
+    /// Position last sent to clients.
+    pub sent: glam::DVec3,
 }
 
 /// A boat entity: its type, motion, the pilot's last wishes and who sits in it.
@@ -103,9 +121,11 @@ impl Ecs {
     pub fn despawn(&mut self, entity: Entity) {
         self.bodies.remove(entity);
         self.controls.remove(entity);
-        self.hotbars.remove(entity);
+        self.inventories.remove(entity);
         self.boats.remove(entity);
         self.mounts.remove(entity);
+        self.drops.remove(entity);
+        self.windows.remove(entity);
         self.entities.despawn(entity);
     }
 }

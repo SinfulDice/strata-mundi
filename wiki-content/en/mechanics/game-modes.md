@@ -1,6 +1,6 @@
 ## Principle
 
-The game mode decides a world's rules. It's chosen at creation, on the "New world" screen, and then shown in the world list. In v0.1, **only one mode exists: creative**. Survival arrives in v0.3.
+The game mode decides a world's rules. It's chosen at creation, on the "New world" screen, and then shown in the world list. Two modes exist: **creative** and **survival**. For now, a world goes to survival with `/gamemode survival`; choosing it at creation comes later in v0.3.
 
 ## Creative mode
 
@@ -13,11 +13,11 @@ The no-strings-attached sandbox, to build and explore in complete freedom:
 
 ## Survival (coming soon)
 
-Planned for v0.3. It will bring its own rules: harvesting, tools, block hardness that really matters, unbreakable bedrock. Meanwhile, `/gamemode survival` politely asks you to be patient.
+No more flying, placed blocks are taken from the inventory and a broken block leaves its item on the ground, picked up by walking over it. Bedrock stays unbreakable. The survival inventory has 27 slots, the hotbar, armour and the off hand (see the Inventory page). Harvesting with tools, hunger and the other rules arrive during v0.3.
 
 ## Changing mode
 
-The `/gamemode creative` command puts the world back into creative; the change is saved with the world.
+The `/gamemode creative` and `/gamemode survival` commands change the mode; the change is saved with the world.
 
 ## Discovery in game
 

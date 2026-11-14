@@ -2,13 +2,15 @@
 //! so that multiplayer (v2.0) only has to plug a network transport.
 
 pub mod commands;
+mod inventory;
 mod local;
 mod messages;
 mod worlds;
 
+pub use inventory::{InventoryRequest, OpenedContainer};
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{
-    ActionId, BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState, HotbarState,
+    ActionId, BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,
     MAX_PENDING_ACTIONS, NetEntity, ServerMessage, WorldAction,
 };
 pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};
@@ -25,4 +27,4 @@ pub fn in_view_disc(dx: i32, dz: i32, view_distance: u32) -> bool {
 }
 
 /// Bumped whenever a message changes in an incompatible way.
-pub const PROTOCOL_VERSION: u32 = 8;
+pub const PROTOCOL_VERSION: u32 = 9;

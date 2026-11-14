@@ -4,10 +4,10 @@ command-unknown = WUT IZ { $name }? (/help 4 LIST)
 command-needs-world = NEEDZ A WORLD 4 DAT.
 command-cinematic-unknown = NO SUCH MOOVEE.
 command-tp-done = ZOOPED 2 { $x } { $y } { $z }.
-command-give-done = { $item } IN UR BOX. U WELCOME.
+command-give-done = { $count } × { $item } IN UR STUFFZ. U WELCOME.
 command-give-unknown = WUT IZ { $item }?
 command-gamemode-done = CRAYTIV MODE.
-command-gamemode-later = SURVIVL COMEZ IN V0.3.
+command-gamemode-survival = SURVIVL MODE. GUD LUK.
 command-time-now = TIEM: { $ticks } OF { $length } (DAI { $day }).
 command-daycycle-now = DAI AN NITE: { $cycle ->
         [on] TIEM GOEZ ON
@@ -30,8 +30,8 @@ command-help-usage = /help [command]
 command-help-help = LISTZ ALL TEH COMMANDZ.
 command-tp-usage = /tp <x> <y> <z>  (~ = WER U R)
 command-tp-help = ZOOPZ U (~5 = 5 BLOKZ MOAR).
-command-give-usage = /give <item>
-command-give-help = PUTZ A THING IN UR BOX.
+command-give-usage = /give <item> [HOW MANY]
+command-give-help = GIVEZ STUFFZ (TOO MUCH FALLZ ON TEH FLOOR).
 command-gamemode-usage = /gamemode <creative|survival>
 command-gamemode-help = CHANGEZ TEH GAEM MODE.
 command-time-usage = /time <set|add|query> [value]
@@ -48,4 +48,4 @@ command-cinematic-usage = /cinematic <id>
 command-cinematic-help = PLAYZ A MOOVEE.
 ui-console-placeholder = TYPE A COMMANDZ…
 ui-console-help = <key:Complete>: FINISH 4 ME
-command-not-allowed = ONLY 4 CRAYTIV KITTEHS.
+command-not-allowed = NO CHEATZ IN DIS WURLD.

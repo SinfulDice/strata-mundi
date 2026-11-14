@@ -5,9 +5,11 @@ use strata_core::generation::WorldgenSettings;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum GameMode {
-    /// Every block available, flight, instant breaking. Survival arrives in v0.3.
+    /// Every block available, flight, instant breaking.
     #[default]
     Creative,
+    /// Blocks come from the inventory and go back into it when broken.
+    Survival,
 }
 
 /// What the player chose on the "new world" screen.

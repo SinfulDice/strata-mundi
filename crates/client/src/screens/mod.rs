@@ -12,6 +12,8 @@ mod menu;
 mod options;
 mod pause;
 mod pointer;
+mod slot_input;
+mod slots;
 mod system;
 mod title;
 mod worlds;
@@ -96,6 +98,11 @@ pub struct Screens {
     clipboard: Option<arboard::Clipboard>,
     /// Request number of the map in the atlas (`None` after the atlas is rebuilt).
     preview_uploaded: Option<u64>,
+    slot_input: slot_input::SlotInput,
+    /// Where the mouse points (interface pixels), unless a gamepad is in use.
+    pointer: Option<(i32, i32)>,
+    /// The window of the menu on top: clicks outside it throw the carried stack.
+    window: Option<Rect>,
 }
 
 impl Screens {
@@ -143,6 +150,9 @@ impl Screens {
             generation: GenerationSources::default(),
             clipboard: None,
             preview_uploaded: None,
+            slot_input: Default::default(),
+            pointer: None,
+            window: None,
         }
     }
 
@@ -275,6 +285,7 @@ impl Screens {
         f: impl FnOnce(&mut dyn ScreenModel) -> R,
     ) -> Option<R> {
         let menu = self.stack.last_mut()?;
+        let (hotbar, container) = menu::game_parts(game);
         let labels = &self.key_labels;
         let key_labels = |action: Action| labels.get(action.index()).cloned().unwrap_or_default();
         let shared = Shared {
@@ -282,7 +293,8 @@ impl Screens {
             settings: &mut self.settings,
             worlds: &self.worlds,
             icons: &self.icons,
-            hotbar: game.map(|g| &mut g.hotbar),
+            hotbar,
+            container,
             focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
             key_labels: &key_labels,
             newer_version: self.newer_version.as_deref(),

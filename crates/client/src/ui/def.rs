@@ -120,6 +120,14 @@ pub enum Node {
         columns: u32,
         rows: u32,
     },
+    /// Inventory slots, every one clickable, with counts, wear and locks.
+    SlotGrid {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        columns: u32,
+        rows: u32,
+    },
     /// A row of item slots (the hotbar).
     Slots {
         id: String,
@@ -161,6 +169,7 @@ impl Node {
             | Self::Tabs { at, .. }
             | Self::ItemGrid { at, .. }
             | Self::Slots { at, .. }
+            | Self::SlotGrid { at, .. }
             | Self::Crosshair { at, .. }
             | Self::Log { at, .. } => Some(*at),
         }
@@ -183,6 +192,7 @@ impl Node {
             | Self::Tabs { id, .. }
             | Self::ItemGrid { id, .. }
             | Self::Slots { id, .. }
+            | Self::SlotGrid { id, .. }
             | Self::Crosshair { id, .. }
             | Self::Log { id, .. } => Some(id),
         }

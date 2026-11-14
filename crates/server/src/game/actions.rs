@@ -93,6 +93,10 @@ impl Game {
                 against,
                 face,
             } => self.use_item(loader, item, against, face),
+            WorldAction::UseBlock { pos } => {
+                self.open_block(loader, pos);
+                Vec::new()
+            }
             WorldAction::Interact(entity) => {
                 self.interact_entity(entity);
                 Vec::new()
@@ -157,7 +161,9 @@ fn aimed_cells(action: WorldAction) -> Vec<BlockPos> {
         WorldAction::Place { against, face, .. } | WorldAction::Use { against, face, .. } => {
             (against, Some(face))
         }
-        WorldAction::Interact(_) | WorldAction::Attack(_) => return Vec::new(),
+        WorldAction::Interact(_) | WorldAction::Attack(_) | WorldAction::UseBlock { .. } => {
+            return Vec::new();
+        }
     };
     let mut cells = vec![against];
     cells.extend(face.map(|face| against.neighbour(face)));

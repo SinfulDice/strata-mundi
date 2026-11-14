@@ -157,8 +157,12 @@ impl Game {
         Some(beside.clone().find(standing).unwrap_or(on_top))
     }
 
-    /// Spawn, move, removal and riding messages since the last call.
+    /// Entity, container and inventory news since the last call.
     pub fn take_messages(&mut self) -> Vec<ServerMessage> {
+        if std::mem::take(&mut self.inventory_dirty) {
+            let inventory = Box::new(self.inventory());
+            self.messages.push(ServerMessage::Inventory(inventory));
+        }
         std::mem::take(&mut self.messages)
     }
 
@@ -231,6 +235,7 @@ fn state(entity: Entity, boat: &Boat) -> EntityState {
         kind: boat.kind,
         position: boat.body.position.to_array(),
         yaw: boat.body.yaw,
+        item: None,
     }
 }
 

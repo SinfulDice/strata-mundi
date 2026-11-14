@@ -33,8 +33,9 @@ fn commands_change_the_world_and_answer() {
         cycle: DayCycle::default(),
     };
     assert_eq!(console.run("/tp ~ ~10 5").feedback.key, "command-tp-done");
-    let given = console.run("give stone");
-    assert!(given.hotbar.is_some() && !given.feedback.error);
+    let given = console.run("give stone 100");
+    assert!(!given.feedback.error);
+    assert!(console.run("give stone zero").feedback.key == "command-usage");
     assert!(console.run("give strata:unobtainium").feedback.error);
     assert_eq!(console.run("time set noon").feedback.args[0].1, "6000");
     assert_eq!(console.run("seed").feedback.args[0].1, "7");
@@ -42,6 +43,12 @@ fn commands_change_the_world_and_answer() {
     assert_eq!(console.run("dance").feedback.key, "command-unknown");
     let feet = game.player_body().unwrap().position;
     assert_eq!((feet.y, feet.z), (90.0, 5.0));
+    let stone = content.items.key(&"strata:stone".parse().unwrap()).unwrap();
+    assert_eq!(
+        game.inventory().slots.count(stone),
+        100,
+        "split into stacks of 64"
+    );
     assert_eq!(meta.day_time, 6_000);
 }
 

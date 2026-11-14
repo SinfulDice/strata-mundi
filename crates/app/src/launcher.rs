@@ -59,6 +59,7 @@ impl GameLauncher {
             day_cycle: true,
             fluids: Default::default(),
             fire: Default::default(),
+            commands: true,
             generation: self.args.world_code.clone().unwrap_or_default(),
         };
         self.start(meta, None)

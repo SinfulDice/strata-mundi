@@ -102,7 +102,10 @@ pub fn predicted_change(
             face,
             block,
         } => predicted_placement(info, world, against, face, block, player),
-        WorldAction::Use { .. } | WorldAction::Interact(_) | WorldAction::Attack(_) => None,
+        WorldAction::Use { .. }
+        | WorldAction::UseBlock { .. }
+        | WorldAction::Interact(_)
+        | WorldAction::Attack(_) => None,
     }
 }
 

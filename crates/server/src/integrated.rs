@@ -75,19 +75,21 @@ impl IntegratedServer {
             start.body,
             meta.mode,
         );
-        game.set_hotbar(start.hotbar);
+        game.set_inventory(start.inventory);
         game.set_look(start.look);
         game.set_fluid_settings(meta.fluids);
         game.set_fire_settings(meta.fire);
         game.set_world_seed(meta.seed, &config.dimension);
         game.restore_boats(persistence.boats(&config.dimension), start.boat);
+        game.restore_drops(persistence.drops(&config.dimension));
+        game.block_entities = persistence.block_entities(&config.dimension);
         if let (Some(body), Some(movement)) = (game.player_body(), game.movement()) {
             connection.send(ServerMessage::Welcome {
                 dimension: config.dimension.clone(),
                 body: *body,
                 movement,
                 border: game.border,
-                hotbar: game.hotbar(),
+                inventory: Box::new(game.inventory()),
                 mode: game.mode(),
                 look: game.look(),
                 day: DayState {
@@ -173,8 +175,10 @@ impl IntegratedServer {
                 let changes = self.game.request_action(&mut self.loader, id, action);
                 self.broadcast_changes(changes);
             }
-            ClientMessage::Hotbar(hotbar) => {
-                self.game.set_hotbar(hotbar);
+            ClientMessage::Inventory(request) => {
+                let content = &self.content;
+                let names = |item, language: &str| content.item_name(item, language);
+                self.game.inventory_request(&self.loader, request, &names);
             }
             ClientMessage::Pause(paused) => self.paused = paused,
             ClientMessage::Save { icon } => {
@@ -200,9 +204,6 @@ impl IntegratedServer {
         };
         let ran = console.run(line);
         tracing::info!(line, answer = %ran.feedback.key, "command");
-        if let Some(hotbar) = ran.hotbar {
-            self.connection.send(ServerMessage::Hotbar(hotbar));
-        }
         self.connection.send(ServerMessage::Feedback(ran.feedback));
         self.send_day_time();
     }

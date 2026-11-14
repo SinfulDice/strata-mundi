@@ -4,20 +4,25 @@
 //! <saves>/<id>/world.ron                          description, versioned
 //!              player.ron                         the player's character
 //!              icon.png                           capture taken at the last save
-//!              entities/<namespace>/<dimension>.ron  boats
+//!              entities/<namespace>/<dimension>.ron  boats, items on the ground
+//!              block_entities/<namespace>/<dimension>.ron  chest and barrel contents
 //!              regions/<namespace>/<dimension>/   modified columns only
 //! <backups>/<id>/<date>/                          rotating copies
 //! ```
 
 mod backup;
+mod block_entities;
 mod entities;
 mod meta;
 mod region;
+mod stacks;
 
 pub use backup::back_up;
-pub use entities::{EntitiesData, SavedBoat};
+pub use block_entities::{BlockEntitiesData, SavedBlockEntity};
+pub use entities::{EntitiesData, SavedBoat, SavedDrop};
 pub use meta::{FORMAT_VERSION, PlayerData, WorldMeta};
 pub use region::{BlockNames, REGION_SIZE, RegionStore};
+pub use stacks::{SavedInventory, SavedStack, load_slots, save_slots};
 pub use strata_core::files::write_atomic;
 
 use meta::FormatOnly;
@@ -212,6 +217,7 @@ pub fn create(
             spread: new.fire_spread,
             destroy: new.fire_destroy,
         },
+        commands: true,
         generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;

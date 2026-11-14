@@ -13,6 +13,14 @@ pub trait ScreenModel {
     fn items(&self, _id: &str) -> Vec<Option<ItemId>> {
         Vec::new()
     }
+    /// Counts, wear and locks of the slots of a grid, in the order of `items`.
+    fn marks(&self, _id: &str) -> Vec<SlotMark> {
+        Vec::new()
+    }
+    /// The stack carried under the pointer (inventory screens): item and count.
+    fn carried(&self) -> Option<(ItemId, u16)> {
+        None
+    }
     /// Selected tab, slot or list row.
     fn selected(&self, _id: &str) -> Option<usize> {
         None
@@ -60,6 +68,10 @@ pub trait ScreenModel {
     fn adjust(&mut self, _id: &str, _index: usize, _step: i32, _fraction: Option<f32>) {}
     /// Wheel or page keys over a list or grid.
     fn scroll(&mut self, _id: &str, _rows: i32) {}
+    /// A click or a button on an inventory slot; `false` if the element is no such slot.
+    fn slot_press(&mut self, _id: &str, _index: usize, _press: SlotPress) -> bool {
+        false
+    }
     /// Number key `slot` pressed while pointing at an element (item → hotbar slot).
     fn quick_slot(&mut self, _id: &str, _index: usize, _slot: usize) {}
     /// Characters typed into a text field (`\u{8}` erases one).
@@ -68,6 +80,25 @@ pub trait ScreenModel {
     fn paste(&mut self, _id: &str, _text: Option<&str>) {}
     /// Whether the text of an `Effect::Copy` reached the clipboard.
     fn copied(&mut self, _done: bool) {}
+}
+
+/// How the pointer or a button acted on an inventory slot.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SlotPress {
+    Click(strata_core::inventory::Click),
+    ToggleLock,
+}
+
+/// What is drawn over an item in a slot.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct SlotMark {
+    /// Shown when above 1.
+    pub count: u16,
+    /// Uses left, 0 to 1, for items that wear.
+    pub wear: Option<f32>,
+    pub locked: bool,
+    /// Left out by a search.
+    pub dim: bool,
 }
 
 /// One line of a `Log` widget.

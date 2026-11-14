@@ -55,6 +55,7 @@ impl Screens {
             key_label: &key_label,
             offsets: None,
             editing: false,
+            pointer: self.pointer,
         };
         let mut hits = Vec::new();
         let shot = game.as_deref().and_then(|g| g.cinematic.as_ref());
@@ -98,12 +99,14 @@ impl Screens {
         }
         crate::debug_overlay::paint(debug, &mut painter, &self.assets.theme);
         if let Some(menu) = self.stack.last_mut() {
+            let (hotbar, container) = menu::game_parts(game);
             let shared = Shared {
                 content,
                 settings: &mut self.settings,
                 worlds: &self.worlds,
                 icons: &self.icons,
-                hotbar: game.map(|g| &mut g.hotbar),
+                hotbar,
+                container,
                 focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
                 key_labels: &key_labels,
                 newer_version: self.newer_version.as_deref(),
@@ -113,6 +116,7 @@ impl Screens {
                 effects: &mut Vec::new(),
             };
             let def = menu.def(&self.assets.screens);
+            self.window = window_rect(def, screen);
             let model = menu::model(menu, shared);
             let focus = self.focus.as_ref();
             hits.extend(draw_screen(
@@ -148,6 +152,20 @@ impl Screens {
             &painter.indices,
         );
     }
+}
+
+/// Where the panel named `window` of a screen lies.
+fn window_rect(def: &ScreenDef, screen: Rect) -> Option<Rect> {
+    def.root.iter().find_map(|node| match node {
+        Node::Panel {
+            id,
+            anchor,
+            at,
+            size,
+            ..
+        } if id == "window" => Some(screen.place(*anchor, *at, *size)),
+        _ => None,
+    })
 }
 
 /// Rows of the first key grid of the keyboard layout.

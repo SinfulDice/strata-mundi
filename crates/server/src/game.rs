@@ -3,7 +3,12 @@
 mod actions;
 mod boat;
 mod bucket;
+mod containers;
+mod drops;
+mod inventory;
 mod terrain;
+
+pub use containers::{BlockEntities, BlockEntity, OpenWindow};
 
 use crate::ecs::{Ecs, Entity, PlayerControl};
 use crate::loader::{Bounded, ColumnLoader};
@@ -14,10 +19,11 @@ use std::sync::Arc;
 use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::dimension::DimensionId;
+use strata_core::inventory::{ItemStack, PlayerInventory};
 use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
 use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings, cell};
-use strata_protocol::{GameMode, HotbarState, MIN_VIEW_DISTANCE, ServerMessage};
+use strata_protocol::{GameMode, MIN_VIEW_DISTANCE, ServerMessage};
 
 /// Farthest a player may break or place, measured from the eyes to the block centre
 /// (a little more than the client's reach, for rounding).
@@ -25,7 +31,6 @@ const MAX_REACH: f64 = 6.0;
 const MAX_QUEUED_INPUTS: usize = 40;
 /// Ticks between two block actions of one player (10 per second at most).
 const ACTION_TICKS: u64 = 2;
-const HOTBAR_SLOTS: usize = 9;
 
 pub struct Game {
     pub ecs: Ecs,
@@ -40,6 +45,10 @@ pub struct Game {
     /// News for the clients (entities, action answers), taken by the server after each
     /// tick or message, after the block changes.
     messages: Vec<ServerMessage>,
+    /// Contents of the container blocks of the dimension.
+    pub block_entities: BlockEntities,
+    /// The inventory changed since the last messages were taken.
+    inventory_dirty: bool,
 }
 
 impl Game {
@@ -47,7 +56,7 @@ impl Game {
         let mut ecs = Ecs::default();
         let player = ecs.entities.spawn();
         ecs.bodies.insert(player, spawn);
-        ecs.hotbars.insert(player, HotbarState::default());
+        ecs.inventories.insert(player, PlayerInventory::default());
         let movement = MovementSettings {
             can_fly: mode == GameMode::Creative,
             step_up: true,
@@ -65,6 +74,8 @@ impl Game {
             updates,
             tick: 0,
             messages: Vec::new(),
+            block_entities: BlockEntities::default(),
+            inventory_dirty: false,
         }
     }
 
@@ -115,22 +126,6 @@ impl Game {
         true
     }
 
-    /// Creative: any existing item, nine slots at most. Returns whether it was accepted.
-    pub fn set_hotbar(&mut self, hotbar: HotbarState) -> bool {
-        let valid = hotbar.slots.len() <= HOTBAR_SLOTS
-            && usize::from(hotbar.selected) < HOTBAR_SLOTS
-            && hotbar
-                .slots
-                .iter()
-                .flatten()
-                .all(|&item| self.rules.is_item(item))
-            && self.is_creative();
-        if valid {
-            self.ecs.hotbars.insert(self.player, hotbar);
-        }
-        valid
-    }
-
     pub fn look(&self) -> [f32; 2] {
         self.ecs
             .controls
@@ -142,14 +137,6 @@ impl Game {
         if let Some(control) = self.ecs.controls.get_mut(self.player) {
             control.look = look;
         }
-    }
-
-    pub fn hotbar(&self) -> HotbarState {
-        self.ecs
-            .hotbars
-            .get(self.player)
-            .cloned()
-            .unwrap_or_default()
     }
 
     pub fn set_preferences(&mut self, auto_jump: bool, step_up: bool) {
@@ -191,6 +178,7 @@ impl Game {
         };
         let moved = boat_movement(&mut self.ecs, &self.rules, &terrain);
         self.report_moves(&moved);
+        self.drops_tick(loader);
         let mut changes = self.run_queued_actions(loader);
         for pos in loader.take_arrived() {
             if let Some(column) = loader.column(pos) {
@@ -198,8 +186,10 @@ impl Game {
             }
         }
         let mut world = Bounded { loader, border };
+        let ticked = changes.len();
         self.updates.tick(&mut world, &mut changes);
         wake_boats(&mut self.ecs, &self.rules, &changes);
+        self.settle_block_entities(loader, &changes[ticked..]);
         changes
     }
 
@@ -226,8 +216,25 @@ impl Game {
         let mut changes = Vec::new();
         if allowed {
             self.set_block(loader, pos, BlockId::AIR, &mut changes);
+            self.drop_broken(current, pos);
         }
         changes
+    }
+
+    /// Survival: a broken block leaves its item on the ground.
+    fn drop_broken(&mut self, block: BlockId, pos: BlockPos) {
+        if self.is_creative() {
+            return;
+        }
+        if let Some(item) = self.rules.block_item(block) {
+            let stack = ItemStack::new(item, 1, &self.rules);
+            let velocity = DVec3::new(0.0, 0.1, 0.0);
+            self.spawn_drop(
+                stack,
+                containers::block_centre(pos) - DVec3::Y * 0.25,
+                velocity,
+            );
+        }
     }
 
     fn set_block(
@@ -238,9 +245,11 @@ impl Game {
         changes: &mut Vec<BlockChange>,
     ) {
         let border = self.border;
+        let before = changes.len();
         let mut world = Bounded { loader, border };
         self.updates.set_block(&mut world, pos, block, changes);
         wake_boats(&mut self.ecs, &self.rules, changes);
+        self.settle_block_entities(loader, &changes[before..]);
     }
 
     /// Validated placement into a free (non-solid) cell that no player stands in: next to
@@ -265,7 +274,11 @@ impl Game {
             .rules
             .updates()
             .placed_variant(block, face, |side| cell(&world, target.neighbour(side)));
+        let held = self
+            .held_item()
+            .is_some_and(|item| self.rules.block_item(block) == Some(item));
         let allowed = self.rules.is_placeable(block)
+            && held
             && self.in_reach(target)
             && !self.blocks_a_player(target, block)
             && variant.is_some()
@@ -273,6 +286,7 @@ impl Game {
         let mut changes = Vec::new();
         if let (true, Some(variant)) = (allowed, variant) {
             self.set_block(loader, target, variant, &mut changes);
+            self.consume_held();
         }
         changes
     }
@@ -304,6 +318,11 @@ impl Game {
             control.mode = mode;
             control.movement.can_fly = mode == GameMode::Creative;
             self.messages.push(ServerMessage::Mode(mode));
+            if mode != GameMode::Creative
+                && let Some(body) = self.ecs.bodies.get_mut(self.player)
+            {
+                body.flying = false;
+            }
         }
     }
 

@@ -16,7 +16,9 @@ mod widgets;
 pub use atlas::{ICON_SIZE, UiAtlas, item_icon};
 pub use def::{Node, ScreenDef};
 pub use focus::{Direction, navigate};
-pub use model::{Hit, HitKind, ListRow, LogLine, OptionRow, ScreenModel, Tone};
+pub use model::{
+    Hit, HitKind, ListRow, LogLine, OptionRow, ScreenModel, SlotMark, SlotPress, Tone,
+};
 pub use painter::{Painter, UiVertex, auto_scale};
 pub use pointer::{RowPart, SLIDER_KNOB, row_part, row_zones, track_fraction, wheel_adjusts};
 pub use rect::Rect;
@@ -33,6 +35,8 @@ use strata_core::pack::{PackError, PackSet, read_ron};
 pub struct ScreenDefs {
     pub hud: ScreenDef,
     pub inventory: ScreenDef,
+    /// Survival inventory, and the same with an open container.
+    pub slots: ScreenDef,
     pub title: ScreenDef,
     pub worlds: ScreenDef,
     pub create_world: ScreenDef,
@@ -48,10 +52,11 @@ pub struct ScreenDefs {
 }
 
 impl ScreenDefs {
-    fn all(&self) -> [&ScreenDef; 14] {
+    fn all(&self) -> [&ScreenDef; 15] {
         [
             &self.hud,
             &self.inventory,
+            &self.slots,
             &self.title,
             &self.worlds,
             &self.create_world,
@@ -93,6 +98,7 @@ impl UiAssets {
         let screens = ScreenDefs {
             hud: read("hud")?,
             inventory: read("creative_inventory")?,
+            slots: read("inventory")?,
             title: read("title")?,
             worlds: read("worlds")?,
             create_world: read("create_world")?,

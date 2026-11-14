@@ -1,3 +1,4 @@
+use super::stacks::SavedInventory;
 use serde::{Deserialize, Serialize};
 use strata_core::generation::WorldgenSettings;
 use strata_core::id::Identifier;
@@ -37,6 +38,9 @@ pub struct WorldMeta {
     /// World option: fire spreads and destroys what burns.
     #[serde(default)]
     pub fire: FireSettings,
+    /// World option: cheating commands (`/give`, `/gamemode`…) may be used.
+    #[serde(default = "yes")]
+    pub commands: bool,
     /// World type and generation settings; older worlds are of the pack's normal type.
     #[serde(default)]
     pub generation: WorldgenSettings,
@@ -62,8 +66,13 @@ pub struct PlayerData {
     /// Yaw and pitch, in radians.
     #[serde(default)]
     pub look: [f32; 2],
-    /// Item identifiers, so a world survives packs being added or reordered.
+    /// The inventory (v0.3); older worlds only have `hotbar`.
+    #[serde(default)]
+    pub inventory: Option<SavedInventory>,
+    /// Hotbar of worlds saved before v0.3: item identifiers, one of each.
+    #[serde(default)]
     pub hotbar: Vec<Option<Identifier>>,
+    #[serde(default)]
     pub selected: usize,
     /// The boat the player sits in: its index in the dimension's saved boats.
     #[serde(default)]

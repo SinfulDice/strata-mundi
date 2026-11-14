@@ -5,9 +5,10 @@ use crate::game::Game;
 use crate::save::WorldMeta;
 use strata_core::content::Content;
 use strata_core::id::Identifier;
+use strata_core::inventory::{ItemRules, ItemStack};
 use strata_core::sky::{DayCycle, Moment};
+use strata_protocol::GameMode;
 use strata_protocol::commands::{Feedback, TIME_PRESETS, find, words};
-use strata_protocol::{GameMode, HotbarState};
 
 /// More liquid updates than this per tick would not hold 20 ticks per second.
 const MAX_FLUID_BUDGET: u32 = 65_536;
@@ -19,18 +20,14 @@ pub struct Console<'a> {
     pub cycle: DayCycle,
 }
 
-/// What a command did: the answer, and the new hotbar if it changed.
+/// What a command did.
 pub struct Ran {
     pub feedback: Feedback,
-    pub hotbar: Option<HotbarState>,
 }
 
 impl From<Feedback> for Ran {
     fn from(feedback: Feedback) -> Self {
-        Self {
-            feedback,
-            hotbar: None,
-        }
+        Self { feedback }
     }
 }
 
@@ -44,8 +41,7 @@ impl Console<'_> {
             Some(spec) => Feedback::error("command-usage", &[("usage", spec.usage_key())]),
             None => Feedback::error("command-unknown", &[("name", name.to_owned())]),
         };
-        // Survival worlds will get a "commands allowed" option.
-        if find(name).is_some_and(|spec| spec.cheat) && !self.game.is_creative() {
+        if find(name).is_some_and(|spec| spec.cheat) && !self.meta.commands {
             return Feedback::error("command-not-allowed", &[]).into();
         }
         let ran = match name {
@@ -85,7 +81,7 @@ impl Console<'_> {
     }
 
     fn give(&mut self, args: &[&str]) -> Option<Ran> {
-        let [name] = args else {
+        let [name, rest @ ..] = args else {
             return None;
         };
         let id = identifier(name)?;
@@ -93,22 +89,25 @@ impl Console<'_> {
             let unknown = Feedback::error("command-give-unknown", &[("item", id.to_string())]);
             return Some(unknown.into());
         };
-        let mut hotbar = self.game.hotbar();
-        let slot = usize::from(hotbar.selected);
-        if hotbar.slots.len() <= slot {
-            hotbar.slots.resize(slot + 1, None);
+        let count = match rest {
+            [] => 1,
+            [count] => count.parse::<u16>().ok().filter(|&c| c > 0)?,
+            _ => return None,
+        };
+        let max = self.game.rules.max_stack(item);
+        let mut left = u32::from(count);
+        while left > 0 {
+            let part = left.min(u32::from(max)) as u16;
+            left -= u32::from(part);
+            let stack = ItemStack::new(item, part, &self.game.rules);
+            if let Some(rest) = self.game.give(stack) {
+                self.game.throw_all([rest]);
+            }
         }
-        hotbar.slots[slot] = Some(item);
-        if !self.game.set_hotbar(hotbar) {
-            return Some(Feedback::error("command-not-allowed", &[]).into());
-        }
-        Some(Ran {
-            feedback: Feedback::ok("command-give-done", &[("item", id.to_string())]),
-            hotbar: Some(self.game.hotbar()),
-        })
+        let args = [("item", id.to_string()), ("count", count.to_string())];
+        Some(Feedback::ok("command-give-done", &args).into())
     }
 
-    /// Survival arrives in v0.3: only creative can be chosen for now.
     fn gamemode(&mut self, args: &[&str]) -> Option<Feedback> {
         match args {
             ["creative"] => {
@@ -116,7 +115,11 @@ impl Console<'_> {
                 self.game.set_mode(GameMode::Creative);
                 Some(Feedback::ok("command-gamemode-done", &[]))
             }
-            ["survival"] => Some(Feedback::error("command-gamemode-later", &[])),
+            ["survival"] => {
+                self.meta.mode = GameMode::Survival;
+                self.game.set_mode(GameMode::Survival);
+                Some(Feedback::ok("command-gamemode-survival", &[]))
+            }
             _ => None,
         }
     }

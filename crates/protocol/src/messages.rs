@@ -1,11 +1,13 @@
 use crate::GameMode;
 use crate::commands::Feedback;
+use crate::inventory::{InventoryRequest, OpenedContainer};
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::{BiomeTints, BlockId, EntityTypeId, Face, ItemId};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
 use strata_core::id::Identifier;
+use strata_core::inventory::{Container, PlayerInventory};
 use strata_core::physics::{Body, MoveInput, MovementSettings};
 use strata_core::sky::DayCycleDef;
 
@@ -29,8 +31,8 @@ pub enum ClientMessage {
     /// in the order of the numbers, once it is done or refused, so the client can drop
     /// its prediction.
     Action { id: ActionId, action: WorldAction },
-    /// The hotbar changed (creative: the client picks any item; kept with the world).
-    Hotbar(HotbarState),
+    /// A click in an inventory screen, the hand's slot, sorting, locking…
+    Inventory(InventoryRequest),
     /// Stop or resume the world (pause menu; any menu if the player asked for it).
     Pause(bool),
     /// Save now, with a capture of the screen for the world list.
@@ -68,6 +70,10 @@ pub enum WorldAction {
         against: BlockPos,
         face: Face,
     },
+    /// Right click on a block that does something of its own (opens a chest).
+    UseBlock {
+        pos: BlockPos,
+    },
     /// Right click on an entity (get into a boat).
     Interact(NetEntity),
     /// Left click on an entity (creative: takes a boat away).
@@ -87,13 +93,8 @@ pub struct EntityState {
     pub position: [f64; 3],
     /// Radians, 0 = north (-Z).
     pub yaw: f32,
-}
-
-/// The nine quick slots and the selected one.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct HotbarState {
-    pub slots: Vec<Option<ItemId>>,
-    pub selected: u8,
+    /// What a dropped item shows.
+    pub item: Option<ItemId>,
 }
 
 /// The day of the player's dimension, given on arrival so the first image of the world
@@ -125,7 +126,7 @@ pub enum ServerMessage {
         movement: MovementSettings,
         /// Half-width of the world, in blocks.
         border: i32,
-        hotbar: HotbarState,
+        inventory: Box<PlayerInventory>,
         mode: GameMode,
         /// Yaw and pitch, in radians.
         look: [f32; 2],
@@ -177,8 +178,14 @@ pub enum ServerMessage {
     Mode(GameMode),
     /// Answer to `ClientMessage::Save`: everything is on disk.
     Saved,
-    /// The server changed the hotbar (`/give`).
-    Hotbar(HotbarState),
+    /// The player's inventory after a click, a pickup or `/give`.
+    Inventory(Box<PlayerInventory>),
+    /// The player opened a container (the screen shows it).
+    ContainerOpened(Box<OpenedContainer>),
+    /// What the open container holds now.
+    ContainerContents(Box<Container>),
+    /// The container is gone or out of reach: the screen closes.
+    ContainerClosed,
     /// Answer to a console command.
     Feedback(Feedback),
 }
@@ -244,6 +251,7 @@ mod tests {
             kind: EntityTypeId(2),
             position: [12.5, 63.8125, -40.25],
             yaw: 1.5,
+            item: Some(ItemId(3)),
         };
         let server = [
             ServerMessage::EntitySpawned(state),

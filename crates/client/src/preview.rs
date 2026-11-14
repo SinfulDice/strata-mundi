@@ -70,6 +70,7 @@ pub fn load_preview(path: &Path, content: &Content) -> Result<ClientWorld, PackE
             kind,
             position: [x, y, z],
             yaw: entity.yaw,
+            item: None,
         });
     }
     Ok(world)

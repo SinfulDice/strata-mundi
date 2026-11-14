@@ -7,15 +7,17 @@ use super::editor::EditorModel;
 use super::inventory::{InventoryModel, InventoryState};
 use super::options::{OptionsModel, OptionsState};
 use super::pause::{CrashModel, NoticeModel, PauseModel};
+use super::slots::{SlotsModel, SlotsState};
 use super::title::TitleModel;
 use super::worlds::{ConfirmModel, WorldsModel};
+use crate::gameplay::Gameplay;
 use crate::hotbar::Hotbar;
 use crate::input::Action;
 use crate::settings::Settings;
 use crate::ui::{Rect, ScreenDef, ScreenDefs, ScreenModel};
 use strata_core::content::Content;
 use strata_core::id::Identifier;
-use strata_protocol::{NewWorld, WorldSummary};
+use strata_protocol::{NewWorld, OpenedContainer, WorldSummary};
 
 pub enum Menu {
     Title,
@@ -30,7 +32,10 @@ pub enum Menu {
     },
     Pause,
     Options(OptionsState),
+    /// Creative inventory: every item.
     Inventory(InventoryState),
+    /// Survival inventory, or a container with the player's slots.
+    Slots(SlotsState),
     HudEditor {
         selected: Option<String>,
     },
@@ -55,6 +60,7 @@ impl Menu {
             Self::Pause => &defs.pause,
             Self::Options(_) => &defs.options,
             Self::Inventory(_) => &defs.inventory,
+            Self::Slots(_) => &defs.slots,
             Self::HudEditor { .. } => &defs.hud_editor,
             Self::Notice { .. } => &defs.notice,
             Self::Crash => &defs.crash,
@@ -109,6 +115,8 @@ pub struct Shared<'a> {
     /// Atlas place of each world's capture, in list order.
     pub icons: &'a [Option<Rect>],
     pub hotbar: Option<&'a mut Hotbar>,
+    /// The container the player opened.
+    pub container: Option<&'a OpenedContainer>,
     /// The focused element (id, index), for models that describe it.
     pub focus: Option<(String, usize)>,
     /// Keyboard and gamepad labels of an action's bindings.
@@ -133,6 +141,14 @@ impl Shared<'_> {
         self.content
             .translations
             .text_with(&self.settings.interface.language, key, args)
+    }
+}
+
+/// The parts of the game the menus use: the inventory and the open container.
+pub fn game_parts(game: Option<&mut Gameplay>) -> (Option<&mut Hotbar>, Option<&OpenedContainer>) {
+    match game {
+        Some(game) => (Some(&mut game.hotbar), game.container.as_ref()),
+        None => (None, None),
     }
 }
 
@@ -175,6 +191,16 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
                 shared.content,
                 &shared.settings.interface.language,
             )),
+            None => Box::new(Empty),
+        },
+        Menu::Slots(state) => match shared.hotbar {
+            Some(hotbar) => Box::new(SlotsModel {
+                state,
+                hotbar,
+                container: shared.container,
+                content: shared.content,
+                language: &shared.settings.interface.language,
+            }),
             None => Box::new(Empty),
         },
     }

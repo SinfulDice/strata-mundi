@@ -1,4 +1,4 @@
-use super::super::tests::{World, block, wait, world};
+use super::super::tests::{World, block, hold, wait, world};
 use super::*;
 use strata_core::chunk::Column;
 use strata_core::content::BlockId;
@@ -6,6 +6,7 @@ use strata_core::coords::ColumnPos;
 
 fn place(w: &mut World, id: u32, against: BlockPos) -> Vec<BlockChange> {
     let planks = block(&w.content, "strata:oak_planks");
+    hold(w, w.game.rules.block_item(planks));
     let action = WorldAction::Place {
         against,
         face: Face::Up,

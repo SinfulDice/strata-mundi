@@ -60,16 +60,7 @@ impl<'a> InventoryModel<'a> {
     }
 
     fn name(&self, item: ItemId) -> String {
-        let Some(id) = self.content.items.identifier(item) else {
-            return String::new();
-        };
-        let kind = match self.content.items.get(item).map(|i| i.kind) {
-            Some(strata_core::content::ItemKind::Block(_)) => "block",
-            _ => "item",
-        };
-        self.content
-            .translations
-            .text(self.language, &id.translation_key(kind))
+        self.content.item_name(item, self.language)
     }
 
     /// Items of the current tab matching the search, in registry order.
@@ -160,7 +151,7 @@ impl ScreenModel for InventoryModel<'_> {
     fn quick_slot(&mut self, id: &str, index: usize, slot: usize) {
         if id == "items" {
             let item = self.grid_item(index);
-            self.hotbar.set(slot, item);
+            self.hotbar.set(slot, item, &self.content.items);
         }
     }
 
@@ -182,7 +173,11 @@ impl ScreenModel for InventoryModel<'_> {
         match id {
             "items" => {
                 if let Some(item) = self.grid_item(index) {
-                    self.hotbar.set(self.hotbar.selected_index(), Some(item));
+                    self.hotbar.set(
+                        self.hotbar.selected_index(),
+                        Some(item),
+                        &self.content.items,
+                    );
                 }
             }
             "hotbar" => self.hotbar.select(index),

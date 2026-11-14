@@ -3,9 +3,9 @@
 //! its smooth light (border included) is right the first time.
 
 use super::{ClientWorld, column_of, local};
-use crate::models::ModelPose;
+use crate::models::{ModelKind, ModelPose};
 use glam::DVec3;
-use strata_core::content::{EntityTypeId, Face};
+use strata_core::content::Face;
 use strata_core::coords::{BlockPos, ColumnPos, SECTION_SIZE};
 use strata_core::light::section_index;
 use strata_core::light::{
@@ -148,10 +148,8 @@ impl ClientWorld {
     }
 
     /// Entities to draw, with the light of their cell.
-    pub fn entity_models(
-        &self,
-    ) -> impl Iterator<Item = (EntityTypeId, ModelPose, PackedLight)> + '_ {
-        self.entities.iter().map(|(_, kind, pose)| {
+    pub fn entity_models(&self) -> impl Iterator<Item = (ModelKind, ModelPose, PackedLight)> + '_ {
+        self.entities.models().map(|(kind, pose)| {
             let at = pose.position + DVec3::Y * ENTITY_LIGHT_HEIGHT;
             let cell = BlockPos {
                 x: at.x.floor() as i32,

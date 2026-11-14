@@ -1,17 +1,21 @@
 //! Saving a running world: modified columns, the player and the world description.
 //! Errors are logged, never fatal: the game goes on and the next save tries again.
 
-use crate::game::Game;
+use crate::game::{BlockEntities, BlockEntity, Game};
 use crate::loader::ColumnLoader;
-use crate::save::{EntitiesData, PlayerData, SavedBoat, WorldFolder, WorldMeta, back_up};
+use crate::save::{
+    BlockEntitiesData, EntitiesData, PlayerData, SavedBlockEntity, SavedBoat, SavedDrop,
+    SavedInventory, WorldFolder, WorldMeta, back_up,
+};
 use glam::DVec3;
 use std::path::PathBuf;
 use std::sync::Arc;
 use strata_core::content::Content;
 use strata_core::content::EntityTypeId;
+use strata_core::coords::BlockPos;
 use strata_core::dimension::DimensionId;
-use strata_core::physics::{BoatBody, Body};
-use strata_protocol::HotbarState;
+use strata_core::inventory::{HOTBAR, ItemStack, PlayerInventory};
+use strata_core::physics::{BoatBody, Body, ItemBody};
 
 const MAX_ICON_BYTES: usize = 256 * 1024;
 
@@ -30,7 +34,7 @@ pub struct WorldSettings {
 pub struct PlayerStart {
     pub body: Body,
     pub look: [f32; 2],
-    pub hotbar: HotbarState,
+    pub inventory: PlayerInventory,
     /// Index of the boat they sat in, among the saved boats.
     pub boat: Option<usize>,
 }
@@ -84,13 +88,13 @@ impl Persistence {
             Some(player) => PlayerStart {
                 body: player.body,
                 look: player.look,
-                hotbar: self.hotbar_from(&player),
+                inventory: self.inventory_from(&player),
                 boat: player.boat,
             },
             None => PlayerStart {
                 body: Body::at(spawn()),
                 look: [0.0; 2],
-                hotbar: HotbarState::default(),
+                inventory: PlayerInventory::default(),
                 boat: None,
             },
         }
@@ -98,13 +102,7 @@ impl Persistence {
 
     /// Boats saved in `dimension`; those whose type is gone (pack removed) are dropped.
     pub fn boats(&self, dimension: &DimensionId) -> Vec<Option<(EntityTypeId, BoatBody)>> {
-        let Some(folder) = &self.folder else {
-            return Vec::new();
-        };
-        let data = folder.read_entities(dimension).unwrap_or_else(|error| {
-            tracing::error!(%error, "entities unreadable: none loaded");
-            EntitiesData::default()
-        });
+        let data = self.entities_data(dimension);
         let entities = &self.content.entities;
         data.boats
             .into_iter()
@@ -115,6 +113,55 @@ impl Persistence {
                 usable.then(|| (kind, BoatBody::at(position, boat.yaw)))
             })
             .collect()
+    }
+
+    /// Items on the ground saved in `dimension`; unknown items are dropped.
+    pub fn drops(&self, dimension: &DimensionId) -> Vec<(ItemStack, ItemBody, u32)> {
+        let items = &self.content.items;
+        self.entities_data(dimension)
+            .items
+            .into_iter()
+            .filter_map(|drop| {
+                let position = DVec3::from_array(drop.position);
+                let stack = drop.stack.to_stack(items)?;
+                Some((stack, ItemBody::at(position, DVec3::ZERO), drop.age))
+            })
+            .collect()
+    }
+
+    /// Container contents saved in `dimension`.
+    pub fn block_entities(&self, dimension: &DimensionId) -> BlockEntities {
+        let Some(folder) = &self.folder else {
+            return BlockEntities::default();
+        };
+        let data = folder
+            .read_block_entities(dimension)
+            .unwrap_or_else(|error| {
+                tracing::error!(%error, "container contents unreadable: none loaded");
+                BlockEntitiesData::default()
+            });
+        let items = &self.content.items;
+        data.entities
+            .into_iter()
+            .map(|saved| {
+                let [x, y, z] = saved.pos;
+                let entity = BlockEntity {
+                    container: crate::save::load_slots(&saved.slots, items),
+                    data: saved.data,
+                };
+                (BlockPos::new(x, y, z), entity)
+            })
+            .collect()
+    }
+
+    fn entities_data(&self, dimension: &DimensionId) -> EntitiesData {
+        let Some(folder) = &self.folder else {
+            return EntitiesData::default();
+        };
+        folder.read_entities(dimension).unwrap_or_else(|error| {
+            tracing::error!(%error, "entities unreadable: none loaded");
+            EntitiesData::default()
+        })
     }
 
     /// Folder of the modified columns of `dimension`, if the world is saved.
@@ -146,8 +193,9 @@ impl Persistence {
         let started = std::time::Instant::now();
         self.meta.last_played = chrono::Utc::now().timestamp();
         let mut results = vec![loader.save(), folder.write_meta(&self.meta)];
-        let (boats, seat) = self.boats_data(game);
-        results.push(folder.write_entities(dimension, &boats));
+        let (entities, seat) = self.entities_to_save(game);
+        results.push(folder.write_entities(dimension, &entities));
+        results.push(folder.write_block_entities(dimension, &self.block_entities_data(game)));
         if let Some(mut player) = self.player_data(game, dimension) {
             player.boat = seat;
             results.push(folder.write_player(&player));
@@ -163,28 +211,35 @@ impl Persistence {
 
     fn player_data(&self, game: &Game, dimension: &DimensionId) -> Option<PlayerData> {
         let body = *game.player_body()?;
-        let hotbar = game
-            .ecs
-            .hotbars
-            .get(game.player)
-            .cloned()
-            .unwrap_or_default();
         let items = &self.content.items;
         Some(PlayerData {
             dimension: dimension.0.clone(),
             body,
             look: game.look(),
-            hotbar: hotbar
-                .slots
-                .iter()
-                .map(|slot| slot.and_then(|item| items.identifier(item).cloned()))
-                .collect(),
-            selected: usize::from(hotbar.selected),
+            inventory: Some(SavedInventory::from_inventory(&game.inventory(), items)),
+            hotbar: Vec::new(),
+            selected: 0,
             boat: None,
         })
     }
 
-    fn boats_data(&self, game: &Game) -> (EntitiesData, Option<usize>) {
+    fn block_entities_data(&self, game: &Game) -> BlockEntitiesData {
+        let items = &self.content.items;
+        let mut entities: Vec<SavedBlockEntity> = game
+            .block_entities
+            .iter()
+            .filter(|(_, entity)| !entity.container.is_empty() || !entity.data.is_empty())
+            .map(|(pos, entity)| SavedBlockEntity {
+                pos: [pos.x, pos.y, pos.z],
+                slots: crate::save::save_slots(&entity.container.slots, items),
+                data: entity.data.clone(),
+            })
+            .collect();
+        entities.sort_by_key(|entity| entity.pos);
+        BlockEntitiesData { entities }
+    }
+
+    fn entities_to_save(&self, game: &Game) -> (EntitiesData, Option<usize>) {
         let (boats, seat) = game.saved_boats();
         let entities = &self.content.entities;
         let boats = boats
@@ -197,20 +252,42 @@ impl Persistence {
                 })
             })
             .collect();
-        (EntitiesData { boats }, seat)
+        let items = &self.content.items;
+        let drops = game
+            .saved_drops()
+            .into_iter()
+            .filter_map(|(stack, body, age)| {
+                Some(SavedDrop {
+                    stack: crate::save::SavedStack::from_stack(&stack, items)?,
+                    position: body.position.to_array(),
+                    age,
+                })
+            })
+            .collect();
+        (
+            EntitiesData {
+                boats,
+                items: drops,
+            },
+            seat,
+        )
     }
 
-    /// Items that no longer exist (pack removed) leave an empty slot.
-    fn hotbar_from(&self, player: &PlayerData) -> HotbarState {
+    /// The saved inventory; a world from before v0.3 gets its hotbar back, one of each
+    /// item. Items that no longer exist (pack removed) leave an empty slot.
+    fn inventory_from(&self, player: &PlayerData) -> PlayerInventory {
         let items = &self.content.items;
-        HotbarState {
-            slots: player
-                .hotbar
-                .iter()
-                .map(|slot| slot.as_ref().and_then(|id| items.key(id)))
-                .collect(),
-            selected: u8::try_from(player.selected).unwrap_or(0),
+        if let Some(saved) = &player.inventory {
+            return saved.to_inventory(items);
         }
+        let mut inventory = PlayerInventory::default();
+        let old = player.hotbar.iter().take(HOTBAR.end);
+        for (slot, id) in inventory.slots.slots.iter_mut().zip(old) {
+            let item = id.as_ref().and_then(|id| items.key(id));
+            *slot = item.map(|item| ItemStack::new(item, 1, items));
+        }
+        inventory.selected = u8::try_from(player.selected.min(HOTBAR.end - 1)).unwrap_or(0);
+        inventory
     }
 }
 
@@ -220,117 +297,5 @@ fn is_small_png(bytes: &[u8]) -> bool {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod tests {
-    use super::*;
-    use crate::loader::tests::loader;
-    use crate::rules::BlockRules;
-    use crate::save;
-    use std::path::Path;
-    use strata_core::content::ItemId;
-    use strata_core::pack::PackSet;
-    use strata_protocol::{GameMode, NewWorld};
-
-    fn content() -> Arc<Content> {
-        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
-        let packs = PackSet::discover(&dir, &mut Vec::new());
-        Arc::new(Content::load(&packs, &PackSet::default()).0)
-    }
-
-    #[test]
-    fn a_saved_player_comes_back_as_left() {
-        let saves = std::env::temp_dir().join(format!("strata-persist-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&saves);
-        let new = NewWorld {
-            name: "Test".into(),
-            seed: String::new(),
-            mode: GameMode::Creative,
-            border: 5_000,
-            fluids: true,
-            day_cycle: true,
-            fire_spread: true,
-            fire_destroy: true,
-            generation: Default::default(),
-        };
-        let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
-        let settings = |meta| WorldSettings {
-            meta,
-            folder: Some(folder.clone()),
-            autosave_ticks: 0,
-            backups: None,
-        };
-        let content = content();
-        let dimension = DimensionId("strata:terra".parse().unwrap());
-        let mut persistence = Persistence::new(settings(meta), Arc::clone(&content));
-        let body = Body::at(DVec3::new(3.5, 140.0, -7.5));
-        let mut game = Game::new(BlockRules::new(&content), 5_000, body, GameMode::Creative);
-        let hotbar = HotbarState {
-            slots: vec![Some(ItemId(2)), None, Some(ItemId(5))],
-            selected: 2,
-        };
-        game.set_hotbar(hotbar.clone());
-        game.set_look([1.0, -0.5]);
-        persistence.count_tick();
-        persistence.save(&game, &mut loader(), &dimension, None);
-
-        let reopened = Persistence::new(settings(folder.read_meta().unwrap()), content);
-        let start = reopened.player_start(&dimension, || DVec3::ZERO);
-        assert_eq!(start.body.position, body.position);
-        assert_eq!(start.look, [1.0, -0.5]);
-        assert_eq!(start.hotbar, hotbar);
-        assert_eq!(start.boat, None);
-        assert_eq!(reopened.meta.play_ticks, 1);
-        assert_eq!(reopened.meta.day_time, 1, "the time of day is saved");
-        assert!(reopened.meta.last_played > 100);
-        std::fs::remove_dir_all(saves).unwrap();
-    }
-
-    #[test]
-    fn boats_and_the_seat_come_back_and_old_worlds_have_none() {
-        let saves = std::env::temp_dir().join(format!("strata-boats-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&saves);
-        let new = NewWorld {
-            name: "Boats".into(),
-            seed: String::new(),
-            mode: GameMode::Creative,
-            border: 5_000,
-            fluids: true,
-            day_cycle: true,
-            fire_spread: true,
-            fire_destroy: true,
-            generation: Default::default(),
-        };
-        let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
-        let settings = |meta| WorldSettings {
-            meta,
-            folder: Some(folder.clone()),
-            autosave_ticks: 0,
-            backups: None,
-        };
-        let content = content();
-        let dimension = DimensionId("strata:terra".parse().unwrap());
-        let mut persistence = Persistence::new(settings(meta), Arc::clone(&content));
-        assert!(persistence.boats(&dimension).is_empty(), "no file yet");
-        let rules = BlockRules::new(&content);
-        let body = Body::at(DVec3::new(0.5, 70.0, 0.5));
-        let mut game = Game::new(rules.clone(), 5_000, body, GameMode::Creative);
-        let kind = |name: &str| content.entities.key(&name.parse().unwrap()).unwrap();
-        let (birch, acacia) = (kind("strata:birch_boat"), kind("strata:acacia_boat"));
-        let first = BoatBody::at(DVec3::new(4.5, 63.7, -2.5), 1.25);
-        let second = BoatBody::at(DVec3::new(-8.5, 63.7, 3.5), 0.0);
-        game.spawn_boat(birch, first);
-        game.restore_boats(vec![Some((acacia, second))], Some(0));
-        persistence.save(&game, &mut loader(), &dimension, None);
-
-        let reopened = Persistence::new(settings(folder.read_meta().unwrap()), content);
-        let boats = reopened.boats(&dimension);
-        assert_eq!(boats, vec![Some((birch, first)), Some((acacia, second))]);
-        let start = reopened.player_start(&dimension, || DVec3::ZERO);
-        assert_eq!(start.boat, Some(1));
-        let mut back = Game::new(rules, 5_000, start.body, GameMode::Creative);
-        back.restore_boats(boats, start.boat);
-        let (saved, seat) = back.saved_boats();
-        assert_eq!((saved.len(), seat), (2, Some(1)));
-        std::fs::remove_dir_all(saves).unwrap();
-    }
-}
+#[path = "persistence_tests.rs"]
+mod tests;

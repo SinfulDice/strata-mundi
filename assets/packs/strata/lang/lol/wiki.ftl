@@ -86,5 +86,6 @@ wiki-mechanic-sounds = NOIZEZ
 wiki-mechanic-boats = FLOATEEZ
 wiki-mechanic-saving = SAEVIN
 wiki-mechanic-game-modes = GAEM MODEZ
+wiki-mechanic-inventory = MAH STUFFZ
 wiki-unbreakable = NO BREAK. EVR.
 wiki-fact-item = HAZ ITEM

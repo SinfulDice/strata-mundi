@@ -22,7 +22,8 @@ use strata_core::physics::{Body, EYE_HEIGHT, MoveInput, Terrain, TerrainFns, sol
 use strata_core::sky::DayCycle;
 use strata_protocol::commands::Feedback;
 use strata_protocol::{
-    BiomeInfo, ClientConnection, ClientMessage, GameMode, HotbarState, ServerMessage, WorldAction,
+    BiomeInfo, ClientConnection, ClientMessage, GameMode, InventoryRequest, OpenedContainer,
+    ServerMessage, WorldAction,
 };
 
 /// Field of view widening while sprinting, and how fast it eases in and out (per second).
@@ -54,8 +55,10 @@ pub struct Gameplay {
     mode: GameMode,
     player: Option<LocalPlayer>,
     border: i32,
-    /// Last hotbar sent to the server, to send only changes.
-    sent_hotbar: HotbarState,
+    /// The container the player opened, as the server last described it.
+    pub container: Option<OpenedContainer>,
+    /// A container just opened: its screen must come up.
+    pub container_opened: bool,
 }
 
 impl Gameplay {
@@ -82,7 +85,8 @@ impl Gameplay {
             mode: GameMode::Creative,
             player: None,
             border: DEFAULT_WORLD_BORDER,
-            sent_hotbar: HotbarState::default(),
+            container: None,
+            container_opened: false,
         }
     }
 
@@ -98,7 +102,7 @@ impl Gameplay {
                 body,
                 mut movement,
                 border,
-                hotbar,
+                inventory,
                 mode,
                 look,
                 day,
@@ -113,8 +117,8 @@ impl Gameplay {
                 self.day_cycle = Some(DayCycle::new(&day.cycle));
                 self.border = border;
                 (self.camera.yaw, self.camera.pitch) = (look[0], look[1]);
-                self.hotbar.restore(&hotbar);
-                self.sent_hotbar = self.hotbar.state();
+                self.hotbar.restore(*inventory);
+                self.hotbar.creative = mode == GameMode::Creative;
                 movement.auto_jump = self.controls.auto_jump;
                 movement.step_up = self.controls.step_up;
                 connection.send(ClientMessage::MovementPreferences {
@@ -133,17 +137,27 @@ impl Gameplay {
             ServerMessage::UnloadColumn(pos) => self.view.remove(pos, renderer),
             ServerMessage::BlockChanged { pos, block } => self.view.receive_block(pos, block),
             ServerMessage::ActionDone(id) => self.view.acknowledge(id),
-            ServerMessage::Hotbar(hotbar) => {
-                self.hotbar.restore(&hotbar);
-                self.sent_hotbar = hotbar;
+            ServerMessage::Inventory(inventory) => self.hotbar.receive(*inventory),
+            ServerMessage::ContainerOpened(container) => {
+                self.container = Some(*container);
+                self.container_opened = true;
             }
+            ServerMessage::ContainerContents(contents) => {
+                if let Some(open) = &mut self.container {
+                    open.contents = *contents;
+                }
+            }
+            ServerMessage::ContainerClosed => self.container = None,
             ServerMessage::Feedback(feedback) => self.feedback.push(feedback),
             ServerMessage::EntitySpawned(state) => self.view.world.entities.spawn(state),
             ServerMessage::EntityMoved { id, position, yaw } => {
                 self.view.world.entities.moved(id, position, yaw);
             }
             ServerMessage::EntityRemoved(id) => self.view.world.entities.remove(id),
-            ServerMessage::Mode(mode) => self.mode = mode,
+            ServerMessage::Mode(mode) => {
+                self.mode = mode;
+                self.hotbar.creative = mode == GameMode::Creative;
+            }
             ServerMessage::Mounted(mount) => {
                 self.interaction.mount = mount;
                 if let Some(player) = &mut self.player {
@@ -181,6 +195,11 @@ impl Gameplay {
         }
         apply_look(&mut self.camera, input, dt, &self.controls);
         self.select_hotbar(input);
+        if input.just_pressed(Action::Drop) {
+            let whole = input.is_held(Action::Sprint);
+            self.hotbar
+                .request(InventoryRequest::DropSelected { whole });
+        }
         let move_input = MoveInput {
             wish: input.movement().to_array(),
             yaw: self.camera.yaw,
@@ -292,12 +311,15 @@ impl Gameplay {
         self.camera.zoom += (target - self.camera.zoom) * blend;
     }
 
-    /// Tells the server about hotbar changes (from play or from the inventory).
+    /// Sends the inventory requests of the frame (from play or from the screens).
     pub fn sync_hotbar(&mut self, connection: &ClientConnection) {
-        if !self.hotbar.matches(&self.sent_hotbar) {
-            self.sent_hotbar = self.hotbar.state();
-            connection.send(ClientMessage::Hotbar(self.sent_hotbar.clone()));
+        for request in self.hotbar.take_requests() {
+            connection.send(ClientMessage::Inventory(request));
         }
+    }
+
+    pub fn is_creative(&self) -> bool {
+        self.mode == GameMode::Creative
     }
 
     /// Scripted camera (benchmarks): the player is teleported along so the world streams.

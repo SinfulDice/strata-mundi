@@ -1,6 +1,6 @@
 ## Description
 
-`/gamemode` changes the game mode of the current world. In v0.1, only one mode exists, **creative**; so the command is mostly here to get ready for the future.
+`/gamemode` changes the game mode of the current world: **creative** or **survival**.
 
 ## Syntax
 
@@ -8,17 +8,17 @@
 
 ## Examples
 
-- `/gamemode creative`: switch (or switch back) to creative mode.
-- `/gamemode survival`: the console kindly tells you that survival arrives in v0.3.
+- `/gamemode creative`: switches to creative (flight, creative inventory).
+- `/gamemode survival`: switches to survival (blocks taken from the inventory, broken blocks drop their item).
 
 ## Behaviour
 
-Run by the server. The chosen mode is saved with the world and appears in the world list. For now, asking for survival changes nothing: the world stays in creative.
+Run by the server. The chosen mode is saved with the world and shown in the world list. Switching to survival stops flight.
 
 ## Tips
 
-The game mode can also be chosen when creating the world, on the "New world" screen. See the game modes page to learn what creative lets you do.
+See the game modes page for what each mode changes.
 
 ## Discovery in game
 
-`/help gamemode` recalls the syntax; Tab suggests the two possible choices. The current mode of each world is shown in the world list.
+`/help gamemode` recalls the syntax; Tab offers both choices. Each world's current mode is shown in the world list.

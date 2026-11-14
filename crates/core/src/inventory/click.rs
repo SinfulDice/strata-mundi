@@ -95,7 +95,7 @@ impl Window<'_> {
 
     fn accepts(&self, slot: SlotRef, stack: &ItemStack, rules: &impl ItemRules) -> bool {
         match slot.area {
-            Area::Player => self.player.accepts(usize::from(slot.index), stack, rules),
+            Area::Player => PlayerInventory::accepts(usize::from(slot.index), stack, rules),
             Area::Open => true,
         }
     }
@@ -186,7 +186,7 @@ impl Window<'_> {
         let player = &mut *self.player;
         let armour = ARMOR.clone().find(|&index| {
             !ARMOR.contains(&from)
-                && player.accepts(index, &stack, rules)
+                && PlayerInventory::accepts(index, &stack, rules)
                 && player.slots.get(index).is_none()
         });
         if let Some(index) = armour {

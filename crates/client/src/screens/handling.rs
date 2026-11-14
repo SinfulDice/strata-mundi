@@ -58,7 +58,11 @@ impl Screens {
         frame_seconds: f32,
     ) -> Handled {
         self.device = input.last_device();
+        self.pointer = self
+            .cursor(input)
+            .filter(|_| self.device != InputDevice::Gamepad);
         self.refresh_labels(content);
+        self.follow_inventory(game.as_deref_mut());
         if self.in_world && self.stack.is_empty() {
             if let Some(game) = game.as_deref_mut().filter(|g| g.cinematic.is_some()) {
                 return skip_cinematic(input, game);
@@ -66,7 +70,7 @@ impl Screens {
             let menu = if input.just_pressed(Action::Pause) {
                 Menu::Pause
             } else if input.just_pressed(Action::Inventory) {
-                Menu::Inventory(Default::default())
+                Self::inventory_menu(game.as_deref())
             } else if input.just_pressed(Action::OpenConsole) {
                 Menu::Console(ConsoleState::new())
             } else {
@@ -124,8 +128,7 @@ impl Screens {
         if self.handle_editor(input, cursor, frame_seconds) {
             return;
         }
-        let closes_inventory = input.just_pressed(Action::Inventory)
-            && matches!(self.stack.last(), Some(Menu::Inventory(_)));
+        let closes_inventory = self.closes_inventory(input);
         if input.just_pressed(Action::MenuBack) || closes_inventory {
             let handled = input.just_pressed(Action::MenuBack)
                 && self
@@ -134,6 +137,9 @@ impl Screens {
             if !handled && !matches!(self.stack.last(), Some(Menu::Title)) {
                 self.effects.push(Effect::Pop);
             }
+            return;
+        }
+        if self.handle_slots(input, game.as_deref_mut(), content, cursor, frame_seconds) {
             return;
         }
         let focus = self.focus.clone();

@@ -31,7 +31,7 @@ const KEYS_TAB: usize = 4;
 const PACKS_TAB: usize = 6;
 
 /// Actions the player can rebind (menu navigation keeps fixed keys so menus always work).
-pub const REBINDABLE: [Action; 27] = [
+pub const REBINDABLE: [Action; 28] = [
     Action::MoveForward,
     Action::MoveBackward,
     Action::MoveLeft,
@@ -43,6 +43,7 @@ pub const REBINDABLE: [Action; 27] = [
     Action::Use,
     Action::PickBlock,
     Action::Inventory,
+    Action::Drop,
     Action::HotbarNext,
     Action::HotbarPrevious,
     Action::Hotbar1,

@@ -160,7 +160,7 @@ impl PlayerInventory {
     }
 
     /// Whether `stack` may lie in slot `index` (armour slots take only their piece).
-    pub fn accepts(&self, index: usize, stack: &ItemStack, rules: &impl ItemRules) -> bool {
+    pub fn accepts(index: usize, stack: &ItemStack, rules: &impl ItemRules) -> bool {
         match index.checked_sub(ARMOR.start) {
             Some(offset) if ARMOR.contains(&index) => {
                 rules.equip(stack.item) == EquipSlot::ALL.get(offset).copied()

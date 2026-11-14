@@ -16,8 +16,10 @@ mod tint;
 mod turned;
 
 pub use attached::{AttachedSides, Attachment};
-pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
-pub use entity::{EntityDef, EntityType, ModelBox};
+pub use block::{
+    Axis, Block, BlockDef, BlockTextures, ContainerDef, Face, Orientation, Placement, RenderKind,
+};
+pub use entity::{DroppedItemDef, EntityDef, EntityType, ModelBox};
 pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
 pub use fluid::{
     Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SLOPE_SEARCH, MAX_SPREAD,
@@ -109,6 +111,18 @@ impl Content {
             sounds,
         };
         (content, errors)
+    }
+
+    /// Translated name of an item (a block's item has the block's name).
+    pub fn item_name(&self, item: ItemId, language: &str) -> String {
+        let Some(id) = self.items.identifier(item) else {
+            return String::new();
+        };
+        let kind = match self.items.get(item).map(|i| i.kind) {
+            Some(ItemKind::Block(_)) => "block",
+            _ => "item",
+        };
+        self.translations.text(language, &id.translation_key(kind))
     }
 
     /// The day cycle of `dimension` (the default one if its pack defines none).
@@ -282,6 +296,13 @@ fn load_blocks(
             fire: value.fire.map(FireDef::clamped),
             tint: value.tint,
             particles: block_particles,
+            container: value.container.filter(|c| {
+                let valid = (1..=ContainerDef::MAX_ROWS).contains(&c.rows);
+                if !valid {
+                    errors.push(PackError::invalid(&source, "container: 1 to 6 rows"));
+                }
+                valid
+            }),
         };
         let inserted = match (fluid_def, &placement) {
             (Some(def), Placement::Fixed) => {

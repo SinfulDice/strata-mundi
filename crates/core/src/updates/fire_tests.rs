@@ -183,13 +183,14 @@ fn forest_fire(seed: u64, dimension: &str) -> Vec<BlockChange> {
 }
 
 /// Pinned so that a change of the rules or the hash, which would make saved worlds
-/// burn differently, is noticed.
+/// burn differently, is noticed. The digest holds block ids: a new block of the pack
+/// moves it while the count stays.
 #[test]
 fn a_forest_fire_matches_its_reference() {
     let changes = forest_fire(1, "strata:terra");
     assert_eq!(
         (changes.len(), digest(&changes)),
-        (863, 15_585_768_166_855_774_781)
+        (863, 16_244_730_914_320_168_529)
     );
 }
 

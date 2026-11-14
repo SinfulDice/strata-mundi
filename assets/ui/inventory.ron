@@ -1,0 +1,36 @@
+// Survival inventory; with a container open, the container on top and the player's
+// slots below. The slots take clicks: left takes or puts, right halves or puts one,
+// shift-click sends across, double-click gathers, middle click (L1) locks.
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (196, 262),
+            children: [
+                Group(id: "player_side", children: [
+                    Label(id: "title", anchor: TopLeft, at: (8, 6), text: "ui-inventory-survival-title"),
+                    SlotGrid(id: "armor", anchor: TopLeft, at: (8, 18), columns: 1, rows: 4),
+                    SlotGrid(id: "offhand", anchor: TopLeft, at: (32, 78), columns: 1, rows: 1),
+                    Label(id: "offhand_label", anchor: TopLeft, at: (56, 84), text: "ui-inventory-offhand", dim: true),
+                    Button(id: "sort_type", anchor: TopLeft, at: (108, 18), size: (80, 16), text: "ui-inventory-sort-type"),
+                    Button(id: "sort_name", anchor: TopLeft, at: (108, 38), size: (80, 16), text: "ui-inventory-sort-name"),
+                    Button(id: "deposit", anchor: TopLeft, at: (108, 58), size: (80, 16), text: "ui-inventory-deposit"),
+                    Label(id: "help", anchor: TopLeft, at: (8, 104), text: "ui-inventory-survival-help", dim: true, wrap: Some(180)),
+                ]),
+                Group(id: "chest_side", children: [
+                    Label(id: "chest_title", anchor: TopLeft, at: (8, 6), text: "@title"),
+                    TextField(id: "search", anchor: TopLeft, at: (8, 18), size: (120, 12), placeholder: "ui-search"),
+                    Button(id: "sort_chest", anchor: TopLeft, at: (132, 16), size: (56, 16), text: "ui-inventory-sort-type"),
+                    SlotGrid(id: "chest", anchor: TopLeft, at: (8, 34), columns: 9, rows: 6),
+                    Button(id: "deposit", anchor: TopLeft, at: (8, 156), size: (90, 16), text: "ui-inventory-deposit"),
+                    Button(id: "sort_name", anchor: TopLeft, at: (102, 156), size: (86, 16), text: "ui-inventory-sort-name"),
+                ]),
+                SlotGrid(id: "main", anchor: TopLeft, at: (8, 176), columns: 9, rows: 3),
+                SlotGrid(id: "hotbar", anchor: TopLeft, at: (8, 240), columns: 9, rows: 1),
+            ],
+        ),
+    ],
+)

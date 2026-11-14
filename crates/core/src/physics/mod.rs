@@ -4,6 +4,7 @@
 mod aabb;
 mod boat;
 mod body;
+mod item;
 mod swim;
 
 pub use aabb::Aabb;
@@ -11,6 +12,7 @@ pub use boat::{
     BoatBody, BoatControls, BoatHandling, BoxSize, DEFAULT_SLIPPERINESS, liquid_surface, step_boat,
 };
 pub use body::{Body, EYE_HEIGHT, HEIGHT, MoveInput, MovementSettings, TICK, WIDTH, step};
+pub use item::{ItemBody, step_item};
 pub use swim::LiquidCell;
 
 use crate::coords::{BlockPos, WORLD_HEIGHT};

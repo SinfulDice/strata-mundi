@@ -3,3 +3,4 @@ category-strata-building = Building
 category-strata-plants = Plants
 category-strata-tools = Tools
 category-strata-transport = Transportation
+category-strata-storage = Storage

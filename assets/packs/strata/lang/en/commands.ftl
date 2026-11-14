@@ -4,10 +4,10 @@ command-unknown = Unknown command: { $name } (/help for the list).
 command-needs-world = This command works inside a world.
 command-cinematic-unknown = Unknown cinematic.
 command-tp-done = Teleported to { $x } { $y } { $z }.
-command-give-done = { $item } in the selected slot.
+command-give-done = { $count } × { $item } in the inventory.
 command-give-unknown = Unknown item: { $item }
 command-gamemode-done = Creative mode.
-command-gamemode-later = Survival mode arrives in v0.3.
+command-gamemode-survival = Survival mode.
 command-time-now = Time: { $ticks } out of { $length } (day { $day }).
 command-daycycle-now = Day and night: { $cycle ->
         [on] time goes on
@@ -30,8 +30,8 @@ command-help-usage = /help [command]
 command-help-help = Lists the commands, or details one.
 command-tp-usage = /tp <x> <y> <z>  (~ = your position)
 command-tp-help = Teleports (~5 = 5 blocks further).
-command-give-usage = /give <item>
-command-give-help = Puts an item in the selected slot.
+command-give-usage = /give <item> [count]
+command-give-help = Gives items (what does not fit falls to the ground).
 command-gamemode-usage = /gamemode <creative|survival>
 command-gamemode-help = Changes the game mode.
 command-time-usage = /time <set|add|query> [value]
@@ -48,4 +48,4 @@ command-cinematic-usage = /cinematic <id>
 command-cinematic-help = Plays a cinematic from the packs.
 ui-console-placeholder = Type a command…
 ui-console-help = <key:Complete>: complete
-command-not-allowed = This command needs creative mode.
+command-not-allowed = Cheating commands are off in this world.

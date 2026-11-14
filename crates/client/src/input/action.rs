@@ -40,10 +40,22 @@ pub enum Action {
     Erase,
     /// Tab in the console: complete the word being typed.
     Complete,
+    /// Throw the held item (with sprint: the whole stack); in a screen, the pointed one.
+    Drop,
+    /// In an inventory: take half a stack, or put one item.
+    MenuSecondary,
+    /// In an inventory: send the stack to the other side (shift click).
+    MenuTransfer,
+    /// In an inventory: gather the same items onto the carried stack (double click).
+    MenuGather,
+    /// In an inventory, with a gamepad: throw one of the pointed stack.
+    MenuDrop,
+    /// In an inventory: lock or unlock the pointed slot.
+    MenuLock,
 }
 
 impl Action {
-    pub const COUNT: usize = 36;
+    pub const COUNT: usize = 42;
     pub const ALL: [Action; Self::COUNT] = [
         Self::MoveForward,
         Self::MoveBackward,
@@ -81,6 +93,12 @@ impl Action {
         Self::MenuBack,
         Self::Erase,
         Self::Complete,
+        Self::Drop,
+        Self::MenuSecondary,
+        Self::MenuTransfer,
+        Self::MenuGather,
+        Self::MenuDrop,
+        Self::MenuLock,
     ];
 
     /// Names used in `<key:…>` markup, in the order of `ALL`.
@@ -121,6 +139,12 @@ impl Action {
         "MenuBack",
         "Erase",
         "Complete",
+        "Drop",
+        "MenuSecondary",
+        "MenuTransfer",
+        "MenuGather",
+        "MenuDrop",
+        "MenuLock",
     ];
 
     /// By its name in the code (`Inventory`), as written in `<key:…>` markup.

@@ -1,0 +1,6 @@
+// Placeholder box of a dropped item (the client draws the item instead).
+Model(
+    boxes: [
+        (from: (-2, 0, -2), to: (2, 4, 2)),
+    ],
+)

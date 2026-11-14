@@ -72,3 +72,5 @@ block-strata-glowstone = Pierre lumineuse
 block-strata-fire = Feu
 block-strata-portal = Portail d'essai
 block-strata-bookshelf = Bibliothèque
+block-strata-chest = Coffre
+block-strata-barrel = Tonneau

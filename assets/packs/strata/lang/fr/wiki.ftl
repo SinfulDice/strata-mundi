@@ -86,5 +86,6 @@ wiki-mechanic-sounds = Sons
 wiki-mechanic-boats = Bateaux
 wiki-mechanic-saving = Sauvegarde
 wiki-mechanic-game-modes = Modes de jeu
+wiki-mechanic-inventory = Inventaire
 wiki-unbreakable = incassable
 wiki-fact-item = Objet

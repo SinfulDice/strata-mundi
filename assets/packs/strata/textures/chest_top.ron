@@ -1,0 +1,29 @@
+// The lid of a wooden chest: boards in a dark frame.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'w': ("oak_wood", 0),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        'H': ("oak_wood", 3),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "DHLLLLLLLLLLLLWD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLwwwwwwwwwwwwwD",
+        "DLLLLLLLLLLLLLWD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLwwwwwwwwwwwwwD",
+        "DLLLLLLLLLLLLLWD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLWWWWWWWWWWWWwD",
+        "DLwwwwwwwwwwwwwD",
+        "DddddddddddddddD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

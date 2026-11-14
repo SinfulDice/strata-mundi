@@ -7,8 +7,10 @@
         (id: "0.2.1", date: "2026-11-13"),
     ],
     entries: {
+        "blocks/strata/barrel": [(version: "0.3.0", change: Added)],
         "blocks/strata/bedrock": [(version: "0.1.0", change: Added)],
         "blocks/strata/cactus": [(version: "0.1.0", change: Added)],
+        "blocks/strata/chest": [(version: "0.3.0", change: Added)],
         "blocks/strata/coal_ore": [(version: "0.1.0", change: Added)],
         "blocks/strata/copper_ore": [(version: "0.2.0", change: Added)],
         "blocks/strata/deep_coal_ore": [(version: "0.1.0", change: Added)],
@@ -119,11 +121,17 @@
         "biomes/strata/river": [(version: "0.2.0", change: Added)],
         "biomes/strata/snowy_tundra": [(version: "0.1.0", change: Added)],
         "commands/cinematic": [(version: "0.1.0", change: Added)],
-        "commands/gamemode": [(version: "0.1.0", change: Added)],
+        "commands/gamemode": [
+            (version: "0.1.0", change: Added),
+            (version: "0.3.0", change: Changed(fr: "La survie se choisit.", en: "Survival can be chosen.", lol: "U CAN PIK SURVIVL.")),
+        ],
         "commands/daycycle": [(version: "0.2.0", change: Added)],
         "commands/fire": [(version: "0.2.0", change: Added)],
         "commands/fluids": [(version: "0.2.0", change: Added)],
-        "commands/give": [(version: "0.1.0", change: Added)],
+        "commands/give": [
+            (version: "0.1.0", change: Added),
+            (version: "0.3.0", change: Changed(fr: "Un nombre facultatif ; les objets vont dans l'inventaire.", en: "An optional count; items go into the inventory.", lol: "U CAN SAY HOW MANY; STUFFZ GO IN UR INVENTORY.")),
+        ],
         "commands/help": [(version: "0.1.0", change: Added)],
         "commands/seed": [(version: "0.1.0", change: Added)],
         "commands/time": [
@@ -145,7 +153,11 @@
             (version: "0.2.0", change: Added),
             (version: "0.2.1", change: Changed(fr: "L'eau file vers le trou le plus proche (4 blocs au plus) au lieu de s'étaler partout ; portée de 7 blocs.", en: "Water heads for the nearest hole (4 blocks at most) instead of spreading everywhere; it reaches 7 blocks.", lol: "WATUR GOEZ TO TEH CLOSEST HOLE (4 BLOKZ MAX) INSTED OV SPREDDIN EVRYWAER; IT GOEZ 7 BLOKZ.")),
         ],
-        "mechanics/game-modes": [(version: "0.1.0", change: Added)],
+        "mechanics/game-modes": [
+            (version: "0.1.0", change: Added),
+            (version: "0.3.0", change: Changed(fr: "La survie arrive : blocs tirés de l'inventaire, objets lâchés à la casse.", en: "Survival arrives: blocks come from the inventory, broken ones drop their item.", lol: "SURVIVL IZ HEER: BLOKZ COM FROM UR STUFFZ, BROKD WUNZ DROP DEMSELVZ.")),
+        ],
+        "mechanics/inventory": [(version: "0.3.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
         "mechanics/sounds": [
             (version: "0.2.0", change: Added),

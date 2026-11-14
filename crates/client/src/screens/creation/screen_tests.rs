@@ -88,6 +88,7 @@ impl Fixture {
             worlds: &[],
             icons: &[],
             hotbar: None,
+            container: None,
             focus: None,
             key_labels: &key_labels,
             newer_version: None,
@@ -103,6 +104,7 @@ impl Fixture {
             key_label: &key_label,
             offsets: None,
             editing: false,
+            pointer: None,
         };
         let def = menu.def(&self.ui.screens);
         let model = menu::model(menu, shared);
@@ -119,6 +121,7 @@ impl Fixture {
             worlds: &[],
             icons: &[],
             hotbar: None,
+            container: None,
             focus: None,
             key_labels: &key_labels,
             newer_version: None,

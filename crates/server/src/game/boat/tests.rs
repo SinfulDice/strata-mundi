@@ -1,11 +1,10 @@
 #![allow(clippy::unwrap_used)]
 
 use super::*;
-use crate::game::tests::{World, block, wait, world};
+use crate::game::tests::{World, block, hold, wait, world};
 use crate::systems::SLEEP_TICKS;
 use strata_core::content::{BlockId, ItemId};
 use strata_core::physics::MoveInput;
-use strata_protocol::HotbarState;
 
 /// Water (surface 63.875) over x 10-15, a shallow strip at x = 9 (stone up to y = 62),
 /// stone to y = 63 for x ≤ 8, where the player stands.
@@ -19,8 +18,7 @@ fn harbour() -> World {
         }
     }
     let boat = w.content.items.key(&"strata:oak_boat".parse().unwrap());
-    let slots = vec![boat];
-    assert!(w.game.set_hotbar(HotbarState { slots, selected: 0 }));
+    hold(&mut w, boat);
     w
 }
 

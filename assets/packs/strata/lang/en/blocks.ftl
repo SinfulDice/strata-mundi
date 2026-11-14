@@ -72,3 +72,5 @@ block-strata-glowstone = Glowstone
 block-strata-fire = Fire
 block-strata-portal = Test Portal
 block-strata-bookshelf = Bookshelf
+block-strata-chest = Chest
+block-strata-barrel = Barrel

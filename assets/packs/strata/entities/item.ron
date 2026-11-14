@@ -1,0 +1,12 @@
+// Items lying on the ground; drawn as the item itself (a small turning block or picture).
+Entity(
+    model: "strata:item",
+    texture: "strata:oak_planks",
+    size: (0.25, 0.25),
+    dropped_item: Some(DroppedItem(
+        lifetime: 300,
+        pickup_delay: 40,
+        pickup_radius: 1.5,
+        merge_radius: 0.75,
+    )),
+)

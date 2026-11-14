@@ -134,6 +134,9 @@ impl Interaction {
         if let Some(message) = self.entity_action(input) {
             return Some(message);
         }
+        if let Some(open) = self.container_action(world, info, input) {
+            return Some(open);
+        }
         let triggered =
             |action| input.just_pressed(action) || (input.is_held(action) && self.cooldown == 0.0);
         let held = hotbar.selected();
@@ -148,7 +151,7 @@ impl Interaction {
         let target = self.target?;
         if input.just_pressed(Action::PickBlock) {
             if let Some(item) = info.item_of(world.block_at(target.block)) {
-                hotbar.pick(item);
+                hotbar.pick(item, &info.content.items);
             }
             return None;
         }
@@ -172,6 +175,25 @@ impl Interaction {
 }
 
 impl Interaction {
+    /// Right click on a container block opens it (sneaking places against it instead).
+    fn container_action(
+        &mut self,
+        world: &ClientWorld,
+        info: &BlockInfo,
+        input: &InputState,
+    ) -> Option<WorldAction> {
+        let target = self.target?;
+        let block = info.content.blocks.get(world.block_at(target.block))?;
+        let opens = block.container.is_some()
+            && input.just_pressed(Action::Use)
+            && !input.is_held(Action::Sneak);
+        if !opens {
+            return None;
+        }
+        self.cooldown = REPEAT_DELAY;
+        Some(WorldAction::UseBlock { pos: target.block })
+    }
+
     /// Right click gets into the aimed boat, left click takes it away (creative).
     fn entity_action(&mut self, input: &InputState) -> Option<WorldAction> {
         let entity = self.entity?;
@@ -217,7 +239,11 @@ fn aim_entity(
         .iter()
         .filter(|(id, _, _)| Some(*id) != mount)
         .filter_map(|(id, kind, pose)| {
-            let size = info.content.entities.get(kind)?.size;
+            let entity = info.content.entities.get(kind)?;
+            if entity.dropped_item.is_some() {
+                return None;
+            }
+            let size = entity.size;
             let aabb = Aabb::standing(pose.position, size.width, size.height);
             let distance = ray_box(origin, direction, aabb.min, aabb.max, REACH)?;
             (distance < block_distance).then_some((distance, id))

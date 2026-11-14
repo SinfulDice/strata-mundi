@@ -169,6 +169,13 @@ impl Default for Bindings {
                 (Pad(PadButton::South), MenuConfirm),
                 (Pad(PadButton::East), MenuBack),
                 (Pad(PadButton::L1), HotbarPrevious),
+                (Key(KeyCode::KeyQ), Drop),
+                (Pad(PadButton::West), MenuSecondary),
+                (Pad(PadButton::North), MenuTransfer),
+                (Pad(PadButton::RightStick), MenuGather),
+                (Pad(PadButton::LeftStick), MenuDrop),
+                (Pad(PadButton::L1), MenuLock),
+                (Binding::Mouse(MouseButton::Middle), MenuLock),
             ],
         }
     }

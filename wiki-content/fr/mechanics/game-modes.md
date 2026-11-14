@@ -1,6 +1,6 @@
 ## Principe
 
-Le mode de jeu décide des règles d'un monde. Il se choisit à la création, dans l'écran « Nouveau monde », et s'affiche ensuite dans la liste des mondes. En v0.1, **un seul mode existe : le créatif**. La survie arrive en v0.3.
+Le mode de jeu décide des règles d'un monde. Il se choisit à la création, dans l'écran « Nouveau monde », et s'affiche ensuite dans la liste des mondes. Deux modes existent : le **créatif** et la **survie**. Pour l'instant, un monde passe en survie avec `/gamemode survival` ; le choix à la création arrive plus tard dans la v0.3.
 
 ## Le mode créatif
 
@@ -11,13 +11,13 @@ Le bac à sable sans contrainte, pour construire et explorer en toute liberté :
 - toutes les **commandes** de la console sont permises ;
 - **tout le savoir** est connu d'avance : rien n'est à découvrir pour pouvoir construire.
 
-## La survie (à venir)
+## La survie
 
-Prévue pour la v0.3. Elle apportera ses propres règles : récolte, outils, dureté des blocs qui compte vraiment, socle incassable. En attendant, `/gamemode survival` vous répond poliment de patienter.
+On ne vole plus, les blocs posés sont pris dans l'inventaire et un bloc cassé laisse son objet au sol, à ramasser en passant dessus. Le socle reste incassable. L'inventaire de survie a 27 cases, la barre rapide, l'armure et la main secondaire (voir la page Inventaire). La récolte avec outils, la faim et les autres règles arrivent au fil de la v0.3.
 
 ## Changer de mode
 
-La commande `/gamemode creative` remet le monde en créatif ; le changement est enregistré avec le monde.
+Les commandes `/gamemode creative` et `/gamemode survival` changent le mode ; le changement est enregistré avec le monde.
 
 ## Découverte en jeu
 

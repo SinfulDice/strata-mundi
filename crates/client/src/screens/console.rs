@@ -315,7 +315,7 @@ pub fn translation_keys() -> Vec<String> {
         "command-give-done",
         "command-give-unknown",
         "command-gamemode-done",
-        "command-gamemode-later",
+        "command-gamemode-survival",
         "command-time-now",
         "command-seed-is",
     ];

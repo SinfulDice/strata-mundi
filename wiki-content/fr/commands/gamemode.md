@@ -1,6 +1,6 @@
 ## Description
 
-`/gamemode` change le mode de jeu du monde en cours. En v0.1, il n'existe qu'un seul mode, le **créatif** ; la commande est donc surtout là pour préparer l'avenir.
+`/gamemode` change le mode de jeu du monde en cours : **créatif** ou **survie**.
 
 ## Syntaxe
 
@@ -8,16 +8,16 @@
 
 ## Exemples
 
-- `/gamemode creative` : passe (ou repasse) en mode créatif.
-- `/gamemode survival` : la console vous répond gentiment que la survie arrive en v0.3.
+- `/gamemode creative` : passe en mode créatif (vol, inventaire créatif).
+- `/gamemode survival` : passe en survie (blocs tirés de l'inventaire, objets lâchés à la casse).
 
 ## Comportement
 
-Exécutée par le serveur. Le mode choisi est enregistré avec le monde et apparaît dans la liste des mondes. Pour l'instant, demander la survie ne change rien : le monde reste en créatif.
+Exécutée par le serveur. Le mode choisi est enregistré avec le monde et apparaît dans la liste des mondes. En passant en survie, on cesse de voler.
 
 ## Conseils
 
-Le mode de jeu se choisit aussi à la création du monde, dans l'écran « Nouveau monde ». Voir la page sur les modes de jeu pour savoir ce que permet le créatif.
+Voir la page sur les modes de jeu pour savoir ce que change chaque mode.
 
 ## Découverte en jeu
 

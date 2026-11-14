@@ -25,6 +25,8 @@ pub struct UiContext<'a> {
     pub offsets: Option<&'a BTreeMap<String, (i32, i32)>>,
     /// HUD editor: every element with an id can be selected and moved.
     pub editing: bool,
+    /// Where the mouse points, in interface pixels (`None` with a gamepad).
+    pub pointer: Option<(i32, i32)>,
 }
 
 impl UiContext<'_> {
@@ -95,10 +97,18 @@ pub fn draw_screen(
     for node in &def.root {
         draw_node(node, screen, &mut draw);
     }
+    let carried = model.carried();
     if let Some(focused) = focus
+        && carried.is_none()
         && let Some(text) = model.tooltip(&focused.id, focused.index)
     {
         controls::tooltip(&mut draw, focused.rect, &text, screen);
+    }
+    let held_at = ctx
+        .pointer
+        .or_else(|| focus.map(|f| (f.rect.x + f.rect.w as i32, f.rect.y)));
+    if let (Some((item, count)), Some(at)) = (carried, held_at) {
+        items::carried(&mut draw, at, item, count);
     }
     draw.hits
 }
@@ -143,6 +153,7 @@ fn draw_node(node: &Node, parent: Rect, d: &mut Draw<'_, '_>) {
         Node::OptionList { .. } => list::options(d, node, parent),
         Node::ItemGrid { .. } => items::grid(d, node, parent),
         Node::Slots { .. } => items::slots(d, node, parent),
+        Node::SlotGrid { .. } => items::slot_grid(d, node, parent),
         Node::Crosshair { .. } => items::crosshair(d, node, parent),
         Node::Log { .. } => list::log(d, node, parent),
     }

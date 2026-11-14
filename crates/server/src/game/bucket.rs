@@ -9,8 +9,8 @@ use strata_core::updates::BlockChange;
 
 impl Game {
     /// Validated use of `item`, in the selected hotbar slot, on `face` of the block at
-    /// `against`. Buckets and flint and steel are creative only until survival (v0.3)
-    /// gives them a content and wear.
+    /// `against`. In survival a bucket is filled or emptied, flint and steel wears and a
+    /// boat is used up.
     pub fn use_item(
         &mut self,
         loader: &mut ColumnLoader,
@@ -18,16 +18,10 @@ impl Game {
         against: BlockPos,
         face: Face,
     ) -> Vec<BlockChange> {
-        let held = self.ecs.hotbars.get(self.player).is_some_and(|hotbar| {
-            hotbar.slots.get(usize::from(hotbar.selected)) == Some(&Some(item))
-        });
+        let held = self.held_item() == Some(item);
         let (Some(action), true) = (self.rules.item_action(item), held) else {
             return Vec::new();
         };
-        let creative_only = !matches!(action, ItemAction::PlaceEntity(_));
-        if creative_only && !self.is_creative() {
-            return Vec::new();
-        }
         let (target, block) = match action {
             ItemAction::PlaceFluid(source) => {
                 let Some(target) = self.placement_target(loader, against, face) else {
@@ -54,15 +48,37 @@ impl Game {
                 (target, fire)
             }
             ItemAction::PlaceEntity(kind) => {
-                self.place_entity(loader, kind, against, face);
+                if self.place_entity(loader, kind, against, face).is_some() {
+                    self.consume_held();
+                }
                 return Vec::new();
             }
         };
         let mut changes = Vec::new();
         if self.in_reach(target) && self.take_action() {
+            let replaced = loader.block(target);
             self.set_block(loader, target, block, &mut changes);
+            self.after_use(action, replaced);
         }
         changes
+    }
+
+    /// Survival: what using the item did to it.
+    fn after_use(&mut self, action: ItemAction, replaced: Option<BlockId>) {
+        let exchanged = match action {
+            ItemAction::PlaceFluid(_) => self.rules.item_with(ItemAction::TakeFluid),
+            ItemAction::TakeFluid => {
+                replaced.and_then(|source| self.rules.item_with(ItemAction::PlaceFluid(source)))
+            }
+            ItemAction::Ignite(_) => {
+                self.wear_held(1);
+                None
+            }
+            ItemAction::PlaceEntity(_) => None,
+        };
+        if let Some(item) = exchanged {
+            self.exchange_held(item);
+        }
     }
 
     /// Where flint and steel used on `face` of `against` lights a fire: in the air (or a
@@ -90,15 +106,22 @@ impl Game {
 mod tests {
     use super::super::tests::{World, block, wait, world};
     use super::*;
-    use strata_protocol::HotbarState;
+    use strata_core::inventory::ItemStack;
 
     fn item(w: &World, id: &str) -> ItemId {
         w.content.items.key(&id.parse().unwrap()).unwrap()
     }
 
     fn hold(w: &mut World, items: &[&str], selected: u8) {
-        let slots = items.iter().map(|id| Some(item(w, id))).collect();
-        assert!(w.game.set_hotbar(HotbarState { slots, selected }));
+        let stacks: Vec<_> = items
+            .iter()
+            .map(|id| Some(ItemStack::new(item(w, id), 1, &w.game.rules)))
+            .collect();
+        w.game.with_inventory(|inventory| {
+            inventory.slots.slots.fill(None);
+            inventory.slots.slots[..stacks.len()].clone_from_slice(&stacks);
+            inventory.selected = selected;
+        });
     }
 
     #[test]

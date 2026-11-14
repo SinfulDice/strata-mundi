@@ -6,14 +6,13 @@ use super::depth::DEPTH_FORMAT;
 use super::frustum::Frustum;
 use super::mesh::StreamBuffer;
 use crate::camera::Camera;
-use crate::models::{ModelLibrary, ModelPose, ModelVertex};
-use strata_core::content::EntityTypeId;
+use crate::models::{ModelKind, ModelLibrary, ModelPose, ModelVertex};
 use strata_core::light::PackedLight;
 
 pub struct ModelPipeline {
     pub library: ModelLibrary,
     /// Entities to draw this frame, with the light of their cell.
-    pub entities: Vec<(EntityTypeId, ModelPose, PackedLight)>,
+    pub entities: Vec<(ModelKind, ModelPose, PackedLight)>,
     pipeline: wgpu::RenderPipeline,
     vertices: StreamBuffer,
     scratch: Vec<ModelVertex>,
