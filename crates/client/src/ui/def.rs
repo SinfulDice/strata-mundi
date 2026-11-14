@@ -140,6 +140,16 @@ pub enum Node {
         anchor: Anchor,
         at: (i32, i32),
     },
+    /// A bar the model fills from 0 to 1 (a furnace's flame and arrow); a vertical one
+    /// fills from the bottom.
+    Gauge {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        size: (u32, u32),
+        #[serde(default)]
+        vertical: bool,
+    },
     /// Lines of text, newest at the bottom (the console).
     Log {
         id: String,
@@ -171,6 +181,7 @@ impl Node {
             | Self::Slots { at, .. }
             | Self::SlotGrid { at, .. }
             | Self::Crosshair { at, .. }
+            | Self::Gauge { at, .. }
             | Self::Log { at, .. } => Some(*at),
         }
     }
@@ -194,6 +205,7 @@ impl Node {
             | Self::Slots { id, .. }
             | Self::SlotGrid { id, .. }
             | Self::Crosshair { id, .. }
+            | Self::Gauge { id, .. }
             | Self::Log { id, .. } => Some(id),
         }
     }

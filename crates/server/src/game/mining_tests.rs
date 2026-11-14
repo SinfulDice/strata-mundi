@@ -19,7 +19,7 @@ fn survival_with(name: &str) -> World {
 }
 
 /// A stone-level test pickaxe: the base pack has no tools before milestone 4.
-fn add_pickaxe(content: &mut Content) {
+pub(super) fn add_pickaxe(content: &mut Content) {
     let item = Item {
         max_stack: 1,
         category: None,
@@ -33,6 +33,8 @@ fn add_pickaxe(content: &mut Content) {
             speed: 4.0,
         }),
         remainder: None,
+        kit: None,
+        module: None,
     };
     content
         .items

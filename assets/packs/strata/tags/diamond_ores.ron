@@ -1,0 +1,5 @@
+// Diamond ore, near the surface or deep.
+Tag(items: [
+    "strata:diamond_ore",
+    "strata:deep_diamond_ore",
+])

@@ -4,4 +4,5 @@ Block(
     tool: Some(BlockTool(kind: "strata:pickaxe", level: 2, required: true)),
     sound: Some("strata:stone"),
     category: Some("strata:natural"),
+    loot: Some("strata:diamond"),
 )

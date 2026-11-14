@@ -1,0 +1,2 @@
+// Logs baked in a furnace: burns like coal.
+Item(texture: "strata:charcoal", category: Some("strata:materials"))

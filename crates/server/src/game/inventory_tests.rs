@@ -2,6 +2,7 @@
 
 use super::tests::{World, block, mine, place, wait, world};
 use super::*;
+use strata_core::content::Face;
 use strata_core::content::ItemId;
 use strata_core::inventory::{Area, Click, ItemStack, MAIN, SlotRef, SortOrder};
 use strata_protocol::{InventoryRequest, WorldAction};

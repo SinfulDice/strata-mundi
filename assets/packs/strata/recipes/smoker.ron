@@ -1,0 +1,5 @@
+Shaped(
+    pattern: [" L ", "LFL", " L "],
+    key: {'L': Tag("strata:logs"), 'F': Item("strata:furnace")},
+    result: Result(item: "strata:smoker"),
+)

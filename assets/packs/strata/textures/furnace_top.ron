@@ -1,0 +1,28 @@
+// Smooth stone with a small flue in the middle.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        's': ("stone", 1),
+        'S': ("stone", 2),
+        'H': ("stone", 3),
+        'O': ("coal", 0),
+    },
+    rows: [
+        "mmmmmmmmmmmmmmmm",
+        "mHHHHHHHHHHHHHHm",
+        "mHSSSSsSSSSSSSsm",
+        "mHSSsSSSSSSsSSsm",
+        "mHSSSSSSsSSSSSsm",
+        "mHSsSSSSSSSSsSsm",
+        "mHSSSSSmmSSSSSsm",
+        "mHSSSSmOOmSSSSsm",
+        "mHSSSSmOOmSSsSsm",
+        "mHSSsSSmmSSSSSsm",
+        "mHSSSSSSSSSSSSsm",
+        "mHSSSSSSsSSSSSsm",
+        "mHSsSSSSSSSsSSsm",
+        "mHSSSSSSSSSSSSsm",
+        "mssssssssssssssm",
+        "mmmmmmmmmmmmmmmm",
+    ],
+)

@@ -79,7 +79,11 @@ pub fn take_result(
     })
 }
 
-fn into_cursor(window: &mut Window<'_>, made: ItemStack, rules: &impl ItemRules) -> bool {
+pub(crate) fn into_cursor(
+    window: &mut Window<'_>,
+    made: ItemStack,
+    rules: &impl ItemRules,
+) -> bool {
     match &mut window.player.cursor {
         None => {
             window.player.cursor = Some(made);
@@ -98,7 +102,11 @@ fn into_cursor(window: &mut Window<'_>, made: ItemStack, rules: &impl ItemRules)
 
 /// Puts the whole result in the inventory, or nothing at all (the room is counted
 /// first, without copying the inventory).
-fn into_inventory(window: &mut Window<'_>, made: ItemStack, rules: &impl ItemRules) -> bool {
+pub(crate) fn into_inventory(
+    window: &mut Window<'_>,
+    made: ItemStack,
+    rules: &impl ItemRules,
+) -> bool {
     let max = u32::from(rules.max_stack(made.item));
     let room: u32 = HOTBAR
         .chain(MAIN)

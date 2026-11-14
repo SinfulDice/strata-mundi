@@ -1,0 +1,5 @@
+// Copper ore, near the surface or deep.
+Tag(items: [
+    "strata:copper_ore",
+    "strata:deep_copper_ore",
+])

@@ -1,0 +1,2 @@
+// Smelted from iron ore.
+Item(texture: "strata:iron_ingot", category: Some("strata:materials"))

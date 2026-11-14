@@ -1,0 +1,27 @@
+// A cut diamond.
+Sprite(
+    colors: {
+        'd': ("diamond", 0),
+        'D': ("diamond", 1),
+        'L': ("diamond", 2),
+        'W': ("diamond", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "....dddddddd....",
+        "...dWLLDLLDDd...",
+        "..dWLLDDLDDDDd..",
+        ".dddddddddddddd.",
+        ".dLWLLLDDDLDDDd.",
+        "..dLLLLDDDDDDd..",
+        "...dLLLDDDDDd...",
+        "....dLLDDDDd....",
+        ".....dLDDDd.....",
+        "......dLDd......",
+        ".......dd.......",
+        "................",
+        "................",
+    ],
+)

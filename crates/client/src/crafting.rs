@@ -28,6 +28,8 @@ impl Default for ClientCrafting {
                 result: None,
                 hint: false,
                 station: None,
+                cuts: Vec::new(),
+                chosen: None,
             },
             known: BTreeSet::new(),
             all_known: false,

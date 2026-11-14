@@ -201,6 +201,53 @@ fn a_world_from_before_inventories_keeps_its_hotbar() {
 }
 
 #[test]
+fn a_furnace_in_the_middle_of_a_cooking_is_saved_and_goes_on() {
+    let (saves, folder, meta) = new_world("furnace");
+    let content = content();
+    let dimension = DimensionId("strata:terra".parse().unwrap());
+    let mut persistence = Persistence::new(settings(&folder, meta), Arc::clone(&content));
+    let rules = BlockRules::new(&content);
+    let body = Body::at(DVec3::new(0.5, 70.0, 0.5));
+    let mut game = Game::new(rules.clone(), 5_000, body, GameMode::Survival);
+    let item = |name: &str| content.items.key(&name.parse().unwrap()).unwrap();
+    let mut furnace = BlockEntity {
+        container: strata_core::inventory::Container::new(4),
+        furnace: Some(strata_core::cooking::FurnaceState {
+            burn_left: 900,
+            burn_total: 1600,
+            progress: 120,
+            experience: 1.4,
+        }),
+        ..BlockEntity::default()
+    };
+    furnace.container.slots[0] = Some(ItemStack::new(item("strata:iron_ore"), 5, &content.items));
+    furnace.container.slots[2] = Some(ItemStack::new(item("strata:iron_ingot"), 2, &content.items));
+    furnace.container.slots[3] = Some(ItemStack::new(
+        item("strata:speed_module"),
+        1,
+        &content.items,
+    ));
+    let pos = BlockPos::new(-4, 64, 7);
+    game.block_entities.insert(pos, furnace.clone());
+    persistence.save(&game, &mut loader(), &dimension, None);
+
+    let reopened = Persistence::new(settings(&folder, folder.read_meta().unwrap()), content);
+    let entities = reopened.block_entities(&dimension);
+    assert_eq!(
+        entities.get(&pos),
+        Some(&furnace),
+        "contents and cooking kept"
+    );
+    let mut again = Game::new(rules, 5_000, body, GameMode::Survival);
+    again.set_block_entities(entities);
+    assert!(
+        again.furnace_is_active(pos),
+        "it is stepped again once loaded"
+    );
+    std::fs::remove_dir_all(saves).unwrap();
+}
+
+#[test]
 fn chests_and_items_on_the_ground_are_saved() {
     let (saves, folder, meta) = new_world("chests");
     let content = content();

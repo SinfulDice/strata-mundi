@@ -1,0 +1,13 @@
+// Cooks food twice as fast, with fuel; stone tier (furnace_tiers/stone.ron). Faces the player who places it.
+Block(
+    textures: Faces(
+        up: "strata:smoker_top", down: "strata:smoker_top", north: "strata:smoker_front",
+        south: "strata:smoker_side", east: "strata:smoker_side", west: "strata:smoker_side",
+    ),
+    hardness: 3.5,
+    tool: Some(BlockTool(kind: "strata:pickaxe", level: 0, required: true)),
+    sound: Some("strata:wood"),
+    category: Some("strata:stations"),
+    placement: Facing(lit: Some(Lit(front: "strata:smoker_front_lit", light_emission: 13))),
+    furnace: Some(Furnace(family: "strata:smoker", tier: "strata:stone", kinds: ["strata:food"], speed: 200)),
+)

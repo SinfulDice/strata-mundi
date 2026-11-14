@@ -70,7 +70,9 @@ fn page(ctx: &Ctx<'_>, id: &Identifier, block: &Block) -> Page {
         .items
         .key(id)
         .map_or_else(String::new, |item| {
-            crate::recipes::section(ctx, &path, item) + &crate::recipes::uses(ctx, &path, item)
+            crate::recipes::section(ctx, &path, item)
+                + &crate::cooking::sections(ctx, &path, item)
+                + &crate::recipes::uses(ctx, &path, item)
         });
     let body = format!(
         "{box_html}{}{found}{crafting}{}",
@@ -102,6 +104,7 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, block: &Block, key: &str) -> Vec<(Strin
     if let Some(key) = ctx.data.content.blocks.key(id) {
         rows.extend(crate::harvest::facts(ctx, &page_path(id), key, block));
     }
+    rows.extend(crate::cooking::furnace_facts(ctx, block));
     rows.extend([
         (ctx.tr("wiki-fact-solid"), escape(&yes_no(block.solid))),
         (ctx.tr("wiki-fact-render"), escape(&look)),

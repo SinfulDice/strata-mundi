@@ -1,0 +1,27 @@
+// A bar of iron, lit from the top left.
+Sprite(
+    colors: {
+        'i': ("iron", 0),
+        'I': ("iron", 1),
+        'J': ("iron", 2),
+        'K': ("iron", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "......iiiiiii...",
+        ".....iKKKKKJi...",
+        "....iKJJJJJIi...",
+        "...iKJJJJJJIi...",
+        "..iiiiiiiiiIi...",
+        "..iKJJJJJJIii...",
+        "..iJJJJJJJIi....",
+        "..iIIIIIIIii....",
+        "..iiiiiiiii.....",
+        "................",
+        "................",
+    ],
+)

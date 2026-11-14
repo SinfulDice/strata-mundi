@@ -1,0 +1,2 @@
+// Percent of a recipe's time per cooking, percent of the cookings per fuel, module slots.
+FurnaceTier(cook_time: 50, fuel_value: 150, upgrade_slots: 2)

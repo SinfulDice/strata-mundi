@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["MMM", "MFM", "MMM"],
+    key: {'M': Item("strata:gold_ingot"), 'F': Item("strata:iron_smoker")},
+    result: Result(item: "strata:gold_smoker"),
+)

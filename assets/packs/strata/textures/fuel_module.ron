@@ -1,0 +1,31 @@
+// A green board with a small flame: less fuel burnt.
+Sprite(
+    colors: {
+        'g': ("verdigris_rock", 0),
+        'G': ("verdigris_rock", 1),
+        'h': ("verdigris_rock", 2),
+        'N': ("verdigris_rock", 3),
+        'I': ("iron", 1),
+        'r': ("fire", 0),
+        'f': ("fire", 1),
+        'F': ("fire", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "...I.I.I.I.I....",
+        "..gggggggggggg..",
+        "..gNhhhhhhhhGg..",
+        "..ghhhhhhhhhGg..",
+        "..ghhhhfhhhhGg..",
+        "..ghhhffhhhhGg..",
+        "..ghhhfFfhhhGg..",
+        "..ghhfFFFfhhGg..",
+        "..ghhhrrrhhhGg..",
+        "..ghhhhhhhhhGg..",
+        "..gGGGGGGGGGGg..",
+        "..gggggggggggg..",
+        "...I.I.I.I.I....",
+        "................",
+    ],
+)

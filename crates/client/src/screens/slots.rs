@@ -1,5 +1,6 @@
-//! Survival inventory and container screens: the player's slots, the open chest, sorting,
-//! locks, quick deposit and search. Every click becomes a request the server answers.
+//! Survival inventory and container screens: the player's slots, the open chest or
+//! furnace, the work stations, sorting, locks, quick deposit and search. Every click
+//! becomes a request the server answers.
 
 use super::journal::JournalState;
 use super::menu::{Effect, Menu};
@@ -7,7 +8,8 @@ use super::worlds::edit;
 use crate::crafting::ClientCrafting;
 use crate::inventory::ClientInventory;
 use crate::ui::{ScreenModel, SlotMark, SlotPress};
-use strata_core::content::{Content, ItemId};
+use strata_core::content::{Content, ItemId, StationDef};
+use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE_OUTPUT};
 use strata_core::inventory::{
     ARMOR, Area, Click, HOTBAR, ItemRules, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
 };
@@ -41,9 +43,15 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
         "main" => (Area::Player, MAIN),
         "armor" => (Area::Player, ARMOR),
         "offhand" => (Area::Player, OFFHAND..OFFHAND + 1),
-        "chest" => (Area::Open, 0..usize::from(u16::MAX)),
-        "craft" | "table" => (Area::Craft, 0..usize::from(u16::MAX)),
-        "craft_result" | "table_result" => (Area::CraftResult, 0..1),
+        "chest" | "furnace_modules" => {
+            let start = if id == "chest" { 0 } else { FURNACE_MODULES };
+            (Area::Open, start..usize::from(u16::MAX))
+        }
+        "furnace_input" => (Area::Open, FURNACE_INPUT..FURNACE_INPUT + 1),
+        "furnace_fuel" => (Area::Open, FURNACE_FUEL..FURNACE_FUEL + 1),
+        "furnace_output" => (Area::Open, FURNACE_OUTPUT..FURNACE_OUTPUT + 1),
+        "craft" | "table" | "cutter" => (Area::Craft, 0..usize::from(u16::MAX)),
+        "craft_result" | "table_result" | "cutter_result" => (Area::CraftResult, 0..1),
         _ => return None,
     })
 }
@@ -53,11 +61,12 @@ impl SlotsModel<'_> {
     pub fn slot(&self, id: &str, index: usize) -> Option<SlotRef> {
         let (area, range) = grid(id)?;
         let slot = range.start + index;
-        let exists = match area {
-            Area::Player | Area::CraftResult => range.contains(&slot),
-            Area::Open => self.container.is_some_and(|c| slot < c.contents.len()),
-            Area::Craft => self.crafting.is_some_and(|c| slot < c.view.grid.len()),
-        };
+        let exists = range.contains(&slot)
+            && match area {
+                Area::Player | Area::CraftResult => true,
+                Area::Open => self.container.is_some_and(|c| slot < c.contents.len()),
+                Area::Craft => self.crafting.is_some_and(|c| slot < c.view.grid.len()),
+            };
         exists.then_some(SlotRef {
             area,
             index: slot as u16,
@@ -82,7 +91,8 @@ impl SlotsModel<'_> {
             Area::Player | Area::CraftResult => range.end,
             Area::Open => self.container.map_or(0, |c| c.contents.len()),
             Area::Craft => self.crafting.map_or(0, |c| c.view.grid.len()),
-        };
+        }
+        .min(range.end);
         (range.start..end)
             .map(|index| {
                 self.stack(SlotRef {
@@ -141,12 +151,22 @@ impl SlotsModel<'_> {
         }
     }
 
-    fn station(&self) -> bool {
-        self.crafting.is_some_and(|c| c.view.station.is_some())
+    fn station(&self) -> Option<StationDef> {
+        let (block, _) = self.crafting?.view.station?;
+        self.content.blocks.get(block)?.station
+    }
+
+    fn furnace(&self) -> bool {
+        self.container
+            .and_then(|open| self.content.blocks.get(open.block))
+            .is_some_and(|block| block.furnace.is_some())
     }
 
     /// A click, a press of a gamepad button or a lock toggle on element `index` of `id`.
     pub fn press(&mut self, id: &str, index: usize, press: SlotPress) -> bool {
+        if id == "cut_choices" {
+            return self.choose_cut(index, press);
+        }
         let Some(slot) = self.slot(id, index) else {
             return false;
         };
@@ -167,6 +187,8 @@ impl ScreenModel for SlotsModel<'_> {
         match id {
             "search" => Some(self.state.search.clone()),
             "craft_note" => Some(self.craft_note()),
+            "furnace_info" => Some(self.furnace_info()),
+            "cutter_note" => Some(self.cutter_note()),
             "help" => Some(
                 Some(self.craft_note())
                     .filter(|note| !note.is_empty())
@@ -192,6 +214,9 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn items(&self, id: &str) -> Vec<Option<ItemId>> {
+        if id == "cut_choices" {
+            return self.cuts().map(|(_, stack)| Some(stack.item)).collect();
+        }
         self.stacks(id)
             .into_iter()
             .map(|stack| stack.map(|s| s.item))
@@ -215,19 +240,46 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn selected(&self, id: &str) -> Option<usize> {
-        (id == "hotbar").then(|| self.inventory.selected_index())
+        match id {
+            "hotbar" => Some(self.inventory.selected_index()),
+            "cut_choices" => {
+                let chosen = self.crafting?.view.chosen?;
+                self.cuts().position(|(index, _)| *index == chosen)
+            }
+            _ => None,
+        }
+    }
+
+    fn gauge(&self, id: &str) -> Option<f32> {
+        let view = self.container?.furnace?;
+        match id {
+            "furnace_flame" => Some(view.flame()),
+            "furnace_arrow" => Some(view.arrow()),
+            _ => None,
+        }
     }
 
     fn tooltip(&self, id: &str, index: usize) -> Option<String> {
+        if id == "cut_choices" {
+            let (_, stack) = self.cuts().nth(index)?;
+            return Some(self.content.item_tooltip(stack.item, self.language));
+        }
         let stack = self.stack(self.slot(id, index)?)?;
         Some(self.content.item_tooltip(stack.item, self.language))
     }
 
     fn shown(&self, id: &str) -> bool {
+        let open = self.container.is_some();
+        let station = self.station();
         match id {
-            "chest_side" => self.container.is_some(),
-            "table_side" => self.container.is_none() && self.station(),
-            "player_side" => self.container.is_none() && !self.station(),
+            "chest_side" => open && !self.furnace(),
+            "furnace_side" => open && self.furnace(),
+            "furnace_no_modules" => self
+                .container
+                .is_some_and(|c| c.contents.len() <= FURNACE_MODULES),
+            "table_side" => !open && matches!(station, Some(StationDef::Crafting(_))),
+            "cutter_side" => !open && station == Some(StationDef::Stonecutter),
+            "player_side" => !open && station.is_none(),
             "crafting" => self.crafting.is_some(),
             _ => true,
         }
@@ -265,6 +317,48 @@ impl ScreenModel for SlotsModel<'_> {
         if id == "search" {
             edit(&mut self.state.search, text, MAX_SEARCH, |_| true);
         }
+    }
+}
+
+impl SlotsModel<'_> {
+    /// What the stonecutter can make of the item laid: (recipe index, result).
+    fn cuts(&self) -> impl Iterator<Item = &(u16, ItemStack)> {
+        self.crafting.into_iter().flat_map(|c| c.view.cuts.iter())
+    }
+
+    fn choose_cut(&mut self, index: usize, press: SlotPress) -> bool {
+        let Some(&(choice, _)) = self.cuts().nth(index) else {
+            return false;
+        };
+        if matches!(press, SlotPress::Click(Click::Primary | Click::Transfer)) {
+            self.inventory.request(InventoryRequest::ChooseCut(choice));
+        }
+        true
+    }
+
+    fn cutter_note(&self) -> String {
+        let laid = self.crafting.is_some_and(|c| c.view.grid.get(0).is_some());
+        if laid && self.cuts().next().is_none() {
+            self.tr("ui-stonecutter-none")
+        } else {
+            self.tr("ui-stonecutter-help")
+        }
+    }
+
+    /// The open furnace's speed and economy, for a usual cooking and a piece of coal.
+    fn furnace_info(&self) -> String {
+        let Some(view) = self.container.and_then(|c| c.furnace) else {
+            return String::new();
+        };
+        let round = |value: f32| format!("{}", (value * 10.0).round() / 10.0);
+        self.content.translations.text_with(
+            self.language,
+            "ui-furnace-info",
+            &[
+                ("time", round(view.seconds)),
+                ("cooks", round(view.per_coal)),
+            ],
+        )
     }
 }
 

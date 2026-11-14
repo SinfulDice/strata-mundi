@@ -1,0 +1,2 @@
+// Furnace module: Half again as many cookings per fuel.
+Item(texture: "strata:fuel_module", category: Some("strata:stations"), module: Some(Furnace(fuel_value: 150)))

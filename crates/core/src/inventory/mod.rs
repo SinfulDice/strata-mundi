@@ -7,7 +7,7 @@ mod craft_grid;
 mod sort;
 mod stack;
 
-pub use click::{Area, Click, SlotRef, Window};
+pub use click::{Area, Click, SlotPolicy, SlotRef, Window};
 pub use container::{ARMOR, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory};
 pub use craft_grid::CraftGrid;
 pub use sort::{SortOrder, deposit_matching, sort};

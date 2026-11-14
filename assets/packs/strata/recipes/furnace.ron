@@ -1,0 +1,6 @@
+Shaped(
+    pattern: ["CCC", "C C", "CCC"],
+    key: {'C': Item("strata:cobblestone")},
+    result: Result(item: "strata:furnace"),
+    starting: true,
+)

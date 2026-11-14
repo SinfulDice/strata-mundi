@@ -1,0 +1,5 @@
+// Coal ore, near the surface or deep.
+Tag(items: [
+    "strata:coal_ore",
+    "strata:deep_coal_ore",
+])

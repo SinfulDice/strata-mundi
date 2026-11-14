@@ -1,0 +1,9 @@
+// Cuts one block into a variant chosen in a list, with no fuel (stonecutting/ recipes).
+Block(
+    textures: TopBottomSides(top: "strata:stonecutter_top", bottom: "strata:polished_stone", sides: "strata:stonecutter_side"),
+    hardness: 3.5,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
+    sound: Some("strata:stone"),
+    category: Some("strata:stations"),
+    station: Some(Stonecutter),
+)

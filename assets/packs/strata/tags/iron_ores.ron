@@ -1,0 +1,5 @@
+// Iron ore, near the surface or deep.
+Tag(items: [
+    "strata:iron_ore",
+    "strata:deep_iron_ore",
+])

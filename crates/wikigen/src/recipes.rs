@@ -90,7 +90,7 @@ fn grid(ctx: &Ctx<'_>, from: &str, recipe: &Recipe) -> String {
 }
 
 /// The first item of a tag stands for it; its name says « any … ».
-fn ingredient(ctx: &Ctx<'_>, from: &str, ingredient: &Ingredient) -> String {
+pub fn ingredient(ctx: &Ctx<'_>, from: &str, ingredient: &Ingredient) -> String {
     let Some(&first) = ingredient.items().first() else {
         return String::new();
     };
@@ -101,7 +101,7 @@ fn ingredient(ctx: &Ctx<'_>, from: &str, ingredient: &Ingredient) -> String {
     icon(ctx, from, first, &name)
 }
 
-fn icon(ctx: &Ctx<'_>, from: &str, item: ItemId, name: &str) -> String {
+pub fn icon(ctx: &Ctx<'_>, from: &str, item: ItemId, name: &str) -> String {
     let Some(id) = ctx.data.content.items.identifier(item) else {
         return String::new();
     };

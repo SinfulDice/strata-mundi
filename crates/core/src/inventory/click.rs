@@ -65,11 +65,21 @@ pub enum Click {
     DropCursor { whole: bool },
 }
 
+/// Rules of the slots of an open container that is not plain storage (a furnace).
+pub trait SlotPolicy {
+    /// Whether `stack` may be put by hand in slot `index` of `slots`.
+    fn accepts(&self, slots: &Container, index: usize, stack: &ItemStack) -> bool;
+    /// The slots a shift click fills with `stack`, in order (none: it stays).
+    fn route(&self, slots: &Container, stack: &ItemStack) -> Vec<usize>;
+}
+
 /// The player's inventory, the container they opened and their crafting grid, if any.
 pub struct Window<'a> {
     pub player: &'a mut PlayerInventory,
     pub open: Option<&'a mut Container>,
     pub craft: Option<&'a mut CraftGrid>,
+    /// Rules of the open container's slots; any stack goes anywhere without.
+    pub policy: Option<&'a dyn SlotPolicy>,
 }
 
 impl Window<'_> {
@@ -111,9 +121,12 @@ impl Window<'_> {
     }
 
     fn accepts(&self, slot: SlotRef, stack: &ItemStack, rules: &impl ItemRules) -> bool {
-        match slot.area {
-            Area::Player => PlayerInventory::accepts(usize::from(slot.index), stack, rules),
-            Area::Open | Area::Craft | Area::CraftResult => true,
+        match (slot.area, self.policy, self.open.as_deref()) {
+            (Area::Player, _, _) => PlayerInventory::accepts(usize::from(slot.index), stack, rules),
+            (Area::Open, Some(policy), Some(open)) => {
+                policy.accepts(open, usize::from(slot.index), stack)
+            }
+            _ => true,
         }
     }
 
@@ -186,7 +199,13 @@ impl Window<'_> {
         let index = usize::from(slot.index);
         let left = match (slot.area, &mut self.open) {
             (Area::Open | Area::Craft | Area::CraftResult, _) => self.player.give(stack, rules),
-            (Area::Player, Some(open)) => open.insert_anywhere(stack, rules),
+            (Area::Player, Some(open)) => match self.policy {
+                Some(policy) => {
+                    let order = policy.route(open, &stack);
+                    open.insert(stack, order.into_iter(), rules)
+                }
+                None => open.insert_anywhere(stack, rules),
+            },
             (Area::Player, None) => self.move_within_player(index, stack, rules),
         };
         if let Some(target) = self.slot_mut(slot) {

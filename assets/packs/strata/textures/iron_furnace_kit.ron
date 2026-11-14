@@ -1,0 +1,28 @@
+// A riveted iron plate marked with an arrow: a furnace kit.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        'i': ("iron", 0),
+        'I': ("iron", 1),
+        'J': ("iron", 2),
+        'K': ("iron", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "..mmmmmmmmmmmm..",
+        "..mKJJJJJJJJIm..",
+        "..mJiJJJJJJiIm..",
+        "..mJJJJKKJJJIm..",
+        "..mJJJKJJKJJIm..",
+        "..mJJKJJJJKJIm..",
+        "..mJJJJKKJJJIm..",
+        "..mJJJJKKJJJIm..",
+        "..mJJJJKKJJJIm..",
+        "..mJiJJJJJJiIm..",
+        "..mIIIIIIIIIIm..",
+        "..mmmmmmmmmmmm..",
+        "................",
+        "................",
+    ],
+)

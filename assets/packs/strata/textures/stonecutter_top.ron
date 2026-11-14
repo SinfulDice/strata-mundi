@@ -1,0 +1,32 @@
+// A round iron blade across a stone slab.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        's': ("stone", 1),
+        'S': ("stone", 2),
+        'H': ("stone", 3),
+        'O': ("coal", 0),
+        'i': ("iron", 0),
+        'I': ("iron", 1),
+        'J': ("iron", 2),
+        'K': ("iron", 3),
+    },
+    rows: [
+        "mmmmmmmmmmmmmmmm",
+        "mHHHHHHHHHHHHHHm",
+        "mHSSSSSSSSSSSSsm",
+        "mHSSSSSSSSSSSSsm",
+        "mHSSSSSKKSSSSSsm",
+        "mHSSSSKJJKSSSSsm",
+        "mHSSSKJIIJKSSSsm",
+        "mHSSKJIiiIJKSSsm",
+        "mOOOOOOOOOOOOOOm",
+        "mHSSKJIiiIJKSSsm",
+        "mHSSSKJIIJKSSSsm",
+        "mHSSSSKJJKSSSSsm",
+        "mHSSSSSKKSSSSSsm",
+        "mHSSSSSSSSSSSSsm",
+        "mssssssssssssssm",
+        "mmmmmmmmmmmmmmmm",
+    ],
+)

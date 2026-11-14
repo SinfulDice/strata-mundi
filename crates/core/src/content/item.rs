@@ -1,5 +1,6 @@
 use super::registry::{BlockId, EntityTypeId, ItemId, Registry, TextureId};
 use super::{Block, EntityType, FluidLevel, TextureLibrary, ToolDef};
+use crate::cooking::{KitDef, ModuleDef};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced};
 use serde::Deserialize;
@@ -28,6 +29,12 @@ pub struct ItemDef {
     /// Left in the crafting grid when used in a recipe (a water bucket leaves a bucket).
     #[serde(default)]
     pub remainder: Option<Identifier>,
+    /// Used on a block of a tier, makes it the next tier in place (furnace kits).
+    #[serde(default)]
+    pub kit: Option<KitDef>,
+    /// Goes in an upgrade slot (furnace modules); such an item never stacks.
+    #[serde(default)]
+    pub module: Option<ModuleDef>,
 }
 
 /// Where a worn item goes, in the order of the armour slots.
@@ -71,6 +78,8 @@ pub struct Item {
     pub tool: Option<ToolDef>,
     /// What stays in the crafting grid after a recipe uses it.
     pub remainder: Option<ItemId>,
+    pub kit: Option<KitDef>,
+    pub module: Option<ModuleDef>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -116,6 +125,8 @@ pub(super) fn load_items(
                 equip: None,
                 tool: None,
                 remainder: None,
+                kit: None,
+                module: None,
             },
         );
     }
@@ -132,12 +143,9 @@ pub(super) fn load_items(
             .action
             .and_then(|action| item_action(known, action, &source, errors));
         let durable = value.durability.filter(|&uses| uses > 0);
+        let single = durable.is_some() || value.module.is_some();
         let item = Item {
-            max_stack: if durable.is_some() {
-                1
-            } else {
-                value.max_stack.max(1)
-            },
+            max_stack: if single { 1 } else { value.max_stack.max(1) },
             category: value.category,
             kind: ItemKind::Flat(texture),
             action,
@@ -147,6 +155,8 @@ pub(super) fn load_items(
                 .tool
                 .and_then(|tool| valid_tool(tool, &source, errors)),
             remainder: None,
+            kit: value.kit,
+            module: value.module,
         };
         match items.insert(id.clone(), item) {
             Some(key) => remainders.extend(value.remainder.map(|left| (key, left, source))),

@@ -1,0 +1,2 @@
+// Used on a iron furnace, smoker or blast furnace: makes it gold, keeping its contents.
+Item(texture: "strata:gold_furnace_kit", max_stack: 16, category: Some("strata:stations"), kit: Some(Kit(from: "strata:iron", to: "strata:gold")))

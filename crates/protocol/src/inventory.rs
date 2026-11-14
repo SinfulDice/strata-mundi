@@ -41,6 +41,9 @@ pub enum InventoryRequest {
         recipe: RecipeId,
         all: bool,
     },
+    /// The stonecutter: cut what lies in its cell with this recipe (an index in
+    /// `Cooking::cuttings`).
+    ChooseCut(u16),
 }
 
 /// A container the player opened, as the screen shows it.
@@ -51,6 +54,8 @@ pub struct OpenedContainer {
     pub pos: BlockPos,
     /// Both halves of a double chest, in order.
     pub contents: Container,
+    /// A furnace's fire and cooking (`ServerMessage::Furnace` keeps it up to date).
+    pub furnace: Option<FurnaceView>,
 }
 
 /// The player's crafting grid, as the screen shows it.
@@ -65,4 +70,41 @@ pub struct CraftingView {
     pub hint: bool,
     /// The work station opened (its name is the screen's title).
     pub station: Option<(BlockId, BlockPos)>,
+    /// At a stonecutter: what the item laid can become (recipe index, result), and the
+    /// one chosen.
+    pub cuts: Vec<(u16, ItemStack)>,
+    pub chosen: Option<u16>,
+}
+
+/// The open furnace's fire and cooking, for its flame and arrow.
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+pub struct FurnaceView {
+    pub burn_left: u32,
+    pub burn_total: u32,
+    pub progress: u32,
+    /// Ticks the item in the input takes (0: nothing to cook).
+    pub cook_time: u32,
+    /// Seconds a usual cooking (10 s in a stone furnace) takes here.
+    pub seconds: f32,
+    /// Cookings a piece of coal gives here.
+    pub per_coal: f32,
+}
+
+impl FurnaceView {
+    /// Fraction of the fuel left, 0 to 1.
+    pub fn flame(&self) -> f32 {
+        fraction(self.burn_left, self.burn_total)
+    }
+
+    /// Fraction of the cooking done, 0 to 1.
+    pub fn arrow(&self) -> f32 {
+        fraction(self.progress, self.cook_time)
+    }
+}
+
+fn fraction(part: u32, whole: u32) -> f32 {
+    if whole == 0 {
+        return 0.0;
+    }
+    (part as f32 / whole as f32).clamp(0.0, 1.0)
 }

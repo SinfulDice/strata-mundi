@@ -1,0 +1,13 @@
+// Cooks and smelts everything, with fuel; stone tier (furnace_tiers/stone.ron). Faces the player who places it.
+Block(
+    textures: Faces(
+        up: "strata:furnace_top", down: "strata:furnace_top", north: "strata:furnace_front",
+        south: "strata:furnace_side", east: "strata:furnace_side", west: "strata:furnace_side",
+    ),
+    hardness: 3.5,
+    tool: Some(BlockTool(kind: "strata:pickaxe", level: 0, required: true)),
+    sound: Some("strata:stone"),
+    category: Some("strata:stations"),
+    placement: Facing(lit: Some(Lit(front: "strata:furnace_front_lit", light_emission: 13))),
+    furnace: Some(Furnace(family: "strata:furnace", tier: "strata:stone")),
+)

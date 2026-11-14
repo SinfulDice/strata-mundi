@@ -34,6 +34,8 @@ fn items() -> Registry<ItemId, Item> {
             equip: None,
             tool: None,
             remainder: (name == "water").then_some(BUCKET),
+            kit: None,
+            module: None,
         };
         items.insert(id(name), item);
     }
@@ -227,6 +229,7 @@ fn a_click_crafts_once_into_the_carried_stack() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     let crafted = take_result(&mut window, &recipes, Click::Primary, &items).unwrap();
     assert_eq!(crafted.times, 1);
@@ -248,6 +251,7 @@ fn shift_click_crafts_as_many_as_possible_and_keeps_every_item() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     let crafted = take_result(&mut window, &recipes, Click::Transfer, &items).unwrap();
     assert_eq!(crafted.times, 20);
@@ -268,6 +272,7 @@ fn shift_click_stops_when_the_inventory_is_full() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     let crafted = take_result(&mut window, &recipes, Click::Transfer, &items).unwrap();
     assert_eq!(crafted.times, 2);
@@ -293,6 +298,7 @@ fn remainders_stay_in_the_grid() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     let crafted = take_result(&mut window, &recipes, Click::Transfer, &items).unwrap();
     assert_eq!(crafted.times, 1, "the water is gone after one");
@@ -314,6 +320,7 @@ fn a_full_cursor_of_something_else_crafts_nothing() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     assert!(take_result(&mut window, &recipes, Click::Primary, &items).is_none());
     assert_eq!(grid.slots.count(LOG), 1);
@@ -347,6 +354,7 @@ fn the_recipe_book_fills_the_grid_from_the_inventory() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     assert!(fill(&mut window, torch, false, &items));
     assert_eq!(grid.slots.get(0), Some(&stack(COAL, 1)));
@@ -356,6 +364,7 @@ fn the_recipe_book_fills_the_grid_from_the_inventory() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     assert!(fill(&mut window, torch, true, &items));
     assert_eq!(grid.slots.get(0), Some(&stack(COAL, 3)));
@@ -376,6 +385,7 @@ fn the_recipe_book_changes_nothing_without_the_items_or_the_room() {
         player: &mut player,
         open: None,
         craft: Some(&mut grid),
+        policy: None,
     };
     assert!(
         fill(&mut window, mud, false, &items),
@@ -386,6 +396,7 @@ fn the_recipe_book_changes_nothing_without_the_items_or_the_room() {
         player: &mut before.0.clone(),
         open: None,
         craft: Some(&mut small),
+        policy: None,
     };
     let three_by_three = shaped(3, vec![Some(Ingredient::item(DIRT)); 3], MUD, 1);
     assert!(!fill(&mut window, &three_by_three, false, &items));
@@ -393,6 +404,7 @@ fn the_recipe_book_changes_nothing_without_the_items_or_the_room() {
         player: &mut PlayerInventory::default(),
         open: None,
         craft: Some(&mut before.1.clone()),
+        policy: None,
     };
     assert!(
         !fill(&mut window, &three_by_three, false, &items),

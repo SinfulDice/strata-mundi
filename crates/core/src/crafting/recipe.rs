@@ -286,7 +286,7 @@ fn trimmed(width: usize, height: usize, cells: Vec<Option<Ingredient>>) -> Recip
     }
 }
 
-fn ingredient(
+pub(crate) fn ingredient(
     def: IngredientDef,
     names: &Names<'_>,
     source: &Path,

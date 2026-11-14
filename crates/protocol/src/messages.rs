@@ -1,6 +1,6 @@
 use crate::GameMode;
 use crate::commands::Feedback;
-use crate::inventory::{CraftingView, InventoryRequest, OpenedContainer};
+use crate::inventory::{CraftingView, FurnaceView, InventoryRequest, OpenedContainer};
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::{BiomeTints, BlockId, EntityTypeId, Face, ItemId, RecipeId};
@@ -197,6 +197,8 @@ pub enum ServerMessage {
     ContainerContents(Box<Container>),
     /// The container is gone or out of reach: the screen closes.
     ContainerClosed,
+    /// The open furnace's fire and cooking changed.
+    Furnace(FurnaceView),
     /// The crafting grid changed, or a work station opened (or closed: `station` empty).
     Crafting(Box<CraftingView>),
     /// The recipes the player knows; `all` when every recipe counts as known (creative,
@@ -354,6 +356,7 @@ mod tests {
                 block: BlockId(9),
                 pos: BlockPos::new(1, 2, 3),
                 contents: contents.clone(),
+                furnace: Some(FurnaceView::default()),
             })),
             ServerMessage::ContainerContents(Box::new(contents)),
             ServerMessage::ContainerClosed,
@@ -363,7 +366,17 @@ mod tests {
                 result: None,
                 hint: true,
                 station: Some((BlockId(4), BlockPos::new(1, 2, 3))),
+                cuts: vec![(3, stack.clone())],
+                chosen: Some(3),
             })),
+            ServerMessage::Furnace(FurnaceView {
+                burn_left: 4,
+                burn_total: 1600,
+                progress: 7,
+                cook_time: 200,
+                seconds: 8.0,
+                per_coal: 10.0,
+            }),
             ServerMessage::Recipes {
                 known: vec![RecipeId(2)],
                 all: false,

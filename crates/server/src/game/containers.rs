@@ -5,7 +5,8 @@ use super::{Game, MAX_REACH};
 use crate::loader::ColumnLoader;
 use glam::DVec3;
 use std::collections::HashMap;
-use strata_core::content::{BlockId, Face, StationDef};
+use strata_core::content::{BlockId, Face};
+use strata_core::cooking::FurnaceState;
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{Container, ItemData, deposit_matching};
 use strata_core::updates::BlockChange;
@@ -20,8 +21,10 @@ const DEPOSIT_REACH: f64 = 8.0;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct BlockEntity {
     pub container: Container,
-    /// Room for later machines (furnace progress…), saved with the contents.
+    /// Room for later machines, saved with the contents.
     pub data: ItemData,
+    /// Fire and cooking, for a furnace.
+    pub furnace: Option<FurnaceState>,
 }
 
 /// The block entities of the dimension, by position.
@@ -41,10 +44,11 @@ impl Game {
         let Some(block) = loader.block(pos) else {
             return false;
         };
-        if let Some(StationDef::Crafting(side)) = self.rules.station(block) {
-            return self.open_station(loader, pos, block, side);
+        if let Some(station) = self.rules.station(block) {
+            return self.open_station(loader, pos, block, station);
         }
-        if self.rules.container(block).is_none() || !self.in_reach(pos) || !self.take_action() {
+        let holds = self.rules.entity_slots(block).is_some();
+        if !holds || !self.in_reach(pos) || !self.take_action() {
             return false;
         }
         let halves = match self.partner(loader, pos) {
@@ -64,7 +68,11 @@ impl Game {
                 block,
                 pos,
                 contents,
+                furnace: None,
             })));
+        if self.rules.furnace(block).is_some() {
+            self.wake_furnace(pos);
+        }
         true
     }
 
@@ -88,10 +96,7 @@ impl Game {
     }
 
     fn contents(&mut self, window: &OpenWindow) -> Container {
-        let size = self
-            .rules
-            .container(window.block)
-            .map_or(0, |def| def.slots());
+        let size = self.rules.entity_slots(window.block).unwrap_or(0);
         let mut contents = Container::default();
         for &half in &window.halves {
             // Made empty the first time (a chest just placed or generated); the slots
@@ -134,6 +139,9 @@ impl Game {
                 let size = entity.container.len();
                 entity.container.slots = slots.by_ref().take(size).collect();
             }
+            if self.rules.furnace(window.block).is_some() {
+                self.wake_furnace(*half);
+            }
         }
         self.messages
             .push(ServerMessage::ContainerContents(Box::new(contents)));
@@ -168,7 +176,7 @@ impl Game {
             .collect();
         near.sort_by_key(|&pos| (pos.x, pos.y, pos.z));
         self.with_window(loader, |window, rules| {
-            if let Some(open) = window.open.as_deref_mut() {
+            if let (Some(open), None) = (window.open.as_deref_mut(), window.policy) {
                 deposit_matching(window.player, open, rules);
             }
         });
@@ -194,13 +202,21 @@ impl Game {
         for (pos, stack) in thrown {
             self.spawn_drop(stack, block_centre(pos), DVec3::ZERO);
         }
+        let furnaces: Vec<BlockPos> = self
+            .block_entities
+            .iter()
+            .filter(|(_, entity)| entity.furnace.is_some())
+            .map(|(&pos, _)| pos)
+            .collect();
+        self.furnaces.extend(furnaces);
     }
 
-    /// A container block that went away (broken, burnt) throws its contents where it was.
+    /// A container block or a furnace that went away (broken, burnt) throws its contents
+    /// where it was.
     pub(super) fn settle_block_entities(&mut self, loader: &ColumnLoader, changes: &[BlockChange]) {
         for &(pos, block) in changes {
-            let gone = self.rules.container(block).is_none();
-            if let (true, Some(mut entity)) = (gone, self.block_entities.remove(&pos)) {
+            let gone = self.rules.entity_slots(block).is_none();
+            if gone && let Some(mut entity) = self.block_entities.remove(&pos) {
                 let centre = block_centre(pos);
                 for stack in entity.container.drain() {
                     self.spawn_drop(stack, centre, DVec3::ZERO);

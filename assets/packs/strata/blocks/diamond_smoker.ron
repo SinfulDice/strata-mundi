@@ -1,0 +1,13 @@
+// Cooks food twice as fast, with fuel; diamond tier (furnace_tiers/diamond.ron). Faces the player who places it.
+Block(
+    textures: Faces(
+        up: "strata:diamond_smoker_top", down: "strata:diamond_smoker_top", north: "strata:diamond_smoker_front",
+        south: "strata:diamond_smoker_side", east: "strata:diamond_smoker_side", west: "strata:diamond_smoker_side",
+    ),
+    hardness: 6.0,
+    tool: Some(BlockTool(kind: "strata:pickaxe", level: 2, required: true)),
+    sound: Some("strata:wood"),
+    category: Some("strata:stations"),
+    placement: Facing(lit: Some(Lit(front: "strata:diamond_smoker_front_lit", light_emission: 13))),
+    furnace: Some(Furnace(family: "strata:smoker", tier: "strata:diamond", kinds: ["strata:food"], speed: 200)),
+)

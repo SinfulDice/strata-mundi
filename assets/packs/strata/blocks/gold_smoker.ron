@@ -1,0 +1,13 @@
+// Cooks food twice as fast, with fuel; gold tier (furnace_tiers/gold.ron). Faces the player who places it.
+Block(
+    textures: Faces(
+        up: "strata:gold_smoker_top", down: "strata:gold_smoker_top", north: "strata:gold_smoker_front",
+        south: "strata:gold_smoker_side", east: "strata:gold_smoker_side", west: "strata:gold_smoker_side",
+    ),
+    hardness: 4.0,
+    tool: Some(BlockTool(kind: "strata:pickaxe", level: 1, required: true)),
+    sound: Some("strata:wood"),
+    category: Some("strata:stations"),
+    placement: Facing(lit: Some(Lit(front: "strata:gold_smoker_front_lit", light_emission: 13))),
+    furnace: Some(Furnace(family: "strata:smoker", tier: "strata:gold", kinds: ["strata:food"], speed: 200)),
+)

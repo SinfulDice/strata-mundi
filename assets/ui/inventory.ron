@@ -1,5 +1,6 @@
-// Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; with
-// a container open, the container on top. The player's slots are always below. Slots
+// Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; at a
+// stonecutter, its cell and the variants to choose; with a container open, the container
+// (or the furnace: input, fuel and its flame, the arrow, output, upgrade slots) on top. The player's slots are always below. Slots
 // take clicks (the help below gives way to the crafting hint or the recipe learnt): left takes or puts, right halves or puts one, shift-click sends across
 // (on the result: crafts as many as fit), double-click gathers, middle click (L1) locks.
 Screen(
@@ -39,6 +40,29 @@ Screen(
                     Button(id: "sort_chest", anchor: TopLeft, at: (104, 13), size: (40, 14), text: "ui-inventory-sort"),
                     Button(id: "deposit", anchor: TopLeft, at: (148, 13), size: (40, 14), text: "ui-inventory-deposit"),
                     SlotGrid(id: "chest", anchor: TopLeft, at: (8, 30), columns: 9, rows: 6),
+                ]),
+                Group(id: "furnace_side", children: [
+                    Label(id: "furnace_title", anchor: TopLeft, at: (8, 4), text: "@title"),
+                    SlotGrid(id: "furnace_input", anchor: TopLeft, at: (40, 20), columns: 1, rows: 1),
+                    Gauge(id: "furnace_flame", anchor: TopLeft, at: (46, 43), size: (8, 14), vertical: true),
+                    SlotGrid(id: "furnace_fuel", anchor: TopLeft, at: (40, 60), columns: 1, rows: 1),
+                    Gauge(id: "furnace_arrow", anchor: TopLeft, at: (66, 47), size: (26, 6)),
+                    SlotGrid(id: "furnace_output", anchor: TopLeft, at: (98, 40), columns: 1, rows: 1),
+                    Label(id: "furnace_modules_label", anchor: TopLeft, at: (128, 16), text: "ui-furnace-modules", dim: true),
+                    SlotGrid(id: "furnace_modules", anchor: TopLeft, at: (128, 28), columns: 3, rows: 2),
+                    Group(id: "furnace_no_modules", children: [
+                        Label(id: "furnace_no_modules_note", anchor: TopLeft, at: (128, 30), text: "ui-furnace-no-modules", dim: true, wrap: Some(60)),
+                    ]),
+                    Label(id: "furnace_info", anchor: TopLeft, at: (8, 90), text: "@furnace_info", wrap: Some(180)),
+                    Label(id: "furnace_help", anchor: TopLeft, at: (8, 112), text: "ui-furnace-help", dim: true, wrap: Some(180)),
+                ]),
+                Group(id: "cutter_side", children: [
+                    Label(id: "cutter_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                    SlotGrid(id: "cutter", anchor: TopLeft, at: (16, 40), columns: 1, rows: 1),
+                    ItemGrid(id: "cut_choices", anchor: TopLeft, at: (48, 20), columns: 4, rows: 3),
+                    Label(id: "cutter_arrow", anchor: TopLeft, at: (134, 46), text: "ui-craft-arrow", dim: true),
+                    SlotGrid(id: "cutter_result", anchor: TopLeft, at: (150, 40), columns: 1, rows: 1),
+                    Label(id: "cutter_note", anchor: TopLeft, at: (8, 100), text: "@cutter_note", dim: true, wrap: Some(180)),
                 ]),
                 SlotGrid(id: "main", anchor: TopLeft, at: (8, 152), columns: 9, rows: 3),
                 SlotGrid(id: "hotbar", anchor: TopLeft, at: (8, 214), columns: 9, rows: 1),

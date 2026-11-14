@@ -175,6 +175,7 @@ impl Persistence {
                 let entity = BlockEntity {
                     container: crate::save::load_slots(&saved.slots, items),
                     data: saved.data,
+                    furnace: saved.furnace,
                 };
                 (BlockPos::new(x, y, z), entity)
             })
@@ -264,11 +265,14 @@ impl Persistence {
         let mut entities: Vec<SavedBlockEntity> = game
             .block_entities
             .iter()
-            .filter(|(_, entity)| !entity.container.is_empty() || !entity.data.is_empty())
+            .filter(|(_, entity)| {
+                !entity.container.is_empty() || !entity.data.is_empty() || entity.furnace.is_some()
+            })
             .map(|(pos, entity)| SavedBlockEntity {
                 pos: [pos.x, pos.y, pos.z],
                 slots: crate::save::save_slots(&entity.container.slots, items),
                 data: entity.data.clone(),
+                furnace: entity.furnace.clone(),
             })
             .collect();
         entities.sort_by_key(|entity| entity.pos);

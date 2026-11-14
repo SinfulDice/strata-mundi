@@ -1,10 +1,12 @@
-//! `block_entities/<namespace>/<dimension>.ron`: what container blocks hold, by position.
+//! `block_entities/<namespace>/<dimension>.ron`: what container blocks and furnaces hold,
+//! by position.
 //! Kept apart from the region files, which store only block ids (see D063).
 
 use super::stacks::SavedStack;
 use super::{SaveError, WorldFolder, write_atomic};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use strata_core::cooking::FurnaceState;
 use strata_core::dimension::DimensionId;
 use strata_core::inventory::ItemData;
 
@@ -22,6 +24,9 @@ pub struct SavedBlockEntity {
     pub slots: Vec<Option<SavedStack>>,
     #[serde(default)]
     pub data: ItemData,
+    /// Fire and cooking of a furnace.
+    #[serde(default)]
+    pub furnace: Option<FurnaceState>,
 }
 
 impl WorldFolder {

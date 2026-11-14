@@ -1,0 +1,27 @@
+// Stone bricks in a dark frame: the side of a furnace.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        's': ("stone", 1),
+        'S': ("stone", 2),
+        'H': ("stone", 3),
+    },
+    rows: [
+        "mmmmmmmmmmmmmmmm",
+        "mHHHHHHHHHHHHHHm",
+        "mSSSSSSsmHSSSSSm",
+        "mssssssmmssssssm",
+        "mmmmmmmmmmmmmmmm",
+        "mHHsmHHHHHHHsmHm",
+        "mSSsmHSSSSSSsmHm",
+        "mSSsmHSSSSSSsmHm",
+        "msssmsssssssmmsm",
+        "mmmmmmmmmmmmmmmm",
+        "mHHHHHHsmHHHHHHm",
+        "mSSSSSSsmHSSSSSm",
+        "mSSSSSSsmHSSSSSm",
+        "mssssssmmssssssm",
+        "mmmmmmmmmmmmmmmm",
+        "mmmmmmmmmmmmmmmm",
+    ],
+)

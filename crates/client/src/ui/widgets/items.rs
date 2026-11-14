@@ -28,7 +28,8 @@ pub(super) fn grid(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         let slot = Rect::new(rect.x + cx as i32, rect.y + cy as i32, SLOT, SLOT);
         let item = items.get(index).copied().flatten();
         let focused = d.is_focused(id, index);
-        draw_slot(d, slot, item, focused, false);
+        let selected = item.is_some() && d.model.selected(id) == Some(index);
+        draw_slot(d, slot, item, focused, selected);
         if item.is_some() {
             d.hit(id, index, slot, HitKind::Slot);
         }

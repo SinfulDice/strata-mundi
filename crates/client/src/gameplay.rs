@@ -158,6 +158,11 @@ impl Gameplay {
                 }
             }
             ServerMessage::ContainerClosed => self.container = None,
+            ServerMessage::Furnace(view) => {
+                if let Some(open) = &mut self.container {
+                    open.furnace = Some(view);
+                }
+            }
             message @ (ServerMessage::Crafting(_)
             | ServerMessage::Recipes { .. }
             | ServerMessage::RecipeLearned(_)) => {

@@ -1,0 +1,31 @@
+// Stone bricks held by a riveted iron band.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        's': ("stone", 1),
+        'S': ("stone", 2),
+        'H': ("stone", 3),
+        'i': ("iron", 0),
+        'I': ("iron", 1),
+        'J': ("iron", 2),
+        'K': ("iron", 3),
+    },
+    rows: [
+        "mmmmmmmmmmmmmmmm",
+        "mHHHHHHHHHHHHHHm",
+        "mSSSSSSsmHSSSSSm",
+        "mssssssmmssssssm",
+        "mmmmmmmmmmmmmmmm",
+        "iiiiiiiiiiiiiiii",
+        "KJJJJJJJJJJJJJJJ",
+        "IIIIIIIIIIIIIIII",
+        "KIIIIKIIIIKIIIIK",
+        "iiiiiiiiiiiiiiii",
+        "mHHHHHHsmHHHHHHm",
+        "mSSSSSSsmHSSSSSm",
+        "mSSSSSSsmHSSSSSm",
+        "mssssssmmssssssm",
+        "mmmmmmmmmmmmmmmm",
+        "mmmmmmmmmmmmmmmm",
+    ],
+)

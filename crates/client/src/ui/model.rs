@@ -46,6 +46,11 @@ pub trait ScreenModel {
         Vec::new()
     }
     /// Tooltip for an element (item names).
+    /// How full a gauge is, 0 to 1.
+    fn gauge(&self, _id: &str) -> Option<f32> {
+        None
+    }
+
     fn tooltip(&self, _id: &str, _index: usize) -> Option<String> {
         None
     }

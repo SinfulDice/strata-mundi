@@ -248,6 +248,51 @@ pub(super) fn slider(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     d.hit(id, 0, rect, HitKind::Slider);
 }
 
+pub(super) fn gauge(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
+    let Node::Gauge {
+        id,
+        anchor,
+        at,
+        size,
+        vertical,
+    } = node
+    else {
+        return;
+    };
+    let rect = parent.place(*anchor, d.ctx.offset(id, *at), *size);
+    let value = d.model.gauge(id).unwrap_or(0.0).clamp(0.0, 1.0);
+    let theme = d.theme();
+    let (field, light, dark, fill) = (
+        theme.field.0,
+        theme.panel_light.0,
+        theme.panel_dark.0,
+        theme.accent.0,
+    );
+    d.painter.fill(rect, field);
+    d.painter.bevel(rect, dark, light);
+    let inner = Rect::new(
+        rect.x + 1,
+        rect.y + 1,
+        rect.w.saturating_sub(2),
+        rect.h.saturating_sub(2),
+    );
+    let filled = if *vertical {
+        let height = (inner.h as f32 * value).round() as u32;
+        Rect::new(
+            inner.x,
+            inner.y + (inner.h - height) as i32,
+            inner.w,
+            height,
+        )
+    } else {
+        let width = (inner.w as f32 * value).round() as u32;
+        Rect::new(inner.x, inner.y, width, inner.h)
+    };
+    if filled.w > 0 && filled.h > 0 {
+        d.painter.fill(filled, fill);
+    }
+}
+
 const TAB_GAP: u32 = 2;
 
 pub(super) fn tabs(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {

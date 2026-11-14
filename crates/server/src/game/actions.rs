@@ -101,10 +101,7 @@ impl Game {
                 against,
                 face,
             } => self.use_item(loader, item, against, face),
-            WorldAction::UseBlock { pos } => {
-                self.open_block(loader, pos);
-                Vec::new()
-            }
+            WorldAction::UseBlock { pos } => self.use_block(loader, pos),
             WorldAction::Interact(entity) => {
                 self.interact_entity(entity);
                 Vec::new()

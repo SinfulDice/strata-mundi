@@ -125,6 +125,21 @@ pub enum Placement {
         #[serde(default)]
         ceiling_texture: Option<Identifier>,
     },
+    /// Turns its front (the pack's north face) toward the player who places it
+    /// (furnaces); `lit` adds a lit variant of each, switched by the server.
+    Facing {
+        #[serde(default)]
+        lit: Option<LitDef>,
+    },
+}
+
+/// The lit look of a facing block: another front texture and the light it gives off.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename = "Lit", deny_unknown_fields)]
+pub struct LitDef {
+    pub front: Identifier,
+    #[serde(default)]
+    pub light_emission: u8,
 }
 
 /// Member of a family of turned blocks; `variants` are indexed by `Axis`.
@@ -273,6 +288,9 @@ pub struct BlockDef {
     /// Makes it a work station (crafting table), opened with a right click.
     #[serde(default)]
     pub station: Option<super::StationDef>,
+    /// Makes it a furnace: cooks with fuel, by recipes of the `cooking/` folder.
+    #[serde(default)]
+    pub furnace: Option<super::FurnaceDef>,
 }
 
 fn default_slipperiness() -> f32 {
@@ -325,6 +343,8 @@ pub struct Block {
     pub particles: BlockParticles,
     pub container: Option<super::ContainerDef>,
     pub station: Option<super::StationDef>,
+    pub facing: Option<super::Facing>,
+    pub furnace: Option<super::FurnaceDef>,
 }
 
 impl Block {
@@ -356,6 +376,8 @@ impl Block {
             particles: BlockParticles::default(),
             container: None,
             station: None,
+            facing: None,
+            furnace: None,
         }
     }
 
@@ -366,7 +388,7 @@ impl Block {
             (Some(o), _, _) => o.along(Axis::Y),
             (_, Some(a), _) => a.family().unwrap_or(id),
             (_, _, Some(fluid)) => fluid.source,
-            _ => id,
+            _ => self.facing.map_or(id, |f| f.family()),
         }
     }
 

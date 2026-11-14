@@ -13,6 +13,8 @@ fn items() -> Registry<ItemId, Item> {
             equip: None,
             tool: None,
             remainder: None,
+            kit: None,
+            module: None,
         };
         items.insert(format!("test:{name}").parse().unwrap(), item);
     }

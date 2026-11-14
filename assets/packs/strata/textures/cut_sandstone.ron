@@ -1,0 +1,27 @@
+// Sandstone cut into smooth bands.
+Sprite(
+    colors: {
+        'm': ("sandstone", 0),
+        's': ("sandstone", 1),
+        'S': ("sandstone", 2),
+        'H': ("sandstone", 3),
+    },
+    rows: [
+        "HHHHHHHHHHHHHHHs",
+        "HSSSSSSSSSSSSSSm",
+        "HSSSSsSSSSSSSSSm",
+        "smmmmmmmmmmmmmmm",
+        "HHHHHHHHHHHHHHHs",
+        "HSSSSSSSSSSsSSSm",
+        "HSSSSSSSSSSSSSSm",
+        "HSSsSSSSSSSSSSSm",
+        "HSSSSSSSSSSSSSSm",
+        "HSSSSSSSSsSSSSSm",
+        "HSSSSSSSSSSSSSSm",
+        "smmmmmmmmmmmmmmm",
+        "HHHHHHHHHHHHHHHs",
+        "HSSSSSSsSSSSSSSm",
+        "HSSSSSSSSSSSSSSm",
+        "smmmmmmmmmmmmmmm",
+    ],
+)

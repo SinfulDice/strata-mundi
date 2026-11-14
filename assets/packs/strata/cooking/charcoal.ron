@@ -1,0 +1,1 @@
+Cooking(ingredient: Tag("strata:logs"), result: Result(item: "strata:charcoal"), experience: 0.15, kind: "strata:misc")

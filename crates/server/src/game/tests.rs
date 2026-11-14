@@ -4,6 +4,7 @@ use super::*;
 use crate::loader::tests::loader;
 use std::path::Path;
 use strata_core::chunk::Column;
+use strata_core::content::Face;
 use strata_core::content::{Content, ItemId};
 use strata_core::coords::{ColumnPos, DEFAULT_WORLD_BORDER};
 use strata_core::inventory::ItemStack;

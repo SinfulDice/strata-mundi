@@ -161,6 +161,9 @@ fn texts_are_composed_by_the_translations() {
     let torch = recipe(&content, "strata:torch");
     let index = listed(&model).iter().position(|&r| r == torch).unwrap();
     model.state.selected = Some(torch);
-    assert_eq!(model.text("detail").unwrap(), "1 × Coal, 1 × Stick");
+    assert_eq!(
+        model.text("detail").unwrap(),
+        "1 × coal or charcoal, 1 × Stick"
+    );
     assert!(index < listed(&model).len());
 }

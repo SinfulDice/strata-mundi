@@ -1,0 +1,1 @@
+Cooking(ingredient: Tag("strata:gold_ores"), result: Result(item: "strata:gold_ingot"), experience: 1.0, kind: "strata:ore")

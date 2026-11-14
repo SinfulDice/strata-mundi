@@ -1,0 +1,2 @@
+// Smelted from copper ore.
+Item(texture: "strata:copper_ingot", category: Some("strata:materials"))

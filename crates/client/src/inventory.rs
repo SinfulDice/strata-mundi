@@ -150,6 +150,8 @@ mod tests {
                 equip: None,
                 tool: None,
                 remainder: None,
+                kit: None,
+                module: None,
             };
             items.insert(format!("strata:{name}").parse().unwrap(), item);
         }

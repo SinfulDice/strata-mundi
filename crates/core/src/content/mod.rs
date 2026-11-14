@@ -6,6 +6,7 @@ mod container;
 mod cracks;
 mod describe;
 mod entity;
+mod facing;
 mod fire;
 mod fluid;
 mod hit_box;
@@ -22,11 +23,15 @@ mod tint;
 mod tool;
 mod turned;
 
+pub use crate::cooking::FurnaceDef;
 pub use attached::{AttachedSides, Attachment};
-pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
+pub use block::{
+    Axis, Block, BlockDef, BlockTextures, Face, LitDef, Orientation, Placement, RenderKind,
+};
 pub use container::{ContainerDef, StationDef};
 pub use cracks::{CracksDef, MAX_CRACK_STAGES};
 pub use entity::{DroppedItemDef, EntityDef, EntityType, ModelBox};
+pub use facing::{FRONTS, Facing};
 pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
 pub use fluid::{
     Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SLOPE_SEARCH, MAX_SPREAD,
@@ -53,6 +58,7 @@ pub use tool::{BlockTool, TICKS_PER_SECOND, ToolDef, crack_progress, crack_stage
 
 use crate::audio::{self, Sounds};
 use crate::cinematic::{self, Cinematic};
+use crate::cooking::{self, Cooking};
 use crate::crafting::{self, Recipes};
 use crate::dimension::DimensionId;
 use crate::id::Identifier;
@@ -85,6 +91,8 @@ pub struct Content {
     /// Named groups of items (« any planks »).
     pub tags: ItemTags,
     pub recipes: Recipes,
+    /// Furnaces (fuels, cooking recipes, tiers) and the stonecutter.
+    pub cooking: Cooking,
     /// Item tooltips by language, see `item_tooltip`.
     pub tooltips: describe::TooltipCache,
 }
@@ -124,6 +132,7 @@ impl Content {
             tags: &tags,
         };
         let recipes = Recipes::new(crafting::load_recipes(packs, &names, &mut errors));
+        let cooking = cooking::load_cooking(packs, &names, &blocks, &mut errors);
         loot::check_loot_names(&loot_refs, &loot_tables, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
         let crack_stages = cracks::load_cracks(&presentation, &textures, &mut errors);
@@ -146,6 +155,7 @@ impl Content {
             crack_stages,
             tags,
             recipes,
+            cooking,
             tooltips: Default::default(),
         };
         content.cache_tooltips();
@@ -326,14 +336,13 @@ fn load_blocks(
                 }
                 valid
             }),
-            station: value.station.filter(|&StationDef::Crafting(side)| {
-                let valid = (1..=crate::crafting::MAX_GRID as u8).contains(&side);
-                if !valid {
-                    errors.push(PackError::invalid(&source, "crafting grid: 1 to 3 cells"));
-                }
-                valid
-            }),
+            station: value
+                .station
+                .filter(|&station| valid_station(station, &source, errors)),
+            facing: None,
+            furnace: value.furnace,
         };
+        let lit = facing::lit_look(&placement, textures, &source, errors);
         let inserted = match (fluid_def, &placement) {
             (Some(def), Placement::Fixed) => {
                 let pending = fluid::insert_fluid(&mut blocks, &id, block, def, &source, errors);
@@ -344,6 +353,7 @@ fn load_blocks(
             (Some(_), _) => false,
             (None, Placement::Fixed) => blocks.insert(id, block).is_some(),
             (None, Placement::Axis) => turned::insert_turned(&mut blocks, &id, block),
+            (None, Placement::Facing { .. }) => facing::insert_facing(&mut blocks, &id, block, lit),
             (
                 None,
                 &Placement::Attached {
@@ -371,4 +381,19 @@ fn load_blocks(
     }
     let fluids = fluid::resolve(&blocks, fluids, errors);
     (blocks, fluids)
+}
+
+fn valid_station(
+    station: StationDef,
+    source: &std::path::Path,
+    errors: &mut Vec<PackError>,
+) -> bool {
+    let StationDef::Crafting(side) = station else {
+        return true;
+    };
+    let valid = (1..=crate::crafting::MAX_GRID as u8).contains(&side);
+    if !valid {
+        errors.push(PackError::invalid(source, "crafting grid: 1 to 3 cells"));
+    }
+    valid
 }

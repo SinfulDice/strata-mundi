@@ -1,0 +1,5 @@
+// Coal or charcoal (torches).
+Tag(items: [
+    "strata:coal",
+    "strata:charcoal",
+])

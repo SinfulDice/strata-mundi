@@ -1,0 +1,8 @@
+// Any log, whatever the wood.
+Tag(items: [
+    "strata:oak_log",
+    "strata:birch_log",
+    "strata:fir_log",
+    "strata:jungle_log",
+    "strata:acacia_log",
+])

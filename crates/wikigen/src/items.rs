@@ -63,7 +63,8 @@ fn page(ctx: &Ctx<'_>, key: ItemId, id: &Identifier, item: &Item) -> Page {
         .texts
         .html(ctx.lang, &format!("items/{}", id_path(id)))
         .unwrap_or_default();
-    let crafting = crate::recipes::section(ctx, &path, key);
+    let crafting =
+        crate::recipes::section(ctx, &path, key) + &crate::cooking::sections(ctx, &path, key);
     let uses = crate::recipes::uses(ctx, &path, key);
     Page {
         path,

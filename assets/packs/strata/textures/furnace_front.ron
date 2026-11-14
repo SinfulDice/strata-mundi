@@ -1,0 +1,31 @@
+// The mouth of a cold furnace under its lintel.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        's': ("stone", 1),
+        'S': ("stone", 2),
+        'H': ("stone", 3),
+        'O': ("coal", 0),
+        'o': ("coal", 1),
+        'c': ("coal", 2),
+        'I': ("iron", 1),
+    },
+    rows: [
+        "mmmmmmmmmmmmmmmm",
+        "mHHHHHHHHHHHHHHm",
+        "mSSSSSSsmHSSSSSm",
+        "mssssssmmssssssm",
+        "mmmmmmmmmmmmmmmm",
+        "mHHsmHHHHHHHsmHm",
+        "mSmmmmmmmmmmmmHm",
+        "mSHSSSSSSSSSSSHm",
+        "msmOOOOOOOOOOmsm",
+        "mmmOooooooooOmmm",
+        "mHmOooooooooOmHm",
+        "mSmOoccoocooOmSm",
+        "mSmIIIIIIIIIImSm",
+        "msmmmmmmmmmmmmsm",
+        "mmmmmmmmmmmmmmmm",
+        "mmmmmmmmmmmmmmmm",
+    ],
+)

@@ -6,8 +6,10 @@ mod bucket;
 mod containers;
 mod crafting;
 mod drops;
+mod furnaces;
 mod inventory;
 mod mining;
+mod placing;
 mod terrain;
 
 pub use containers::{BlockEntities, BlockEntity, OpenWindow};
@@ -18,15 +20,16 @@ use crate::loader::{Bounded, ColumnLoader};
 use crate::rules::BlockRules;
 use crate::systems::{boat_movement, player_movement, wake_boats};
 use glam::DVec3;
+use std::collections::HashSet;
 use std::sync::Arc;
-use strata_core::content::{BlockId, Face};
+use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::dimension::DimensionId;
 use strata_core::inventory::PlayerInventory;
-use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings};
+use strata_core::physics::{Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
-use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings, cell};
-use strata_protocol::{GameMode, MIN_VIEW_DISTANCE, ServerMessage};
+use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings};
+use strata_protocol::{FurnaceView, GameMode, MIN_VIEW_DISTANCE, ServerMessage};
 
 /// Farthest a player may break or place, measured from the eyes to the block centre
 /// (a little more than the client's reach, for rounding).
@@ -60,6 +63,10 @@ pub struct Game {
     discover_recipes: bool,
     /// Recipes learnt whose pack is gone, saved again as they were.
     pub unknown_recipes: Vec<strata_core::id::Identifier>,
+    /// Furnaces burning or cooling: only these are stepped each tick.
+    furnaces: HashSet<BlockPos>,
+    /// Fire and cooking of the open furnace, as last sent.
+    furnace_view: Option<FurnaceView>,
 }
 
 impl Game {
@@ -94,6 +101,8 @@ impl Game {
             craft_dirty: false,
             discover_recipes: true,
             unknown_recipes: Vec::new(),
+            furnaces: HashSet::new(),
+            furnace_view: None,
         }
     }
 
@@ -201,6 +210,7 @@ impl Game {
         self.drops_tick(loader);
         let mut changes = self.run_queued_actions(loader);
         changes.extend(self.mining_tick(loader));
+        changes.extend(self.furnaces_tick(loader));
         for pos in loader.take_arrived() {
             if let Some(column) = loader.column(pos) {
                 self.updates.wake_fires(column);
@@ -242,7 +252,7 @@ impl Game {
         self.finish_break(loader, pos, current)
     }
 
-    fn set_block(
+    pub(super) fn set_block(
         &mut self,
         loader: &mut ColumnLoader,
         pos: BlockPos,
@@ -255,67 +265,6 @@ impl Game {
         self.updates.set_block(&mut world, pos, block, changes);
         wake_boats(&mut self.ecs, &self.rules, changes);
         self.settle_block_entities(loader, &changes[before..]);
-    }
-
-    /// Validated placement into a free (non-solid) cell that no player stands in: next to
-    /// a solid block, or in place of a replaceable one (plants). Turned blocks (logs)
-    /// follow the clicked face, attached ones (torches) lean on the clicked block; plants
-    /// and torches need their support.
-    pub fn place_block(
-        &mut self,
-        loader: &mut ColumnLoader,
-        against: BlockPos,
-        face: Face,
-        block: BlockId,
-    ) -> Vec<BlockChange> {
-        let Some(target) = self.placement_target(loader, against, face) else {
-            return Vec::new();
-        };
-        let world = Bounded {
-            loader,
-            border: self.border,
-        };
-        let variant = self
-            .rules
-            .updates()
-            .placed_variant(block, face, |side| cell(&world, target.neighbour(side)));
-        let held = self
-            .held_item()
-            .is_some_and(|item| self.rules.block_item(block) == Some(item));
-        let allowed = self.rules.is_placeable(block)
-            && held
-            && self.in_reach(target)
-            && !self.blocks_a_player(target, block)
-            && variant.is_some()
-            && self.take_action();
-        let mut changes = Vec::new();
-        if let (true, Some(variant)) = (allowed, variant) {
-            self.set_block(loader, target, variant, &mut changes);
-            self.consume_held();
-        }
-        changes
-    }
-
-    /// The cell a block placed against `against` goes to, if any.
-    fn placement_target(
-        &self,
-        loader: &ColumnLoader,
-        against: BlockPos,
-        face: Face,
-    ) -> Option<BlockPos> {
-        if !against.is_valid(self.border) {
-            return None;
-        }
-        let aimed = loader.block(against)?;
-        if self.rules.is_replaceable(aimed) {
-            return Some(against);
-        }
-        let target = against.neighbour(face);
-        let current = loader.block(target)?;
-        (self.rules.is_solid(aimed)
-            && !self.rules.is_solid(current)
-            && target.is_valid(self.border))
-        .then_some(target)
     }
 
     pub fn set_mode(&mut self, mode: GameMode) {
@@ -351,7 +300,7 @@ impl Game {
     }
 
     /// Rate limit shared by breaking and placing; consumes the action when allowed.
-    fn take_action(&mut self) -> bool {
+    pub(super) fn take_action(&mut self) -> bool {
         let tick = self.tick;
         self.ecs.controls.get_mut(self.player).is_some_and(|c| {
             let ready = c.last_action.is_none_or(|last| tick >= last + ACTION_TICKS);
@@ -362,26 +311,11 @@ impl Game {
         })
     }
 
-    fn in_reach(&self, pos: BlockPos) -> bool {
+    pub(super) fn in_reach(&self, pos: BlockPos) -> bool {
         self.player_body().is_some_and(|body| {
             let center = DVec3::new(f64::from(pos.x), f64::from(pos.y), f64::from(pos.z)) + 0.5;
             body.eyes().distance(center) <= MAX_REACH
         })
-    }
-
-    fn blocks_a_player(&self, pos: BlockPos, block: BlockId) -> bool {
-        if !self.rules.is_solid(block) {
-            return false;
-        }
-        let min = DVec3::new(f64::from(pos.x), f64::from(pos.y), f64::from(pos.z));
-        let cell = Aabb {
-            min,
-            max: min + 1.0,
-        };
-        self.ecs
-            .bodies
-            .iter()
-            .any(|(_, body)| body.aabb().overlaps(&cell))
     }
 }
 
@@ -399,3 +333,6 @@ mod mining_tests;
 
 #[cfg(test)]
 mod crafting_tests;
+
+#[cfg(test)]
+mod furnace_tests;

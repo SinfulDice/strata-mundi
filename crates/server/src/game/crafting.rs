@@ -1,10 +1,12 @@
-//! Crafting: the player's grid (2×2, or 3×3 at a crafting table), the result, the recipes
-//! learnt by crafting them and the recipe book filling the grid.
+//! Crafting: the player's grid (2×2, 3×3 at a crafting table, the single cell of the
+//! stonecutter), the result, the recipes learnt by crafting them and the recipe book
+//! filling the grid.
 
 use super::{Game, MAX_REACH};
 use crate::loader::ColumnLoader;
 use std::collections::BTreeSet;
-use strata_core::content::{BlockId, RecipeId};
+use strata_core::content::{BlockId, RecipeId, StationDef};
+use strata_core::cooking::{cut_choices, cut_result, take_cut};
 use strata_core::coords::BlockPos;
 use strata_core::crafting::{GridItems, fill, grid_result, take_result};
 use strata_core::inventory::{Click, CraftGrid, ItemStack};
@@ -15,6 +17,9 @@ use strata_protocol::{CraftingView, ServerMessage};
 pub struct CraftWindow {
     pub grid: CraftGrid,
     pub station: Option<(BlockId, BlockPos)>,
+    /// At a stonecutter: the cutting chosen (an index in `Cooking::cuttings`).
+    pub cut: Option<u16>,
+    pub stonecutter: bool,
 }
 
 impl Game {
@@ -25,15 +30,21 @@ impl Game {
         loader: &ColumnLoader,
         pos: BlockPos,
         block: BlockId,
-        side: u8,
+        station: StationDef,
     ) -> bool {
         if !self.in_reach(pos) || !self.take_action() {
             return false;
         }
         self.close_window(loader);
+        let (side, stonecutter) = match station {
+            StationDef::Crafting(side) => (side, false),
+            StationDef::Stonecutter => (1, true),
+        };
         let window = CraftWindow {
             grid: CraftGrid::new(side),
             station: Some((block, pos)),
+            cut: None,
+            stonecutter,
         };
         self.ecs.crafts.insert(self.player, window);
         self.craft_changed();
@@ -113,6 +124,13 @@ impl Game {
 
     /// A click on the result slot.
     pub(super) fn craft_click(&mut self, loader: &ColumnLoader, click: Click) {
+        if let Some(choice) = self.stonecutter_choice() {
+            let cooking = std::sync::Arc::clone(&self.rules.cooking);
+            self.with_window(loader, |window, rules| {
+                take_cut(window, &cooking, choice, click, rules)
+            });
+            return;
+        }
         let recipes = std::sync::Arc::clone(&self.rules.recipes);
         let crafted = self.with_window(loader, |window, rules| {
             take_result(window, &recipes, click, rules)
@@ -125,7 +143,7 @@ impl Game {
 
     /// The recipe book: lays a known recipe with the inventory's items.
     pub(super) fn fill_recipe(&mut self, loader: &ColumnLoader, recipe: RecipeId, all: bool) {
-        if !self.knows(recipe) {
+        if !self.knows(recipe) || self.stonecutter_choice().is_some() {
             return;
         }
         let recipes = std::sync::Arc::clone(&self.rules.recipes);
@@ -164,8 +182,33 @@ impl Game {
         self.craft_dirty = true;
     }
 
+    /// At a stonecutter, the cutting chosen (`Some(None)` when none is).
+    fn stonecutter_choice(&self) -> Option<Option<u16>> {
+        let window = self.ecs.crafts.get(self.player)?;
+        window.stonecutter.then_some(window.cut)
+    }
+
+    /// The stonecutter: the cutting chosen for what lies in its cell.
+    pub(super) fn choose_cut(&mut self, choice: u16) {
+        let cooking = std::sync::Arc::clone(&self.rules.cooking);
+        let Some(window) = self.ecs.crafts.get_mut(self.player) else {
+            return;
+        };
+        let valid = window.stonecutter
+            && cut_choices(&cooking, &window.grid)
+                .iter()
+                .any(|(index, _)| *index == choice);
+        if valid {
+            window.cut = Some(choice);
+            self.craft_changed();
+        }
+    }
+
     pub(super) fn crafting_view(&self) -> Option<CraftingView> {
         let window = self.ecs.crafts.get(self.player)?;
+        if window.stonecutter {
+            return Some(self.cutting_view(window));
+        }
         let recipes = &self.rules.recipes;
         let items = window.grid.items();
         let grid = GridItems {
@@ -178,6 +221,28 @@ impl Game {
             result: grid_result(recipes, &window.grid, &self.rules),
             hint: !self.all_recipes_known() && recipes.hint(grid, |r| self.knows(r)),
             station: window.station,
+            cuts: Vec::new(),
+            chosen: None,
         })
+    }
+
+    fn cutting_view(&self, window: &CraftWindow) -> CraftingView {
+        let cooking = &self.rules.cooking;
+        let cuts = cut_choices(cooking, &window.grid)
+            .into_iter()
+            .map(|(index, recipe)| {
+                let stack = ItemStack::new(recipe.result, recipe.count, &self.rules);
+                (index, stack)
+            })
+            .collect();
+        CraftingView {
+            side: window.grid.side,
+            grid: window.grid.slots.clone(),
+            result: cut_result(cooking, &window.grid, window.cut, &self.rules),
+            hint: false,
+            station: window.station,
+            cuts,
+            chosen: window.cut,
+        }
     }
 }

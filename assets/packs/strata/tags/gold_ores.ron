@@ -1,0 +1,5 @@
+// Gold ore, near the surface or deep.
+Tag(items: [
+    "strata:gold_ore",
+    "strata:deep_gold_ore",
+])

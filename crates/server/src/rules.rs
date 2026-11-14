@@ -1,9 +1,10 @@
 use crate::mining_rules::MiningRules;
 use std::sync::Arc;
 use strata_core::content::{
-    BlockId, ContainerDef, Content, EntityType, EntityTypeId, EquipSlot, Item, ItemAction, ItemId,
-    ItemKind, Registry, StationDef,
+    BlockId, ContainerDef, Content, EntityType, EntityTypeId, EquipSlot, Facing, FurnaceDef, Item,
+    ItemAction, ItemId, ItemKind, Registry, StationDef,
 };
+use strata_core::cooking::Cooking;
 use strata_core::crafting::Recipes;
 use strata_core::inventory::ItemRules;
 use strata_core::physics::LiquidCell;
@@ -19,6 +20,8 @@ pub struct BlockRules {
     replaceable: Vec<bool>,
     containers: Vec<Option<ContainerDef>>,
     stations: Vec<Option<StationDef>>,
+    facings: Vec<Option<Facing>>,
+    furnaces: Vec<Option<FurnaceDef>>,
     items: Arc<Registry<ItemId, Item>>,
     /// The item of each block (what breaking it gives back).
     block_items: Vec<Option<ItemId>>,
@@ -29,6 +32,8 @@ pub struct BlockRules {
     /// Break times and loot.
     pub mining: Arc<MiningRules>,
     pub recipes: Arc<Recipes>,
+    /// Fuels, cooking and cutting recipes, furnace tiers.
+    pub cooking: Arc<Cooking>,
 }
 
 impl BlockRules {
@@ -73,7 +78,14 @@ impl BlockRules {
                 .iter()
                 .map(|(_, _, block)| block.station)
                 .collect(),
+            facings: content.blocks.iter().map(|(_, _, b)| b.facing).collect(),
+            furnaces: content
+                .blocks
+                .iter()
+                .map(|(_, _, b)| b.furnace.clone())
+                .collect(),
             recipes: Arc::new(content.recipes.clone()),
+            cooking: Arc::new(content.cooking.clone()),
             updates: Arc::new(UpdateRules::new(content)),
             mining: Arc::new(MiningRules::new(content)),
         }
@@ -101,6 +113,55 @@ impl BlockRules {
     /// The work station a block opens (crafting table).
     pub fn station(&self, block: BlockId) -> Option<StationDef> {
         self.stations.get(usize::from(block.0)).copied().flatten()
+    }
+
+    /// The front and lit variants of a block that has a front (furnaces).
+    pub fn facing(&self, block: BlockId) -> Option<Facing> {
+        self.facings.get(usize::from(block.0)).copied().flatten()
+    }
+
+    pub fn furnace(&self, block: BlockId) -> Option<&FurnaceDef> {
+        self.furnaces.get(usize::from(block.0))?.as_ref()
+    }
+
+    /// Slots of the block entity of `block`: a container's, or a furnace's three and
+    /// its tier's upgrade slots.
+    pub fn entity_slots(&self, block: BlockId) -> Option<usize> {
+        if let Some(container) = self.container(block) {
+            return Some(container.slots());
+        }
+        let furnace = self.furnace(block)?;
+        let tier = self
+            .cooking
+            .tier(&furnace.tier)
+            .copied()
+            .unwrap_or_default();
+        Some(strata_core::cooking::FURNACE_MODULES + usize::from(tier.upgrade_slots))
+    }
+
+    /// The block of the same furnace family and of `tier`, with the same front and light.
+    pub fn furnace_of_tier(
+        &self,
+        block: BlockId,
+        tier: &strata_core::id::Identifier,
+    ) -> Option<BlockId> {
+        let family = &self.furnace(block)?.family;
+        let facing = self.facing(block);
+        let index = self.furnaces.iter().position(|other| {
+            other
+                .as_ref()
+                .is_some_and(|o| o.family == *family && o.tier == *tier)
+        })?;
+        let found = BlockId(u16::try_from(index).ok()?);
+        let Some(facing) = facing else {
+            return Some(found);
+        };
+        let variants = self.facing(found)?;
+        Some(variants.variant(facing.front, facing.lit))
+    }
+
+    pub fn items(&self) -> &Registry<ItemId, Item> {
+        &self.items
     }
 
     /// The first entity type for items on the ground, if a pack has one.
@@ -210,6 +271,7 @@ fn block_items(content: &Content) -> Vec<Option<ItemId>> {
                         .iter()
                         .flat_map(|a| a.variants.into_iter().flatten()),
                 );
+                variants.extend(entry.facing.iter().flat_map(|f| f.variants.concat()));
             }
             for variant in variants {
                 if let Some(slot) = items.get_mut(usize::from(variant.0)) {

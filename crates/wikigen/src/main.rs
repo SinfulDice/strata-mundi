@@ -4,6 +4,7 @@
 
 mod biomes;
 mod blocks;
+mod cooking;
 mod harvest;
 mod history;
 mod html;

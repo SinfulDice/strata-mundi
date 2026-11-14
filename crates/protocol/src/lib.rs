@@ -7,7 +7,7 @@ mod local;
 mod messages;
 mod worlds;
 
-pub use inventory::{CraftingView, InventoryRequest, OpenedContainer};
+pub use inventory::{CraftingView, FurnaceView, InventoryRequest, OpenedContainer};
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{
     ActionId, BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,

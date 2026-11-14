@@ -1,0 +1,4 @@
+// Diamond ores give a diamond.
+LootTable(pools: [
+    Pool(entries: [Item(item: "strata:diamond")]),
+])

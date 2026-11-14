@@ -5,9 +5,10 @@ use super::Game;
 use crate::loader::ColumnLoader;
 use crate::rules::BlockRules;
 use strata_core::content::ItemId;
+use strata_core::cooking::FurnaceSlots;
 use strata_core::inventory::{
-    Area, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotRef, SortOrder, Window,
-    clear_empty, sort,
+    Area, CraftGrid, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotPolicy, SlotRef,
+    SortOrder, Window, clear_empty, sort,
 };
 use strata_protocol::{InventoryRequest, ServerMessage};
 
@@ -42,6 +43,7 @@ impl Game {
                     player: inventory,
                     open: None,
                     craft: Some(&mut craft.grid),
+                    policy: None,
                 }
                 .close(rules)
             })
@@ -73,6 +75,7 @@ impl Game {
                 click,
             } => self.craft_click(loader, click),
             InventoryRequest::FillRecipe { recipe, all } => self.fill_recipe(loader, recipe, all),
+            InventoryRequest::ChooseCut(choice) => self.choose_cut(choice),
             InventoryRequest::Click { slot, click } => {
                 let thrown =
                     self.with_window(loader, |window, rules| window.click(slot, click, rules));
@@ -131,12 +134,13 @@ impl Game {
                 ),
                 SortOrder::Name => (name(item).to_lowercase(), item.0),
             };
+            let storage = window.policy.is_none();
             match (area, window.open.as_deref_mut()) {
                 (Area::Player, _) => {
                     let locked = window.player.locked.clone();
                     sort(&mut window.player.slots, MAIN, &locked, rules, key)
                 }
-                (Area::Open, Some(open)) => {
+                (Area::Open, Some(open)) if storage => {
                     let range = 0..open.len();
                     sort(open, range, &[], rules, key)
                 }
@@ -245,17 +249,30 @@ impl Game {
         let Some(player) = self.ecs.inventories.get_mut(self.player) else {
             return T::default();
         };
+        let furnace = open
+            .as_ref()
+            .and_then(|(window, _)| self.rules.furnace(window.block));
+        let policy = furnace.map(|furnace| FurnaceSlots {
+            cooking: &self.rules.cooking,
+            items: self.rules.items(),
+            kinds: &furnace.kinds,
+        });
         let mut window = Window {
             player,
             open: open.as_mut().map(|(_, container)| container),
             craft: craft.as_mut().map(|window| &mut window.grid),
+            policy: policy.as_ref().map(|p| p as &dyn SlotPolicy),
         };
         let result = change(&mut window, &self.rules);
         if let Some(open) = open {
             self.put_back_open_container(open);
         }
-        if let Some(craft) = craft {
-            if before.as_ref() != Some(&craft.grid) {
+        if let Some(mut craft) = craft {
+            if let Some(before) = before.filter(|before| *before != craft.grid) {
+                let first = |grid: &CraftGrid| grid.slots.get(0).map(|s| s.item);
+                if first(&before) != first(&craft.grid) {
+                    craft.cut = None;
+                }
                 self.craft_changed();
             }
             self.ecs.crafts.insert(self.player, craft);

@@ -24,4 +24,6 @@ impl ContainerDef {
 pub enum StationDef {
     /// A crafting grid of this side (3 for the crafting table).
     Crafting(u8),
+    /// One input cut into the variant chosen in a list (`stonecutting/` recipes).
+    Stonecutter,
 }

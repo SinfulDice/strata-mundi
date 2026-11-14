@@ -1,0 +1,2 @@
+// Used on a stone furnace, smoker or blast furnace: makes it iron, keeping its contents.
+Item(texture: "strata:iron_furnace_kit", max_stack: 16, category: Some("strata:stations"), kit: Some(Kit(from: "strata:stone", to: "strata:iron")))

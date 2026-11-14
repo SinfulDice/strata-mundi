@@ -156,5 +156,6 @@ fn draw_node(node: &Node, parent: Rect, d: &mut Draw<'_, '_>) {
         Node::SlotGrid { .. } => items::slot_grid(d, node, parent),
         Node::Crosshair { .. } => items::crosshair(d, node, parent),
         Node::Log { .. } => list::log(d, node, parent),
+        Node::Gauge { .. } => controls::gauge(d, node, parent),
     }
 }

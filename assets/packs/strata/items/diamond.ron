@@ -1,0 +1,2 @@
+// Mined from diamond ore.
+Item(texture: "strata:diamond", category: Some("strata:materials"))
