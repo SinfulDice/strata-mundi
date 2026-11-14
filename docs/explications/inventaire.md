@@ -37,7 +37,7 @@ Le client n'applique rien lui-même : il **affiche** l'état reçu. Seule la cas
 
 ### Survie et créatif
 
-En créatif, l'écran montre tous les objets et chaque choix devient un `CreativeSet` (le serveur vérifie qu'on est bien en créatif). En survie, poser un bloc retire un objet de la main, casser un bloc laisse son objet par terre, un seau se remplit ou se vide, le briquet s'use.
+En créatif, l'écran montre tous les objets et chaque choix devient un `CreativeSet` (le serveur vérifie qu'on est bien en créatif). En survie, poser un bloc retire un objet de la main, casser un bloc laisse son butin par terre (voir [Récolte](recolte.md)), un seau se remplit ou se vide, le briquet s'use.
 
 ### Coffres et tonneaux : des « entités de bloc »
 

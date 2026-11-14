@@ -23,7 +23,7 @@ With a gamepad: A takes or puts, X takes half, Y transfers, R3 gathers, L3 throw
 
 ## Items on the ground
 
-The Throw key throws the held item (with Sprint: the whole stack). A block broken in survival leaves its item on the ground. Items on the ground spin, gather when identical and close, are **picked up automatically** when you walk over them and **disappear after 5 minutes** (a duration set by the pack). They are saved with the world.
+The Throw key throws the held item (with Sprint: the whole stack). A block broken in survival leaves its loot on the ground (see Harvesting). Items on the ground spin, gather when identical and close, are **picked up automatically** when you walk over them and **disappear after 5 minutes** (a duration set by the pack). They are saved with the world.
 
 ## Chests and barrels
 

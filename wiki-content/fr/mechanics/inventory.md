@@ -23,7 +23,7 @@ La touche Inventaire ouvre l'écran (en créatif, c'est l'inventaire créatif qu
 
 ## Objets au sol
 
-La touche Jeter lance l'objet en main (avec Sprint : toute la pile). Un bloc cassé en survie laisse son objet au sol. Les objets au sol tournent sur eux-mêmes, se rassemblent s'ils sont identiques et proches, sont **ramassés automatiquement** quand on passe dessus et **disparaissent après 5 minutes** (durée fixée par le pack). Ils sont enregistrés avec le monde.
+La touche Jeter lance l'objet en main (avec Sprint : toute la pile). Un bloc cassé en survie laisse son butin au sol (voir Récolte). Les objets au sol tournent sur eux-mêmes, se rassemblent s'ils sont identiques et proches, sont **ramassés automatiquement** quand on passe dessus et **disparaissent après 5 minutes** (durée fixée par le pack). Ils sont enregistrés avec le monde.
 
 ## Coffres et tonneaux
 

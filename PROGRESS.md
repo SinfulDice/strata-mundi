@@ -3,9 +3,9 @@
 ## État
 
 - **Version en cours** : v0.3 — Survie. Détail : `docs/versions/v0.3.md`.
-- **Jalon en cours** : 1 — Objets et inventaire
+- **Jalon en cours** : 3 — Craft
   - [x] J1 Objets et inventaire (piles, durabilité, métadonnées, 27+9+4+1, glisser-déposer, tri, verrouillage, dépôt rapide, recherche, objets lâchés, coffres, tonneaux)
-  - [ ] J2 Récolte (temps de casse, fissures, tables de butin, outil requis)
+  - [x] J2 Récolte (temps de casse, fissures, tables de butin, outil requis)
   - [ ] J3 Craft (2×2, établi, recettes en pack, livre de recettes, fours/fumoir/haut fourneau, tailleur de pierre, fours améliorables)
   - [ ] J4 Outils, armes, armures (tiers, poids, outils spécialisés, marteau de mineur, durabilité, améliorations génériques, réparation)
   - [ ] J5 Accessoires et sets

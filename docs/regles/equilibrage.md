@@ -48,6 +48,27 @@ Valeurs de Minecraft (difficulté normale), toutes réglables dans le pack ; bor
 
 Inflammabilité `(catch, burn)` des blocs : bûches (5, 5), planches (5, 20), feuilles (30, 60), herbes, fougères, buissons, fleurs (60, 100), liane (15, 100).
 
+## Casse et outils (v0.3, champs `hardness` et `tool` des blocs)
+
+Formule de Minecraft : un bloc cède après **dureté × 30 / vitesse** ticks (dureté × 1,5 s à mains nues) avec le bon outil ou quand aucun n'est requis, **dureté × 100** ticks sans l'outil requis (et alors sans butin). Dureté négative : incassable. Le serveur accepte une casse jusqu'à `max(2 ticks, 10 %)` en avance (latence).
+
+Niveaux de minage : 0 bois, 1 pierre, 2 fer, 3 diamant (Ignium, Nihilium, Siderium au-delà). Les vitesses des outils viendront au jalon 4 (référence Minecraft : main 1, bois 2, pierre 4, fer 6, diamant 8, or 12).
+
+| Blocs | Dureté | Outil | Requis (niveau) |
+|---|---|---|---|
+| Pierre, pierre profonde, grès, terres cuites, roches ferreuse et vert-de-gris, lanterne | 1,5 / 3 / 0,8 / 1,25 / 1,8 / 3,5 | pioche | oui (0) |
+| Minerais de charbon (et profond) | 3 / 4,5 | pioche | oui (0) |
+| Minerais de cuivre, de fer (et profonds) | 3 / 4,5 | pioche | oui (1) |
+| Minerais d'or, de diamant (et profonds) | 3 / 4,5 | pioche | oui (2) |
+| Obsidienne | 50 | pioche | oui (3) |
+| Glace | 0,5 | pioche | non |
+| Bûches, planches, coffre, tonneau, bibliothèque, blocs et pied de champignon | 2 / 2 / 2,5 / 2,5 / 1,5 / 0,2 | hache | non |
+| Terre, herbe, podzol, mycélium, boue, sables, gravier | 0,5-0,6 | pelle | non |
+| Bloc de neige | 0,2 | pelle | oui (0) |
+| Feuilles, liane | 0,2 | cisailles | non (butin seulement aux cisailles) |
+| Plantes, fleurs, torche | 0 (instantané) | — | — |
+| Socle, liquides | incassable | — | — |
+
 ## Coffres et fours améliorables (v0.3)
 
 Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).

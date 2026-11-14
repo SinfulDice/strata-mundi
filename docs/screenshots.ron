@@ -5,7 +5,8 @@
 // `time` is the world time in ticks (`--time`; noon if omitted, 24000 a day).
 // `break` (`--break x,y,z`) breaks a block just before the capture; `particles`
 // (`--particles <seconds>`) simulates particles that long first. `world_code`
-// (`--world-code`) generates the world with these settings (world types).
+// (`--world-code`) generates the world with these settings (world types). `cracks`
+// (`--crack x,y,z,stage`, repeated) draws breaking cracks on blocks (stage 0 to 9).
 [
     (name: "preview", pos: (-12.0, 15.5, 14.0), look: (41.0, -28.0)),
     (name: "spawn-42", seed: "42", look: (30.0, -20.0)),
@@ -62,4 +63,6 @@
     (name: "cliff-7", seed: "7", pos: (128.0, 168.0, 54.0), look: (90.0, -15.0)),
     (name: "cliff-sunrise-42", seed: "42", pos: (-352.0, 178.0, -8.0), look: (90.0, -15.0), time: 300),
     (name: "cliff-night-42", seed: "42", pos: (-352.0, 178.0, -8.0), look: (90.0, -15.0), time: 15000),
+    // Survival breaking: cracks at stages 2 to 9 on stone, ore, log, dirt and planks (v0.3).
+    (name: "cracks", scene: "mining", pos: (0.0, 6.6, 1.5), look: (0.0, -12.0), cracks: [(-2, 6, -4, 2), (-3, 5, -4, 9), (-1, 6, -3, 5), (1, 5, -3, 7), (3, 5, -3, 4)]),
 ]

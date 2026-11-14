@@ -38,6 +38,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 
 28. [Audio](audio.md) : sons et musique synthétisés, mixeur, son 3D, réverbération, occlusion, cache, threads. Format des packs : [guide des sons](../guide-sons.md).
 29. [Inventaire, coffres et objets au sol](inventaire.md) : piles, clics décidés par le serveur, entités de bloc, tri, dépôt rapide, objets lâchés.
+30. [Récolte](recolte.md) : temps de casse selon dureté et outil, casse vérifiée par le serveur, fissures, tables de butin.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 
