@@ -97,3 +97,6 @@ wiki-tool-level = { $tool } of level { $level } or more
 wiki-seconds = { $seconds } s
 wiki-loot-nothing = nothing
 wiki-loot-with = with { $tool }
+wiki-crafting = Crafting
+wiki-recipe-shapeless = Shapeless: the ingredients go in any cells.
+wiki-recipe-table = 3×3 grid: at a crafting table.

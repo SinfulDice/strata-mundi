@@ -42,6 +42,20 @@ fn the_book_lists_learnt_recipes_filters_and_fills_the_grid() {
         effects: &mut effects,
     };
     let listed = model.recipes();
+    let rows = model.rows("list");
+    let chest = content.items.key(&"strata:chest".parse().unwrap()).unwrap();
+    let table_item = content
+        .items
+        .key(&"strata:crafting_table".parse().unwrap())
+        .unwrap();
+    assert!(
+        rows.iter().any(|row| row.item == Some(chest) && row.dim),
+        "eight planks needed"
+    );
+    assert!(
+        rows.iter()
+            .any(|row| row.item == Some(table_item) && !row.dim)
+    );
     assert!(listed.contains(&recipe(&content, "strata:torch")));
     assert!(
         !listed.contains(&recipe(&content, "strata:barrel")),

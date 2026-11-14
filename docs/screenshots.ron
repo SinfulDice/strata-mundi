@@ -65,4 +65,6 @@
     (name: "cliff-night-42", seed: "42", pos: (-352.0, 178.0, -8.0), look: (90.0, -15.0), time: 15000),
     // Survival breaking: cracks at stages 2 to 9 on stone, ore, log, dirt and planks (v0.3).
     (name: "cracks", scene: "mining", pos: (0.0, 6.6, 1.5), look: (0.0, -12.0), cracks: [(-2, 6, -4, 2), (-3, 5, -4, 9), (-1, 6, -3, 5), (1, 5, -3, 7), (3, 5, -3, 4)]),
+    // Crafting table, cobblestone, a stick and coal on the floor (v0.3, milestone 3).
+    (name: "craft", scene: "storage", pos: (3.5, 4.2, 1.5), look: (20.0, -25.0)),
 ]

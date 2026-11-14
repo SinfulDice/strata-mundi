@@ -7,6 +7,8 @@
   - [x] J1 Objets et inventaire (piles, durabilité, métadonnées, 27+9+4+1, glisser-déposer, tri, verrouillage, dépôt rapide, recherche, objets lâchés, coffres, tonneaux)
   - [x] J2 Récolte (temps de casse, fissures, tables de butin, outil requis)
   - [ ] J3 Craft (2×2, établi, recettes en pack, livre de recettes, fours/fumoir/haut fourneau, tailleur de pierre, fours améliorables)
+    - [x] J3a grille/recettes/livre (recettes et tags en pack, 2×2 et établi 3×3 côté serveur, Maj-clic, restes, recettes apprises et expérimentation, option « recettes à découvrir », journal avec livre de recettes)
+    - [ ] J3b fours, tailleur, fours améliorables
   - [ ] J4 Outils, armes, armures (tiers, poids, outils spécialisés, marteau de mineur, durabilité, améliorations génériques, réparation)
   - [ ] J5 Accessoires et sets
   - [ ] J6 Stations de travail spécialisées

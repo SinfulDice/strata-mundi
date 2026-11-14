@@ -8,6 +8,7 @@ mod harvest;
 mod history;
 mod html;
 mod pages;
+mod recipes;
 mod reference;
 mod search;
 mod site;

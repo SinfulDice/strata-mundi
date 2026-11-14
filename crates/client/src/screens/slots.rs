@@ -167,6 +167,11 @@ impl ScreenModel for SlotsModel<'_> {
         match id {
             "search" => Some(self.state.search.clone()),
             "craft_note" => Some(self.craft_note()),
+            "help" => Some(
+                Some(self.craft_note())
+                    .filter(|note| !note.is_empty())
+                    .unwrap_or_else(|| self.tr("ui-inventory-survival-help")),
+            ),
             "station_title" => self
                 .crafting
                 .and_then(|c| c.view.station)

@@ -97,3 +97,6 @@ wiki-tool-level = { $tool } de niveau { $level } ou plus
 wiki-seconds = { $seconds } s
 wiki-loot-nothing = rien
 wiki-loot-with = avec { $tool }
+wiki-crafting = Fabrication
+wiki-recipe-shapeless = Sans forme : les ingrédients vont dans n'importe quelles cases.
+wiki-recipe-table = Grille 3×3 : à l'établi.

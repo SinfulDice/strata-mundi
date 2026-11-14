@@ -64,8 +64,16 @@ fn page(ctx: &Ctx<'_>, id: &Identifier, block: &Block) -> Page {
     let picture = image(ctx, &path, "icons", &id_path(id), &title, "");
     let box_html = infobox(&title, &picture, &facts(ctx, id, block, &key));
     let found = generation(ctx, &path, id);
+    let crafting = ctx
+        .data
+        .content
+        .items
+        .key(id)
+        .map_or_else(String::new, |item| {
+            crate::recipes::section(ctx, &path, item)
+        });
     let body = format!(
-        "{box_html}{}{found}{}",
+        "{box_html}{}{found}{crafting}{}",
         ctx.text(&key),
         history_section(ctx, &key)
     );

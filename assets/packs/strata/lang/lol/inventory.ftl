@@ -24,3 +24,5 @@ ui-journal-empty = NO HOW 2 MAEK YET.
 ui-journal-choose = PIK WUN 2 SEE TEH GRID.
 ui-journal-fill = PUT
 ui-journal-fill-all = PUT ALL
+ui-journal-can-make = CAN MAEK
+ui-journal-missing = NO HAZ ALL STUFFZ

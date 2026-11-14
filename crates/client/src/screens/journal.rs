@@ -15,7 +15,7 @@ use strata_core::inventory::{HOTBAR, MAIN};
 use strata_protocol::InventoryRequest;
 
 /// Rows of the recipe list visible at once (matches `journal.ron`).
-pub const VISIBLE_ROWS: usize = 7;
+pub const VISIBLE_ROWS: usize = 5;
 const MAX_SEARCH: usize = 32;
 /// Section titles; later milestones add objects studied, bestiary, places…
 const SECTIONS: [&str; 1] = ["ui-journal-recipes"];
@@ -114,10 +114,10 @@ impl JournalModel<'_> {
             1 => self.name(recipe.result),
             count => format!("{} ×{count}", self.name(recipe.result)),
         };
-        let detail = if recipe.grid_size() > 2 {
-            self.tr("ui-journal-needs-table")
-        } else {
-            self.ingredients_text(recipe)
+        let detail = match (recipe.grid_size() > 2, can_make(recipe, available)) {
+            (true, _) => self.tr("ui-journal-needs-table"),
+            (false, true) => self.tr("ui-journal-can-make"),
+            (false, false) => self.tr("ui-journal-missing"),
         };
         Some(ListRow {
             title,

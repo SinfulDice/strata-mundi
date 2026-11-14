@@ -24,3 +24,5 @@ ui-journal-empty = No recipe learnt yet.
 ui-journal-choose = Pick a recipe to see its grid.
 ui-journal-fill = Lay
 ui-journal-fill-all = Lay all
+ui-journal-can-make = Can be made
+ui-journal-missing = Ingredients missing

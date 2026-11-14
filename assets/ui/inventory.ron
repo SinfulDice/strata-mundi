@@ -1,6 +1,6 @@
 // Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; with
 // a container open, the container on top. The player's slots are always below. Slots
-// take clicks: left takes or puts, right halves or puts one, shift-click sends across
+// take clicks (the help below gives way to the crafting hint or the recipe learnt): left takes or puts, right halves or puts one, shift-click sends across
 // (on the result: crafts as many as fit), double-click gathers, middle click (L1) locks.
 Screen(
     root: [
@@ -23,8 +23,7 @@ Screen(
                     Button(id: "sort_name", anchor: TopLeft, at: (112, 32), size: (76, 14), text: "ui-inventory-sort-name"),
                     Button(id: "deposit", anchor: TopLeft, at: (112, 48), size: (76, 14), text: "ui-inventory-deposit"),
                     Button(id: "book", anchor: TopLeft, at: (112, 64), size: (76, 14), text: "ui-inventory-journal"),
-                    Label(id: "help", anchor: TopLeft, at: (8, 100), text: "ui-inventory-survival-help", dim: true, wrap: Some(180)),
-                    Label(id: "craft_note", anchor: TopLeft, at: (8, 138), text: "@craft_note", wrap: Some(180)),
+                    Label(id: "help", anchor: TopLeft, at: (8, 100), text: "@help", dim: true, wrap: Some(180)),
                 ]),
                 Group(id: "table_side", children: [
                     Label(id: "station_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),

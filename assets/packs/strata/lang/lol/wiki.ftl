@@ -97,3 +97,6 @@ wiki-tool-level = { $tool } LEVUL { $level } OR MOAR
 wiki-seconds = { $seconds } SECZ
 wiki-loot-nothing = NUTHIN
 wiki-loot-with = WIF { $tool }
+wiki-crafting = HOW 2 MAEK
+wiki-recipe-shapeless = NO SHAEP: PUT STUFFZ ANYWER.
+wiki-recipe-table = 3×3 GRID: AT TEH CRAFTIN TABUL.

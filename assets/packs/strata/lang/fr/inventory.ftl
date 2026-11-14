@@ -24,3 +24,5 @@ ui-journal-empty = Aucune recette apprise.
 ui-journal-choose = Choisis une recette pour voir sa grille.
 ui-journal-fill = Placer
 ui-journal-fill-all = Placer tout
+ui-journal-can-make = Réalisable
+ui-journal-missing = Il manque des ingrédients

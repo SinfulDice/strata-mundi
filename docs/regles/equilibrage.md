@@ -48,6 +48,24 @@ Valeurs de Minecraft (difficulté normale), toutes réglables dans le pack ; bor
 
 Inflammabilité `(catch, burn)` des blocs : bûches (5, 5), planches (5, 20), feuilles (30, 60), herbes, fougères, buissons, fleurs (60, 100), liane (15, 100).
 
+## Recettes de base (v0.3, `recipes/` du pack `strata`)
+
+Coûts de Minecraft, pour qu'un joueur habitué ne soit pas dérouté. « Départ » : connue dès le début (sinon apprise en la posant, ou toutes connues selon l'option de monde).
+
+| Résultat | Ingrédients | Grille | Départ |
+|---|---|---|---|
+| 4 planches (par essence) | 1 bûche de la même essence | 2×2 | oui |
+| 4 bâtons | 2 planches quelconques en colonne | 2×2 | oui |
+| Établi | 4 planches quelconques en carré | 2×2 | oui |
+| 4 torches | 1 charbon sur 1 bâton | 2×2 | oui |
+| Coffre | 8 planches quelconques en anneau | 3×3 | oui |
+| Tonneau | 6 planches + 2 bâtons (haut et bas) | 3×3 | non |
+| Grès | 4 sables en carré | 2×2 | non |
+| 4 boues | 4 terres + 1 seau d'eau (le seau revient vide) | 3×3, sans forme | non |
+| Bateau (par essence) | 5 planches de l'essence en U | 3×3 | non |
+
+Butin associé : la pierre donne de la pierre taillée, les minerais de charbon un charbon (pioche requise). Four (jalon 3b) et outils (jalon 4) rejoindront les recettes de départ.
+
 ## Casse et outils (v0.3, champs `hardness` et `tool` des blocs)
 
 Formule de Minecraft : un bloc cède après **dureté × 30 / vitesse** ticks (dureté × 1,5 s à mains nues) avec le bon outil ou quand aucun n'est requis, **dureté × 100** ticks sans l'outil requis (et alors sans butin). Dureté négative : incassable. Le serveur accepte une casse jusqu'à `max(2 ticks, 10 %)` en avance (latence).

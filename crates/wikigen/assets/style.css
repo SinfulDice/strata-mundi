@@ -55,3 +55,12 @@ code { background: var(--panel); padding: 0 .25rem; border-radius: 3px; }
 footer { text-align: center; color: var(--dim); font-size: .85rem; padding: 1rem; }
 .chooser { text-align: center; padding-top: 20vh; }
 @media (max-width: 700px) { .infobox { float: none; width: auto; margin: 0 0 1rem; } }
+.recipes { display: flex; flex-wrap: wrap; gap: 1rem; }
+.recipe { display: flex; align-items: center; gap: .5rem; margin: 0; flex-wrap: wrap; }
+.recipe figcaption { flex-basis: 100%; font-size: .85rem; color: var(--muted, #888); }
+.recipe .grid { border-collapse: collapse; }
+.recipe .grid td, .recipe .cell { width: 36px; height: 36px; padding: 0; border: 1px solid var(--line); background: var(--panel); text-align: center; vertical-align: middle; position: relative; display: table-cell; }
+.recipe .cell { display: inline-flex; align-items: center; justify-content: center; }
+.recipe img { width: 32px; height: 32px; image-rendering: pixelated; }
+.recipe .count { position: absolute; right: 2px; bottom: 0; font-weight: bold; text-shadow: 1px 1px 0 #000; color: #fff; }
+.recipe .arrow { font-size: 1.4rem; }

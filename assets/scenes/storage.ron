@@ -1,4 +1,5 @@
-// A cellar corner (`--scene storage`): a double chest, a single chest, barrels, and items
+// A cellar corner (`--scene storage`): a double chest, a single chest, barrels, a
+// crafting table by a cobblestone pile, and items
 // lying on the floor (block items as small cubes, other items as pictures).
 (
     fills: [
@@ -10,6 +11,8 @@
         (from: (2, 2, -5), to: (3, 2, -5), block: "strata:barrel"),
         (from: (2, 3, -5), to: (2, 3, -5), block: "strata:barrel"),
         (from: (-6, 2, -5), to: (-6, 2, -5), block: "strata:torch"),
+        (from: (5, 2, -5), to: (5, 2, -5), block: "strata:crafting_table"),
+        (from: (6, 2, -5), to: (7, 3, -5), block: "strata:cobblestone"),
     ],
     entities: [
         (kind: "strata:item", position: (-1.5, 2.0, -2.5), item: Some("strata:stone")),
@@ -17,5 +20,7 @@
         (kind: "strata:item", position: (1.6, 2.0, -2.9), yaw: 1.4, item: Some("strata:bucket")),
         (kind: "strata:item", position: (-0.6, 2.0, -0.6), yaw: 2.2, item: Some("strata:flint_and_steel")),
         (kind: "strata:item", position: (2.4, 2.0, -0.9), yaw: 0.2, item: Some("strata:dirt")),
+        (kind: "strata:item", position: (4.6, 2.0, -2.2), yaw: 0.9, item: Some("strata:stick")),
+        (kind: "strata:item", position: (5.4, 2.0, -1.4), yaw: 2.6, item: Some("strata:coal")),
     ],
 )
