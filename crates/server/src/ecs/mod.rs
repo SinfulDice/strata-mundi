@@ -10,7 +10,8 @@ pub use storage::Storage;
 
 use crate::game::OpenWindow;
 use std::collections::VecDeque;
-use strata_core::content::EntityTypeId;
+use strata_core::content::{BlockId, EntityTypeId, ItemId};
+use strata_core::coords::BlockPos;
 use strata_core::inventory::{ItemStack, PlayerInventory};
 use strata_core::physics::{BoatBody, BoatControls, Body, ItemBody, MoveInput, MovementSettings};
 use strata_protocol::{ActionId, GameMode, WorldAction};
@@ -89,6 +90,23 @@ pub struct PlayerControl {
     pub actions: VecDeque<Queued>,
     /// Sneak was held in the last input: getting off a boat needs a new press.
     pub sneaking: bool,
+    /// The block being broken in survival.
+    pub mining: Option<Mining>,
+}
+
+/// A survival break in progress, from `StartBreak`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Mining {
+    pub pos: BlockPos,
+    /// The block hit: another one there ends the break.
+    pub block: BlockId,
+    /// The held item: changing it ends the break.
+    pub item: Option<ItemId>,
+    pub started: u64,
+    /// Ticks the block takes with that item.
+    pub needed: u32,
+    /// Cracks last reported.
+    pub stage: Option<u8>,
 }
 
 /// A click waiting for its turn.
@@ -113,6 +131,7 @@ impl PlayerControl {
             last_action: None,
             actions: VecDeque::new(),
             sneaking: false,
+            mining: None,
         }
     }
 }

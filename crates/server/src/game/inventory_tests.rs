@@ -1,9 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
-use super::tests::{World, block, place, wait, world};
+use super::tests::{World, block, mine, place, wait, world};
 use super::*;
 use strata_core::content::ItemId;
-use strata_core::inventory::{Area, Click, MAIN, SlotRef, SortOrder};
+use strata_core::inventory::{Area, Click, ItemStack, MAIN, SlotRef, SortOrder};
 use strata_protocol::{InventoryRequest, WorldAction};
 
 fn item(w: &World, name: &str) -> ItemId {
@@ -143,7 +143,7 @@ fn survival_uses_up_placed_blocks_and_breaking_drops_them() {
     assert_eq!(count(&w, "strata:oak_planks"), 1);
     wait(&mut w, 2);
     let placed = against.neighbour(Face::Up);
-    assert!(!w.game.break_block(&mut w.loader, placed).is_empty());
+    assert!(!mine(&mut w, placed).is_empty());
     assert_eq!(w.game.ecs.drops.len(), 1, "the block's item lies there");
     wait(&mut w, 20);
     assert_eq!(w.game.ecs.drops.len(), 1, "too far to be picked up");
@@ -252,7 +252,7 @@ fn chests_open_join_in_pairs_and_drop_their_contents() {
         30
     );
     wait(&mut w, 2);
-    assert!(!w.game.break_block(&mut w.loader, row[1]).is_empty());
+    assert!(!mine(&mut w, row[1]).is_empty());
     assert!(!w.game.block_entities.contains_key(&row[1]));
     let dropped: u16 = w.game.ecs.drops.iter().map(|(_, d)| d.stack.count).sum();
     assert_eq!(dropped, 31, "the contents and the chest itself");

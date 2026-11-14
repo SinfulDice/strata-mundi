@@ -49,6 +49,29 @@ impl ParticleSystem {
         }
     }
 
+    /// A block being broken is hit: one fragment flies off the face hit.
+    pub fn block_hit(&mut self, pos: BlockPos, face: Face, world: &ClientWorld) {
+        let old = world.block_at(pos);
+        let kind = self.table.breaking(old, BlockId::AIR);
+        let (Some(kind), true) = (kind, self.budget.capacity > 0) else {
+            return;
+        };
+        let block = self.table.block(old);
+        let mut spawner = self.spawner();
+        let source = block_look(&block, face, pos, world);
+        let side = pos.neighbour(face);
+        let place = |out: i32, rng: &mut Rng| match out {
+            0 => f64::from(rng.between([0.1, 0.9])),
+            _ => 0.5 + 0.55 * f64::from(out),
+        };
+        let inside = DVec3::new(
+            place(side.x - pos.x, spawner.rng),
+            place(side.y - pos.y, spawner.rng),
+            place(side.z - pos.z, spawner.rng),
+        );
+        spawner.spawn(kind, block_corner(pos) + inside, source);
+    }
+
     /// Looks at a few random cells around `camera` (a budget per second, carried over
     /// between frames) for drips and bubbles.
     pub(super) fn sample_emitters(&mut self, dt: f32, camera: DVec3, world: &ClientWorld) {

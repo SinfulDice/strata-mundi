@@ -2,6 +2,7 @@
 
 mod block_pipeline;
 mod cloud_pipeline;
+mod crack_pipeline;
 mod depth;
 mod frustum;
 mod gpu;
@@ -31,6 +32,8 @@ use crate::mesher::{SectionKey, SectionMesh};
 use crate::sky::SkyFrame;
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use cloud_pipeline::{CloudDraw, CloudPipeline};
+use crack_pipeline::CrackPipeline;
+pub use crack_pipeline::{CrackDraw, MAX_CRACKS};
 use depth::DepthBuffer;
 use frustum::Frustum;
 pub use frustum::in_vertical_range;
@@ -60,6 +63,9 @@ pub struct Renderer {
     outline_pipeline: OutlinePipeline,
     /// Block drawn with an outline (the one the player aims at).
     pub outline: Option<BlockPos>,
+    crack_pipeline: CrackPipeline,
+    /// Blocks being broken, drawn cracked this frame.
+    pub cracks: Vec<CrackDraw>,
     depth: DepthBuffer,
     /// Section meshes grouped by column, so unloading a column is a single removal.
     columns: HashMap<(i32, i32), Vec<Option<GpuSection>>>,
@@ -99,8 +105,8 @@ impl Renderer {
         textures: &TextureLibrary,
         filtering: TextureFiltering,
     ) -> Result<Self, GpuError> {
-        let textures = texture_array(gpu, textures, filtering)?;
-        let blocks = BlockPipeline::new(&gpu.device, color_format, &textures);
+        let array = texture_array(gpu, textures, filtering)?;
+        let blocks = BlockPipeline::new(&gpu.device, color_format, &array);
         let models = ModelPipeline::new(
             &gpu.device,
             color_format,
@@ -132,6 +138,8 @@ impl Renderer {
                 &blocks.camera_layout,
             ),
             outline: None,
+            crack_pipeline: CrackPipeline::new(&gpu.device, color_format, &blocks, textures),
+            cracks: Vec::new(),
             blocks,
             depth: DepthBuffer::new(&gpu.device, (1, 1)),
             columns: HashMap::new(),
@@ -252,6 +260,7 @@ impl Renderer {
         self.blocks.write_camera(&gpu.queue, &uniform);
         self.models.prepare(gpu, camera, &frustum);
         self.particles.prepare(gpu);
+        self.crack_pipeline.prepare(gpu, &self.cracks);
         let draw_sky = self.immersion.is_none();
         let clouds = self.cloud_draw(camera).filter(|_| draw_sky);
         if draw_sky {
@@ -304,6 +313,7 @@ impl Renderer {
             self.blocks.set_groups(&mut pass);
             self.sky_pipeline.draw(&mut pass);
         }
+        self.crack_pipeline.draw(&mut pass, &self.blocks);
         if let Some(block) = self.outline {
             let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
             self.outline_pipeline
@@ -352,6 +362,7 @@ impl Renderer {
     pub fn clear(&mut self) {
         self.columns.clear();
         self.outline = None;
+        self.cracks.clear();
         self.models.entities.clear();
         self.particles.instances.clear();
     }

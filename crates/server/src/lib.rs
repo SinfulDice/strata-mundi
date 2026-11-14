@@ -7,6 +7,7 @@ mod game;
 mod generation;
 mod integrated;
 mod loader;
+mod mining_rules;
 mod persistence;
 mod rules;
 pub mod save;

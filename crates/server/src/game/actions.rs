@@ -23,7 +23,7 @@ impl Game {
         id: ActionId,
         action: WorldAction,
     ) -> Vec<BlockChange> {
-        let ready = self.action_ready();
+        let ready = self.action_ready() || !rate_limited(action);
         let Some(control) = self.ecs.controls.get_mut(self.player) else {
             return Vec::new();
         };
@@ -65,7 +65,7 @@ impl Game {
                     queue.pop_front();
                     self.answer(loader, id, action, &[]);
                 }
-                Some(Queued::Run(id, action)) if ready => {
+                Some(Queued::Run(id, action)) if ready || !rate_limited(action) => {
                     queue.pop_front();
                     changes.extend(self.run_action(loader, id, action));
                 }
@@ -82,6 +82,14 @@ impl Game {
         action: WorldAction,
     ) -> Vec<BlockChange> {
         let changes = match action {
+            WorldAction::StartBreak { pos } => {
+                self.start_break(loader, pos);
+                Vec::new()
+            }
+            WorldAction::StopBreak => {
+                self.stop_break();
+                Vec::new()
+            }
             WorldAction::Break { pos } => self.break_block(loader, pos),
             WorldAction::Place {
                 against,
@@ -154,6 +162,15 @@ impl Game {
     }
 }
 
+/// Starting and stopping a break change nothing: they never wait for the rate limit
+/// (but still for the clicks before them, to keep their order).
+fn rate_limited(action: WorldAction) -> bool {
+    !matches!(
+        action,
+        WorldAction::StartBreak { .. } | WorldAction::StopBreak
+    )
+}
+
 /// Every cell the action may have changed, as the client could predict it.
 fn aimed_cells(action: WorldAction) -> Vec<BlockPos> {
     let (against, face): (BlockPos, Option<Face>) = match action {
@@ -161,7 +178,11 @@ fn aimed_cells(action: WorldAction) -> Vec<BlockPos> {
         WorldAction::Place { against, face, .. } | WorldAction::Use { against, face, .. } => {
             (against, Some(face))
         }
-        WorldAction::Interact(_) | WorldAction::Attack(_) | WorldAction::UseBlock { .. } => {
+        WorldAction::Interact(_)
+        | WorldAction::Attack(_)
+        | WorldAction::UseBlock { .. }
+        | WorldAction::StartBreak { .. }
+        | WorldAction::StopBreak => {
             return Vec::new();
         }
     };

@@ -103,6 +103,8 @@ pub fn predicted_change(
             block,
         } => predicted_placement(info, world, against, face, block, player),
         WorldAction::Use { .. }
+        | WorldAction::StartBreak { .. }
+        | WorldAction::StopBreak
         | WorldAction::UseBlock { .. }
         | WorldAction::Interact(_)
         | WorldAction::Attack(_) => None,

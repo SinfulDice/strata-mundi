@@ -4,6 +4,7 @@
 use crate::camera::Camera;
 use crate::input::{Action, InputState};
 use crate::inventory::ClientInventory;
+use crate::mining::{Mining, MiningInput};
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::sync::Arc;
@@ -97,6 +98,13 @@ impl BlockInfo {
         self.items.get(usize::from(block.0)).copied().flatten()
     }
 
+    /// Ticks of hitting that break `block` with `held` in hand (`None`: never).
+    pub fn break_ticks(&self, block: BlockId, held: Option<ItemId>) -> Option<u32> {
+        let items = &self.content.items;
+        let tool = held.and_then(|item| items.get(item)?.tool.as_ref());
+        self.content.blocks.get(block)?.break_ticks(tool)
+    }
+
     pub fn block_of(&self, item: ItemId) -> Option<BlockId> {
         match self.content.items.get(item)?.kind {
             ItemKind::Block(block) => Some(block),
@@ -112,6 +120,8 @@ pub struct Interaction {
     pub entity: Option<NetEntity>,
     /// The boat the player sits in: never aimed at.
     pub mount: Option<NetEntity>,
+    /// Survival breaking in progress, and the cracks to draw.
+    pub mining: Mining,
     cooldown: f32,
 }
 
@@ -137,8 +147,9 @@ impl Interaction {
         if let Some(open) = self.container_action(world, info, input) {
             return Some(open);
         }
+        let cooldown = self.cooldown;
         let triggered =
-            |action| input.just_pressed(action) || (input.is_held(action) && self.cooldown == 0.0);
+            |action| input.just_pressed(action) || (input.is_held(action) && cooldown == 0.0);
         let held = hotbar.selected();
         let action = held.and_then(|item| info.content.items.get(item)?.action);
         if let (Some(item), Some(action), true) = (held, action, triggered(Action::Use)) {
@@ -148,6 +159,10 @@ impl Interaction {
             }
             return action;
         }
+        let creative = hotbar.creative;
+        if let Some(action) = self.mine(dt, (world, info), input, held, creative) {
+            return Some(action);
+        }
         let target = self.target?;
         if input.just_pressed(Action::PickBlock) {
             if let Some(item) = info.item_of(world.block_at(target.block)) {
@@ -155,7 +170,7 @@ impl Interaction {
             }
             return None;
         }
-        let action = if triggered(Action::Attack) {
+        let action = if hotbar.creative && triggered(Action::Attack) {
             Some(WorldAction::Break { pos: target.block })
         } else if triggered(Action::Use) {
             let block = hotbar.selected().and_then(|item| info.block_of(item))?;
@@ -175,6 +190,33 @@ impl Interaction {
 }
 
 impl Interaction {
+    /// Survival: holding the attack button on a block breaks it over time; creative
+    /// breaks on click (in `update`).
+    fn mine(
+        &mut self,
+        dt: f32,
+        (world, info): (&ClientWorld, &BlockInfo),
+        input: &InputState,
+        held: Option<ItemId>,
+        creative: bool,
+    ) -> Option<WorldAction> {
+        if creative {
+            return self.mining.cancel();
+        }
+        let mining = MiningInput {
+            world,
+            info,
+            target: self.target.filter(|_| input.is_held(Action::Attack)),
+            held,
+            ready: self.cooldown == 0.0,
+        };
+        let action = self.mining.update(dt, &mining);
+        if matches!(action, Some(WorldAction::Break { .. })) {
+            self.cooldown = REPEAT_DELAY;
+        }
+        action
+    }
+
     /// Right click on a container block opens it (sneaking places against it instead).
     fn container_action(
         &mut self,

@@ -1,6 +1,7 @@
 //! What the player does in the world: moving (predicted), looking, aiming, building,
 //! riding boats.
 
+use crate::audio::Audio;
 use crate::camera::Camera;
 use crate::cinematic::PlayingShot;
 use crate::input::{Action, InputState};
@@ -137,6 +138,11 @@ impl Gameplay {
             ServerMessage::UnloadColumn(pos) => self.view.remove(pos, renderer),
             ServerMessage::BlockChanged { pos, block } => self.view.receive_block(pos, block),
             ServerMessage::ActionDone(id) => self.view.acknowledge(id),
+            ServerMessage::Cracking {
+                breaker,
+                pos,
+                stage,
+            } => self.interaction.mining.report(breaker, pos, stage),
             ServerMessage::Inventory(inventory) => self.inventory.receive(*inventory),
             ServerMessage::ContainerOpened(container) => {
                 self.container = Some(*container);
@@ -234,6 +240,19 @@ impl Gameplay {
                 connection.send(ClientMessage::Input { sequence, input });
             }
             self.camera.position = player.eyes();
+        }
+    }
+
+    /// The aimed block's outline, the cracks of the blocks being broken, and the hits of
+    /// this frame (a fragment and a sound each).
+    pub fn show_breaking(&mut self, renderer: &mut Renderer, audio: &mut Audio) {
+        renderer.outline = self.interaction.target.map(|hit| hit.block);
+        let world = &self.view.world;
+        let mining = &mut self.interaction.mining;
+        renderer.cracks = mining.draws(world, &self.info, self.camera.position);
+        for (pos, face) in mining.hits.drain(..) {
+            self.view.particles.block_hit(pos, face, world);
+            audio.block_hit(pos, world.block_at(pos));
         }
     }
 

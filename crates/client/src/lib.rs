@@ -18,6 +18,7 @@ mod lighting;
 mod look;
 mod mesh_scheduler;
 pub mod mesher;
+mod mining;
 pub mod models;
 pub mod particles;
 mod player;

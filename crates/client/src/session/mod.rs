@@ -287,7 +287,9 @@ impl Session {
                     None => world.game.update(dt, &self.input, &world.connection),
                 }
                 world.game.sync_inventory(&world.connection);
-                self.renderer.outline = world.game.interaction.target.map(|hit| hit.block);
+                world
+                    .game
+                    .show_breaking(&mut self.renderer, &mut self.audio);
                 self.renderer.immersion = world
                     .game
                     .view

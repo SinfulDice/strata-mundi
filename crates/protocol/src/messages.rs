@@ -43,6 +43,9 @@ pub enum ClientMessage {
     Command(String),
 }
 
+/// Steps of the cracks drawn over a block being broken.
+pub const CRACK_STAGES: u8 = 10;
+
 /// Clicks the server keeps waiting for their turn; the client predicts no more clicks
 /// than this without an answer.
 pub const MAX_PENDING_ACTIONS: usize = 8;
@@ -55,9 +58,14 @@ pub struct ActionId(pub u32);
 /// that no click is lost, whatever it aims at.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum WorldAction {
-    Break {
-        pos: BlockPos,
-    },
+    /// Survival: starts hitting the block at `pos` (the server counts the time from here).
+    /// Another block, or `StopBreak`, ends the previous one.
+    StartBreak { pos: BlockPos },
+    /// Survival: the player stopped hitting before the block broke.
+    StopBreak,
+    /// Breaks the block: at once in creative; in survival, once it has been hit long
+    /// enough since `StartBreak` (instant blocks need no start).
+    Break { pos: BlockPos },
     /// Put `block` against `face` of the block at `against`.
     Place {
         against: BlockPos,
@@ -71,9 +79,7 @@ pub enum WorldAction {
         face: Face,
     },
     /// Right click on a block that does something of its own (opens a chest).
-    UseBlock {
-        pos: BlockPos,
-    },
+    UseBlock { pos: BlockPos },
     /// Right click on an entity (get into a boat).
     Interact(NetEntity),
     /// Left click on an entity (creative: takes a boat away).
@@ -163,6 +169,13 @@ pub enum ServerMessage {
     /// Block action `id` is done or refused; the `BlockChanged` it caused (or, when
     /// refused, the actual state of the cells it aimed at) came before.
     ActionDone(ActionId),
+    /// Cracks of a block someone is breaking: stage 0 to `CRACK_STAGES - 1`, or `None`
+    /// when they stop. Drawn for every breaker, so other players' work shows too.
+    Cracking {
+        breaker: NetEntity,
+        pos: BlockPos,
+        stage: Option<u8>,
+    },
     /// An entity came into existence (or is already there when the player arrives).
     EntitySpawned(EntityState),
     /// An entity moved or turned during the last tick.
@@ -264,6 +277,11 @@ mod tests {
             ServerMessage::Mounted(Some(id)),
             ServerMessage::Mounted(None),
             ServerMessage::ActionDone(ActionId(u32::MAX)),
+            ServerMessage::Cracking {
+                breaker: id,
+                pos: BlockPos::new(-4, 300, 9),
+                stage: Some(CRACK_STAGES - 1),
+            },
         ];
         for message in &server {
             assert_eq!(&round_trip(message), message);
@@ -276,6 +294,16 @@ mod tests {
             ClientMessage::Action {
                 id: ActionId(4),
                 action: WorldAction::Attack(id),
+            },
+            ClientMessage::Action {
+                id: ActionId(5),
+                action: WorldAction::StartBreak {
+                    pos: BlockPos::new(1, 2, 3),
+                },
+            },
+            ClientMessage::Action {
+                id: ActionId(6),
+                action: WorldAction::StopBreak,
             },
             ClientMessage::Action {
                 id: ActionId(9),

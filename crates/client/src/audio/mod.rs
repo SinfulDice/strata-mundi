@@ -177,6 +177,13 @@ impl Audio {
         }
     }
 
+    /// A block being broken is hit: the sound of a step on it, like Minecraft.
+    pub fn block_hit(&mut self, pos: BlockPos, block: BlockId) {
+        if let Some(cue) = self.table.hit(pos, block) {
+            gather(&mut self.cues, cue);
+        }
+    }
+
     /// Moves the ears, plays the local player's steps, the blocks and the ambiences
     /// around, follows the place, and starts what was asked this frame.
     pub fn update(&mut self, seconds: f32, hearing: &Hearing<'_>) {

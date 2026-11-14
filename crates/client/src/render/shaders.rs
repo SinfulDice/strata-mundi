@@ -9,9 +9,10 @@ macro_rules! shader {
     };
 }
 
-const BUILT_IN: [(&str, &str); 9] = [
+const BUILT_IN: [(&str, &str); 10] = [
     shader!("block.wgsl"),
     shader!("clouds.wgsl"),
+    shader!("crack.wgsl"),
     shader!("light.wgsl"),
     shader!("model.wgsl"),
     shader!("outline.wgsl"),
@@ -22,7 +23,7 @@ const BUILT_IN: [(&str, &str); 9] = [
 ];
 
 /// Shaders completed by `light.wgsl` (camera, block textures, light and fog).
-const LIT: [&str; 3] = ["block.wgsl", "model.wgsl", "particle.wgsl"];
+const LIT: [&str; 4] = ["block.wgsl", "crack.wgsl", "model.wgsl", "particle.wgsl"];
 
 pub fn module(device: &wgpu::Device, name: &str) -> wgpu::ShaderModule {
     device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -60,6 +61,7 @@ mod tests {
         for name in [
             "block.wgsl",
             "clouds.wgsl",
+            "crack.wgsl",
             "light.wgsl",
             "model.wgsl",
             "outline.wgsl",

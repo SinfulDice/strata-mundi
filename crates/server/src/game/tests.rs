@@ -6,6 +6,7 @@ use std::path::Path;
 use strata_core::chunk::Column;
 use strata_core::content::{Content, ItemId};
 use strata_core::coords::{ColumnPos, DEFAULT_WORLD_BORDER};
+use strata_core::inventory::ItemStack;
 use strata_core::pack::PackSet;
 
 pub(super) struct World {
@@ -16,9 +17,15 @@ pub(super) struct World {
 
 /// Stone up to y = 63 in column (0, 0), the player standing on it at (8.5, 64, 8.5).
 pub(super) fn world() -> World {
+    world_with(|_| {})
+}
+
+/// `world()` with content changed first (a test tool added).
+pub(super) fn world_with(edit: impl FnOnce(&mut Content)) -> World {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
     let packs = PackSet::discover(&dir, &mut Vec::new());
-    let (content, _) = Content::load(&packs, &PackSet::default());
+    let (mut content, _) = Content::load(&packs, &PackSet::default());
+    edit(&mut content);
     let stone = block(&content, "strata:stone");
     let mut column = Column::empty(ColumnPos { x: 0, z: 0 });
     for (x, y, z) in
@@ -64,6 +71,16 @@ pub(super) fn hold(w: &mut World, item: Option<ItemId>) {
     if let Some(inventory) = w.game.ecs.inventories.get_mut(w.game.player) {
         *inventory.selected_slot_mut() = stack;
     }
+}
+
+/// Survival: hits the block at `pos` as long as the held item needs, then breaks it.
+pub(super) fn mine(w: &mut World, pos: BlockPos) -> Vec<BlockChange> {
+    w.game.start_break(&w.loader, pos);
+    let block = w.loader.block(pos).unwrap();
+    let held = w.game.held_item();
+    let ticks = w.game.rules.mining.break_ticks(block, held).unwrap();
+    wait(w, ticks);
+    w.game.break_block(&mut w.loader, pos)
 }
 
 pub(super) fn wait(world: &mut World, ticks: u32) {

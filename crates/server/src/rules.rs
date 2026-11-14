@@ -1,3 +1,4 @@
+use crate::mining_rules::MiningRules;
 use std::sync::Arc;
 use strata_core::content::{
     BlockId, ContainerDef, Content, EntityType, EntityTypeId, EquipSlot, Item, ItemAction, ItemId,
@@ -23,6 +24,8 @@ pub struct BlockRules {
     slipperiness: Vec<f32>,
     entities: Vec<EntityType>,
     updates: Arc<UpdateRules>,
+    /// Break times and loot.
+    pub mining: Arc<MiningRules>,
 }
 
 impl BlockRules {
@@ -63,6 +66,7 @@ impl BlockRules {
                 .map(|(_, _, block)| block.container)
                 .collect(),
             updates: Arc::new(UpdateRules::new(content)),
+            mining: Arc::new(MiningRules::new(content)),
         }
     }
 

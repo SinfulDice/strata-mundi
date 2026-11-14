@@ -2,7 +2,7 @@
 
 use super::tests::{World, block, world};
 use super::*;
-use strata_core::inventory::{Click, HOTBAR, MAIN, SlotRef};
+use strata_core::inventory::{Click, HOTBAR, ItemStack, MAIN, SlotRef};
 use strata_protocol::InventoryRequest;
 
 fn total(w: &World) -> u32 {

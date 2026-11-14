@@ -84,6 +84,17 @@ impl SoundTable {
     }
 }
 
+impl SoundTable {
+    /// Hitting `block` while breaking it; one's own strokes are not subtitled.
+    pub fn hit(&self, pos: BlockPos, block: BlockId) -> Option<Cue> {
+        Some(Cue {
+            sound: self.get(block).set.step?,
+            at: centre(pos),
+            subtitled: false,
+        })
+    }
+}
+
 /// What a block muffles when its sound set does not say.
 fn density(block: &Block) -> f32 {
     match block.render {

@@ -6,6 +6,7 @@ mod bucket;
 mod containers;
 mod drops;
 mod inventory;
+mod mining;
 mod terrain;
 
 pub use containers::{BlockEntities, BlockEntity, OpenWindow};
@@ -19,7 +20,7 @@ use std::sync::Arc;
 use strata_core::content::{BlockId, Face};
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::dimension::DimensionId;
-use strata_core::inventory::{ItemStack, PlayerInventory};
+use strata_core::inventory::PlayerInventory;
 use strata_core::physics::{Aabb, Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
 use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings, cell};
@@ -49,6 +50,8 @@ pub struct Game {
     pub block_entities: BlockEntities,
     /// The inventory changed since the last messages were taken.
     inventory_dirty: bool,
+    /// Mixed with the block and the tick for each loot roll.
+    loot_seed: u64,
 }
 
 impl Game {
@@ -76,6 +79,7 @@ impl Game {
             messages: Vec::new(),
             block_entities: BlockEntities::default(),
             inventory_dirty: false,
+            loot_seed: 0,
         }
     }
 
@@ -156,6 +160,7 @@ impl Game {
 
     pub fn set_world_seed(&mut self, seed: u64, dimension: &DimensionId) {
         self.updates.set_seed(seed, dimension);
+        self.loot_seed = seed;
     }
 
     /// Runs one tick of player and boat physics, liquids and fire; returns the blocks changed.
@@ -180,6 +185,7 @@ impl Game {
         self.report_moves(&moved);
         self.drops_tick(loader);
         let mut changes = self.run_queued_actions(loader);
+        self.mining_tick(loader);
         for pos in loader.take_arrived() {
             if let Some(column) = loader.column(pos) {
                 self.updates.wake_fires(column);
@@ -200,7 +206,8 @@ impl Game {
             .map_or(0, |c| c.last_sequence)
     }
 
-    /// Validated break: within reach, an actual block the player may break. The changes
+    /// Validated break: within reach, an actual block the player may break (in survival,
+    /// hit long enough since `StartBreak`). The changes
     /// also hold the neighbours' reactions (a plant losing its ground); empty when refused.
     pub fn break_block(&mut self, loader: &mut ColumnLoader, pos: BlockPos) -> Vec<BlockChange> {
         if !pos.is_valid(self.border) {
@@ -210,31 +217,17 @@ impl Game {
             return Vec::new();
         };
         let allowed = current != BlockId::AIR
-            && (self.is_creative() || self.rules.is_breakable(current))
+            && (self.is_creative()
+                || (self.rules.is_breakable(current) && self.hit_long_enough(pos, current)))
             && self.in_reach(pos)
             && self.take_action();
         let mut changes = Vec::new();
         if allowed {
-            self.set_block(loader, pos, BlockId::AIR, &mut changes);
             self.drop_broken(current, pos);
+            self.stop_break();
+            self.set_block(loader, pos, BlockId::AIR, &mut changes);
         }
         changes
-    }
-
-    /// Survival: a broken block leaves its item on the ground.
-    fn drop_broken(&mut self, block: BlockId, pos: BlockPos) {
-        if self.is_creative() {
-            return;
-        }
-        if let Some(item) = self.rules.block_item(block) {
-            let stack = ItemStack::new(item, 1, &self.rules);
-            let velocity = DVec3::new(0.0, 0.1, 0.0);
-            self.spawn_drop(
-                stack,
-                containers::block_centre(pos) - DVec3::Y * 0.25,
-                velocity,
-            );
-        }
     }
 
     fn set_block(
@@ -387,3 +380,6 @@ mod inventory_tests;
 
 #[cfg(test)]
 mod conservation_tests;
+
+#[cfg(test)]
+mod mining_tests;
