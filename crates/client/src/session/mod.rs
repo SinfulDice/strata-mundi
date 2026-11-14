@@ -286,7 +286,7 @@ impl Session {
                     None if menu_open => world.game.update(dt, &self.idle, &world.connection),
                     None => world.game.update(dt, &self.input, &world.connection),
                 }
-                world.game.sync_hotbar(&world.connection);
+                world.game.sync_inventory(&world.connection);
                 self.renderer.outline = world.game.interaction.target.map(|hit| hit.block);
                 self.renderer.immersion = world
                     .game
@@ -312,7 +312,8 @@ impl Session {
         view.world.entities.advance(f64::from(frame_seconds));
         let entities = &mut self.renderer.models.entities;
         entities.clear();
-        entities.extend(view.world.entity_models());
+        let item_distance = self.applied.graphics.item_distance;
+        entities.extend(view.world.entity_models(camera, item_distance));
         let particle_seconds = if pause {
             0.0
         } else {

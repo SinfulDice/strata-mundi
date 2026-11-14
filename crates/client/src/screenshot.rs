@@ -139,7 +139,9 @@ pub fn render_image(
         .with_fog_tint(fog_tint.unwrap_or(glam::Vec3::ONE))
         .under_ground(openness);
     renderer.models.library = ModelLibrary::from_content(content);
-    renderer.models.entities = world.entity_models().collect();
+    renderer.models.entities = world
+        .entity_models(position, view.graphics.item_distance)
+        .collect();
     let table = BlockTable::from_content(content);
     if world.is_inside_opaque(view.camera.position, &table) {
         tracing::warn!(

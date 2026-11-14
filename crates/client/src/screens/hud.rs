@@ -1,12 +1,12 @@
 use crate::audio::{Direction, LIFETIME, Subtitle};
 use crate::gameplay::Gameplay;
-use crate::hotbar::{Hotbar, SLOTS};
+use crate::inventory::{ClientInventory, SLOTS};
 use crate::ui::{LogLine, ScreenModel, SlotMark, Tone};
 use strata_core::content::{Content, ItemId, ItemKind};
 
 /// Data shown by the in-game overlay (sample values in the HUD editor).
 pub struct HudModel<'a> {
-    pub hotbar: &'a Hotbar,
+    pub hotbar: &'a ClientInventory,
     /// Translated name of the aimed block, if shown.
     pub target: Option<String>,
     /// How to get off the boat, while riding.

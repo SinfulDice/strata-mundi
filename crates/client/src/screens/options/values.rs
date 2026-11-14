@@ -3,8 +3,8 @@
 use super::super::menu::Shared;
 use super::ranges::range_slot;
 use crate::settings::{
-    ANISOTROPY, BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, RENDER_DISTANCE, RENDER_SCALE,
-    SENSITIVITY, VERTICAL_DISTANCE, VOLUME,
+    ANISOTROPY, BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, ITEM_DISTANCE, RENDER_DISTANCE,
+    RENDER_SCALE, SENSITIVITY, VERTICAL_DISTANCE, VOLUME,
 };
 use crate::settings::{
     AUTO_THREADS, CloudMode, ColorFilter, FontChoice, Lighting, MapPreview, MusicFrequency,
@@ -28,6 +28,7 @@ pub enum Setting {
     AnimatedTextures,
     TextureVariants,
     BiomeBlend,
+    ItemDistance,
     Stars,
     Clouds,
     Mipmaps,
@@ -87,6 +88,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Anisotropy,
     Setting::Vegetation,
     Setting::Particles,
+    Setting::ItemDistance,
     Setting::MapPreview,
     Setting::MeshThreads,
     Setting::WorldThreads,
@@ -197,6 +199,10 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::TextureVariants => (on_off(shared, g.texture_variants), None),
         Setting::BiomeBlend if g.biome_blend == 0 => (shared.tr("ui-off"), None),
         Setting::BiomeBlend => (g.biome_blend.to_string(), gauge(g.biome_blend, BIOME_BLEND)),
+        Setting::ItemDistance => (
+            g.item_distance.to_string(),
+            gauge(g.item_distance, ITEM_DISTANCE),
+        ),
         Setting::Stars => (on_off(shared, g.stars), None),
         Setting::Clouds => (shared.tr(&format!("clouds-{}", g.clouds.id())), None),
         Setting::Mipmaps => (on_off(shared, g.mipmaps), None),

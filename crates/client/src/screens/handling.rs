@@ -2,6 +2,7 @@
 //! keyboard and moving HUD elements in the editor.
 
 use super::console::ConsoleState;
+use super::effects::Clip;
 use super::keyboard::Keyboard;
 use super::menu::{Effect, Menu};
 use super::options::bind_captured;
@@ -17,12 +18,6 @@ pub struct Handled {
     /// The input was meant for a menu (the game must ignore it).
     pub used: bool,
     pub actions: Vec<UiAction>,
-}
-
-/// The clipboard, after the effects: a copy done (or not), a field waiting for its text.
-enum Clip {
-    Copied(bool),
-    Paste(String),
 }
 
 /// Widgets showing a window over longer content (world list, item grid, settings rows).
@@ -361,41 +356,5 @@ impl Screens {
             .rev()
             .find(|hit| hit.rect.contains(x, y))
             .cloned()
-    }
-
-    /// The session's actions, and what the clipboard did or is asked for.
-    fn apply_effects(&mut self) -> (Vec<UiAction>, Option<Clip>) {
-        let (mut actions, mut clip) = (Vec::new(), None);
-        for effect in std::mem::take(&mut self.effects) {
-            match effect {
-                Effect::Push(menu) => {
-                    self.stack.push(menu);
-                    self.reset_focus();
-                }
-                Effect::Pop => {
-                    self.stack.pop();
-                    if !self.in_world && self.stack.is_empty() {
-                        self.stack.push(Menu::Title);
-                    }
-                    self.reset_focus();
-                }
-                Effect::CloseAll => {
-                    self.stack.truncate(usize::from(!self.in_world));
-                    self.reset_focus();
-                }
-                Effect::SettingsChanged => {
-                    self.settings_dirty = true;
-                    self.labels_stale = true;
-                }
-                Effect::Action(action) => actions.push(action),
-                Effect::ClearFocus => {
-                    self.focus = None;
-                    self.dragging = None;
-                }
-                Effect::Copy(text) => clip = Some(Clip::Copied(self.copy_text(text))),
-                Effect::Paste(field) => clip = Some(Clip::Paste(field)),
-            }
-        }
-        (actions, clip)
     }
 }

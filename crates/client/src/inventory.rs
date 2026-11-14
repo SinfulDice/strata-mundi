@@ -9,14 +9,14 @@ pub const SLOTS: usize = HOTBAR.end;
 /// slot is chosen here (and told to the server); every other change is a request the
 /// server answers with the new inventory.
 #[derive(Debug, Clone, Default, PartialEq)]
-pub struct Hotbar {
+pub struct ClientInventory {
     inventory: PlayerInventory,
     /// Creative: any item may be put in a slot.
     pub creative: bool,
     outbox: Vec<InventoryRequest>,
 }
 
-impl Hotbar {
+impl ClientInventory {
     pub fn selected_index(&self) -> usize {
         self.inventory.selected_index()
     }
@@ -63,7 +63,8 @@ impl Hotbar {
         }
     }
 
-    /// Creative: puts one `item` in slot `index` (or empties it).
+    /// Creative: puts one `item` in slot `index` (or empties it). Shown at once; the
+    /// server's next inventory overwrites this guess with what it accepted.
     pub fn set(&mut self, index: usize, item: Option<ItemId>, items: &Registry<ItemId, Item>) {
         if !self.creative {
             return;
@@ -156,9 +157,9 @@ mod tests {
     #[test]
     fn picking_reuses_existing_slots_then_empty_ones() {
         let items = items();
-        let mut hotbar = Hotbar {
+        let mut hotbar = ClientInventory {
             creative: true,
-            ..Hotbar::default()
+            ..ClientInventory::default()
         };
         hotbar.pick(ItemId(0), &items);
         assert_eq!(hotbar.selected(), Some(ItemId(0)));
@@ -172,7 +173,7 @@ mod tests {
     #[test]
     fn survival_only_selects_what_it_has() {
         let items = items();
-        let mut hotbar = Hotbar::default();
+        let mut hotbar = ClientInventory::default();
         hotbar.pick(ItemId(0), &items);
         assert_eq!(hotbar.selected(), None);
         assert!(hotbar.take_requests().is_empty());
@@ -180,7 +181,7 @@ mod tests {
 
     #[test]
     fn scrolling_wraps_and_the_hand_survives_server_updates() {
-        let mut hotbar = Hotbar::default();
+        let mut hotbar = ClientInventory::default();
         hotbar.scroll(-1);
         assert_eq!(hotbar.selected_index(), 8);
         hotbar.scroll(2);

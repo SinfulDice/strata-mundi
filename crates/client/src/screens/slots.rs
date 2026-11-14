@@ -2,7 +2,7 @@
 //! locks, quick deposit and search. Every click becomes a request the server answers.
 
 use super::worlds::edit;
-use crate::hotbar::Hotbar;
+use crate::inventory::ClientInventory;
 use crate::ui::{ScreenModel, SlotMark, SlotPress};
 use strata_core::content::{Content, ItemId};
 use strata_core::inventory::{
@@ -23,7 +23,7 @@ pub struct SlotsState {
 
 pub struct SlotsModel<'a> {
     pub state: &'a mut SlotsState,
-    pub hotbar: &'a mut Hotbar,
+    pub inventory: &'a mut ClientInventory,
     pub container: Option<&'a OpenedContainer>,
     pub content: &'a Content,
     pub language: &'a str,
@@ -59,7 +59,7 @@ impl SlotsModel<'_> {
     fn stack(&self, slot: SlotRef) -> Option<&ItemStack> {
         let index = usize::from(slot.index);
         match slot.area {
-            Area::Player => self.hotbar.stack(index),
+            Area::Player => self.inventory.stack(index),
             Area::Open => self.container?.contents.get(index),
         }
     }
@@ -85,7 +85,7 @@ impl SlotsModel<'_> {
     fn mark(&self, area: Area, index: usize, stack: Option<&ItemStack>) -> SlotMark {
         let Some(stack) = stack else {
             return SlotMark {
-                locked: area == Area::Player && self.hotbar.inventory().is_locked(index),
+                locked: area == Area::Player && self.inventory.inventory().is_locked(index),
                 ..SlotMark::default()
             };
         };
@@ -97,7 +97,7 @@ impl SlotsModel<'_> {
                 .durability
                 .zip(full)
                 .map(|(left, full)| f32::from(left) / f32::from(full.max(1))),
-            locked: area == Area::Player && self.hotbar.inventory().is_locked(index),
+            locked: area == Area::Player && self.inventory.inventory().is_locked(index),
             dim: area == Area::Open
                 && !query.is_empty()
                 && !self.name(stack.item).to_lowercase().contains(&query),
@@ -114,9 +114,9 @@ impl SlotsModel<'_> {
             return false;
         };
         match press {
-            SlotPress::Click(click) => self.hotbar.click(slot, click),
+            SlotPress::Click(click) => self.inventory.click(slot, click),
             SlotPress::ToggleLock if slot.area == Area::Player => {
-                self.hotbar
+                self.inventory
                     .request(InventoryRequest::ToggleLock(slot.index));
             }
             SlotPress::ToggleLock => {}
@@ -160,12 +160,12 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn carried(&self) -> Option<(ItemId, u16)> {
-        let carried = self.hotbar.inventory().cursor.as_ref()?;
+        let carried = self.inventory.inventory().cursor.as_ref()?;
         Some((carried.item, carried.count))
     }
 
     fn selected(&self, id: &str) -> Option<usize> {
-        (id == "hotbar").then(|| self.hotbar.selected_index())
+        (id == "hotbar").then(|| self.inventory.selected_index())
     }
 
     fn tooltip(&self, id: &str, index: usize) -> Option<String> {
@@ -184,10 +184,14 @@ impl ScreenModel for SlotsModel<'_> {
     fn activate(&mut self, id: &str, index: usize) {
         let language = self.language.to_owned();
         match id {
-            "sort_type" => self.hotbar.sort(Area::Player, SortOrder::Type, &language),
-            "sort_name" => self.hotbar.sort(Area::Player, SortOrder::Name, &language),
-            "sort_chest" => self.hotbar.sort(Area::Open, SortOrder::Type, &language),
-            "deposit" => self.hotbar.request(InventoryRequest::QuickDeposit),
+            "sort_type" => self
+                .inventory
+                .sort(Area::Player, SortOrder::Type, &language),
+            "sort_name" => self
+                .inventory
+                .sort(Area::Player, SortOrder::Name, &language),
+            "sort_chest" => self.inventory.sort(Area::Open, SortOrder::Type, &language),
+            "deposit" => self.inventory.request(InventoryRequest::QuickDeposit),
             _ => {
                 self.press(id, index, SlotPress::Click(Click::Primary));
             }

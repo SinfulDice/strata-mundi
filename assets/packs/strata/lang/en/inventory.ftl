@@ -7,3 +7,5 @@ ui-inventory-deposit = Stash
 ui-inventory-survival-help = <key:Use>: half, <key:Sneak>+click: transfer, double click: gather, <key:MenuLock>: lock, <key:Drop>: throw
 action-drop = Throw item
 ui-inventory-sort = Sort
+option-item-distance = Items on the ground
+option-item-distance-help = Distance, in blocks, up to which items lying on the ground are drawn. Shorter = less work.

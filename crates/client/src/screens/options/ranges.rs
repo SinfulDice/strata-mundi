@@ -2,8 +2,8 @@
 
 use super::values::{BACKUPS, Setting};
 use crate::settings::{
-    BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, MAX_SCALE, RENDER_DISTANCE, RENDER_SCALE, SENSITIVITY,
-    Settings, VERTICAL_DISTANCE, VOLUME,
+    BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, ITEM_DISTANCE, MAX_SCALE, RENDER_DISTANCE,
+    RENDER_SCALE, SENSITIVITY, Settings, VERTICAL_DISTANCE, VOLUME,
 };
 
 /// A range setting's value, its bounds and the size of one step.
@@ -37,6 +37,7 @@ pub fn range_slot(setting: Setting, s: &mut Settings) -> Option<RangeSlot<'_>> {
         Setting::Fov => (&mut g.fov, FOV, 5),
         Setting::Brightness => (&mut g.brightness, BRIGHTNESS, 10),
         Setting::BiomeBlend => (&mut g.biome_blend, BIOME_BLEND, 1),
+        Setting::ItemDistance => (&mut g.item_distance, ITEM_DISTANCE, 4),
         Setting::MasterVolume => (&mut sound.master, VOLUME, 10),
         Setting::BlocksVolume => (&mut sound.blocks, VOLUME, 10),
         Setting::AmbientVolume => (&mut sound.ambient, VOLUME, 10),

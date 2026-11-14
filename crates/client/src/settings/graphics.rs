@@ -218,6 +218,9 @@ pub struct GraphicsSettings {
     pub anisotropy: u32,
     pub vegetation: Vegetation,
     pub particles: ParticleMode,
+    /// How far items lying on the ground are drawn, in blocks.
+    #[serde(default = "default_item_distance")]
+    pub item_distance: u32,
     pub map_preview: MapPreview,
     /// Background threads for meshing.
     pub worker_threads: usize,
@@ -286,6 +289,13 @@ impl GraphicsSettings {
                 Preset::Low | Preset::Ds => ParticleMode::Reduced,
                 _ => ParticleMode::Full,
             },
+            item_distance: match preset {
+                Preset::VeryLow => 12,
+                Preset::Low | Preset::Ds => 16,
+                Preset::Medium => 24,
+                Preset::High => 32,
+                Preset::Ultra => 48,
+            },
             map_preview: match preset {
                 Preset::VeryLow | Preset::Low | Preset::Ds => MapPreview::Coarse,
                 _ => MapPreview::Detailed,
@@ -311,6 +321,10 @@ impl GraphicsSettings {
     }
 }
 
+fn default_item_distance() -> u32 {
+    32
+}
+
 /// Stored value meaning "as many as the machine allows".
 pub const AUTO_THREADS: usize = 0;
 
@@ -322,6 +336,7 @@ pub const RENDER_SCALE: (u32, u32) = (50, 200);
 pub const FOV: (u32, u32) = (50, 110);
 pub const BRIGHTNESS: (u32, u32) = (0, 100);
 pub const BIOME_BLEND: (u32, u32) = (0, crate::mesher::MAX_BLEND_RADIUS);
+pub const ITEM_DISTANCE: (u32, u32) = (4, 64);
 pub const DEFAULT_BRIGHTNESS: u32 = 50;
 pub const ANISOTROPY: [u32; 5] = [1, 2, 4, 8, 16];
 /// More threads than this is never useful, whatever the file says.
@@ -337,6 +352,7 @@ impl GraphicsSettings {
         clamp(&mut self.fov, FOV);
         clamp(&mut self.brightness, BRIGHTNESS);
         clamp(&mut self.biome_blend, BIOME_BLEND);
+        clamp(&mut self.item_distance, ITEM_DISTANCE);
         if !ANISOTROPY.contains(&self.anisotropy) {
             self.anisotropy = 1;
         }
@@ -378,6 +394,7 @@ mod tests {
         assert_eq!(ds.vegetation, Vegetation::Reduced);
         assert_eq!(ds.clouds, CloudMode::Flat);
         assert_eq!(ds.particles, ParticleMode::Reduced);
+        assert!(ds.item_distance < GraphicsSettings::for_preset(Preset::Ultra).item_distance);
         assert_eq!(ds.map_preview, MapPreview::Coarse);
         let very_low = GraphicsSettings::for_preset(Preset::VeryLow);
         assert_eq!(very_low.particles, ParticleMode::Off);

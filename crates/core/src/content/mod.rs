@@ -2,6 +2,7 @@
 
 mod attached;
 mod block;
+mod container;
 mod entity;
 mod fire;
 mod fluid;
@@ -16,9 +17,8 @@ mod tint;
 mod turned;
 
 pub use attached::{AttachedSides, Attachment};
-pub use block::{
-    Axis, Block, BlockDef, BlockTextures, ContainerDef, Face, Orientation, Placement, RenderKind,
-};
+pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
+pub use container::ContainerDef;
 pub use entity::{DroppedItemDef, EntityDef, EntityType, ModelBox};
 pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
 pub use fluid::{
@@ -88,11 +88,11 @@ impl Content {
         };
         let (blocks, fluids) = load_blocks(packs, &presented, &mut errors);
         let entities = entity::load_entities(packs, &textures, &mut errors);
-        let known = Known {
+        let known = item::Known {
             blocks: &blocks,
             entities: &entities,
         };
-        let items = load_items(packs, &known, &textures, &mut errors);
+        let items = item::load_items(packs, &known, &textures, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
         let cinematics = cinematic::load(packs, &mut errors);
         let days = sky::load_days(packs, &mut errors);
@@ -341,113 +341,4 @@ fn load_blocks(
     }
     let fluids = fluid::resolve(&blocks, fluids, errors);
     (blocks, fluids)
-}
-
-/// What items may refer to.
-struct Known<'a> {
-    blocks: &'a Registry<BlockId, Block>,
-    entities: &'a Registry<EntityTypeId, EntityType>,
-}
-
-fn load_items(
-    packs: &PackSet,
-    known: &Known<'_>,
-    textures: &TextureLibrary,
-    errors: &mut Vec<PackError>,
-) -> Registry<ItemId, Item> {
-    let mut items = Registry::default();
-    for (block_id, id, block) in known.blocks.iter().filter(|(_, _, b)| b.has_item) {
-        items.insert(
-            id.clone(),
-            Item {
-                max_stack: block.max_stack,
-                category: block.category.clone(),
-                kind: ItemKind::Block(block_id),
-                action: None,
-                durability: None,
-                equip: None,
-            },
-        );
-    }
-    for (id, Sourced { value, source }) in packs.layered::<ItemDef>("items", errors) {
-        let texture = textures.layer(&value.texture).unwrap_or_else(|| {
-            errors.push(PackError::invalid(
-                &source,
-                format!("unknown texture `{}`", value.texture),
-            ));
-            TextureId::MISSING
-        });
-        let action = value
-            .action
-            .and_then(|action| item_action(known, action, &source, errors));
-        let durable = value.durability.filter(|&uses| uses > 0);
-        let item = Item {
-            max_stack: if durable.is_some() {
-                1
-            } else {
-                value.max_stack.max(1)
-            },
-            category: value.category,
-            kind: ItemKind::Flat(texture),
-            action,
-            durability: durable,
-            equip: value.equip,
-        };
-        if items.insert(id.clone(), item).is_none() {
-            errors.push(PackError::invalid(
-                &source,
-                format!("`{id}` is already a block item"),
-            ));
-        }
-    }
-    items
-}
-
-fn item_action(
-    known: &Known<'_>,
-    action: ItemActionDef,
-    source: &std::path::Path,
-    errors: &mut Vec<PackError>,
-) -> Option<ItemAction> {
-    let blocks = known.blocks;
-    match action {
-        ItemActionDef::TakeFluid => Some(ItemAction::TakeFluid),
-        ItemActionDef::PlaceEntity(id) => {
-            let entity = known.entities.key(&id);
-            if entity.is_none() {
-                errors.push(PackError::invalid(
-                    source,
-                    format!("PlaceEntity: unknown entity `{id}`"),
-                ));
-            }
-            entity.map(ItemAction::PlaceEntity)
-        }
-        ItemActionDef::PlaceFluid(id) => {
-            let fluid = blocks.key(&id).filter(|&key| {
-                blocks
-                    .get(key)
-                    .and_then(|block| block.fluid)
-                    .is_some_and(|state| state.level == FluidLevel::Source)
-            });
-            if fluid.is_none() {
-                errors.push(PackError::invalid(
-                    source,
-                    format!("PlaceFluid: `{id}` is not a liquid source"),
-                ));
-            }
-            fluid.map(ItemAction::PlaceFluid)
-        }
-        ItemActionDef::Ignite(id) => {
-            let fire = blocks
-                .key(&id)
-                .filter(|&key| blocks.get(key).is_some_and(|block| block.fire.is_some()));
-            if fire.is_none() {
-                errors.push(PackError::invalid(
-                    source,
-                    format!("Ignite: `{id}` is not a fire"),
-                ));
-            }
-            fire.map(ItemAction::Ignite)
-        }
-    }
 }

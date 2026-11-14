@@ -2,8 +2,8 @@
 //! sends intents; the server decides (block clicks are predicted, see `prediction`).
 
 use crate::camera::Camera;
-use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
+use crate::inventory::ClientInventory;
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::sync::Arc;
@@ -123,7 +123,7 @@ impl Interaction {
         world: &ClientWorld,
         info: &BlockInfo,
         input: &InputState,
-        hotbar: &mut Hotbar,
+        hotbar: &mut ClientInventory,
     ) -> Option<WorldAction> {
         self.target = aim(camera, world, |block| info.hit_box(block));
         self.entity = aim_entity(camera, world, info, self.target, self.mount);

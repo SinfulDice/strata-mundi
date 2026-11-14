@@ -1,5 +1,5 @@
 use super::worlds::edit;
-use crate::hotbar::{Hotbar, SLOTS};
+use crate::inventory::{ClientInventory, SLOTS};
 use crate::ui::ScreenModel;
 use strata_core::content::{Content, ItemId};
 use strata_core::id::Identifier;
@@ -13,7 +13,7 @@ pub const TAB_ALL_KEY: &str = "ui-tab-all";
 /// Creative inventory: every item, filtered by category tab and by search text.
 pub struct InventoryModel<'a> {
     pub state: &'a mut InventoryState,
-    pub hotbar: &'a mut Hotbar,
+    pub hotbar: &'a mut ClientInventory,
     pub content: &'a Content,
     pub language: &'a str,
 }
@@ -33,7 +33,7 @@ pub struct InventoryState {
 impl<'a> InventoryModel<'a> {
     pub fn new(
         state: &'a mut InventoryState,
-        hotbar: &'a mut Hotbar,
+        hotbar: &'a mut ClientInventory,
         content: &'a Content,
         language: &'a str,
     ) -> Self {

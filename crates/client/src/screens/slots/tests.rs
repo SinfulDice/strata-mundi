@@ -23,7 +23,7 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
     let mut inventory = PlayerInventory::default();
     inventory.slots.slots[MAIN.start + 2] = Some(ItemStack::new(stone, 7, &content.items));
     inventory.toggle_lock(MAIN.start + 2);
-    let mut hotbar = Hotbar::default();
+    let mut hotbar = ClientInventory::default();
     hotbar.restore(inventory);
     let mut chest = Container::new(27);
     chest.slots[3] = Some(ItemStack::new(stone, 2, &content.items));
@@ -38,7 +38,7 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
     };
     let mut model = SlotsModel {
         state: &mut state,
-        hotbar: &mut hotbar,
+        inventory: &mut hotbar,
         container: Some(&open),
         content: &content,
         language: "en",

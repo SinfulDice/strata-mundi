@@ -60,7 +60,7 @@ impl Screens {
         }
         let open = self.stack.iter().any(|menu| matches!(menu, Menu::Slots(_)));
         if self.slot_input.was_open && !open {
-            game.hotbar
+            game.inventory
                 .request(strata_protocol::InventoryRequest::Close);
             game.container = None;
         }

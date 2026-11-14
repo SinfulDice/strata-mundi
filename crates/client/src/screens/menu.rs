@@ -11,8 +11,8 @@ use super::slots::{SlotsModel, SlotsState};
 use super::title::TitleModel;
 use super::worlds::{ConfirmModel, WorldsModel};
 use crate::gameplay::Gameplay;
-use crate::hotbar::Hotbar;
 use crate::input::Action;
+use crate::inventory::ClientInventory;
 use crate::settings::Settings;
 use crate::ui::{Rect, ScreenDef, ScreenDefs, ScreenModel};
 use strata_core::content::Content;
@@ -114,7 +114,7 @@ pub struct Shared<'a> {
     pub worlds: &'a [WorldSummary],
     /// Atlas place of each world's capture, in list order.
     pub icons: &'a [Option<Rect>],
-    pub hotbar: Option<&'a mut Hotbar>,
+    pub inventory: Option<&'a mut ClientInventory>,
     /// The container the player opened.
     pub container: Option<&'a OpenedContainer>,
     /// The focused element (id, index), for models that describe it.
@@ -145,9 +145,11 @@ impl Shared<'_> {
 }
 
 /// The parts of the game the menus use: the inventory and the open container.
-pub fn game_parts(game: Option<&mut Gameplay>) -> (Option<&mut Hotbar>, Option<&OpenedContainer>) {
+pub fn game_parts(
+    game: Option<&mut Gameplay>,
+) -> (Option<&mut ClientInventory>, Option<&OpenedContainer>) {
     match game {
-        Some(game) => (Some(&mut game.hotbar), game.container.as_ref()),
+        Some(game) => (Some(&mut game.inventory), game.container.as_ref()),
         None => (None, None),
     }
 }
@@ -184,7 +186,7 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
             log: shared.console,
             shared,
         }),
-        Menu::Inventory(state) => match shared.hotbar {
+        Menu::Inventory(state) => match shared.inventory {
             Some(hotbar) => Box::new(InventoryModel::new(
                 state,
                 hotbar,
@@ -193,10 +195,10 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
             )),
             None => Box::new(Empty),
         },
-        Menu::Slots(state) => match shared.hotbar {
-            Some(hotbar) => Box::new(SlotsModel {
+        Menu::Slots(state) => match shared.inventory {
+            Some(inventory) => Box::new(SlotsModel {
                 state,
-                hotbar,
+                inventory,
                 container: shared.container,
                 content: shared.content,
                 language: &shared.settings.interface.language,

@@ -3,9 +3,9 @@
 
 use crate::camera::Camera;
 use crate::cinematic::PlayingShot;
-use crate::hotbar::Hotbar;
 use crate::input::{Action, InputState};
 use crate::interaction::{BlockInfo, Interaction};
+use crate::inventory::ClientInventory;
 use crate::look::apply_look;
 use crate::player::LocalPlayer;
 use crate::prediction::predicted_change;
@@ -33,7 +33,7 @@ const ZOOM_SPEED: f32 = 8.0;
 pub struct Gameplay {
     pub view: WorldView,
     pub camera: Camera,
-    pub hotbar: Hotbar,
+    pub inventory: ClientInventory,
     pub interaction: Interaction,
     pub info: BlockInfo,
     pub controls: ControlSettings,
@@ -71,7 +71,7 @@ impl Gameplay {
         Self {
             view,
             camera,
-            hotbar: Hotbar::default(),
+            inventory: ClientInventory::default(),
             interaction: Interaction::default(),
             info,
             controls,
@@ -117,8 +117,8 @@ impl Gameplay {
                 self.day_cycle = Some(DayCycle::new(&day.cycle));
                 self.border = border;
                 (self.camera.yaw, self.camera.pitch) = (look[0], look[1]);
-                self.hotbar.restore(*inventory);
-                self.hotbar.creative = mode == GameMode::Creative;
+                self.inventory.restore(*inventory);
+                self.inventory.creative = mode == GameMode::Creative;
                 movement.auto_jump = self.controls.auto_jump;
                 movement.step_up = self.controls.step_up;
                 connection.send(ClientMessage::MovementPreferences {
@@ -137,7 +137,7 @@ impl Gameplay {
             ServerMessage::UnloadColumn(pos) => self.view.remove(pos, renderer),
             ServerMessage::BlockChanged { pos, block } => self.view.receive_block(pos, block),
             ServerMessage::ActionDone(id) => self.view.acknowledge(id),
-            ServerMessage::Inventory(inventory) => self.hotbar.receive(*inventory),
+            ServerMessage::Inventory(inventory) => self.inventory.receive(*inventory),
             ServerMessage::ContainerOpened(container) => {
                 self.container = Some(*container);
                 self.container_opened = true;
@@ -156,7 +156,7 @@ impl Gameplay {
             ServerMessage::EntityRemoved(id) => self.view.world.entities.remove(id),
             ServerMessage::Mode(mode) => {
                 self.mode = mode;
-                self.hotbar.creative = mode == GameMode::Creative;
+                self.inventory.creative = mode == GameMode::Creative;
             }
             ServerMessage::Mounted(mount) => {
                 self.interaction.mount = mount;
@@ -197,7 +197,7 @@ impl Gameplay {
         self.select_hotbar(input);
         if input.just_pressed(Action::Drop) {
             let whole = input.is_held(Action::Sprint);
-            self.hotbar
+            self.inventory
                 .request(InventoryRequest::DropSelected { whole });
         }
         let move_input = MoveInput {
@@ -220,7 +220,7 @@ impl Gameplay {
             &self.view.world,
             &self.info,
             input,
-            &mut self.hotbar,
+            &mut self.inventory,
         );
         if let Some(action) = intent {
             self.send_action(action, connection);
@@ -312,8 +312,8 @@ impl Gameplay {
     }
 
     /// Sends the inventory requests of the frame (from play or from the screens).
-    pub fn sync_hotbar(&mut self, connection: &ClientConnection) {
-        for request in self.hotbar.take_requests() {
+    pub fn sync_inventory(&mut self, connection: &ClientConnection) {
+        for request in self.inventory.take_requests() {
             connection.send(ClientMessage::Inventory(request));
         }
     }
@@ -333,12 +333,12 @@ impl Gameplay {
     fn select_hotbar(&mut self, input: &InputState) {
         for (index, action) in Action::HOTBAR.into_iter().enumerate() {
             if input.just_pressed(action) {
-                self.hotbar.select(index);
+                self.inventory.select(index);
             }
         }
         let buttons = i32::from(input.just_pressed(Action::HotbarNext))
             - i32::from(input.just_pressed(Action::HotbarPrevious));
-        self.hotbar.scroll(buttons - input.scroll_steps());
+        self.inventory.scroll(buttons - input.scroll_steps());
     }
 }
 

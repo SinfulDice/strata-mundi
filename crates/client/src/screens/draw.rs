@@ -6,8 +6,8 @@ use super::keyboard::KeyboardModel;
 use super::menu::{self, Menu, Shared};
 use super::{MAX_AUTO_SCALE, Screens, UiFrame};
 use crate::gameplay::Gameplay;
-use crate::hotbar::Hotbar;
 use crate::input::{Action, InputDevice};
+use crate::inventory::ClientInventory;
 use crate::render::Gpu;
 use crate::ui::{Node, Rect, ScreenDef, UiContext, auto_scale, draw_screen};
 use strata_core::content::Content;
@@ -71,10 +71,10 @@ impl Screens {
                 ctx.theme,
             );
         } else if (self.in_world && self.stack.is_empty()) || editor {
-            let sample = Hotbar::default();
+            let sample = ClientInventory::default();
             let hud = match game.as_deref() {
                 Some(game) => HudModel {
-                    hotbar: &game.hotbar,
+                    hotbar: &game.inventory,
                     target: aimed_block_name(game, content, &language),
                     mount: game
                         .is_riding()
@@ -99,13 +99,13 @@ impl Screens {
         }
         crate::debug_overlay::paint(debug, &mut painter, &self.assets.theme);
         if let Some(menu) = self.stack.last_mut() {
-            let (hotbar, container) = menu::game_parts(game);
+            let (inventory, container) = menu::game_parts(game);
             let shared = Shared {
                 content,
                 settings: &mut self.settings,
                 worlds: &self.worlds,
                 icons: &self.icons,
-                hotbar,
+                inventory,
                 container,
                 focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
                 key_labels: &key_labels,

@@ -147,9 +147,18 @@ impl ClientWorld {
         }
     }
 
-    /// Entities to draw, with the light of their cell.
-    pub fn entity_models(&self) -> impl Iterator<Item = (ModelKind, ModelPose, PackedLight)> + '_ {
-        self.entities.models().map(|(kind, pose)| {
+    /// Entities to draw, with the light of their cell; items on the ground only within
+    /// `item_distance` blocks of `camera`.
+    pub fn entity_models(
+        &self,
+        camera: DVec3,
+        item_distance: u32,
+    ) -> impl Iterator<Item = (ModelKind, ModelPose, PackedLight)> + '_ {
+        let reach = f64::from(item_distance).powi(2);
+        let near = move |(kind, pose): &(ModelKind, ModelPose)| {
+            !matches!(kind, ModelKind::Item(_)) || pose.position.distance_squared(camera) <= reach
+        };
+        self.entities.models().filter(near).map(|(kind, pose)| {
             let at = pose.position + DVec3::Y * ENTITY_LIGHT_HEIGHT;
             let cell = BlockPos {
                 x: at.x.floor() as i32,
