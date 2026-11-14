@@ -2,7 +2,7 @@
 
 ## État
 
-- **Version en cours** : v0.2.1 — Retours de test, **terminée** (13/11/2026), en attente de l'utilisateur. Détail et rapport : `docs/versions/v0.2.1.md`. La v0.3 attend sa validation.
+- **Version en cours** : v0.2.1 — Retours de test, **terminée** (13/11/2026), **validée par l'utilisateur le 14/11/2026** (essai en jeu, FPS mesurés, tag `v0.2.1` poussé). Détail et rapport : `docs/versions/v0.2.1.md`. La v0.3 attend sa validation.
   - [x] J1 Ravins rares · [x] J2 Biomes plus grands, bandes de chaleur · [x] J3 Eau façon Minecraft · [x] J4 Pose de blocs fiable · [x] J5 Torches murales, lanternes suspendues · [x] J6 Sons · [x] J7 Curseurs · [x] J8 Clôture (captures, rapport, version 0.2.1, tag `v0.2.1` à pousser par l'utilisateur)
 - **Dernière session** : 13/11/2026
 
@@ -46,6 +46,8 @@
 |---|---|---|---|---|---|---|
 | 11/11/2026 | PC utilisateur (i5-1235U, Iris Xe intégré) | ultra | 61,6 | 30,6 | 291 Mio | `perf-reports/2026-11-11-sinfuldice-njx0pu-ultra-flyover.md` |
 | 11/11/2026 | PC utilisateur, 4 cœurs (`taskset`) | DS | 343,5 | 48,9 | 179 Mio | `perf-reports/2026-11-11-sinfuldice-njx0pu-ds-flyover.md` (GPU ~3× plus puissant que le N100 : pas une mesure DS) |
+| 14/11/2026 | PC utilisateur (v0.2.1) | ultra | 82,7 | 37,7 | 311 Mio | `perf-reports/2026-11-14-sinfuldice-njx0pu-ultra-flyover.md` |
+| 14/11/2026 | PC utilisateur, 4 cœurs (v0.2.1) | DS | 512,2 | 180,7 | 193 Mio | `perf-reports/2026-11-14-sinfuldice-njx0pu-ds-flyover.md` (pas une mesure DS) |
 
 Benchmarks CPU (cloud, `cargo bench --workspace --bench '*'`), dernière valeur de chaque opération ; historique dans les rapports `docs/versions/v0.X.md`. La VM a ralenti après son redémarrage du 13/11 : la v0.2.0 remesurée ce jour-là sert de référence (tableau complet dans le rapport de la v0.2.1).
 
@@ -93,12 +95,9 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## Blocages
 
-- Envoi des tags refusé (HTTP 403) par la passerelle Git de la session cloud ; les branches passent. Contournement : l'utilisateur pousse le tag de fin de version. Encore le cas pour `v0.2.1` le 13/11/2026 (connexion coupée par la passerelle à chaque essai) : tag créé localement seulement.
+- Envoi des tags refusé (HTTP 403) par la passerelle Git de la session cloud ; les branches passent. Contournement : l'utilisateur pousse le tag de fin de version. Encore le cas pour `v0.2.1` (13/11/2026) : poussé par l'utilisateur le 14/11/2026.
 
 ## En attente de l'utilisateur
 
-- **Pousser le tag** `v0.2.1` (refus 403 en cloud) : `git fetch origin && git tag -a v0.2.1 -m "v0.2.1" origin/main && git push origin v0.2.1`.
-- **Essayer la v0.2.1 en jeu** (ravins, biomes, eau, pose rapide, torches et lanternes, sons, curseurs ; molette sur les listes de choix à vérifier) ; écouter lave et vent.
-- **Mesures FPS sur PC** (ultra et DS sur 4 cœurs) pour fermer le critère de performances : commandes dans le rapport de la v0.2.1.
 - **Historique Git** : 52 Mo de musique commités par erreur puis retirés restent dans l'historique ; le garder ou le réécrire (irréversible) : à décider.
 - Repli CC0 pour les sons : reporté à plus tard (l'utilisateur, 11/11/2026 : les sons conviennent pour l'instant).
