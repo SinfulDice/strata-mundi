@@ -5,6 +5,7 @@ use super::hit_box::{HitBox, Support};
 use super::particle::{BlockParticles, ParticleTriggersDef};
 use super::registry::{BlockId, TextureId};
 use super::tint::BlockTint;
+use super::tool::BlockTool;
 use crate::id::Identifier;
 use serde::Deserialize;
 
@@ -211,9 +212,15 @@ pub struct BlockDef {
     /// Light the block gives off, 0 (none) to 15 (lava, glowstone).
     #[serde(default)]
     pub light_emission: u8,
-    /// Time to mine, like Minecraft; negative = unbreakable. Used from v0.3.
+    /// Time to mine, like Minecraft (seconds × 1.5 by hand); negative = unbreakable.
     #[serde(default = "one")]
     pub hardness: f32,
+    /// The kind of tool that breaks it best, and whether it needs one to drop anything.
+    #[serde(default)]
+    pub tool: Option<BlockTool>,
+    /// Loot table given when broken (`loot_tables/`); absent, the block's own item.
+    #[serde(default)]
+    pub loot: Option<Identifier>,
     pub textures: BlockTextures,
     /// Sound set (v0.2), e.g. `strata:stone`.
     #[serde(default)]
@@ -293,6 +300,8 @@ pub struct Block {
     pub light_opacity: u8,
     pub light_emission: u8,
     pub hardness: f32,
+    pub tool: Option<BlockTool>,
+    pub loot: Option<Identifier>,
     /// Texture layer of each face, indexed by `Face::index`.
     pub faces: [TextureId; 6],
     pub sound: Option<Identifier>,
@@ -322,6 +331,8 @@ impl Block {
             light_opacity: 0,
             light_emission: 0,
             hardness: 0.0,
+            tool: None,
+            loot: None,
             faces: [TextureId::MISSING; 6],
             sound: None,
             category: None,

@@ -2,6 +2,7 @@
 //! or PNG files, layered across packs and resource packs.
 
 mod color;
+mod cracks;
 mod generate;
 mod image;
 mod isometric;

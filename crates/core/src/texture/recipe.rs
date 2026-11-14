@@ -76,6 +76,9 @@ pub enum Pattern {
     TopFringe { depth: u32 },
     /// Border only, transparent center with glints (glass).
     Frame,
+    /// Cracks of a block being broken, stage `stage` of `stages`; the stages of a series
+    /// share `seed`, so each one grows the cracks of the one before.
+    Cracks { stage: u32, stages: u32, seed: u32 },
 }
 
 /// A sprite color: `("ramp", level)` or a fixed `"#rrggbb"`.
@@ -176,6 +179,13 @@ impl TextureRecipe {
                 Pattern::TopFringe { depth } => at_most("depth", *depth, BASE_SIZE),
                 Pattern::Leaves { holes } if !(0.0..=1.0).contains(holes) => {
                     Err("`holes` must be between 0 and 1".into())
+                }
+                Pattern::Cracks { stage, stages, .. } => {
+                    at_most("stages", *stages, BASE_SIZE)?;
+                    if *stage >= *stages {
+                        return Err("`stage` must be below `stages`".into());
+                    }
+                    Ok(())
                 }
                 Pattern::Leaves { .. } | Pattern::Rings { .. } | Pattern::Frame => Ok(()),
             },

@@ -17,6 +17,20 @@ pub fn paint(
     painter: &Painter<'_>,
 ) -> Result<RgbaImage, String> {
     let seed = painter.seed;
+    if let &Pattern::Cracks {
+        stage,
+        stages,
+        seed,
+    } = pattern
+    {
+        return Ok(super::cracks::paint(
+            image,
+            ramp,
+            stage,
+            stages,
+            u64::from(seed),
+        ));
+    }
     let border = match pattern {
         Pattern::Rings { border } => Some(painter.ramp(border)?),
         _ => None,
@@ -33,6 +47,7 @@ pub fn paint(
                 Pattern::Stripes { period } => Some(stripes(ramp, seed, x, y, *period)),
                 Pattern::TopFringe { depth } => fringe(ramp, seed, x, y, *depth),
                 Pattern::Frame => frame(ramp, seed, x, y),
+                Pattern::Cracks { .. } => None,
             };
             if let Some(color) = pixel {
                 image.set(x, y, color);

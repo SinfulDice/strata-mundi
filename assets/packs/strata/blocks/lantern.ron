@@ -5,6 +5,7 @@ Block(
     light_opacity: 0,
     light_emission: 15,
     hardness: 3.5,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
     sound: Some("strata:metal"),
     category: Some("strata:building"),
     placement: Attached(ceiling: true, ceiling_texture: Some("strata:lantern_hanging")),

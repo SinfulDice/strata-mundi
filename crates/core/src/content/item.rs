@@ -1,5 +1,5 @@
 use super::registry::{BlockId, EntityTypeId, ItemId, Registry, TextureId};
-use super::{Block, EntityType, FluidLevel, TextureLibrary};
+use super::{Block, EntityType, FluidLevel, TextureLibrary, ToolDef};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced};
 use serde::Deserialize;
@@ -22,6 +22,9 @@ pub struct ItemDef {
     /// Equipment slot it may be worn in (armour).
     #[serde(default)]
     pub equip: Option<EquipSlot>,
+    /// What it mines and how well (pickaxes, axes, shears…).
+    #[serde(default)]
+    pub tool: Option<ToolDef>,
 }
 
 /// Where a worn item goes, in the order of the armour slots.
@@ -62,6 +65,7 @@ pub struct Item {
     pub action: Option<ItemAction>,
     pub durability: Option<u16>,
     pub equip: Option<EquipSlot>,
+    pub tool: Option<ToolDef>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,6 +109,7 @@ pub(super) fn load_items(
                 action: None,
                 durability: None,
                 equip: None,
+                tool: None,
             },
         );
     }
@@ -131,6 +136,9 @@ pub(super) fn load_items(
             action,
             durability: durable,
             equip: value.equip,
+            tool: value
+                .tool
+                .and_then(|tool| valid_tool(tool, &source, errors)),
         };
         if items.insert(id.clone(), item).is_none() {
             errors.push(PackError::invalid(
@@ -140,6 +148,18 @@ pub(super) fn load_items(
         }
     }
     items
+}
+
+fn valid_tool(
+    tool: ToolDef,
+    source: &std::path::Path,
+    errors: &mut Vec<PackError>,
+) -> Option<ToolDef> {
+    if tool.kinds.is_empty() {
+        errors.push(PackError::invalid(source, "a tool needs at least one kind"));
+        return None;
+    }
+    Some(tool.clamped())
 }
 
 fn item_action(

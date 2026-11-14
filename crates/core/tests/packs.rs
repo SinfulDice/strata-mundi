@@ -1,7 +1,10 @@
 #![allow(clippy::unwrap_used)]
 
 use std::path::{Path, PathBuf};
-use strata_core::content::{BlockId, Content, Face, HitBox, ItemKind, RenderKind, TextureId};
+use strata_core::audio::Rng;
+use strata_core::content::{
+    BlockId, Content, Face, HitBox, ItemKind, LootContext, RenderKind, TextureId,
+};
 use strata_core::id::Identifier;
 use strata_core::lang::LANGUAGES;
 use strata_core::pack::{PackError, PackSet};
@@ -81,6 +84,29 @@ fn base_game_pack_loads_cleanly() {
         .unwrap();
     assert_eq!(leaves.render, RenderKind::Cutout);
     assert!(content.textures.images.len() > 20);
+}
+
+#[test]
+fn base_pack_blocks_have_tools_and_loot() {
+    let (content, errors) = load(&game_packs());
+    assert!(errors.is_empty(), "{errors:#?}");
+    let block = |name: &str| content.blocks.key(&id(name)).unwrap();
+    let stone = content.blocks.get(block("strata:stone")).unwrap();
+    assert!(stone.tool.as_ref().is_some_and(|tool| tool.required));
+    assert!(!stone.harvests(None));
+    let mut rng = Rng::new(1);
+    let dirt = content.items.key(&id("strata:dirt")).unwrap();
+    let context = LootContext {
+        tool: None,
+        itself: content.items.key(&id("strata:grass_block")),
+    };
+    let grass = content.block_loot(block("strata:grass_block")).unwrap();
+    assert_eq!(grass.roll(&context, &mut rng), vec![(dirt, 1)]);
+    let leaves = content.block_loot(block("strata:oak_leaves")).unwrap();
+    assert!(leaves.roll(&context, &mut rng).is_empty());
+    assert!(content.block_loot(block("strata:dirt")).is_none());
+    let kinds = content.tool_kinds();
+    assert!(kinds.contains(&&id("strata:pickaxe")) && kinds.contains(&&id("strata:shears")));
 }
 
 #[test]

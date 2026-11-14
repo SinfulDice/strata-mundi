@@ -1,0 +1,4 @@
+// Grass, snowy grass, podzol and mycelium: their dirt is left.
+LootTable(pools: [
+    Pool(entries: [Item(item: "strata:dirt")]),
+])

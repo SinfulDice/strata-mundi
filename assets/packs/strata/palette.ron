@@ -2,6 +2,7 @@
 // A resource pack can restyle the whole game by replacing ramps.
 // Style « classique » (proche de Minecraft), choisi le 23/10/2026.
 {
+    "crack": ["#000000d0", "#141414c0", "#262626b0"],
     "stone": ["#5e5e64", "#727278", "#85858b", "#9a9aa0"],
     "deep_stone": ["#34343c", "#43434c", "#52525c", "#62626c"],
     "sandstone": ["#b89a62", "#c9ad74", "#d8be86", "#e4cd98"],

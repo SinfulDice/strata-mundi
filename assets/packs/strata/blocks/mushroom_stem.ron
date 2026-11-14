@@ -1,6 +1,7 @@
 Block(
     textures: All("strata:mushroom_stem"),
     hardness: 0.2,
+    tool: Some(BlockTool(kind: "strata:axe")),
     sound: Some("strata:wood"),
     category: Some("strata:natural"),
 )

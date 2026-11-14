@@ -1,0 +1,2 @@
+// Stage 5 of 10 of the cracks drawn over a block being broken.
+Material(ramp: "crack", pattern: Cracks(stage: 4, stages: 10, seed: 3))

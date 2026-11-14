@@ -1,6 +1,7 @@
 Block(
     textures: All("strata:obsidian"),
     hardness: 50.0,
+    tool: Some(BlockTool(kind: "strata:pickaxe", level: 3, required: true)),
     sound: Some("strata:stone"),
     category: Some("strata:natural"),
 )

@@ -9,11 +9,13 @@ mod fluid;
 mod hit_box;
 mod item;
 mod liquid;
+mod loot;
 mod particle;
 mod png_file;
 mod registry;
 mod textures;
 mod tint;
+mod tool;
 mod turned;
 
 pub use attached::{AttachedSides, Attachment};
@@ -27,6 +29,10 @@ pub use fluid::{
 pub use hit_box::{HitBox, Support};
 pub use item::{EquipSlot, Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
+pub use loot::{
+    EntryDef, LootCondition, LootContext, LootDrop, LootEntry, LootPool, LootTable, LootTableDef,
+    PoolDef,
+};
 pub use particle::{
     BlockParticles, BreakingDef, ImpactDef, MAX_BURST, Particle, ParticleDef, ParticleRole,
     ParticleTriggersDef, Particles,
@@ -37,6 +43,7 @@ pub use registry::{
 };
 pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
 pub use tint::{BiomeTints, BlockTint, Tint, TintFaces, TintKind, UNTINTED_ALPHA};
+pub use tool::{BlockTool, TICKS_PER_SECOND, ToolDef, crack_stage};
 
 use crate::audio::{self, Sounds};
 use crate::cinematic::{self, Cinematic};
@@ -64,6 +71,8 @@ pub struct Content {
     pub skies: BTreeMap<Identifier, Sky>,
     pub particles: Registry<ParticleId, Particle>,
     pub sounds: Sounds,
+    /// What broken blocks give, by table identifier.
+    pub loot_tables: BTreeMap<Identifier, LootTable>,
 }
 
 /// Identifier of the empty block, always `BlockId::AIR`.
@@ -93,6 +102,8 @@ impl Content {
             entities: &entities,
         };
         let items = item::load_items(packs, &known, &textures, &mut errors);
+        let loot_tables = loot::load_loot_tables(packs, &items, &mut errors);
+        loot::check_loot_names(&blocks, &loot_tables, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
         let cinematics = cinematic::load(packs, &mut errors);
         let days = sky::load_days(packs, &mut errors);
@@ -109,6 +120,7 @@ impl Content {
             skies,
             particles: particles.registry,
             sounds,
+            loot_tables,
         };
         (content, errors)
     }
@@ -123,6 +135,26 @@ impl Content {
             _ => "item",
         };
         self.translations.text(language, &id.translation_key(kind))
+    }
+
+    /// What breaking `block` rolls: its table, or the block itself.
+    pub fn block_loot(&self, block: BlockId) -> Option<&LootTable> {
+        let name = self.blocks.get(block)?.loot.as_ref()?;
+        self.loot_tables.get(name)
+    }
+
+    /// Tool kinds named by blocks, items and loot tables (each has a translated name).
+    pub fn tool_kinds(&self) -> Vec<&Identifier> {
+        let blocks = self.blocks.iter().filter_map(|(_, _, b)| b.tool.as_ref());
+        let items = self.items.iter().filter_map(|(_, _, i)| i.tool.as_ref());
+        let mut kinds: Vec<&Identifier> = blocks
+            .map(|tool| &tool.kind)
+            .chain(items.flat_map(|tool| &tool.kinds))
+            .chain(self.loot_tables.values().flat_map(loot::condition_kinds))
+            .collect();
+        kinds.sort();
+        kinds.dedup();
+        kinds
     }
 
     /// The day cycle of `dimension` (the default one if its pack defines none).
@@ -196,8 +228,13 @@ impl Content {
             .flat_map(|shot| &shot.keyframes)
             .filter_map(|key| key.subtitle.clone());
         let sounds = self.sounds.subtitle_keys().cloned();
+        let tools = self
+            .tool_kinds()
+            .into_iter()
+            .map(|k| k.translation_key("tool"));
         let mut keys: Vec<String> = blocks
             .chain(items)
+            .chain(tools)
             .chain(categories)
             .chain(subtitles)
             .chain(sounds)
@@ -279,6 +316,8 @@ fn load_blocks(
             light_opacity: value.light_opacity.min(15),
             light_emission: value.light_emission.min(15),
             hardness: value.hardness,
+            tool: value.tool,
+            loot: value.loot,
             faces,
             sound: value.sound,
             category: value.category,

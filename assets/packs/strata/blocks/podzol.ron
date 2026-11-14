@@ -1,6 +1,8 @@
 Block(
     textures: TopBottomSides(top: "strata:podzol_top", bottom: "strata:dirt", sides: "strata:podzol_side"),
     hardness: 0.5,
+    tool: Some(BlockTool(kind: "strata:shovel")),
+    loot: Some("strata:dirt_from_grass"),
     sound: Some("strata:grass"),
     category: Some("strata:natural"),
 )

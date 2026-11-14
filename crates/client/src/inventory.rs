@@ -148,6 +148,7 @@ mod tests {
                 action: None,
                 durability: None,
                 equip: None,
+                tool: None,
             };
             items.insert(format!("strata:{name}").parse().unwrap(), item);
         }

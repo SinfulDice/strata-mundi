@@ -1,6 +1,7 @@
 Block(
     textures: TopBottomSides(top: "strata:sandstone_top", bottom: "strata:sandstone_top", sides: "strata:sandstone"),
     hardness: 0.8,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
     sound: Some("strata:stone"),
     category: Some("strata:natural"),
 )

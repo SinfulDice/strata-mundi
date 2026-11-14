@@ -1,6 +1,8 @@
 Block(
     textures: TopBottomSides(top: "strata:snow", bottom: "strata:dirt", sides: "strata:snowy_grass_block_side"),
     hardness: 0.6,
+    tool: Some(BlockTool(kind: "strata:shovel")),
+    loot: Some("strata:dirt_from_grass"),
     sound: Some("strata:snow"),
     category: Some("strata:natural"),
 )

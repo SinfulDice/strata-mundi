@@ -1,0 +1,7 @@
+// Mostly nothing, sometimes one or two mushrooms.
+LootTable(pools: [
+    Pool(entries: [
+        Nothing(weight: 4),
+        Item(item: "strata:brown_mushroom", count: (1, 2)),
+    ]),
+])

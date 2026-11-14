@@ -3,6 +3,7 @@ Block(
     render: Cutout,
     light_opacity: 0,
     hardness: 0.3,
+    loot: Some("strata:nothing"),
     sound: Some("strata:glass"),
     category: Some("strata:building"),
 )

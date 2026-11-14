@@ -1,6 +1,7 @@
 Block(
     textures: All("strata:gravel"),
     hardness: 0.6,
+    tool: Some(BlockTool(kind: "strata:shovel")),
     sound: Some("strata:gravel"),
     category: Some("strata:natural"),
 )

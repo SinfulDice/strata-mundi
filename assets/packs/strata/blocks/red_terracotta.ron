@@ -1,6 +1,7 @@
 Block(
     textures: All("strata:red_terracotta"),
     hardness: 1.25,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
     sound: Some("strata:stone"),
     category: Some("strata:natural"),
 )

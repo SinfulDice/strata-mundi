@@ -3,6 +3,8 @@ Block(
     render: Translucent,
     light_opacity: 2,
     hardness: 0.5,
+    tool: Some(BlockTool(kind: "strata:pickaxe")),
+    loot: Some("strata:nothing"),
     slipperiness: 0.98,
     sound: Some("strata:glass"),
     category: Some("strata:natural"),

@@ -2,6 +2,7 @@
 Block(
     textures: TopBottomSides(top: "strata:chest_top", bottom: "strata:chest_top", sides: "strata:chest_side"),
     hardness: 2.5,
+    tool: Some(BlockTool(kind: "strata:axe")),
     sound: Some("strata:wood"),
     category: Some("strata:storage"),
     container: Some(Container(rows: 3, joins: true)),

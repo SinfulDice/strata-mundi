@@ -1,0 +1,4 @@
+// Leaves, vines and tall plants: kept only when cut with shears.
+LootTable(pools: [
+    Pool(conditions: [Tool("strata:shears")], entries: [Itself()]),
+])

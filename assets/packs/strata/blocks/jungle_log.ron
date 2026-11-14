@@ -1,6 +1,7 @@
 Block(
     textures: Column(end: "strata:jungle_log_top", side: "strata:jungle_log"),
     hardness: 2.0,
+    tool: Some(BlockTool(kind: "strata:axe")),
     sound: Some("strata:wood"),
     category: Some("strata:natural"),
     placement: Axis,
