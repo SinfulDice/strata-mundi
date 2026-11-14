@@ -289,4 +289,59 @@ mod tests {
             assert_eq!(round_trip(&message), message);
         }
     }
+
+    #[test]
+    fn inventory_messages_survive_serialization() {
+        use crate::inventory::{InventoryRequest, OpenedContainer};
+        use strata_core::inventory::{Area, Click, DataValue, ItemStack, SlotRef, SortOrder};
+        let mut stack = ItemStack {
+            item: ItemId(4),
+            count: 12,
+            durability: Some(7),
+            data: Default::default(),
+        };
+        let parts = vec![
+            DataValue::Id("strata:oak".parse().unwrap()),
+            DataValue::Int(-3),
+        ];
+        stack
+            .data
+            .set("strata:parts".parse().unwrap(), DataValue::List(parts));
+        let mut inventory = PlayerInventory::default();
+        inventory.slots.slots[40] = Some(stack.clone());
+        inventory.cursor = Some(stack.clone());
+        let mut contents = Container::new(54);
+        contents.slots[53] = Some(stack.clone());
+        for message in [
+            ServerMessage::Inventory(Box::new(inventory)),
+            ServerMessage::ContainerOpened(Box::new(OpenedContainer {
+                block: BlockId(9),
+                pos: BlockPos::new(1, 2, 3),
+                contents: contents.clone(),
+            })),
+            ServerMessage::ContainerContents(Box::new(contents)),
+            ServerMessage::ContainerClosed,
+        ] {
+            assert_eq!(round_trip(&message), message);
+        }
+        for request in [
+            InventoryRequest::Click {
+                slot: SlotRef::open(53),
+                click: Click::HotbarSwap(8),
+            },
+            InventoryRequest::Sort {
+                area: Area::Open,
+                order: SortOrder::Name,
+                language: "lol".into(),
+            },
+            InventoryRequest::CreativeSet {
+                index: 3,
+                stack: Some(stack),
+            },
+            InventoryRequest::DropSelected { whole: true },
+        ] {
+            let message = ClientMessage::Inventory(request);
+            assert_eq!(round_trip(&message), message);
+        }
+    }
 }
