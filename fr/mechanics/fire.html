@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feu — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/mechanics/fire.html" hreflang="fr">FR</a><a href="../../en/mechanics/fire.html" hreflang="en">EN</a><a href="../../lol/mechanics/fire.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Feu</h1>
+<h2>Principe</h2>
+<p>Le <strong>feu</strong> est un bloc de flammes qui éclaire (niveau 15), vieillit et se propage. Il tient sur un bloc solide ou à côté d'un bloc inflammable. À chaque pas (un peu plus d'une seconde et demie), il prend de l'âge, peut <strong>consumer</strong> un voisin inflammable (parfois en lui laissant une flamme) et <strong>allumer l'air</strong> autour de lui, jusqu'à quatre blocs au-dessus, quand cet air touche quelque chose qui brûle. Plus il est vieux, moins il se propage ; un feu sans combustible s'éteint vite, et tout incendie finit par mourir de lui-même.</p>
+<h2>Le briquet (créatif)</h2>
+<p>Dans l'onglet <strong>Outils</strong> de l'inventaire créatif, le <strong>briquet</strong> allume un feu d'un <strong>clic droit</strong> sur la face visée, si un feu peut tenir à cet endroit (pas à côté de l'eau). Le serveur vérifie chaque usage (portée, place libre), comme pour poser un bloc.</p>
+<h2>Ce qui brûle</h2>
+<ul>
+<li><strong>Bûches</strong> : s'enflamment difficilement et se consument lentement.</li>
+<li><strong>Planches</strong> : un peu plus vite.</li>
+<li><strong>Feuilles</strong> : prennent facilement.</li>
+<li><strong>Herbes, fougères, buissons, fleurs</strong> : partent en un instant.</li>
+<li><strong>Lianes</strong> : brûlent vite mais allument peu l'air autour.</li>
+</ul>
+<p>La pierre, la terre, le sable et les champignons ne brûlent pas. Le wiki de chaque bloc indique s'il est <strong>inflammable</strong>.</p>
+<h2>Éteindre</h2>
+<ul>
+<li>L'<strong>eau</strong> éteint aussitôt un feu qui la touche, et aucun feu ne s'allume à côté d'elle.</li>
+<li>Casser le feu ou poser un bloc à sa place l'efface.</li>
+<li>Sans combustible, il s'éteint seul en quelques secondes.</li>
+</ul>
+<h2>Réglages</h2>
+<p>Options de monde, choisies à la création ou avec <code>/fire</code> : <code>spread</code> (le feu allume de nouveaux feux) et <code>destroy</code> (ce qui brûle est détruit). Les feux partagent le budget de mises à jour par tick des liquides (<code>/fluids &lt;budget&gt;</code>).</p>
+<h2>Historique</h2><table class="data"><tr><td>0.2.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

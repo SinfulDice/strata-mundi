@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/fire — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/commands/fire.html" hreflang="fr">FR</a><a href="../../en/commands/fire.html" hreflang="en">EN</a><a href="../../lol/commands/fire.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>/fire</h1>
+<p><code>/fire [spread|destroy] [on|off] ou /fire query</code></p><p>Laisse le feu se propager ou non, détruire ce qui brûle ou non.</p><p class="dim">Exécutée par le serveur, en mode créatif seulement.</p><h2>Description</h2>
+<p><code>/fire</code> règle le comportement du feu dans ce monde. Le réglage est enregistré avec le monde ; il se choisit aussi à la création (boutons « Feu » et « Brûle »).</p>
+<h2>Syntaxe</h2>
+<p><code>/fire spread on|off</code>, <code>/fire destroy on|off</code>, <code>/fire query</code></p>
+<ul>
+<li><code>spread off</code> : le feu n'allume plus de nouveaux feux autour de lui ; il s'use et s'éteint là où il est.</li>
+<li><code>destroy off</code> : ce qui brûle n'est plus détruit (le feu finit tout de même par s'éteindre).</li>
+<li><code>query</code> (ou rien) : affiche les deux réglages.</li>
+</ul>
+<h2>Exemples</h2>
+<ul>
+<li><code>/fire spread off</code> : une cheminée qui ne met jamais le feu à la maison.</li>
+<li><code>/fire destroy off</code> puis <code>/fire spread on</code> : un incendie spectaculaire qui ne laisse aucune trace.</li>
+</ul>
+<h2>Comportement</h2>
+<p>Exécutée par le serveur, en <strong>mode créatif</strong> uniquement. Les feux déjà allumés suivent aussitôt le nouveau réglage.</p>
+<h2>Découverte en jeu</h2>
+<p><code>/help fire</code> rappelle la syntaxe ; Tab complète <code>spread</code>, <code>destroy</code>, <code>query</code>, puis <code>on</code> et <code>off</code>.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.2.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

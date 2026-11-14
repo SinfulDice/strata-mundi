@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sons — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/mechanics/sounds.html" hreflang="fr">FR</a><a href="../../en/mechanics/sounds.html" hreflang="en">EN</a><a href="../../lol/mechanics/sounds.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Sons</h1>
+<h2>Principe</h2>
+<p>Tous les sons du jeu sont <strong>fabriqués par le jeu lui-même</strong> à partir de recettes : du bruit filtré pour les frottements et les souffles, des grains pour le gravier, la neige ou les feuilles, des résonances pour le bois, la pierre, le verre et le métal, des bulles pour l'eau et la lave. Chaque son existe en plusieurs <strong>variantes</strong>, et chaque lecture change un peu sa hauteur : deux pas de suite ne sonnent jamais pareil.</p>
+<h2>Ce qu'on entend</h2>
+<ul>
+<li><strong>Pas</strong> : leur son dépend du bloc sous les pieds (pierre, terre, herbe, sable, gravier, neige, bois, verre et glace, feuilles, métal) et leur rythme de la vitesse : on entend courir.</li>
+<li><strong>Blocs cassés et posés</strong> : chaque matière a les siens ; le verre se brise en éclats.</li>
+<li><strong>Eau</strong> : un plouf quand on y tombe, des brassées quand on nage.</li>
+<li><strong>Lave</strong> : sa surface bouillonne ; au bord d'un lac de lave, on l'entend à peu près chaque seconde.</li>
+<li><strong>Feu</strong> : il crépite.</li>
+</ul>
+<p>Les sons viennent <strong>de leur position</strong> : plus faibles au loin, à gauche ou à droite selon l'endroit où l'on regarde, un peu étouffés quand ils viennent de derrière.</p>
+<h2>Ambiances</h2>
+<p>Chaque lieu a son fond sonore, qui se mêle doucement au suivant quand on change de biome :</p>
+<ul>
+<li><strong>Plaines et prairies</strong> : un vent léger, un peu plus fort en hauteur, avec une rafale de loin en loin.</li>
+<li><strong>Forêts</strong> : les feuilles qui bruissent.</li>
+<li><strong>Jungle</strong> : feuilles et insectes, plus bruyants la nuit.</li>
+<li><strong>Marais</strong> : la nuit, insectes et grenouilles.</li>
+<li><strong>Montagnes et neige</strong> : le vent, plus fort près des sommets, et quelques rafales.</li>
+<li><strong>Mer, océan et plages</strong> : les vagues, qu'on entend déjà depuis la terre proche.</li>
+<li><strong>Désert et badlands</strong> : un vent sec et du sable soulevé.</li>
+<li><strong>Sous terre</strong> : un grondement sourd et des gouttes qui tombent au loin.</li>
+</ul>
+<h2>Écho et murs</h2>
+<p>Avec l'<strong>audio spatial avancé</strong>, le lieu s'entend : rien en plein air, un léger écho dans une maison, plus dans une petite grotte, une longue résonance dans une grande caverne. Un son caché derrière des blocs pleins arrive <strong>étouffé</strong> et plus faible ; feuilles, verre et eau l'étouffent moins.</p>
+<h2>Musique</h2>
+<p>De temps en temps, un <strong>morceau calme</strong> s'élève : du piano sur des accords doux, avec beaucoup de silence entre les phrases. Chaque monde a son <strong>thème</strong> ; celui de Terra joue aussi sur l'écran titre. Le jeu compose plusieurs morceaux du thème, chacun d'une à trois minutes, et les <strong>enregistre la première fois</strong> pour ne plus avoir à les refaire. Entre deux morceaux, plusieurs minutes de silence : la musique reste une surprise.</p>
+<h2>Réglages</h2>
+<p>Onglet <strong>Son</strong> des options : volume général, puis volumes des <strong>blocs</strong> (pas, casse, pose, eau, lave, feu), des <strong>ambiances</strong> (fonds sonores des lieux : vent, feuilles, vagues, insectes, gouttes) et de la <strong>musique</strong>, que les préréglages ne changent pas, et la <strong>fréquence de la musique</strong> (<em>rare</em>, <em>normale</em> ou <em>souvent</em>) ; un volume de musique à 0 la coupe. <strong>Audio spatial</strong> : <em>avancé</em> (écho et sons étouffés) ou <em>stéréo simple</em> (distance et gauche/droite seulement, un peu moins de calcul) ; les préréglages <strong>DS</strong> et <strong>très bas</strong> passent en stéréo simple. Sans carte son, le jeu tourne normalement, en silence.</p>
+<h2>Sous-titres</h2>
+<p>Activés dans l'onglet <strong>Son</strong>, ils écrivent en bas à droite de l'écran chaque son entendu, avec une flèche vers sa direction (← à gauche, → à droite, ↑ devant, ↓ derrière). Une ligne disparaît trois secondes après le dernier son ; vos propres pas ne sont pas sous-titrés.</p>
+<h2>Packs de ressources</h2>
+<p>Un pack de ressources peut remplacer un son par un enregistrement : un fichier <code>sounds/&lt;nom&gt;.ogg</code> prend la place de la recette du même nom, et des fichiers <code>music/&lt;thème&gt;/*.ogg</code> remplacent les morceaux composés d'un thème.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.2.0</td><td>Ajouté</td></tr><tr><td>0.2.0</td><td>Musique calme et rare, composée par le jeu : thème de Terra, fréquence réglable.</td></tr><tr><td>0.2.1</td><td>Tous les sons sont prêts dès le chargement ; la lave s&#39;entend, le vent est plus doux ; curseur Ambiances.</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

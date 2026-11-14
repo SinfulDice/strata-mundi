@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Génération du monde — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/mechanics/world-generation.html" hreflang="fr">FR</a><a href="../../en/mechanics/world-generation.html" hreflang="en">EN</a><a href="../../lol/mechanics/world-generation.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Génération du monde</h1>
+<h2>Principe</h2>
+<p>Le monde n'est pas dessiné à la main : il est <strong>calculé</strong> à partir d'une graine, au fur et à mesure que vous avancez. Même graine, même monde, au bloc près, quel que soit l'ordre d'exploration. Il est pratiquement infini : seule la bordure choisie à la création l'arrête.</p>
+<h2>Relief et biomes</h2>
+<p>Quatre cartes invisibles couvrent le monde : <strong>température</strong>, <strong>humidité</strong>, <strong>continentalité</strong> (du large à l'intérieur des terres) et <strong>érosion</strong> (des terrains plats et usés aux reliefs jeunes). Les deux dernières donnent la hauteur du sol : océans profonds, collines douces, montagnes en crêtes. Le relief est en trois dimensions : <strong>falaises</strong>, <strong>surplombs</strong> et <strong>arches</strong> là où le terrain est jeune, <strong>plateaux en terrasses</strong> dans l'intérieur des terres, et des <strong>rivières</strong> sinueuses qui s'estompent en altitude en creusant des vallées sèches. Le biome, choisi d'après le climat, ne décide que du sol et de la végétation, avec des transitions douces entre voisins. Les biomes s'étendent sur des centaines de blocs et suivent des <strong>bandes de chaleur</strong> : un désert ne touche jamais la neige, il y a toujours entre eux des plaines, des forêts ou une savane. Dix-neuf biomes existent pour l'instant.</p>
+<h2>Sous la surface</h2>
+<p>Sous le sol du biome viennent la pierre, la roche profonde, puis le socle. L'eau remplit les creux jusqu'au niveau de la mer. Des <strong>grottes</strong> sinueuses traversent la roche sans s'ouvrir sous la mer, les <strong>minerais</strong> forment de petits filons selon la profondeur, de rares <strong>grands gisements</strong> de fer ou de cuivre s'étirent sur des dizaines de blocs (quelques pierres colorées les trahissent en surface), et arbres et cactus poussent selon le biome.</p>
+<h2>Types de monde</h2>
+<p>À la création, <strong>Type</strong> choisit le monde : <strong>normal</strong>, <strong>plat</strong> (des couches de blocs empilées), <strong>amplifié</strong> (montagnes bien plus hautes), <strong>biome unique</strong> (un seul biome partout, au choix) ou <strong>archipel</strong> (surtout de la mer, semée d'îles). <strong>Personnaliser la génération…</strong> ouvre l'éditeur : taille des biomes, niveau de la mer, densité des grottes et fréquence des minerais (100 % : le monde normal) ; selon le type, les <strong>couches</strong> du monde plat (ajouter, retirer, monter, baisser, choisir le bloc et l'épaisseur) ou le <strong>biome</strong>. Une <strong>carte</strong> à droite montre aussitôt le résultat autour du centre, sur environ 2 km (option Aperçu de la carte : détaillé, grossier ou désactivé).</p>
+<p>L'onglet <strong>Code</strong> donne un texte court qui résume tous ces réglages (<code>S1-…</code>) : copiez-le pour le partager, collez celui d'un ami pour retrouver le même type de monde. Un code abîmé ou venu d'une version plus récente est refusé avec un message. La graine reste à part : même code et même graine, même monde.</p>
+<h2>Point de départ</h2>
+<p>Plaines ou forêt, au sec, avec de l'eau à proximité.</p>
+<h2>Découverte en jeu</h2>
+<p>Explorez ! F3 affiche position et altitude, <code>/seed</code> la graine. Tout ceci est décrit dans le pack de base, modifiable par d'autres packs.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.1.0</td><td>Ajouté</td></tr><tr><td>0.2.0</td><td>Relief en 3D : falaises, surplombs, arches, plateaux en terrasses et rivières.</td></tr><tr><td>0.2.0</td><td>Cuivre, et grands gisements rares de fer et de cuivre signalés par des pierres colorées en surface.</td></tr><tr><td>0.2.0</td><td>Types de monde (normal, plat, amplifié, biome unique, archipel), éditeur de génération avec carte et codes partageables.</td></tr><tr><td>0.2.1</td><td>Biomes deux à trois fois plus grands ; un biome chaud et sec ne touche plus un biome enneigé ; ravins rares, étroits, aux parois de roche nue.</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

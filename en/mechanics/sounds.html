@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sounds — Strata Mundi Wiki</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="en">
+<header>
+<a class="logo" href="../index.html">Strata Mundi Wiki</a>
+<nav><a href="../blocks/index.html">Blocks</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mechanics</a><a href="../commands/index.html">Commands</a><a href="../controls.html">Controls</a><a href="../settings.html">Settings</a><a href="../news.html">What&#39;s new</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Search…" autocomplete="off">
+<span class="languages"><a href="../../fr/mechanics/sounds.html" hreflang="fr">FR</a><a class="current" href="../../en/mechanics/sounds.html" hreflang="en">EN</a><a href="../../lol/mechanics/sounds.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Light or dark theme" aria-label="Light or dark theme"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Sounds</h1>
+<h2>How it works</h2>
+<p>Every sound in the game is <strong>made by the game itself</strong> from recipes: filtered noise for scuffs and gusts, grains for gravel, snow or leaves, resonances for wood, stone, glass and metal, bubbles for water and lava. Each sound comes in several <strong>variants</strong>, and each play shifts its pitch a little: two steps in a row never sound the same.</p>
+<h2>What you hear</h2>
+<ul>
+<li><strong>Footsteps</strong>: their sound depends on the block underfoot (stone, dirt, grass, sand, gravel, snow, wood, glass and ice, leaves, metal) and their pace on your speed: you can hear running.</li>
+<li><strong>Broken and placed blocks</strong>: each material has its own; glass shatters.</li>
+<li><strong>Water</strong>: a splash when you fall in, strokes as you swim.</li>
+<li><strong>Lava</strong>: its surface bubbles; on the shore of a lava lake you hear it about every second.</li>
+<li><strong>Fire</strong>: it crackles.</li>
+</ul>
+<p>Sounds come <strong>from where they happen</strong>: quieter far away, left or right depending on where you look, a little duller from behind.</p>
+<h2>Ambiences</h2>
+<p>Each place has its own background, which slowly blends into the next one as you change biome:</p>
+<ul>
+<li><strong>Plains and meadows</strong>: a light wind, a little stronger up high, with a rare gust.</li>
+<li><strong>Forests</strong>: rustling leaves.</li>
+<li><strong>Jungle</strong>: leaves and insects, louder at night.</li>
+<li><strong>Swamp</strong>: at night, insects and frogs.</li>
+<li><strong>Mountains and snow</strong>: the wind, stronger near the summits, and a few gusts.</li>
+<li><strong>Sea, ocean and beaches</strong>: the waves, already heard from the land nearby.</li>
+<li><strong>Desert and badlands</strong>: a dry wind and blowing sand.</li>
+<li><strong>Underground</strong>: a deep rumble and drops of water falling far away.</li>
+</ul>
+<h2>Echo and walls</h2>
+<p>With <strong>advanced spatial audio</strong>, you can hear the place: nothing in the open air, a slight echo in a house, more in a small cave, a long ring in a large cavern. A sound hidden behind solid blocks arrives <strong>muffled</strong> and quieter; leaves, glass and water muffle it less.</p>
+<h2>Music</h2>
+<p>Now and then, a <strong>calm piece</strong> rises: piano over soft chords, with plenty of silence between the phrases. Each world has its own <strong>theme</strong>; Terra's also plays on the title screen. The game composes several pieces of the theme, one to three minutes each, and <strong>saves them the first time</strong> so it never has to make them again. Several minutes of silence pass between two pieces: the music stays a surprise.</p>
+<h2>Settings</h2>
+<p><strong>Sound</strong> tab of the options: master volume, then <strong>blocks</strong> (steps, breaking, placing, water, lava, fire), <strong>ambiences</strong> (background sounds of places: wind, leaves, waves, insects, drips) and <strong>music</strong> volumes, which presets never change, and the <strong>music frequency</strong> (<em>rare</em>, <em>normal</em> or <em>often</em>); a music volume of 0 turns it off. <strong>Spatial audio</strong>: <em>advanced</em> (echo and muffled sounds) or <em>simple stereo</em> (distance and left/right only, a little less work); the <strong>DS</strong> and <strong>very low</strong> presets switch to simple stereo. Without a sound card the game runs normally, silently.</p>
+<h2>Subtitles</h2>
+<p>Turned on in the <strong>Sound</strong> tab, they write every sound heard at the bottom right of the screen, with an arrow towards it (← left, → right, ↑ ahead, ↓ behind). A line goes three seconds after the sound was last heard; your own footsteps are not subtitled.</p>
+<h2>Resource packs</h2>
+<p>A resource pack can replace a sound with a recording: a <code>sounds/&lt;name&gt;.ogg</code> file takes the place of the recipe with the same name, and <code>music/&lt;theme&gt;/*.ogg</code> files replace the composed pieces of a theme.</p>
+<h2>History</h2><table class="data"><tr><td>0.2.0</td><td>Added</td></tr><tr><td>0.2.0</td><td>Calm and rare music, composed by the game: Terra&#39;s theme, adjustable frequency.</td></tr><tr><td>0.2.1</td><td>Every sound is ready from loading; lava can be heard, the wind is softer; Ambiences slider.</td></tr></table>
+</main>
+<footer>Generated from the game&#39;s packs. Texts under CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

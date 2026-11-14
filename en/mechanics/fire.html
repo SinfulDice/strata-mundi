@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fire — Strata Mundi Wiki</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="en">
+<header>
+<a class="logo" href="../index.html">Strata Mundi Wiki</a>
+<nav><a href="../blocks/index.html">Blocks</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mechanics</a><a href="../commands/index.html">Commands</a><a href="../controls.html">Controls</a><a href="../settings.html">Settings</a><a href="../news.html">What&#39;s new</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Search…" autocomplete="off">
+<span class="languages"><a href="../../fr/mechanics/fire.html" hreflang="fr">FR</a><a class="current" href="../../en/mechanics/fire.html" hreflang="en">EN</a><a href="../../lol/mechanics/fire.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Light or dark theme" aria-label="Light or dark theme"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Fire</h1>
+<h2>Principle</h2>
+<p><strong>Fire</strong> is a block of flames that gives light (level 15), ages and spreads. It stands on a solid block or next to a flammable one. At each step (a little over a second and a half), it gets older, may <strong>consume</strong> a flammable neighbour (sometimes leaving a flame in its place) and <strong>light the air</strong> around it, up to four blocks above, when that air touches something that burns. The older it is, the less it spreads; a fire without fuel soon dies, and every blaze ends on its own.</p>
+<h2>Flint and steel (creative)</h2>
+<p>In the <strong>Tools</strong> tab of the creative inventory, <strong>flint and steel</strong> lights a fire with a <strong>right click</strong> on the aimed face, if a fire can stand there (not next to water). The server checks each use (reach, free space), as for placing a block.</p>
+<h2>What burns</h2>
+<ul>
+<li><strong>Logs</strong>: hard to light, burn slowly.</li>
+<li><strong>Planks</strong>: a little faster.</li>
+<li><strong>Leaves</strong>: catch easily.</li>
+<li><strong>Grass, ferns, bushes, flowers</strong>: go up in an instant.</li>
+<li><strong>Vines</strong>: burn fast but light little air around them.</li>
+</ul>
+<p>Stone, dirt, sand and mushrooms do not burn. Each block's wiki page says whether it is <strong>flammable</strong>.</p>
+<h2>Putting it out</h2>
+<ul>
+<li><strong>Water</strong> puts out at once a fire that touches it, and no fire lights next to it.</li>
+<li>Breaking the fire or placing a block in its place removes it.</li>
+<li>Without fuel, it dies on its own within seconds.</li>
+</ul>
+<h2>Settings</h2>
+<p>World options, chosen at creation or with <code>/fire</code>: <code>spread</code> (fire lights new fires) and <code>destroy</code> (what burns is destroyed). Fires share the liquids' budget of updates per tick (<code>/fluids &lt;budget&gt;</code>).</p>
+<h2>History</h2><table class="data"><tr><td>0.2.0</td><td>Added</td></tr></table>
+</main>
+<footer>Generated from the game&#39;s packs. Texts under CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

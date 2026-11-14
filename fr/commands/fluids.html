@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/fluids — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/commands/fluids.html" hreflang="fr">FR</a><a href="../../en/commands/fluids.html" hreflang="en">EN</a><a href="../../lol/commands/fluids.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>/fluids</h1>
+<p><code>/fluids [on|off|query|&lt;budget&gt;]</code></p><p>Fait couler ou fige l&#39;eau et la lave ; un nombre règle les mises à jour par tick, partagées avec le feu (un pas de feu en compte trois).</p><p class="dim">Exécutée par le serveur, en mode créatif seulement.</p><h2>Description</h2>
+<p><code>/fluids</code> fait couler ou fige l'eau et la lave du monde, et règle combien de blocs de liquide le serveur met à jour à chaque tick. Le réglage est enregistré avec le monde ; il se choisit aussi à la création du monde (bouton « Fluides »).</p>
+<h2>Syntaxe</h2>
+<p><code>/fluids [on|off|query|&lt;budget&gt;]</code></p>
+<ul>
+<li><code>on</code> : les liquides coulent.</li>
+<li><code>off</code> : les liquides restent tels quels, là où ils sont.</li>
+<li><code>query</code> (ou rien) : affiche le réglage actuel.</li>
+<li><code>&lt;budget&gt;</code> : nombre de mises à jour de liquide par tick au plus (2048 par défaut) ; le reste attend le tick suivant.</li>
+</ul>
+<h2>Exemples</h2>
+<ul>
+<li><code>/fluids off</code> : fige un lac pendant une construction.</li>
+<li><code>/fluids 512</code> : écoulements plus lents mais moins coûteux, utile sur une petite machine.</li>
+</ul>
+<h2>Comportement</h2>
+<p>Exécutée par le serveur, en <strong>mode créatif</strong> uniquement. Figer les liquides oublie les blocs en train de couler : ils repartent seulement quand un bloc voisin change après <code>/fluids on</code>.</p>
+<h2>Conseils</h2>
+<p>Un budget plus petit ne change pas la forme finale d'un écoulement, seulement sa vitesse quand beaucoup d'eau bouge à la fois.</p>
+<h2>Découverte en jeu</h2>
+<p><code>/help fluids</code> rappelle la syntaxe ; Tab complète <code>on</code>, <code>off</code> et <code>query</code>.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.2.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/cinematic — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/commands/cinematic.html" hreflang="fr">FR</a><a href="../../en/commands/cinematic.html" hreflang="en">EN</a><a href="../../lol/commands/cinematic.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>/cinematic</h1>
+<p><code>/cinematic &lt;id&gt;</code></p><p>Joue une cinématique des packs.</p><p class="dim">Exécutée sur votre écran.</p><h2>Description</h2>
+<p><code>/cinematic</code> joue une cinématique : un plan de caméra scripté, décrit dans un pack, qui survole les environs comme dans un film. Le pack de base en contient une de démonstration.</p>
+<h2>Syntaxe</h2>
+<p><code>/cinematic &lt;id&gt;</code>, où <code>id</code> est l'identifiant complet de la cinématique (espace de noms compris).</p>
+<h2>Exemples</h2>
+<ul>
+<li><code>/cinematic strata:showcase</code> : la caméra s'élève et tourne autour de l'endroit où vous vous trouvez.</li>
+</ul>
+<h2>Comportement</h2>
+<p>Traitée directement par votre écran, dans tous les modes de jeu. Le plan part de <strong>votre position</strong> : la même cinématique fonctionne partout. Pendant la lecture, vous ne bougez plus, l'interface laisse place à des bandes noires et à d'éventuels sous-titres, puis la vue revient à vos yeux. Échap (ou B à la manette) passe la cinématique si elle le permet. Un identifiant inconnu est signalé.</p>
+<h2>Conseils</h2>
+<p>Placez-vous à un endroit dégagé avant de lancer un plan : la caméra ne contourne pas les obstacles.</p>
+<h2>Découverte en jeu</h2>
+<p><code>/help cinematic</code> rappelle la syntaxe, et Tab complète les identifiants de toutes les cinématiques disponibles dans vos packs.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.1.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

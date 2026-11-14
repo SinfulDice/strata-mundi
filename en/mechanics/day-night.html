@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day and night — Strata Mundi Wiki</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="en">
+<header>
+<a class="logo" href="../index.html">Strata Mundi Wiki</a>
+<nav><a href="../blocks/index.html">Blocks</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mechanics</a><a href="../commands/index.html">Commands</a><a href="../controls.html">Controls</a><a href="../settings.html">Settings</a><a href="../news.html">What&#39;s new</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Search…" autocomplete="off">
+<span class="languages"><a href="../../fr/mechanics/day-night.html" hreflang="fr">FR</a><a class="current" href="../../en/mechanics/day-night.html" hreflang="en">EN</a><a href="../../lol/mechanics/day-night.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Light or dark theme" aria-label="Light or dark theme"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Day and night</h1>
+<h2>Principle</h2>
+<p>On Terra, a day lasts <strong>20 minutes</strong>: about 10 minutes of daylight and 10 of night, with a short twilight at each sunrise and sunset. The <strong>sun</strong> rises in the east, crosses the sky tilting a little towards the south, then makes way for the <strong>moon</strong>. The share of the day and the light left at night come from the dimension's pack, so a pack can change them.</p>
+<h2>What you see</h2>
+<ul>
+<li><strong>The sky</strong> goes from daytime blue to the orange of twilight, then to the dark blue of night. The fog and the horizon follow.</li>
+<li><strong>The sun and moon</strong> are big, crisp pixels. The moon has <strong>8 phases</strong>, one per day, from full moon to new moon and back.</li>
+<li><strong>Stars</strong> twinkle at night and fade near the horizon and at dawn.</li>
+<li><strong>Clouds</strong> drift gently, always the same way, very high up: above the hills, below the great peaks. Their colour follows the time (white by day, pinkish at twilight, dark grey at night). They only move while time passes: when the game is paused, they stop.</li>
+<li><strong>Daylight</strong> drops at night but never to zero: you can still see a little by the glow of the sky. Since 0.2, nights are <strong>bluish</strong>: by moonlight, shapes and slopes stay readable but not the details, and a torch has never been more welcome. Placed lights (torches, lanterns, glowstone) make the difference.</li>
+</ul>
+<h2>Setting the time</h2>
+<ul>
+<li><code>/time</code> reads or sets the world's time; <code>/daycycle</code> stops or restarts its course. Both are typed in creative mode.</li>
+<li>When creating a world, the <strong>Day and night</strong> button picks between time that goes by or a frozen clock. The choice is saved with the world.</li>
+<li>The time is saved with the world. It never goes back: the phases of the moon keep counting the days.</li>
+<li>Time stands still while the game is paused.</li>
+</ul>
+<h2>Settings</h2>
+<p>Two graphics settings are about the sky (Graphics tab):</p>
+<ul>
+<li><strong>Stars</strong>: on or off. Almost no cost. Off in the "Very low" preset.</li>
+<li><strong>Clouds</strong>: <strong>off</strong>, <strong>simple</strong> (one flat layer, very light) or <strong>full</strong> (with volume, a little more work for the graphics card). "Very low" turns them off, "Low" and "DS" keep them simple, the others use full ones.</li>
+</ul>
+<p>Changes apply right away. The dimension's pack also sets the length of the day, the amount of clouds and their speed.</p>
+<h2>Tips</h2>
+<ul>
+<li>Night has fallen? In creative, <code>/time set day</code> saves you waiting for the morning.</li>
+<li>To build with the sun standing still: <code>/time set noon</code> then <code>/daycycle off</code>.</li>
+<li>A full-moon night is the brightest to look at; count eight days from one full moon to the next.</li>
+</ul>
+<h2>Discovery in game</h2>
+<p>The sky is found simply by playing: sun, moon and clouds are there from the first day. The commands are explained by <code>/help time</code> and <code>/help daycycle</code>, and the settings by their help sentences in the options menu. [LORE À ÉCRIRE]: what the people of Terra say about the sun and the moon.</p>
+<h2>History</h2><table class="data"><tr><td>0.2.0</td><td>Added</td></tr><tr><td>0.2.0</td><td>Darker nights and fog tinted by the biome.</td></tr></table>
+</main>
+<footer>Generated from the game&#39;s packs. Texts under CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

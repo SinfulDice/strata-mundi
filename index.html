@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strata Mundi — Wiki</title>
+<link rel="stylesheet" href="style.css">
+<script>
+  // Opens the wiki in the visitor's language (French, else English); links below otherwise.
+  var lang = (navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en";
+  try { lang = localStorage.getItem("strata-wiki-lang") || lang; } catch (e) {}
+  location.replace(lang + "/index.html");
+</script>
+</head>
+<body>
+<main class="chooser">
+<h1>Strata Mundi — Wiki</h1>
+<p><a href="fr/index.html">Français</a> · <a href="en/index.html">English</a> · <a href="lol/index.html">LOLCAT</a></p>
+</main>
+</body>
+</html>

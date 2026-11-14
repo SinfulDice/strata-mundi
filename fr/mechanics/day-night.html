@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cycle jour et nuit — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/mechanics/day-night.html" hreflang="fr">FR</a><a href="../../en/mechanics/day-night.html" hreflang="en">EN</a><a href="../../lol/mechanics/day-night.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Cycle jour et nuit</h1>
+<h2>Principe</h2>
+<p>Sur Terra, une journée dure <strong>20 minutes</strong> : environ 10 minutes de jour, 10 de nuit, avec un court crépuscule à chaque lever et coucher du soleil. Le <strong>soleil</strong> se lève à l'est, traverse le ciel en s'inclinant un peu vers le sud, puis laisse la place à la <strong>lune</strong>. La part du jour et la lumière qui reste la nuit viennent du pack de la dimension : un pack peut donc les changer.</p>
+<h2>À voir</h2>
+<ul>
+<li><strong>Le ciel</strong> passe du bleu du jour à l'orangé du crépuscule, puis au bleu sombre de la nuit. Le brouillard et l'horizon suivent, et le brouillard prend aussi la teinte du biome où l'on se trouve.</li>
+<li><strong>Le soleil et la lune</strong> sont de gros pixels bien nets. La lune a <strong>8 phases</strong>, une par jour, de la pleine lune à la nouvelle lune, puis retour.</li>
+<li><strong>Les étoiles</strong> scintillent la nuit et s'effacent près de l'horizon et à l'aube.</li>
+<li><strong>Les nuages</strong> dérivent doucement, toujours dans le même sens, très haut : au-dessus des collines, sous les grands pics. Leur couleur suit l'heure (blancs le jour, rosés au crépuscule, gris sombre la nuit). Le vent ne les fait avancer que tant que le temps passe : en pause, ils s'arrêtent.</li>
+<li><strong>La lumière du jour</strong> baisse la nuit sans jamais tomber à zéro : on y voit encore un peu à la lueur du ciel. Depuis la 0.2, les nuits sont <strong>bleutées</strong> : au clair de lune, le relief et les silhouettes restent lisibles, mais pas les détails, et une torche n'a jamais été aussi appréciée. Les lumières posées (torches, lanternes, pierre lumineuse) font la différence.</li>
+</ul>
+<h2>Régler l'heure</h2>
+<ul>
+<li><code>/time</code> lit ou règle l'heure du monde ; <code>/daycycle</code> arrête ou relance son cours. Ces deux commandes se tapent en mode créatif.</li>
+<li>À la création d'un monde, le bouton <strong>Cycle jour/nuit</strong> choisit d'avoir un temps qui passe ou une heure figée. Le choix est enregistré avec le monde.</li>
+<li>L'heure est enregistrée avec la sauvegarde. Elle ne recule jamais : les phases de la lune continuent de compter les jours.</li>
+<li>Le temps est gelé quand le jeu est en pause.</li>
+</ul>
+<h2>Réglages</h2>
+<p>Deux réglages graphiques concernent le ciel (onglet Graphismes) :</p>
+<ul>
+<li><strong>Étoiles</strong> : activées ou non. Coût presque nul. Coupées dans le préréglage « Très bas ».</li>
+<li><strong>Nuages</strong> : <strong>désactivés</strong>, <strong>simples</strong> (une couche plate, très légère) ou <strong>complets</strong> (avec du volume, un peu plus de travail pour la carte graphique). Les préréglages « Très bas » les coupent, « Bas » et « DS » les gardent simples, les autres les veulent complets.</li>
+</ul>
+<p>Les changements s'appliquent tout de suite. Le pack de la dimension règle aussi la durée du jour, la quantité de nuages et leur vitesse.</p>
+<h2>Conseils</h2>
+<ul>
+<li>La nuit venue, un tour de <code>/time set day</code> (en créatif) évite d'attendre le matin.</li>
+<li>Pour construire sans que le soleil bouge : <code>/time set noon</code> puis <code>/daycycle off</code>.</li>
+<li>Une nuit de pleine lune est la plus claire à regarder ; comptez huit jours d'une pleine lune à l'autre.</li>
+</ul>
+<h2>Découverte en jeu</h2>
+<p>Le ciel se découvre simplement en jouant : le soleil, la lune et les nuages sont là dès le premier jour. Les commandes sont expliquées par <code>/help time</code> et <code>/help daycycle</code>, et les réglages par leurs phrases d'aide dans le menu d'options. [LORE À ÉCRIRE] : ce que les gens de Terra disent du soleil et de la lune.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.2.0</td><td>Ajouté</td></tr><tr><td>0.2.0</td><td>Nuits plus sombres et brouillard teinté par le biome.</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

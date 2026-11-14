@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sauvegarde — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/mechanics/saving.html" hreflang="fr">FR</a><a href="../../en/mechanics/saving.html" hreflang="en">EN</a><a href="../../lol/mechanics/saving.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Sauvegarde</h1>
+<h2>Principe</h2>
+<p>Chaque monde a son propre dossier : sa description (nom, graine, mode, temps de jeu), votre personnage (position, regard, barre) et une capture pour la liste des mondes. Le terrain se recalculant depuis la graine, <strong>seules les zones modifiées</strong> sont enregistrées : un monde très parcouru mais peu transformé reste minuscule.</p>
+<h2>Quand le jeu sauvegarde</h2>
+<ul>
+<li><strong>Automatiquement</strong>, à intervalle régulier (réglable dans Options → Jeu).</li>
+<li>Avec <strong>Sauvegarder et quitter</strong>, dans le menu pause.</li>
+<li>En fermant la fenêtre du jeu.</li>
+<li>Sur le DS, en <strong>fermant le clapet</strong> : pause et sauvegarde immédiates.</li>
+</ul>
+<h2>Jamais de monde abîmé</h2>
+<p>Chaque fichier est écrit à côté puis remplacé d'un coup : une coupure de courant laisse l'ancienne ou la nouvelle version, jamais un mélange. Un fichier illisible est mis de côté, pas écrasé.</p>
+<h2>Copies de sécurité</h2>
+<p>À chaque ouverture d'un monde, une copie complète est faite ; les plus récentes sont gardées (nombre réglable dans Options → Jeu). Supprimer un monde conserve ses copies.</p>
+<h2>Versions</h2>
+<p>Un monde venant d'une version incompatible apparaît grisé dans la liste, avec la raison.</p>
+<h2>Découverte en jeu</h2>
+<p>La liste des mondes montre capture, date, mode et temps de jeu ; la confirmation de suppression rappelle que les copies sont gardées.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.1.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

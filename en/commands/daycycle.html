@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/daycycle — Strata Mundi Wiki</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="en">
+<header>
+<a class="logo" href="../index.html">Strata Mundi Wiki</a>
+<nav><a href="../blocks/index.html">Blocks</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mechanics</a><a href="../commands/index.html">Commands</a><a href="../controls.html">Controls</a><a href="../settings.html">Settings</a><a href="../news.html">What&#39;s new</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Search…" autocomplete="off">
+<span class="languages"><a href="../../fr/commands/daycycle.html" hreflang="fr">FR</a><a class="current" href="../../en/commands/daycycle.html" hreflang="en">EN</a><a href="../../lol/commands/daycycle.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Light or dark theme" aria-label="Light or dark theme"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>/daycycle</h1>
+<p><code>/daycycle [on|off|query]</code></p><p>Lets the time of day go on or stops it.</p><p class="dim">Run by the server, in creative mode only.</p><h2>Description</h2>
+<p><code>/daycycle</code> lets the world's time of day go on or stops it. The setting is saved with the world; it can also be chosen when creating the world (the "Day and night" button).</p>
+<h2>Syntax</h2>
+<p><code>/daycycle [on|off|query]</code></p>
+<ul>
+<li><code>on</code>: time goes on, the sun and moon move.</li>
+<li><code>off</code>: time stays where it is (handy with <code>/time set</code> to always build in broad daylight).</li>
+<li><code>query</code> (or nothing): shows the current setting.</li>
+</ul>
+<h2>Examples</h2>
+<ul>
+<li><code>/time set noon</code> then <code>/daycycle off</code>: noon forever.</li>
+<li><code>/daycycle on</code>: the day goes on again.</li>
+</ul>
+<h2>Behaviour</h2>
+<p>Run by the server, in <strong>creative mode</strong> only. Time also stands still while the game is paused.</p>
+<h2>Tips</h2>
+<p><code>/time add</code> works even with the time stopped: move on a few hours without starting the cycle again.</p>
+<h2>Discovery in game</h2>
+<p><code>/help daycycle</code> recalls the syntax; Tab completes <code>on</code>, <code>off</code> and <code>query</code>.</p>
+<h2>History</h2><table class="data"><tr><td>0.2.0</td><td>Added</td></tr></table>
+</main>
+<footer>Generated from the game&#39;s packs. Texts under CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

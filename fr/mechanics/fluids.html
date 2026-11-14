@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquides — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/mechanics/fluids.html" hreflang="fr">FR</a><a href="../../en/mechanics/fluids.html" hreflang="en">EN</a><a href="../../lol/mechanics/fluids.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>Liquides</h1>
+<h2>Principe</h2>
+<p>L'eau et la lave <strong>coulent</strong>. Chaque liquide a des <strong>sources</strong> (l'eau des mers et des lacs, les lacs de lave des profondeurs) et des <strong>écoulements</strong> de plus en plus minces : vers le bas d'abord, puis sur les côtés, en filant vers la pente la plus proche. Une eau qui voit un trou à 4 blocs ou moins ne coule <strong>que</strong> vers lui : une brèche dans un lac donne un filet qui descend marche après marche, pas une nappe ; sans trou en vue, elle s'élargit dans les 4 directions. Au pied d'une chute, l'eau redevient pleine et repart. Deux sources voisines au-dessus d'un sol ou d'une source en créent une troisième. L'eau s'étend jusqu'à 7 blocs sur un sol plat, la lave seulement 3, et bien plus lentement. Retirer la source fait disparaître l'écoulement. L'eau et la lave qui se touchent donnent de la <strong>pierre</strong> ou de l'<strong>obsidienne</strong>.</p>
+<h2>À voir</h2>
+<p>La surface d'un liquide <strong>penche</strong> selon l'écoulement : pleine près de la source, presque à plat au bout. Deux cases du même liquide ne se séparent jamais par une paroi, et un liquide surmonté du même liquide remplit tout son bloc (les cascades). L'eau est translucide, la lave opaque ; leur surface <strong>ondule</strong> doucement, ce que l'option graphique « Animation des liquides » arrête.</p>
+<h2>Nager</h2>
+<ul>
+<li>On <strong>coule doucement</strong> sans rien toucher.</li>
+<li><strong>Saut maintenu</strong> : on remonte, jusqu'à flotter à la surface.</li>
+<li>On avance <strong>deux fois moins vite</strong> dans l'eau, encore bien moins dans la lave.</li>
+<li>Contre une berge, un <strong>petit coup de pied</strong> aide à sortir de l'eau.</li>
+<li>La tête dans un liquide, la vue se perd dans un <strong>brouillard</strong> bleu (eau) ou orange (lave).</li>
+<li>En vol créatif, les liquides ne gênent pas.</li>
+</ul>
+<h2>Le seau (créatif)</h2>
+<p>Dans l'onglet <strong>Outils</strong> de l'inventaire créatif :</p>
+<ul>
+<li>le <strong>seau d'eau</strong> et le <strong>seau de lave</strong> posent une source d'un <strong>clic droit</strong>, contre le bloc visé ;</li>
+<li>le <strong>seau</strong> vide, pointé sur une source, la <strong>reprend</strong>.</li>
+</ul>
+<p>En créatif, le seau reste tel quel après usage. Le serveur vérifie chaque usage (portée, bloc visé), comme pour poser un bloc.</p>
+<h2>Réglages</h2>
+<p>L'option de monde <code>fluids</code> règle l'écoulement (<code>flow: false</code> l'arrête) et le nombre de cases de liquide mises à jour à chaque tick (<code>updates_per_tick</code>).</p>
+<h2>Historique</h2><table class="data"><tr><td>0.2.0</td><td>Ajouté</td></tr><tr><td>0.2.1</td><td>L&#39;eau file vers le trou le plus proche (4 blocs au plus) au lieu de s&#39;étaler partout ; portée de 7 blocs.</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>

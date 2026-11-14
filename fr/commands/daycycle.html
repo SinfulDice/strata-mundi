@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/daycycle — Wiki de Strata Mundi</title>
+<link rel="stylesheet" href="../../style.css">
+<script src="../../wiki.js"></script>
+</head>
+<body data-root="../" data-lang="fr">
+<header>
+<a class="logo" href="../index.html">Wiki de Strata Mundi</a>
+<nav><a href="../blocks/index.html">Blocs</a><a href="../biomes/index.html">Biomes</a><a href="../mechanics/index.html">Mécaniques</a><a href="../commands/index.html">Commandes</a><a href="../controls.html">Contrôles</a><a href="../settings.html">Réglages</a><a href="../news.html">Nouveautés</a></nav>
+<div class="tools">
+<input id="search" type="search" placeholder="Rechercher…" autocomplete="off">
+<span class="languages"><a class="current" href="../../fr/commands/daycycle.html" hreflang="fr">FR</a><a href="../../en/commands/daycycle.html" hreflang="en">EN</a><a href="../../lol/commands/daycycle.html" hreflang="lol">LOL</a></span>
+<button id="theme" type="button" title="Thème clair ou sombre" aria-label="Thème clair ou sombre"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1a7 7 0 0 1 0 14z" fill="currentColor"/></svg></button>
+</div>
+<ol id="results" hidden></ol>
+</header>
+<main>
+<h1>/daycycle</h1>
+<p><code>/daycycle [on|off|query]</code></p><p>Fait avancer l&#39;heure ou la fige.</p><p class="dim">Exécutée par le serveur, en mode créatif seulement.</p><h2>Description</h2>
+<p><code>/daycycle</code> fait avancer l'heure du monde ou la fige. Le réglage est enregistré avec le monde ; il se choisit aussi à la création du monde (bouton « Cycle jour/nuit »).</p>
+<h2>Syntaxe</h2>
+<p><code>/daycycle [on|off|query]</code></p>
+<ul>
+<li><code>on</code> : l'heure avance, le soleil et la lune se déplacent.</li>
+<li><code>off</code> : l'heure reste où elle est (pratique avec <code>/time set</code> pour construire toujours en plein jour).</li>
+<li><code>query</code> (ou rien) : affiche le réglage actuel.</li>
+</ul>
+<h2>Exemples</h2>
+<ul>
+<li><code>/time set noon</code> puis <code>/daycycle off</code> : midi pour toujours.</li>
+<li><code>/daycycle on</code> : la journée reprend son cours.</li>
+</ul>
+<h2>Comportement</h2>
+<p>Exécutée par le serveur, en <strong>mode créatif</strong> uniquement. L'heure est aussi figée quand le jeu est en pause.</p>
+<h2>Conseils</h2>
+<p><code>/time add</code> fonctionne même heure figée : on peut avancer de quelques heures sans relancer le cycle.</p>
+<h2>Découverte en jeu</h2>
+<p><code>/help daycycle</code> rappelle la syntaxe ; Tab complète <code>on</code>, <code>off</code> et <code>query</code>.</p>
+<h2>Historique</h2><table class="data"><tr><td>0.2.0</td><td>Ajouté</td></tr></table>
+</main>
+<footer>Généré depuis les packs du jeu. Textes sous licence CC BY-NC 4.0.</footer>
+<script src="../search-index.js"></script>
+</body>
+</html>
