@@ -4,20 +4,29 @@
 
 use super::Game;
 use super::terrain::WorldTerrain;
+use crate::clock::TICKS_PER_SECOND;
 use crate::ecs::{DroppedItem, Entity};
 use crate::loader::ColumnLoader;
 use glam::DVec3;
-use std::collections::BTreeMap;
+use glam::IVec3;
+use std::collections::{HashMap, HashSet};
+
+/// The cell of an item and the 26 around it.
+const NEIGHBOURS: [IVec3; 27] = {
+    let mut cells = [IVec3::ZERO; 27];
+    let mut i = 0;
+    while i < 27 {
+        cells[i] = IVec3::new(i as i32 % 3 - 1, i as i32 / 3 % 3 - 1, i as i32 / 9 - 1);
+        i += 1;
+    }
+    cells
+};
 use strata_core::content::ItemId;
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::inventory::ItemStack;
 use strata_core::physics::{ItemBody, step_item};
 use strata_protocol::{EntityState, NetEntity, ServerMessage};
 
-/// Past this many items on the ground, the oldest go first.
-const MAX_DROPS: usize = 1024;
-/// Ticks between two passes joining nearby stacks.
-const MERGE_PERIOD: u64 = 10;
 const THROW_SPEED: f64 = 0.3;
 /// Half-width of a dropped item's box, in blocks.
 pub(super) const DROP_SIZE: f64 = 0.25;
@@ -41,7 +50,7 @@ impl Game {
         if stack.count == 0 || !body.position.is_finite() || !body.velocity.is_finite() {
             return None;
         }
-        if self.ecs.drops.len() >= MAX_DROPS {
+        if self.ecs.drops.len() >= def.max_count as usize {
             self.remove_oldest_drop();
         }
         let entity = self.ecs.entities.spawn();
@@ -94,7 +103,7 @@ impl Game {
         let Some((_, def)) = self.rules.dropped_item_entity() else {
             return;
         };
-        let lifetime = u64::from(def.lifetime) * 20;
+        let lifetime = u64::from(def.lifetime) * u64::from(TICKS_PER_SECOND);
         let terrain = WorldTerrain {
             loader,
             rules: &self.rules,
@@ -118,7 +127,7 @@ impl Game {
             self.remove_drop(entity);
         }
         self.report_drop_moves(&moved);
-        if self.tick.is_multiple_of(MERGE_PERIOD) {
+        if self.tick.is_multiple_of(u64::from(def.merge_period)) {
             self.merge_drops(def.merge_radius);
         }
         self.pick_up(def.pickup_radius);
@@ -141,44 +150,64 @@ impl Game {
         }
     }
 
-    /// Equal stacks close to each other join into the older one.
+    /// Equal stacks close to each other join, the older ones taking the younger. Items
+    /// are sorted into a grid of `radius`-wide cells: only neighbouring cells are compared.
     fn merge_drops(&mut self, radius: f64) {
-        let mut by_item: BTreeMap<ItemId, Vec<Entity>> = BTreeMap::new();
+        let cell = radius.max(0.1);
+        let key = |position: DVec3| (position / cell).floor().as_ivec3();
+        let mut grid: HashMap<(ItemId, IVec3), Vec<Entity>> = HashMap::new();
+        let mut oldest_first: Vec<(u32, Entity)> = Vec::new();
         for (entity, drop) in self.ecs.drops.iter() {
-            by_item.entry(drop.stack.item).or_default().push(entity);
+            let at = (drop.stack.item, key(drop.body.position));
+            grid.entry(at).or_default().push(entity);
+            oldest_first.push((drop.age, entity));
         }
-        let rules = self.rules.clone();
-        for group in by_item.into_values().filter(|group| group.len() > 1) {
-            for (i, &into) in group.iter().enumerate() {
-                for &from in &group[i + 1..] {
-                    let (Some(a), Some(b)) = (self.ecs.drops.get(into), self.ecs.drops.get(from))
-                    else {
-                        continue;
-                    };
-                    let close = a.body.position.distance(b.body.position) <= radius;
-                    if !close || !a.stack.stacks_with(&b.stack) {
-                        continue;
-                    }
-                    let (older, younger) = if a.age >= b.age {
-                        (into, from)
-                    } else {
-                        (from, into)
-                    };
-                    let Some(mut taken) = self.ecs.drops.get(younger).map(|d| d.stack.clone())
-                    else {
-                        continue;
-                    };
-                    if let Some(target) = self.ecs.drops.get_mut(older) {
-                        target.stack.absorb(&mut taken, &rules);
-                    }
-                    if taken.count == 0 {
-                        self.remove_drop(younger);
-                    } else if let Some(rest) = self.ecs.drops.get_mut(younger) {
-                        rest.stack = taken;
+        oldest_first.sort_by_key(|&(age, entity)| (std::cmp::Reverse(age), entity.to_bits()));
+        let (mut emptied, mut removed) = (HashSet::new(), Vec::new());
+        for (_, into) in oldest_first {
+            let Some(drop) = self
+                .ecs
+                .drops
+                .get(into)
+                .filter(|_| !emptied.contains(&into))
+            else {
+                continue;
+            };
+            let (item, centre) = (drop.stack.item, key(drop.body.position));
+            for offset in NEIGHBOURS {
+                for &from in grid.get(&(item, centre + offset)).into_iter().flatten() {
+                    if from != into
+                        && !emptied.contains(&from)
+                        && self.merge_pair(into, from, radius)
+                    {
+                        emptied.insert(from);
+                        removed.push(from);
                     }
                 }
             }
         }
+        for entity in removed {
+            self.remove_drop(entity);
+        }
+    }
+
+    /// Moves what fits of `from` into `into` if they are close and equal; `true` when
+    /// `from` is left empty.
+    fn merge_pair(&mut self, into: Entity, from: Entity, radius: f64) -> bool {
+        let (Some(a), Some(b)) = (self.ecs.drops.get(into), self.ecs.drops.get(from)) else {
+            return false;
+        };
+        if a.body.position.distance(b.body.position) > radius || !a.stack.stacks_with(&b.stack) {
+            return false;
+        }
+        let mut taken = b.stack.clone();
+        if let Some(target) = self.ecs.drops.get_mut(into) {
+            target.stack.absorb(&mut taken, &self.rules);
+        }
+        if let Some(rest) = self.ecs.drops.get_mut(from) {
+            rest.stack.count = taken.count;
+        }
+        taken.count == 0
     }
 
     /// Items within reach of the player's body go into the inventory (what fits).

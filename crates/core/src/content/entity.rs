@@ -47,6 +47,20 @@ pub struct DroppedItemDef {
     /// Equal stacks closer than this join, in blocks.
     #[serde(default = "merge_radius")]
     pub merge_radius: f64,
+    /// Ticks between two passes joining nearby stacks.
+    #[serde(default = "merge_period")]
+    pub merge_period: u32,
+    /// Most items on the ground in a dimension; past it, the oldest go first.
+    #[serde(default = "max_count")]
+    pub max_count: u32,
+}
+
+fn merge_period() -> u32 {
+    10
+}
+
+fn max_count() -> u32 {
+    1024
 }
 
 fn five_minutes() -> u32 {

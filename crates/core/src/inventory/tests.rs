@@ -328,3 +328,53 @@ fn a_saved_inventory_reads_back() {
         player
     );
 }
+
+#[test]
+fn a_restored_inventory_is_made_valid_without_losing_items() {
+    let mut player = with(&[
+        (0, stack(PEARL, 40)),
+        (ARMOR.start + 1, stack(HELMET, 1)),
+        (5, stack(ItemId(99), 3)),
+    ]);
+    player.cursor = Some(stack(DIRT, 5));
+    let thrown = player.sanitize(&Rules);
+    assert!(thrown.is_empty());
+    assert_eq!(player.slots.count(PEARL), 40, "split into stacks of 16");
+    assert!(
+        player
+            .slots
+            .slots
+            .iter()
+            .flatten()
+            .all(|s| s.is_valid(&Rules))
+    );
+    assert!(
+        player.slots.get(ARMOR.start + 1).is_none(),
+        "a helmet is no chestplate"
+    );
+    assert_eq!(player.slots.count(HELMET), 1);
+    assert_eq!(
+        player.slots.count(DIRT),
+        5,
+        "the carried stack is given back"
+    );
+    assert!(player.cursor.is_none());
+}
+
+#[test]
+fn an_over_full_container_keeps_what_fits_and_returns_the_rest() {
+    let mut chest = Container::new(2);
+    chest.slots[0] = Some(stack(PEARL, 40));
+    let left = chest.normalize(&Rules);
+    assert_eq!(
+        (
+            chest.count(PEARL),
+            left.iter().map(|s| s.count).sum::<u16>()
+        ),
+        (32, 8)
+    );
+    let mut big = Container::new(4);
+    big.slots[3] = Some(stack(DIRT, 9));
+    assert_eq!(big.resize(2), vec![stack(DIRT, 9)]);
+    assert_eq!(big.len(), 2);
+}

@@ -16,14 +16,15 @@ pub enum SortOrder {
 }
 
 /// Joins the equal stacks of `range` and lays them out in order, skipping the locked
-/// slots (which keep what they hold). `key` ranks an item.
+/// slots (which keep what they hold). `key` ranks an item. Returns what no longer fits
+/// (only an over-full stack from an older save can cause that), to be thrown.
 pub fn sort<K: Ord>(
     slots: &mut Container,
     range: Range<usize>,
     locked: &[bool],
     rules: &impl ItemRules,
     key: impl Fn(ItemId) -> K,
-) {
+) -> Vec<ItemStack> {
     let free: Vec<usize> = range
         .filter(|&i| i < slots.len() && !locked.get(i).copied().unwrap_or(false))
         .collect();
@@ -31,13 +32,14 @@ pub fn sort<K: Ord>(
     stacks.sort_by_key(|stack| std::cmp::Reverse(stack.count));
     stacks.sort_by_cached_key(|stack| key(stack.item));
     let mut packed = Container::new(free.len());
-    for stack in stacks {
-        let left = packed.insert_anywhere(stack, rules);
-        debug_assert!(left.is_none(), "packing never needs more slots");
-    }
+    let left = stacks
+        .into_iter()
+        .filter_map(|stack| packed.insert_anywhere(stack, rules))
+        .collect();
     for (slot, stack) in free.into_iter().zip(packed.slots) {
         slots.slots[slot] = stack;
     }
+    left
 }
 
 /// Moves the unlocked main-slot stacks of items that `chest` already holds into it.

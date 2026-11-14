@@ -82,7 +82,7 @@ impl IntegratedServer {
         game.set_world_seed(meta.seed, &config.dimension);
         game.restore_boats(persistence.boats(&config.dimension), start.boat);
         game.restore_drops(persistence.drops(&config.dimension));
-        game.block_entities = persistence.block_entities(&config.dimension);
+        game.set_block_entities(persistence.block_entities(&config.dimension));
         if let (Some(body), Some(movement)) = (game.player_body(), game.movement()) {
             connection.send(ServerMessage::Welcome {
                 dimension: config.dimension.clone(),
@@ -137,6 +137,7 @@ impl IntegratedServer {
             }
             thread::sleep(clock.next_tick().saturating_duration_since(Instant::now()));
         }
+        self.game.release_cursor();
         let icon = self.leaving_icon.take();
         self.save(icon.as_deref());
         self.game.remove_player();

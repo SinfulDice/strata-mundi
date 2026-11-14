@@ -10,6 +10,8 @@ use strata_core::sky::{DayCycle, Moment};
 use strata_protocol::GameMode;
 use strata_protocol::commands::{Feedback, TIME_PRESETS, find, words};
 
+/// `/give` hands out at most a full inventory of stacks of 64.
+const MAX_GIVE: u16 = 64 * 36;
 /// More liquid updates than this per tick would not hold 20 ticks per second.
 const MAX_FLUID_BUDGET: u32 = 65_536;
 
@@ -41,7 +43,7 @@ impl Console<'_> {
             Some(spec) => Feedback::error("command-usage", &[("usage", spec.usage_key())]),
             None => Feedback::error("command-unknown", &[("name", name.to_owned())]),
         };
-        if find(name).is_some_and(|spec| spec.cheat) && !self.meta.commands {
+        if find(name).is_some_and(|spec| spec.cheat) && !self.meta.commands_allowed() {
             return Feedback::error("command-not-allowed", &[]).into();
         }
         let ran = match name {
@@ -91,10 +93,10 @@ impl Console<'_> {
         };
         let count = match rest {
             [] => 1,
-            [count] => count.parse::<u16>().ok().filter(|&c| c > 0)?,
+            [count] => count.parse::<u16>().ok().filter(|&c| c > 0)?.min(MAX_GIVE),
             _ => return None,
         };
-        let max = self.game.rules.max_stack(item);
+        let max = self.game.rules.max_stack(item).max(1);
         let mut left = u32::from(count);
         while left > 0 {
             let part = left.min(u32::from(max)) as u16;

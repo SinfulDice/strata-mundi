@@ -235,3 +235,73 @@ fn chests_and_items_on_the_ground_are_saved() {
     assert_eq!(drops[0].1.position, DVec3::new(9.5, 70.0, 2.5));
     std::fs::remove_dir_all(saves).unwrap();
 }
+
+#[test]
+fn a_carried_stack_survives_saving_and_leaving() {
+    let (saves, folder, meta) = new_world("carried");
+    let content = content();
+    let dimension = DimensionId("strata:terra".parse().unwrap());
+    let mut persistence = Persistence::new(settings(&folder, meta), Arc::clone(&content));
+    let body = Body::at(DVec3::new(0.5, 70.0, 0.5));
+    let rules = BlockRules::new(&content);
+    let mut game = Game::new(rules.clone(), 5_000, body, GameMode::Survival);
+    let stone = content.items.key(&"strata:stone".parse().unwrap()).unwrap();
+    let inventory = PlayerInventory {
+        cursor: Some(ItemStack::new(stone, 20, &content.items)),
+        ..PlayerInventory::default()
+    };
+    game.ecs.inventories.insert(game.player, inventory);
+    persistence.save(&game, &mut loader(), &dimension, None);
+
+    let reopened = Persistence::new(
+        settings(&folder, folder.read_meta().unwrap()),
+        Arc::clone(&content),
+    );
+    let start = reopened.player_start(&dimension, || DVec3::ZERO);
+    let mut back = Game::new(rules, 5_000, start.body, GameMode::Survival);
+    back.set_inventory(start.inventory);
+    assert_eq!(
+        back.inventory().slots.count(stone),
+        20,
+        "autosave: given back on loading"
+    );
+    assert!(back.inventory().cursor.is_none());
+
+    game.release_cursor();
+    assert_eq!(
+        game.inventory().slots.count(stone),
+        20,
+        "leaving: put back first"
+    );
+    std::fs::remove_dir_all(saves).unwrap();
+}
+
+#[test]
+fn a_double_chest_comes_back_whole() {
+    let (saves, folder, meta) = new_world("double");
+    let content = content();
+    let dimension = DimensionId("strata:terra".parse().unwrap());
+    let mut persistence = Persistence::new(settings(&folder, meta), Arc::clone(&content));
+    let rules = BlockRules::new(&content);
+    let body = Body::at(DVec3::new(0.5, 70.0, 0.5));
+    let mut game = Game::new(rules.clone(), 5_000, body, GameMode::Survival);
+    let dirt = content.items.key(&"strata:dirt".parse().unwrap()).unwrap();
+    let halves = [BlockPos::new(4, 64, 4), BlockPos::new(5, 64, 4)];
+    for (pos, count) in halves.into_iter().zip([3, 60]) {
+        let mut entity = BlockEntity {
+            container: strata_core::inventory::Container::new(27),
+            ..BlockEntity::default()
+        };
+        entity.container.slots[26] = Some(ItemStack::new(dirt, count, &content.items));
+        game.block_entities.insert(pos, entity);
+    }
+    let saved = game.block_entities.clone();
+    persistence.save(&game, &mut loader(), &dimension, None);
+
+    let reopened = Persistence::new(settings(&folder, folder.read_meta().unwrap()), content);
+    let mut back = Game::new(rules, 5_000, body, GameMode::Survival);
+    back.set_block_entities(reopened.block_entities(&dimension));
+    assert_eq!(back.block_entities, saved);
+    assert_eq!(back.ecs.drops.len(), 0, "nothing over-full to throw");
+    std::fs::remove_dir_all(saves).unwrap();
+}

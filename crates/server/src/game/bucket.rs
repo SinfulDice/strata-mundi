@@ -117,7 +117,7 @@ mod tests {
             .iter()
             .map(|id| Some(ItemStack::new(item(w, id), 1, &w.game.rules)))
             .collect();
-        w.game.with_inventory(|inventory| {
+        w.game.with_inventory(|inventory, _| {
             inventory.slots.slots.fill(None);
             inventory.slots.slots[..stacks.len()].clone_from_slice(&stacks);
             inventory.selected = selected;

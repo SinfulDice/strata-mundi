@@ -217,7 +217,7 @@ pub fn create(
             spread: new.fire_spread,
             destroy: new.fire_destroy,
         },
-        commands: true,
+        commands: Some(new.mode == strata_protocol::GameMode::Creative),
         generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;

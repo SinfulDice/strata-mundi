@@ -100,12 +100,9 @@ impl BlockRules {
             })
     }
 
+    /// A block that has an item can be placed (survival also needs it in hand).
     pub fn is_placeable(&self, block: BlockId) -> bool {
         flag(&self.placeable, block)
-    }
-
-    pub fn is_item(&self, item: ItemId) -> bool {
-        self.items.get(item).is_some()
     }
 
     pub fn item_action(&self, item: ItemId) -> Option<ItemAction> {
@@ -118,14 +115,6 @@ impl BlockRules {
             .iter()
             .find(|(_, _, item)| item.action == Some(action))
             .map(|(id, _, _)| id)
-    }
-
-    /// The block an item places, if it is a block's item.
-    pub fn item_block(&self, item: ItemId) -> Option<BlockId> {
-        match self.items.get(item)?.kind {
-            ItemKind::Block(block) => Some(block),
-            ItemKind::Flat(_) => None,
-        }
     }
 
     pub fn block_item(&self, block: BlockId) -> Option<ItemId> {

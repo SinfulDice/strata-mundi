@@ -85,26 +85,24 @@ impl Game {
     }
 
     fn contents(&mut self, window: &OpenWindow) -> Container {
+        let size = self
+            .rules
+            .container(window.block)
+            .map_or(0, |def| def.slots());
         let mut contents = Container::default();
         for &half in &window.halves {
-            let size = self
-                .rules
-                .container(window.block)
-                .map_or(0, |def| def.slots());
-            let entity = self.block_entity(half, size);
+            // Made empty the first time (a chest just placed or generated); the slots
+            // cut off when the pack gave it fewer rows fall to the ground.
+            let entity = self.block_entities.entry(half).or_default();
+            let cut = entity.container.resize(size);
             contents
                 .slots
                 .extend(entity.container.slots.iter().cloned());
+            for stack in cut {
+                self.spawn_drop(stack, block_centre(half), DVec3::ZERO);
+            }
         }
         contents
-    }
-
-    /// The block entity at `pos`, made empty the first time (a chest just placed or
-    /// generated), resized if the pack changed its rows.
-    fn block_entity(&mut self, pos: BlockPos, size: usize) -> &mut BlockEntity {
-        let entity = self.block_entities.entry(pos).or_default();
-        entity.container.slots.resize(size, None);
-        entity
     }
 
     /// Takes the open container out (both halves, end to end) for a click; `None` and
@@ -145,36 +143,53 @@ impl Game {
         }
     }
 
-    /// Unlocked main-slot stacks go into the chests around that already hold such items.
+    /// Unlocked main-slot stacks go into the chests around that already hold such items
+    /// (the open one first, through the window, so its screen follows).
     pub(super) fn quick_deposit(&mut self, loader: &ColumnLoader) {
-        let rules = self.rules.clone();
+        let open: Vec<BlockPos> = self
+            .ecs
+            .windows
+            .get(self.player)
+            .map(|window| window.halves.clone())
+            .unwrap_or_default();
         let mut near: Vec<BlockPos> = self
             .block_entities
             .keys()
             .copied()
-            .filter(|&pos| self.within(pos, DEPOSIT_REACH))
+            .filter(|pos| !open.contains(pos) && self.within(*pos, DEPOSIT_REACH))
             .filter(|&pos| {
                 loader
                     .block(pos)
-                    .is_some_and(|b| rules.container(b).is_some())
+                    .is_some_and(|b| self.rules.container(b).is_some())
             })
             .collect();
         near.sort_by_key(|&pos| (pos.x, pos.y, pos.z));
+        self.with_window(loader, |window, rules| {
+            if let Some(open) = window.open.as_deref_mut() {
+                deposit_matching(window.player, open, rules);
+            }
+        });
         let Some(player) = self.ecs.inventories.get_mut(self.player) else {
             return;
         };
-        let mut moved = 0;
         for pos in near {
             if let Some(entity) = self.block_entities.get_mut(&pos) {
-                moved += deposit_matching(player, &mut entity.container, &rules);
+                deposit_matching(player, &mut entity.container, &self.rules);
             }
         }
-        if moved > 0 {
-            self.inventory_changed();
-            if let Some((window, _)) = self.take_open_container(loader) {
-                let contents = self.contents(&window);
-                self.put_back_open_container((window, contents));
-            }
+    }
+
+    /// Restores the saved contents, made valid for the current packs (what no longer
+    /// fits falls where the container is).
+    pub fn set_block_entities(&mut self, entities: BlockEntities) {
+        self.block_entities = entities;
+        let mut thrown = Vec::new();
+        for (&pos, entity) in &mut self.block_entities {
+            let left = entity.container.normalize(&self.rules);
+            thrown.extend(left.into_iter().map(|stack| (pos, stack)));
+        }
+        for (pos, stack) in thrown {
+            self.spawn_drop(stack, block_centre(pos), DVec3::ZERO);
         }
     }
 

@@ -157,15 +157,6 @@ impl Game {
         Some(beside.clone().find(standing).unwrap_or(on_top))
     }
 
-    /// Entity, container and inventory news since the last call.
-    pub fn take_messages(&mut self) -> Vec<ServerMessage> {
-        if std::mem::take(&mut self.inventory_dirty) {
-            let inventory = Box::new(self.inventory());
-            self.messages.push(ServerMessage::Inventory(inventory));
-        }
-        std::mem::take(&mut self.messages)
-    }
-
     /// Boats to save, and which one the player sits in (index in the list).
     pub fn saved_boats(&self) -> (Vec<(EntityTypeId, BoatBody)>, Option<usize>) {
         let mount = self.ecs.mounts.get(self.player).copied();

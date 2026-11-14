@@ -384,3 +384,6 @@ mod tests;
 
 #[cfg(test)]
 mod inventory_tests;
+
+#[cfg(test)]
+mod conservation_tests;

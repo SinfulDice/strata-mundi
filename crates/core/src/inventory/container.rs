@@ -88,6 +88,39 @@ impl Container {
         self.insert(stack, 0..self.len(), rules)
     }
 
+    /// Makes every slot hold a valid stack (a save from other packs may not): unknown or
+    /// empty stacks go, over-full ones are split into the free slots. Returns what does
+    /// not fit, to be thrown.
+    pub fn normalize(&mut self, rules: &impl ItemRules) -> Vec<ItemStack> {
+        let mut extra = Vec::new();
+        for slot in &mut self.slots {
+            let Some(stack) = slot else {
+                continue;
+            };
+            let max = rules.max_stack(stack.item);
+            if max == 0 || stack.count == 0 {
+                *slot = None;
+            } else if stack.count > max {
+                extra.extend(stack.take(stack.count - max));
+            }
+        }
+        extra
+            .into_iter()
+            .filter_map(|stack| self.insert_anywhere(stack, rules))
+            .collect()
+    }
+
+    /// Keeps the first `size` slots; the stacks of the others are returned.
+    pub fn resize(&mut self, size: usize) -> Vec<ItemStack> {
+        let cut = if self.slots.len() > size {
+            self.slots.split_off(size).into_iter().flatten().collect()
+        } else {
+            Vec::new()
+        };
+        self.slots.resize(size, None);
+        cut
+    }
+
     /// Takes all the stacks out (breaking the block that held them).
     pub fn drain(&mut self) -> Vec<ItemStack> {
         self.slots.iter_mut().filter_map(Option::take).collect()
@@ -172,6 +205,31 @@ impl PlayerInventory {
     /// Picks something up: the hotbar first, then the main slots. Returns what did not fit.
     pub fn give(&mut self, stack: ItemStack, rules: &impl ItemRules) -> Option<ItemStack> {
         self.slots.insert(stack, HOTBAR.chain(MAIN), rules)
+    }
+
+    /// Makes a restored inventory valid: current number of slots, stacks within their
+    /// limit, armour only in its slot, the carried stack put back. What was moved out
+    /// goes into the hotbar and main slots; what does not fit is returned, to be thrown.
+    pub fn sanitize(&mut self, rules: &impl ItemRules) -> Vec<ItemStack> {
+        self.normalize();
+        let mut moved: Vec<ItemStack> = self.cursor.take().into_iter().collect();
+        for (index, slot) in self.slots.slots.iter_mut().enumerate() {
+            let Some(stack) = slot else {
+                continue;
+            };
+            let max = rules.max_stack(stack.item);
+            if max == 0 || stack.count == 0 {
+                *slot = None;
+            } else if !Self::accepts(index, stack, rules) {
+                moved.extend(slot.take());
+            } else if stack.count > max {
+                moved.extend(stack.take(stack.count - max));
+            }
+        }
+        moved
+            .into_iter()
+            .filter_map(|stack| self.give(stack, rules))
+            .collect()
     }
 
     /// Brings a newer or older save to the current number of slots.

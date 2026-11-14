@@ -25,7 +25,7 @@ fn request(w: &mut World, request: InventoryRequest) {
 fn put(w: &mut World, index: usize, name: &str, count: u16) {
     let stack = ItemStack::new(item(w, name), count, &w.game.rules);
     w.game
-        .with_inventory(|inventory| inventory.slots.slots[index] = Some(stack));
+        .with_inventory(|inventory, _| inventory.slots.slots[index] = Some(stack));
 }
 
 fn count(w: &World, name: &str) -> u32 {
@@ -166,7 +166,7 @@ fn survival_uses_up_placed_blocks_and_breaking_drops_them() {
 }
 
 fn hold_nothing(w: &mut World) {
-    w.game.with_inventory(|inventory| inventory.selected = 5);
+    w.game.with_inventory(|inventory, _| inventory.selected = 5);
 }
 
 #[test]
@@ -189,7 +189,7 @@ fn thrown_items_wait_merge_and_expire() {
     w.game.spawn_drop(stone, far, DVec3::ZERO);
     let lifetime = w.game.rules.dropped_item_entity().unwrap().1.lifetime;
     for (_, drop) in w.game.ecs.drops.iter_mut() {
-        drop.age = lifetime * 20 - 2;
+        drop.age = lifetime * crate::clock::TICKS_PER_SECOND - 2;
     }
     w.game.take_messages();
     wait(&mut w, 3);

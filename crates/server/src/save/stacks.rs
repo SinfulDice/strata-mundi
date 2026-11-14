@@ -25,6 +25,10 @@ pub struct SavedInventory {
     pub locked: Vec<bool>,
     #[serde(default)]
     pub selected: u8,
+    /// Carried under the pointer when saved (an autosave with a screen open); given
+    /// back on loading.
+    #[serde(default)]
+    pub cursor: Option<SavedStack>,
 }
 
 impl SavedStack {
@@ -72,6 +76,10 @@ impl SavedInventory {
             slots: save_slots(&inventory.slots.slots, items),
             locked: inventory.locked.clone(),
             selected: inventory.selected,
+            cursor: inventory
+                .cursor
+                .as_ref()
+                .and_then(|stack| SavedStack::from_stack(stack, items)),
         }
     }
 
@@ -80,7 +88,7 @@ impl SavedInventory {
             slots: load_slots(&self.slots, items),
             locked: self.locked.clone(),
             selected: self.selected,
-            cursor: None,
+            cursor: self.cursor.as_ref().and_then(|stack| stack.to_stack(items)),
         };
         inventory.normalize();
         inventory

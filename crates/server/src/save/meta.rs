@@ -38,9 +38,10 @@ pub struct WorldMeta {
     /// World option: fire spreads and destroys what burns.
     #[serde(default)]
     pub fire: FireSettings,
-    /// World option: cheating commands (`/give`, `/gamemode`…) may be used.
-    #[serde(default = "yes")]
-    pub commands: bool,
+    /// World option: cheating commands (`/give`, `/gamemode`…) may be used. Absent in
+    /// older worlds: allowed in creative ones (see `commands_allowed`).
+    #[serde(default)]
+    pub commands: Option<bool>,
     /// World type and generation settings; older worlds are of the pack's normal type.
     #[serde(default)]
     pub generation: WorldgenSettings,
@@ -48,6 +49,13 @@ pub struct WorldMeta {
 
 fn yes() -> bool {
     true
+}
+
+impl WorldMeta {
+    /// Whether cheating commands may be used; an older world decides once, from its mode.
+    pub fn commands_allowed(&mut self) -> bool {
+        *self.commands.get_or_insert(self.mode == GameMode::Creative)
+    }
 }
 
 /// Only the version, readable whatever the rest of the file looks like.
