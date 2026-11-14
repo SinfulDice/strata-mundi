@@ -1,11 +1,11 @@
 //! Loot tables (`loot_tables/<name>.ron`): what a broken block gives. A block without a
 //! table gives its own item.
 
-use super::registry::{BlockId, ItemId, Registry};
-use super::{Block, Item, ToolDef};
-use crate::audio::Rng;
+use super::registry::{ItemId, Registry};
+use super::{Item, ToolDef};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced};
+use crate::rng::Rng;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -163,20 +163,16 @@ impl LootTable {
         drops
     }
 
-    /// Every tool kind the conditions name (the wiki tells them; each needs a name).
+    /// Tool kinds some loot needs (`Tool` conditions; those under `Not` are left out):
+    /// the wiki says « with shears ».
     pub fn tool_kinds(&self) -> Vec<&Identifier> {
-        fn walk<'a>(condition: &'a LootCondition, out: &mut Vec<&'a Identifier>) {
-            match condition {
-                LootCondition::Tool(kind) => out.push(kind),
-                LootCondition::Not(inner) => walk(inner, out),
-                LootCondition::Chance(_) => {}
-            }
-        }
         let mut kinds = Vec::new();
         for pool in &self.pools {
             let entries = pool.entries.iter().flat_map(|e| &e.conditions);
             for condition in pool.conditions.iter().chain(entries) {
-                walk(condition, &mut kinds);
+                if let LootCondition::Tool(kind) = condition {
+                    kinds.push(kind);
+                }
             }
         }
         kinds.sort();
@@ -338,21 +334,15 @@ fn check_conditions(conditions: &[LootCondition], source: &Path, errors: &mut Ve
 
 /// Blocks naming a table no pack defines.
 pub(super) fn check_loot_names(
-    blocks: &Registry<BlockId, Block>,
+    references: &[(Identifier, std::path::PathBuf)],
     tables: &BTreeMap<Identifier, LootTable>,
     errors: &mut Vec<PackError>,
 ) {
-    let mut missing: Vec<(&Identifier, &Identifier)> = blocks
-        .iter()
-        .filter_map(|(_, id, block)| Some((id, block.loot.as_ref()?)))
-        .filter(|(_, table)| !tables.contains_key(*table))
-        .collect();
-    missing.dedup_by(|a, b| a.1 == b.1);
-    for (block, table) in missing {
-        errors.push(PackError::invalid(
-            std::path::Path::new("blocks"),
-            format!("`{block}`: unknown loot table `{table}`"),
-        ));
+    for (table, source) in references {
+        if !tables.contains_key(table) {
+            let message = format!("unknown loot table `{table}`");
+            errors.push(PackError::invalid(source, message));
+        }
     }
 }
 

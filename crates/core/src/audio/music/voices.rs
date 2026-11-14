@@ -5,7 +5,8 @@
 use super::compose::{DAMPER, Instrument, Note, hertz, piano_ring};
 use super::theme::{Pad, ThemeDef};
 use crate::audio::SAMPLE_RATE;
-use crate::audio::dsp::{Biquad, FilterKind, MAX_HZ, Noise, NoiseColor, Rng};
+use crate::audio::dsp::{Biquad, FilterKind, MAX_HZ, Noise, NoiseColor};
+use crate::rng::Rng;
 use std::f64::consts::TAU;
 
 const RATE: f64 = SAMPLE_RATE as f64;

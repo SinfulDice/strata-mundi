@@ -1,9 +1,9 @@
 //! How long each block takes to break with the held item, and what it gives.
 
-use strata_core::audio::Rng;
 use strata_core::content::{
     Block, BlockId, Content, ItemId, LootContext, LootTable, Registry, ToolDef,
 };
+use strata_core::rng::Rng;
 
 #[derive(Debug, Clone, Default)]
 pub struct MiningRules {
@@ -13,6 +13,8 @@ pub struct MiningRules {
     loot: Vec<LootTable>,
     /// Tool of each item, by `ItemId`.
     tools: Vec<Option<ToolDef>>,
+    /// Crack stages of the packs: progress is reported when the stage changes.
+    pub crack_stages: usize,
 }
 
 impl MiningRules {
@@ -30,6 +32,7 @@ impl MiningRules {
                 })
                 .collect(),
             tools: tools(&content.items),
+            crack_stages: content.crack_stages.len().max(1),
         }
     }
 

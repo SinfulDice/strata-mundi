@@ -71,7 +71,7 @@ sequenceDiagram
 | Visée, casser, poser, prise de bloc | `crates/client/src/interaction.rs` |
 | File des clics, réponses `ActionDone` | `crates/server/src/game/actions.rs` |
 | Prédiction des blocs | `crates/client/src/prediction.rs`, `streaming.rs` (`predict`, `receive_block`, `acknowledge`) |
-| Contour du bloc visé | `crates/client/src/render/outline.rs` |
+| Contour du bloc visé | `crates/client/src/render/overlays/outline.rs` |
 | Variantes orientées | `crates/core/src/content/` (`Placement`, `Orientation`, `turned.rs`) |
 | Variantes accrochées, soutien | `crates/core/src/content/attached.rs`, `crates/core/src/updates/rules.rs` (`placed_variant`, `is_supported`) |
 | Barre | `crates/client/src/hotbar.rs` |

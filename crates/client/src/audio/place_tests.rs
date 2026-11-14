@@ -171,7 +171,7 @@ fn the_underground_is_deep_and_dark() {
 fn ambiences_cross_fade_without_jumps_and_events_come_now_and_then() {
     let table = table();
     let mut player = AmbiencePlayer::default();
-    let mut rng = strata_core::audio::Rng::new(9);
+    let mut rng = strata_core::rng::Rng::new(9);
     let mut cues = Vec::new();
     let head = DVec3::new(0.0, 125.0, 0.0);
     let plains = Place::new(&table, &[(biome("plains"), 1.0)], 0.0, head, 1.0);
@@ -260,7 +260,7 @@ fn mixed(spatial: Option<bool>, setup: impl Fn(&mut Mixer), muffle: f32) -> Vec<
         mixer.apply(Command::Spatial(spatial));
     }
     setup(&mut mixer);
-    let mut rng = strata_core::audio::Rng::new(4);
+    let mut rng = strata_core::rng::Rng::new(4);
     let burst: Vec<f32> = (0..SAMPLE_RATE as usize / 4)
         .map(|i| rng.signed() * 0.5 * (1.0 - i as f32 / 11_025.0))
         .collect();
@@ -330,7 +330,7 @@ fn the_reverberation_is_bounded_and_dies_out() {
     }
     assert!(*windows.last().unwrap() < windows[1] * 1e-3);
     // Loud noise for two seconds: no runaway.
-    let mut rng = strata_core::audio::Rng::new(1);
+    let mut rng = strata_core::rng::Rng::new(1);
     let mut loudest = 0.0f32;
     for _ in 0..(SAMPLE_RATE as usize * 2 / block) {
         let noise: Vec<f32> = (0..block).map(|_| rng.signed()).collect();

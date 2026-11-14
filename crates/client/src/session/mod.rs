@@ -275,6 +275,9 @@ impl Session {
                 ));
                 let settled = world.game.view.is_settled(wanted);
                 let dt = frame_seconds.min(MAX_FRAME_SECONDS);
+                if menu_open || !self.focused || self.bench.is_some() {
+                    world.game.cancel_breaking(&world.connection);
+                }
                 match &mut self.bench {
                     // The bench starts once the initial world is loaded, so loading is not measured.
                     Some(bench) if settled || bench.started() => {

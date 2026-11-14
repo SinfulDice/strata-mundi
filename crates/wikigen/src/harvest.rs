@@ -16,7 +16,9 @@ pub fn facts(ctx: &Ctx<'_>, from: &str, key: BlockId, block: &Block) -> Vec<(Str
             escape(&ctx.tr("wiki-unbreakable")),
         )];
     };
-    let mut rows = vec![(ctx.tr("wiki-fact-hardness"), format!("{}", block.hardness))];
+    let translations = &content.translations;
+    let hardness = translations.short_decimal(ctx.lang, f64::from(block.hardness));
+    let mut rows = vec![(ctx.tr("wiki-fact-hardness"), escape(&hardness))];
     let tool = block.tool.as_ref();
     let required = tool.filter(|tool| tool.required).map(|tool| {
         let name = content.tool_name(&tool.kind, ctx.lang);
@@ -37,8 +39,9 @@ pub fn facts(ctx: &Ctx<'_>, from: &str, key: BlockId, block: &Block) -> Vec<(Str
         let name = content.tool_name(&best.kind, ctx.lang);
         rows.push((ctx.tr("wiki-fact-best-tool"), escape(&name)));
     }
-    let seconds = ticks as f32 / TICKS_PER_SECOND as f32;
-    let time = ctx.tr_with("wiki-seconds", &[("seconds", format!("{seconds:.2}"))]);
+    let seconds = f64::from(ticks) / f64::from(TICKS_PER_SECOND);
+    let seconds = translations.decimal(ctx.lang, seconds, 2);
+    let time = ctx.tr_with("wiki-seconds", &[("seconds", seconds)]);
     rows.push((ctx.tr("wiki-fact-break-time"), escape(&time)));
     rows.push((ctx.tr("wiki-fact-loot"), loot(ctx, from, key)));
     rows

@@ -2,8 +2,9 @@
 //! result normalised to the recipe's volume and faded at the end. Deterministic for a seed.
 
 use super::SAMPLE_RATE;
-use super::dsp::{Biquad, FilterKind, Noise, NoiseColor, Rng, exp_decay, samples};
+use super::dsp::{Biquad, FilterKind, Noise, NoiseColor, exp_decay, samples};
 use super::recipe::{Band, Envelope, Filter, Layer, Mode, SoundDef, Wobble};
+use crate::rng::Rng;
 use std::f32::consts::TAU;
 
 /// Samples between two retunings of a moving filter.

@@ -98,13 +98,18 @@ impl Block {
     }
 }
 
-/// Crack stage (0 to `stages - 1`) shown after `elapsed` of `needed` ticks.
-pub fn crack_stage(elapsed: f32, needed: f32, stages: u8) -> u8 {
-    if needed <= 0.0 || stages == 0 {
-        return 0;
+/// How far a break is, 0 (just started) to 255 (done): what the server tells, whatever
+/// number of crack stages each client draws.
+pub fn crack_progress(elapsed: f32, needed: f32) -> u8 {
+    if needed <= 0.0 {
+        return u8::MAX;
     }
-    let fraction = (elapsed / needed).clamp(0.0, 1.0);
-    ((fraction * f32::from(stages)) as u8).min(stages - 1)
+    ((elapsed / needed).clamp(0.0, 1.0) * f32::from(u8::MAX)) as u8
+}
+
+/// Crack stage (0 to `stages - 1`) shown at `progress` (from `crack_progress`).
+pub fn crack_stage(progress: u8, stages: usize) -> usize {
+    (usize::from(progress) * stages / 256).min(stages.saturating_sub(1))
 }
 
 #[cfg(test)]
@@ -221,11 +226,17 @@ mod tests {
 
     #[test]
     fn crack_stages_cover_the_break() {
-        assert_eq!(crack_stage(0.0, 20.0, 10), 0);
-        assert_eq!(crack_stage(1.9, 20.0, 10), 0);
-        assert_eq!(crack_stage(2.0, 20.0, 10), 1);
-        assert_eq!(crack_stage(19.9, 20.0, 10), 9);
-        assert_eq!(crack_stage(40.0, 20.0, 10), 9);
-        assert_eq!(crack_stage(5.0, 0.0, 10), 0);
+        assert_eq!(crack_progress(0.0, 20.0), 0);
+        assert_eq!(crack_progress(10.0, 20.0), 127);
+        assert_eq!(crack_progress(40.0, 20.0), 255);
+        assert_eq!(crack_progress(5.0, 0.0), 255);
+        let stage = |elapsed| crack_stage(crack_progress(elapsed, 20.0), 10);
+        assert_eq!(stage(0.0), 0);
+        assert_eq!(stage(1.9), 0);
+        assert_eq!(stage(2.1), 1);
+        assert_eq!(stage(19.9), 9);
+        assert_eq!(stage(40.0), 9);
+        assert_eq!(crack_stage(200, 0), 0);
+        assert_eq!(crack_stage(255, 4), 3);
     }
 }

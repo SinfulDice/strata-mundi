@@ -173,3 +173,4 @@ ui-gen-done = Done
 ui-gen-preview-failed = Map failed (see the log)
 ui-gen-copied = Code copied.
 ui-gen-no-clipboard = Clipboard unavailable: copy the code by hand.
+decimal-separator = .

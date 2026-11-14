@@ -1,4 +1,4 @@
-use super::depth::DEPTH_FORMAT;
+use crate::render::depth::DEPTH_FORMAT;
 use glam::Vec3;
 
 /// The 12 edges of the aimed block, drawn as thin dark lines over the world.
@@ -17,7 +17,7 @@ impl OutlinePipeline {
         color_format: wgpu::TextureFormat,
         camera_layout: &wgpu::BindGroupLayout,
     ) -> Self {
-        let shader = super::shaders::module(device, "outline.wgsl");
+        let shader = crate::render::shaders::module(device, "outline.wgsl");
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("outline layout"),
             bind_group_layouts: &[Some(camera_layout)],

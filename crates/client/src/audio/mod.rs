@@ -55,10 +55,11 @@ use glam::DVec3;
 use late::Late;
 use output::Output;
 use std::path::PathBuf;
-use strata_core::audio::{Rng, SoundCategory};
+use strata_core::audio::SoundCategory;
 use strata_core::content::{BlockId, Content};
 use strata_core::coords::BlockPos;
 use strata_core::physics::Body;
+use strata_core::rng::Rng;
 use strata_protocol::BiomeInfo;
 
 /// Sounds started at most in one frame.

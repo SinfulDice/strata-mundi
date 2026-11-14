@@ -94,6 +94,6 @@ wiki-fact-best-tool = Outil le plus rapide
 wiki-fact-break-time = Temps à mains nues
 wiki-fact-loot = Donne
 wiki-tool-level = { $tool } de niveau { $level } ou plus
-wiki-seconds = { $seconds } s
+wiki-seconds = { $seconds } s
 wiki-loot-nothing = rien
 wiki-loot-with = avec { $tool }

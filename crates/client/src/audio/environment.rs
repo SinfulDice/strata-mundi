@@ -10,9 +10,10 @@ use super::space::{Space, SpaceProbe};
 use super::surroundings::{Surroundings, biomes_around, underground};
 use super::triggers::Cue;
 use glam::DVec3;
-use strata_core::audio::{Rng, Sounds};
+use strata_core::audio::Sounds;
 use strata_core::chunk::BiomeId;
 use strata_core::content::SoundId;
+use strata_core::rng::Rng;
 use strata_protocol::BiomeInfo;
 
 /// Seconds between two looks at the biomes around and the ground overhead.

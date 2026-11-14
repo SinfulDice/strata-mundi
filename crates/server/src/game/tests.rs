@@ -73,14 +73,17 @@ pub(super) fn hold(w: &mut World, item: Option<ItemId>) {
     }
 }
 
-/// Survival: hits the block at `pos` as long as the held item needs, then breaks it.
+/// Survival: hits the block at `pos` until the server breaks it; the changes it made.
 pub(super) fn mine(w: &mut World, pos: BlockPos) -> Vec<BlockChange> {
     w.game.start_break(&w.loader, pos);
     let block = w.loader.block(pos).unwrap();
     let held = w.game.held_item();
     let ticks = w.game.rules.mining.break_ticks(block, held).unwrap();
-    wait(w, ticks);
-    w.game.break_block(&mut w.loader, pos)
+    let mut changes = Vec::new();
+    for _ in 0..=ticks {
+        changes.extend(w.game.tick(&mut w.loader));
+    }
+    changes
 }
 
 pub(super) fn wait(world: &mut World, ticks: u32) {

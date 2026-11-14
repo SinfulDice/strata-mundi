@@ -105,8 +105,8 @@ pub struct Mining {
     pub started: u64,
     /// Ticks the block takes with that item.
     pub needed: u32,
-    /// Cracks last reported.
-    pub stage: Option<u8>,
+    /// Crack stage last reported.
+    pub stage: Option<usize>,
 }
 
 /// A click waiting for its turn.

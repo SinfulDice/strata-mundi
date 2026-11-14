@@ -4,7 +4,8 @@ use super::mining::long_enough;
 use super::tests::{World, block, hold, mine, wait, world_with};
 use super::*;
 use strata_core::content::{Content, Item, ItemId, ItemKind, TextureId, ToolDef};
-use strata_protocol::{ActionId, CRACK_STAGES, WorldAction};
+use strata_core::content::{LootDrop, LootEntry, LootPool, LootTable};
+use strata_protocol::{ActionId, WorldAction};
 
 /// Beside the player, on the stone floor.
 const SPOT: BlockPos = BlockPos::new(10, 64, 8);
@@ -56,7 +57,7 @@ fn cracks(w: &mut World) -> Vec<Option<u8>> {
         .take_messages()
         .into_iter()
         .filter_map(|message| match message {
-            ServerMessage::Cracking { stage, .. } => Some(stage),
+            ServerMessage::Cracking { progress, .. } => Some(progress),
             _ => None,
         })
         .collect()
@@ -175,10 +176,11 @@ fn cracks_grow_stage_by_stage_then_go() {
     let mut w = survival_with("strata:oak_planks");
     hold(&mut w, None);
     assert!(!mine(&mut w, SPOT).is_empty());
-    let stages = cracks(&mut w);
-    let grown: Vec<Option<u8>> = (0..CRACK_STAGES).map(Some).collect();
-    assert_eq!(stages[..stages.len() - 1], grown[..]);
-    assert_eq!(stages.last(), Some(&None));
+    let reports = cracks(&mut w);
+    let (last, grown) = reports.split_last().unwrap();
+    assert_eq!(last, &None);
+    assert_eq!(grown.len(), w.content.crack_stages.len(), "one per stage");
+    assert!(grown.windows(2).all(|pair| pair[0] < pair[1]));
 }
 
 #[test]
@@ -200,11 +202,121 @@ fn starting_a_break_skips_the_rate_limit_but_keeps_the_order() {
     w.game.request_action(&mut w.loader, ActionId(2), start);
     let mining = w.game.ecs.controls.get(w.game.player).unwrap().mining;
     assert_eq!(mining.map(|m| m.pos), Some(SPOT), "started at once");
-    wait(&mut w, 15);
+    wait(&mut w, 13);
     let action = WorldAction::Break { pos: SPOT };
     assert!(
         !w.game
             .request_action(&mut w.loader, ActionId(3), action)
             .is_empty()
     );
+}
+
+#[test]
+fn the_server_breaks_the_block_when_the_client_is_late() {
+    let mut w = survival_with("strata:dirt");
+    hold(&mut w, None);
+    w.game.start_break(&w.loader, SPOT);
+    wait(&mut w, 5);
+    assert!(
+        w.game.break_block(&mut w.loader, SPOT).is_empty(),
+        "too early"
+    );
+    w.game.start_break(&w.loader, SPOT);
+    wait(&mut w, 10);
+    assert_eq!(
+        w.loader.block(SPOT),
+        Some(BlockId::AIR),
+        "broken at 15 ticks"
+    );
+    assert_eq!(dropped(&w), vec![(item(&w, "strata:dirt"), 1)]);
+    assert!(
+        w.game.break_block(&mut w.loader, SPOT).is_empty(),
+        "late Break"
+    );
+}
+
+#[test]
+fn going_out_of_reach_or_into_creative_ends_the_break() {
+    let mut w = survival_with("strata:oak_planks");
+    hold(&mut w, None);
+    w.game.start_break(&w.loader, SPOT);
+    wait(&mut w, 10);
+    w.game.ecs.bodies.get_mut(w.game.player).unwrap().position.x = 40.0;
+    wait(&mut w, 1);
+    assert!(mining(&w).is_none());
+    assert_eq!(cracks(&mut w).last(), Some(&None));
+    w.game.ecs.bodies.get_mut(w.game.player).unwrap().position.x = 8.5;
+    w.game.start_break(&w.loader, SPOT);
+    wait(&mut w, 10);
+    w.game.set_mode(GameMode::Creative);
+    wait(&mut w, 1);
+    assert!(mining(&w).is_none());
+    assert_eq!(cracks(&mut w).last(), Some(&None));
+}
+
+#[test]
+fn stopping_clears_the_cracks_and_a_new_start_keeps_the_time() {
+    let mut w = survival_with("strata:oak_planks");
+    hold(&mut w, None);
+    w.game.start_break(&w.loader, SPOT);
+    wait(&mut w, 10);
+    w.game.start_break(&w.loader, SPOT);
+    assert_eq!(mining(&w).unwrap().started, 0, "same block, same item");
+    w.game.take_messages();
+    let stop = WorldAction::StopBreak;
+    w.game.request_action(&mut w.loader, ActionId(1), stop);
+    assert_eq!(cracks(&mut w), vec![None]);
+    assert!(mining(&w).is_none());
+}
+
+#[test]
+fn breaks_are_limited_to_one_every_two_ticks() {
+    let mut w = survival_with("strata:poppy");
+    hold(&mut w, None);
+    let other = BlockPos::new(10, 64, 9);
+    assert!(w.loader.set_block(other, block(&w.content, "strata:poppy")));
+    assert!(!w.game.break_block(&mut w.loader, SPOT).is_empty());
+    assert!(w.game.break_block(&mut w.loader, other).is_empty());
+    wait(&mut w, 2);
+    assert!(!w.game.break_block(&mut w.loader, other).is_empty());
+}
+
+#[test]
+fn loot_is_dropped_in_full_stacks() {
+    let mut w = world_with(|content| {
+        let bucket = content
+            .items
+            .key(&"strata:bucket".parse().unwrap())
+            .unwrap();
+        let table = LootTable {
+            pools: vec![LootPool {
+                rolls: 1,
+                conditions: Vec::new(),
+                entries: vec![LootEntry {
+                    drop: LootDrop::Item(bucket),
+                    weight: 1,
+                    count: (20, 20),
+                    conditions: Vec::new(),
+                }],
+            }],
+        };
+        let name: strata_core::id::Identifier = "test:buckets".parse().unwrap();
+        content.loot_tables.insert(name.clone(), table);
+        let poppy = content
+            .blocks
+            .key(&"strata:poppy".parse().unwrap())
+            .unwrap();
+        content.blocks.get_mut(poppy).unwrap().loot = Some(name);
+    });
+    w.game.set_mode(GameMode::Survival);
+    assert!(w.loader.set_block(SPOT, block(&w.content, "strata:poppy")));
+    hold(&mut w, None);
+    assert!(!w.game.break_block(&mut w.loader, SPOT).is_empty());
+    let mut counts: Vec<u16> = dropped(&w).iter().map(|(_, count)| *count).collect();
+    counts.sort_unstable();
+    assert_eq!(counts, vec![4, 16]);
+}
+
+fn mining(w: &World) -> Option<crate::ecs::Mining> {
+    w.game.ecs.controls.get(w.game.player).unwrap().mining
 }

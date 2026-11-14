@@ -1,0 +1,5 @@
+// Textures drawn over a block being broken, from the first hit to the last.
+Cracks(stages: [
+    "strata:crack_0", "strata:crack_1", "strata:crack_2", "strata:crack_3", "strata:crack_4",
+    "strata:crack_5", "strata:crack_6", "strata:crack_7", "strata:crack_8", "strata:crack_9",
+])

@@ -160,7 +160,8 @@ impl Game {
 
     pub fn set_world_seed(&mut self, seed: u64, dimension: &DimensionId) {
         self.updates.set_seed(seed, dimension);
-        self.loot_seed = seed;
+        let dimension = strata_core::hash::fnv1a(dimension.0.to_string().as_bytes());
+        self.loot_seed = seed ^ dimension.rotate_left(17);
     }
 
     /// Runs one tick of player and boat physics, liquids and fire; returns the blocks changed.
@@ -185,7 +186,7 @@ impl Game {
         self.report_moves(&moved);
         self.drops_tick(loader);
         let mut changes = self.run_queued_actions(loader);
-        self.mining_tick(loader);
+        changes.extend(self.mining_tick(loader));
         for pos in loader.take_arrived() {
             if let Some(column) = loader.column(pos) {
                 self.updates.wake_fires(column);
@@ -221,13 +222,10 @@ impl Game {
                 || (self.rules.is_breakable(current) && self.hit_long_enough(pos, current)))
             && self.in_reach(pos)
             && self.take_action();
-        let mut changes = Vec::new();
-        if allowed {
-            self.drop_broken(current, pos);
-            self.stop_break();
-            self.set_block(loader, pos, BlockId::AIR, &mut changes);
+        if !allowed {
+            return Vec::new();
         }
-        changes
+        self.finish_break(loader, pos, current)
     }
 
     fn set_block(

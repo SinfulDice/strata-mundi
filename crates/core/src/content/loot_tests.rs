@@ -145,3 +145,15 @@ fn possible_items_list_each_item_once() {
     );
     assert_eq!(loot.possible_items(None), vec![ItemId(5)]);
 }
+
+#[test]
+fn only_required_tools_are_named() {
+    let mut shears = entry(LootDrop::Itself, 1, (1, 1));
+    shears.conditions = vec![LootCondition::Tool(kind("shears"))];
+    let mut no_axe = entry(LootDrop::Nothing, 1, (0, 0));
+    no_axe.conditions = vec![LootCondition::Not(Box::new(LootCondition::Tool(kind(
+        "axe",
+    ))))];
+    let loot = table(vec![shears, no_axe]);
+    assert_eq!(loot.tool_kinds(), vec![&kind("shears")]);
+}

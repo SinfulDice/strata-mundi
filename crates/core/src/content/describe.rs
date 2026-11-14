@@ -3,10 +3,38 @@
 
 use super::{BlockTool, Content, ItemId, ItemKind, ToolDef};
 use crate::id::Identifier;
+use crate::lang::LANGUAGES;
+use std::collections::HashMap;
+
+/// Tooltips of every item in every language, written once when the content loads.
+pub type TooltipCache = HashMap<(ItemId, &'static str), String>;
 
 impl Content {
-    /// The item's name, then one line per fact (tool needed, tool given), joined by `\n`.
+    /// The item's name, then one line per fact (tool needed, tool given), joined by `\n`;
+    /// from the cache for the game's languages.
     pub fn item_tooltip(&self, item: ItemId, language: &str) -> String {
+        let cached = LANGUAGES
+            .iter()
+            .find(|&&known| known == language)
+            .and_then(|&known| self.tooltips.get(&(item, known)));
+        match cached {
+            Some(text) => text.clone(),
+            None => self.write_tooltip(item, language),
+        }
+    }
+
+    /// Fills `tooltips` (after loading, once translations are known).
+    pub(super) fn cache_tooltips(&mut self) {
+        let items: Vec<ItemId> = self.items.iter().map(|(key, _, _)| key).collect();
+        let tooltips = items
+            .into_iter()
+            .flat_map(|item| LANGUAGES.iter().map(move |&language| (item, language)))
+            .map(|(item, language)| ((item, language), self.write_tooltip(item, language)))
+            .collect();
+        self.tooltips = tooltips;
+    }
+
+    fn write_tooltip(&self, item: ItemId, language: &str) -> String {
         let mut lines = vec![self.item_name(item, language)];
         if let Some(entry) = self.items.get(item) {
             let block = match entry.kind {
@@ -50,7 +78,11 @@ impl Content {
         let args = [
             ("tools", kinds.join(", ")),
             ("level", tool.level.to_string()),
-            ("speed", format!("{}", tool.speed)),
+            (
+                "speed",
+                self.translations
+                    .short_decimal(language, f64::from(tool.speed)),
+            ),
         ];
         self.translations
             .text_with(language, "mining-tool-line", &args)

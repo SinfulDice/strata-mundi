@@ -173,3 +173,4 @@ ui-gen-done = Terminé
 ui-gen-preview-failed = Carte impossible (voir le journal)
 ui-gen-copied = Code copié.
 ui-gen-no-clipboard = Presse-papiers indisponible : recopiez le code.
+decimal-separator = ,

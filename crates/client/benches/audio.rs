@@ -6,8 +6,9 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use glam::DVec3;
 use std::hint::black_box;
 use strata_client::audio::{BedVolume, Command, MAX_VOICES, Mixer, Room, Voice};
-use strata_core::audio::{Rng, SAMPLE_RATE, SoundCategory};
+use strata_core::audio::{SAMPLE_RATE, SoundCategory};
 use strata_core::content::SoundId;
+use strata_core::rng::Rng;
 
 const BLOCK_FRAMES: usize = 512;
 

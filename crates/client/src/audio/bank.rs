@@ -5,8 +5,9 @@
 use super::decode::decode;
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
-use strata_core::audio::{self, Rng, Sound, Sounds};
+use strata_core::audio::{self, Sound, Sounds};
 use strata_core::content::{RegistryId, SoundId};
+use strata_core::rng::Rng;
 
 /// One play of a sound: which buffer and how fast.
 #[derive(Debug, Clone)]

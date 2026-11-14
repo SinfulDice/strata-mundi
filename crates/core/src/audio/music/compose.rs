@@ -2,7 +2,7 @@
 //! motifs over a slow walk of chords, sometimes held by a pad, with long rests between.
 
 use super::theme::{Motif, ThemeDef};
-use crate::audio::Rng;
+use crate::rng::Rng;
 
 /// How the music should feel. Only calm exploration for now; fights (v0.4) will add an
 /// intensity that layers more parts over the same score.

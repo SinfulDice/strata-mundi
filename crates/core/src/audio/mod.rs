@@ -15,7 +15,7 @@ mod wav;
 pub use ambience::{
     Altitude, Ambience, AmbienceDef, Bed, BedDef, Event, EventDef, MAX_PARTS, TimeOfDay,
 };
-pub use dsp::{NoiseColor, Rng};
+pub use dsp::NoiseColor;
 pub use load::{Sound, SoundSet, SoundSetDef, Sounds, load_sounds, variant_seed};
 pub use recipe::{
     Band, Envelope, Filter, Layer, MAX_GRAINS, MAX_LAYERS, Mode, SoundCategory, SoundDef, Wobble,

@@ -1,13 +1,13 @@
 #![allow(clippy::unwrap_used)]
 
 use std::path::{Path, PathBuf};
-use strata_core::audio::Rng;
 use strata_core::content::{
     BlockId, Content, Face, HitBox, ItemKind, LootContext, RenderKind, TextureId,
 };
 use strata_core::id::Identifier;
 use strata_core::lang::LANGUAGES;
 use strata_core::pack::{PackError, PackSet};
+use strata_core::rng::Rng;
 
 fn fixtures(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -56,6 +56,12 @@ fn broken_pack_gives_clear_errors_without_crashing() {
         "{messages:#?}"
     );
     assert!(mentions("reference loop"), "{messages:#?}");
+    for file in [
+        "looted.ron: unknown loot table",
+        "looted_too.ron: unknown loot table",
+    ] {
+        assert!(mentions(file), "{messages:#?}");
+    }
     assert!(
         mentions("`octaves` is 99, the maximum is 6"),
         "{messages:#?}"

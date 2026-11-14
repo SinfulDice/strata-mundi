@@ -45,8 +45,9 @@ pub struct View {
     pub graphics: GraphicsSettings,
     pub sky: SkyFrame,
     pub particles: ParticleShot,
-    /// Blocks drawn cracked, with their stage (0 to 9), as while breaking them.
-    pub cracks: Vec<(BlockPos, u8)>,
+    /// Blocks drawn cracked, with their stage (from 0, see the packs' `cracks.ron`), as
+    /// while breaking them.
+    pub cracks: Vec<(BlockPos, usize)>,
 }
 
 /// Particles frozen at one moment: a block broken at the start, then `seconds` of
@@ -165,7 +166,7 @@ pub fn render_image(
     view.particles.run(&mut particles, world, camera);
     particles.write_instances(camera.position, world, &mut renderer.particles.instances);
     renderer.immersion = world.immersion(camera.position, content);
-    renderer.cracks = crack_draws(content, world, &view.cracks, camera.position);
+    renderer.overlays.cracks = crack_draws(content, world, &view.cracks, camera.position);
     let target = OffscreenTarget::new(&gpu, size);
     let mut encoder = gpu.device.create_command_encoder(&Default::default());
     renderer.render(
@@ -184,14 +185,15 @@ pub fn render_image(
 fn crack_draws(
     content: &Content,
     world: &ClientWorld,
-    cracks: &[(BlockPos, u8)],
+    cracks: &[(BlockPos, usize)],
     eyes: glam::DVec3,
 ) -> Vec<CrackDraw> {
     cracks
         .iter()
         .filter_map(|&(pos, stage)| {
+            let layer = content.crack_stages.get(stage)?;
             let shape = content.blocks.get(world.block_at(pos))?.hit_box()?;
-            Some(CrackDraw::on(pos, shape, stage, eyes))
+            Some(CrackDraw::on(pos, shape, u32::from(layer.0), eyes))
         })
         .collect()
 }

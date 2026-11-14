@@ -96,26 +96,35 @@ fn cracks_grow_and_merge_with_reported_ones() {
     let mut mining = Mining::default();
     frame(&mut mining, &scene, aim(STONE));
     assert_eq!(mining.cracks(&scene.world), vec![(STONE, 0)]);
-    for _ in 0..80 {
+    for _ in 0..75 {
         frame(&mut mining, &scene, aim(STONE));
     }
-    assert_eq!(
-        mining.cracks(&scene.world),
-        vec![(STONE, 5)],
-        "4 of 7.5 seconds"
-    );
+    let [(pos, half)] = mining.cracks(&scene.world)[..] else {
+        panic!("one crack");
+    };
+    assert_eq!(pos, STONE);
+    assert!((126..=127).contains(&half), "3.75 of 7.5 seconds: {half}");
     let other = NetEntity(9);
-    mining.report(other, STONE, Some(8));
-    mining.report(other, DIRT, Some(2));
+    mining.report(other, STONE, Some(200));
+    mining.report(other, DIRT, Some(30));
     let mut cracks = mining.cracks(&scene.world);
     cracks.sort_by_key(|(pos, _)| pos.x);
-    assert_eq!(cracks, vec![(DIRT, 2), (STONE, 5)]);
-    mining.report(NetEntity(4), STONE, Some(8));
-    assert!(mining.cracks(&scene.world).contains(&(STONE, 8)));
+    assert_eq!(cracks, vec![(DIRT, 30), (STONE, half)]);
+    mining.report(NetEntity(4), STONE, Some(200));
+    assert!(mining.cracks(&scene.world).contains(&(STONE, 200)));
+    mining.forget(NetEntity(4));
     mining.report(other, DIRT, None);
-    mining.report(NetEntity(4), BlockPos::new(5, 5, 5), Some(3));
-    assert_eq!(mining.cracks(&scene.world), vec![(STONE, 5)], "none on air");
+    mining.report(NetEntity(5), BlockPos::new(5, 5, 5), Some(3));
+    assert_eq!(
+        mining.cracks(&scene.world),
+        vec![(STONE, half)],
+        "none on air"
+    );
     let draws = mining.draws(&scene.world, &scene.info, DVec3::ZERO);
     assert_eq!(draws.len(), 1);
     assert_eq!(draws[0].min, glam::Vec3::new(2.0, 0.0, 1.0));
+    let stages = &scene.info.content.crack_stages;
+    assert_eq!(draws[0].layer, u32::from(stages[stages.len() / 2 - 1].0));
+    mining.clear();
+    assert!(mining.cracks(&scene.world).is_empty());
 }

@@ -38,23 +38,24 @@ sequenceDiagram
     C->>S: Action(StartBreak { pos })
     S->>S: retient pos, bloc, objet en main, tick de départ
     loop chaque tick
-        S-->>C: Cracking { étape } (quand elle change)
+        S-->>C: Cracking { avancement 0-255 } (quand l'étape change)
     end
-    Note over C: son propre compte est fini
+    Note over C: son propre compte est fini : il montre la casse
     C->>S: Action(Break { pos })
     S->>S: assez de ticks ? (marge de 2 ticks ou 10 %)
     S-->>C: BlockChanged + ActionDone
+    Note over S: sinon, il casse lui-même au tick prévu
 ```
 
 - Le client (`mining.rs`) compte le temps image par image tant que le bouton Attaquer est maintenu sur **la même case, le même bloc, le même objet en main**. Autre chose → il recommence (`StartBreak` sur le nouveau bloc) ; bouton lâché → `StopBreak`.
-- Le serveur (`game/mining.rs`) note le début, et refuse un `Break` arrivé trop tôt. Une petite **marge** couvre les à-coups du réseau. Il arrête aussi la casse si l'objet en main change ou si le bloc disparaît.
+- Le serveur (`game/mining.rs`) note le début et **casse lui-même** le bloc quand le temps est écoulé : c'est lui qui a le dernier mot. Le `Break` du client, quand il arrive un peu avant (petite **marge** pour les à-coups du réseau), permet seulement de casser sans attendre ; trop tôt, il est refusé sans remettre le compte à zéro. Le serveur arrête la casse si l'objet en main change, si le bloc disparaît, si le joueur s'éloigne ou passe en créatif. Côté client, ouvrir un menu ou une cinématique, ou quitter la fenêtre, arrête aussi la casse.
 - `StartBreak` et `StopBreak` passent par la même file que les autres clics (voir [Joueur et interaction](joueur-et-interaction.md)) pour garder l'ordre, mais n'attendent pas la limite de 10 actions par seconde : ils ne changent aucun bloc.
 
 ### Les fissures
 
-Les textures `strata:crack_0` à `crack_9` sont **dessinées par le code** (motif `Cracks`) : des branches partent du centre et grandissent ensemble ; chaque étape montre un peu plus des **mêmes** traits, donc les fissures s'allongent au lieu de changer. Le rendu (`crack_pipeline.rs`) pose une boîte à peine plus grande que le bloc, avec la texture de l'étape sur ses six faces, mélangée par transparence au-dessus du monde.
+La liste des étapes est dans `cracks.ron`, à la racine du pack ; les textures `strata:crack_0` à `crack_9` sont **dessinées par le code** (motif `Cracks`) : des branches partent du centre et grandissent ensemble ; chaque étape montre un peu plus des **mêmes** traits, donc les fissures s'allongent au lieu de changer. Le rendu (`render/overlays/cracks.rs`) pose une boîte à peine plus grande que le bloc, avec la texture de l'étape sur ses six faces, mélangée par transparence au-dessus du monde.
 
-Le serveur annonce l'étape de chaque casseur (`Cracking`) : en multijoueur, chacun verra les autres creuser. Le client dessine, pour chaque bloc, l'étape la plus avancée entre la sienne et celles reçues.
+Le serveur annonce l'**avancement** de chaque casseur (`Cracking`, de 0 à 255) : en multijoueur, chacun verra les autres creuser. Chaque client le change en étape selon son propre nombre de textures, et dessine, pour chaque bloc, la casse la plus avancée entre la sienne et celles reçues.
 
 Toutes les 0,2 seconde, un **coup** : un petit éclat du bloc et le bruit d'un pas sur lui, comme dans Minecraft.
 
@@ -69,7 +70,7 @@ LootTable(pools: [
 ])
 ```
 
-Une table contient des **réserves** (`Pool`) tirées l'une après l'autre. Chaque tirage choisit une **entrée** avec une chance proportionnelle à son poids (`weight`) : un objet précis (`Item`), le bloc lui-même (`Itself`) ou rien (`Nothing`), en quantité entre `count.0` et `count.1`. Des **conditions** (`Tool`, `Not`, `Chance`) s'appliquent à une réserve entière ou à une entrée. Le hasard vient d'un petit générateur semé par la graine du monde, la position et le tick : la même partie rejouée donne le même butin, et les tests peuvent le vérifier.
+Une table contient des **réserves** (`Pool`) tirées l'une après l'autre. Chaque tirage choisit une **entrée** avec une chance proportionnelle à son poids (`weight`) : un objet précis (`Item`), le bloc lui-même (`Itself`) ou rien (`Nothing`), en quantité entre `count.0` et `count.1`. Des **conditions** (`Tool`, `Not`, `Chance`) s'appliquent à une réserve entière ou à une entrée. Le hasard vient d'un petit générateur (`strata_core::rng`) semé par la graine du monde, la dimension, la position et le tick : la même partie rejouée donne le même butin, et les tests peuvent le vérifier.
 
 ### Ce que voit le joueur
 
@@ -82,10 +83,10 @@ L'infobulle d'un objet ajoute une ligne : « Outil requis : pioche de niveau 2 o
 | Formule, types `ToolDef`, `BlockTool`, étapes | `crates/core/src/content/tool.rs` |
 | Tables de butin et tirage | `crates/core/src/content/loot.rs` |
 | Texte des infobulles | `crates/core/src/content/describe.rs` |
-| Texture des fissures | `crates/core/src/texture/cracks.rs`, `assets/packs/strata/textures/crack_*.ron` |
+| Texture des fissures | `crates/core/src/texture/cracks.rs`, `assets/packs/strata/cracks.ron`, `textures/crack_*.ron` |
 | Messages | `WorldAction::StartBreak`, `StopBreak`, `ServerMessage::Cracking` dans `crates/protocol/src/messages.rs` |
 | Décision du serveur | `crates/server/src/game/mining.rs`, `crates/server/src/mining_rules.rs` |
-| Compte du client, fissures | `crates/client/src/mining.rs`, `crates/client/src/render/crack_pipeline.rs`, `shaders/crack.wgsl` |
+| Compte du client, fissures | `crates/client/src/mining.rs`, `crates/client/src/render/overlays/`, `shaders/crack.wgsl` |
 | Pages du wiki | `crates/wikigen/src/harvest.rs` |
 | Captures | `strata --scene mining --crack x,y,z,étape ...` |
 
@@ -95,7 +96,7 @@ L'infobulle d'un objet ajoute une ligne : « Outil requis : pioche de niveau 2 o
 - **Variantes d'énumération avec champs** : `EntryDef::Item { item, weight, count, conditions }`. En RON on écrit `Item(item: "strata:dirt", weight: 2)` ; les champs absents prennent leur valeur `#[serde(default = ...)]`.
 - **`Box<LootCondition>`** : une condition `Not` contient une autre condition. Un type ne peut pas se contenir lui-même directement (sa taille serait infinie) ; la `Box` le range ailleurs dans la mémoire et ne garde qu'un pointeur.
 - **`matches!(action, WorldAction::StartBreak { .. } | WorldAction::StopBreak)`** : vrai si la valeur a l'une de ces formes, sans écrire un `match` complet.
-- **`std::array::from_fn`** : construit un tableau de taille fixe (les 10 couches de fissures) en appelant une fonction pour chaque indice.
+- **`impl Iterator<Item = u16>`** : `split(20, 16)` rend « un itérateur de nombres » (16 puis 4) sans dire son type exact ; l'appelant le parcourt avec `for`.
 
 </details>
 

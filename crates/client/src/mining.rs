@@ -7,10 +7,10 @@ use crate::render::CrackDraw;
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::collections::HashMap;
-use strata_core::content::{BlockId, Face, ItemId, TICKS_PER_SECOND, crack_stage};
+use strata_core::content::{BlockId, Face, ItemId, TICKS_PER_SECOND, crack_progress, crack_stage};
 use strata_core::coords::BlockPos;
 use strata_core::raycast::RayHit;
-use strata_protocol::{CRACK_STAGES, NetEntity, WorldAction};
+use strata_protocol::{NetEntity, WorldAction};
 
 /// A hit sound and a fragment come this often while breaking (seconds), like Minecraft.
 const HIT_PERIOD: f32 = 0.2;
@@ -29,7 +29,7 @@ struct Break {
 #[derive(Debug, Default)]
 pub struct Mining {
     current: Option<Break>,
-    /// Cracks reported by the server, by breaker.
+    /// Progress (0-255) reported by the server, by breaker.
     reported: HashMap<NetEntity, (BlockPos, u8)>,
     /// Blocks hit since the last frame (sound and fragments), with the face hit.
     pub hits: Vec<(BlockPos, Face)>,
@@ -103,21 +103,30 @@ impl Mining {
         self.current.take().map(|_| WorldAction::StopBreak)
     }
 
-    /// The server's news about someone's cracks.
-    pub fn report(&mut self, breaker: NetEntity, pos: BlockPos, stage: Option<u8>) {
-        match stage {
-            Some(stage) => self.reported.insert(breaker, (pos, stage)),
+    /// The server's news about someone's break.
+    pub fn report(&mut self, breaker: NetEntity, pos: BlockPos, progress: Option<u8>) {
+        match progress {
+            Some(progress) => self.reported.insert(breaker, (pos, progress)),
             None => self.reported.remove(&breaker),
         };
     }
 
-    /// Cracks to draw: the local break and the reported ones, the furthest stage per
-    /// block, never on air.
+    /// The breaker is gone (its entity was removed).
+    pub fn forget(&mut self, breaker: NetEntity) {
+        self.reported.remove(&breaker);
+    }
+
+    /// Another world or dimension: nothing reported before stands.
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
+
+    /// Breaks to draw, with their progress (0-255): the local one and the reported ones,
+    /// the furthest per block, never on air.
     pub fn cracks(&self, world: &ClientWorld) -> Vec<(BlockPos, u8)> {
-        let local = self.current.map(|current| {
-            let stage = crack_stage(current.elapsed, current.needed, CRACK_STAGES);
-            (current.pos, stage)
-        });
+        let local = self
+            .current
+            .map(|current| (current.pos, crack_progress(current.elapsed, current.needed)));
         let mut cracks: Vec<(BlockPos, u8)> = Vec::new();
         for (pos, stage) in local.into_iter().chain(self.reported.values().copied()) {
             if world.block_at(pos) == BlockId::AIR {
@@ -131,14 +140,16 @@ impl Mining {
         cracks
     }
 
-    /// The cracks as the renderer draws them: on each block's hit box, relative to the
-    /// camera at `eyes`.
+    /// The cracks as the renderer draws them: the texture of the stage reached (from the
+    /// packs' `cracks.ron`) on each block's hit box, relative to the camera at `eyes`.
     pub fn draws(&self, world: &ClientWorld, info: &BlockInfo, eyes: DVec3) -> Vec<CrackDraw> {
+        let stages = &info.content.crack_stages;
         self.cracks(world)
             .into_iter()
-            .filter_map(|(pos, stage)| {
+            .filter_map(|(pos, progress)| {
+                let layer = stages.get(crack_stage(progress, stages.len()))?;
                 let shape = info.hit_box(world.block_at(pos))?;
-                Some(CrackDraw::on(pos, shape, stage, eyes))
+                Some(CrackDraw::on(pos, shape, u32::from(layer.0), eyes))
             })
             .collect()
     }

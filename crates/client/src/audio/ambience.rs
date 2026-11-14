@@ -4,10 +4,11 @@
 
 use super::triggers::Cue;
 use glam::DVec3;
-use strata_core::audio::{Ambience, Rng, Sounds};
+use strata_core::audio::{Ambience, Sounds};
 use strata_core::chunk::BiomeId;
 use strata_core::content::SoundId;
 use strata_core::id::Identifier;
+use strata_core::rng::Rng;
 
 /// Seconds for a bed to go from silence to full volume (or back).
 pub const FADE_SECONDS: f32 = 3.0;

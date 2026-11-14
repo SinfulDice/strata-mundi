@@ -130,6 +130,26 @@ impl Translations {
             .unwrap_or_else(|| key.to_owned())
     }
 
+    /// `value` with `decimals` digits after the language's separator (`decimal-separator`,
+    /// `,` in French): 7.5 → « 7,50 ».
+    pub fn decimal(&self, language: &str, value: f64, decimals: usize) -> String {
+        let text = format!("{value:.decimals$}");
+        let separator = self.text(language, DECIMAL_SEPARATOR);
+        match separator.as_str() {
+            "." | "" => text,
+            _ if separator == DECIMAL_SEPARATOR => text,
+            _ => text.replace('.', &separator),
+        }
+    }
+
+    /// `decimal` without the useless trailing zeros: 4.0 → « 4 », 1.5 → « 1,5 ».
+    pub fn short_decimal(&self, language: &str, value: f64) -> String {
+        let text = format!("{value:.2}");
+        let trimmed = text.trim_end_matches('0').trim_end_matches('.');
+        let decimals = trimmed.split_once('.').map_or(0, |(_, after)| after.len());
+        self.decimal(language, value, decimals)
+    }
+
     pub fn format(
         &self,
         language: &str,
@@ -173,4 +193,29 @@ fn new_bundle(language: &str) -> FluentBundle<FluentResource> {
     // Unicode isolation marks would show as boxes in the bitmap font.
     bundle.set_use_isolating(false);
     bundle
+}
+
+/// Fluent key of the decimal separator of each language.
+const DECIMAL_SEPARATOR: &str = "decimal-separator";
+
+#[cfg(test)]
+mod decimal_tests {
+    use super::*;
+    use crate::pack::PackSet;
+    use std::path::Path;
+
+    #[test]
+    fn decimals_follow_the_language() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
+        let packs = PackSet::discover(&dir, &mut Vec::new());
+        let translations = Translations::load(&packs, &mut Vec::new());
+        assert_eq!(translations.decimal("fr", 7.5, 2), "7,50");
+        assert_eq!(translations.decimal("en", 7.5, 2), "7.50");
+        assert_eq!(translations.short_decimal("fr", 4.0), "4");
+        assert_eq!(translations.short_decimal("fr", 1.25), "1,25");
+        assert_eq!(translations.short_decimal("en", 0.5), "0.5");
+        let seconds = [("seconds", translations.decimal("fr", 7.5, 2))];
+        let text = translations.text_with("fr", "wiki-seconds", &seconds);
+        assert!(text.contains("7,50\u{a0}s"), "{text:?}");
+    }
 }

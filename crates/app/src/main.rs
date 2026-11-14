@@ -189,7 +189,7 @@ fn screenshot(
         cracks: args
             .crack
             .iter()
-            .map(|&[x, y, z, stage]| (BlockPos::new(x, y, z), stage as u8))
+            .map(|&[x, y, z, stage]| (BlockPos::new(x, y, z), stage.unsigned_abs() as usize))
             .collect(),
     };
     Ok(capture(&loaded.content, &mut world, &view, path)?)

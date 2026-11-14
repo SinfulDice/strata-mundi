@@ -2,7 +2,6 @@
 
 mod block_pipeline;
 mod cloud_pipeline;
-mod crack_pipeline;
 mod depth;
 mod frustum;
 mod gpu;
@@ -10,7 +9,7 @@ mod mesh;
 mod model_pipeline;
 mod offscreen;
 mod options;
-mod outline;
+mod overlays;
 mod particle_pipeline;
 mod post;
 mod shaders;
@@ -32,8 +31,6 @@ use crate::mesher::{SectionKey, SectionMesh};
 use crate::sky::SkyFrame;
 use block_pipeline::{BlockPass, BlockPipeline, CameraUniform};
 use cloud_pipeline::{CloudDraw, CloudPipeline};
-use crack_pipeline::CrackPipeline;
-pub use crack_pipeline::{CrackDraw, MAX_CRACKS};
 use depth::DepthBuffer;
 use frustum::Frustum;
 pub use frustum::in_vertical_range;
@@ -41,12 +38,11 @@ use glam::DVec3;
 use mesh::GpuMesh;
 pub use model_pipeline::ModelPipeline;
 use options::{FOG_START, IMMERSED_FOG_LEAD, MIN_AMBIENT, TIME_WRAP};
-use outline::OutlinePipeline;
+pub use overlays::{CrackDraw, MAX_CRACKS, Overlays};
 pub use particle_pipeline::{ParticleInstance, ParticlePipeline};
 use sky_pipeline::SkyPipeline;
 use std::collections::HashMap;
 use strata_core::content::TextureLibrary;
-use strata_core::coords::BlockPos;
 use strata_core::coords::{SECTION_SIZE, SECTIONS_PER_COLUMN};
 use texture_array::TextureArray;
 pub use texture_array::TextureFiltering;
@@ -60,12 +56,8 @@ struct GpuSection {
 
 pub struct Renderer {
     blocks: BlockPipeline,
-    outline_pipeline: OutlinePipeline,
-    /// Block drawn with an outline (the one the player aims at).
-    pub outline: Option<BlockPos>,
-    crack_pipeline: CrackPipeline,
-    /// Blocks being broken, drawn cracked this frame.
-    pub cracks: Vec<CrackDraw>,
+    /// The aimed block's outline and the cracks of blocks being broken.
+    pub overlays: Overlays,
     depth: DepthBuffer,
     /// Section meshes grouped by column, so unloading a column is a single removal.
     columns: HashMap<(i32, i32), Vec<Option<GpuSection>>>,
@@ -132,14 +124,7 @@ impl Renderer {
             &blocks.texture_layout,
         );
         Ok(Self {
-            outline_pipeline: OutlinePipeline::new(
-                &gpu.device,
-                color_format,
-                &blocks.camera_layout,
-            ),
-            outline: None,
-            crack_pipeline: CrackPipeline::new(&gpu.device, color_format, &blocks, textures),
-            cracks: Vec::new(),
+            overlays: Overlays::new(&gpu.device, color_format, &blocks),
             blocks,
             depth: DepthBuffer::new(&gpu.device, (1, 1)),
             columns: HashMap::new(),
@@ -260,7 +245,7 @@ impl Renderer {
         self.blocks.write_camera(&gpu.queue, &uniform);
         self.models.prepare(gpu, camera, &frustum);
         self.particles.prepare(gpu);
-        self.crack_pipeline.prepare(gpu, &self.cracks);
+        self.overlays.prepare(gpu);
         let draw_sky = self.immersion.is_none();
         let clouds = self.cloud_draw(camera).filter(|_| draw_sky);
         if draw_sky {
@@ -313,12 +298,7 @@ impl Renderer {
             self.blocks.set_groups(&mut pass);
             self.sky_pipeline.draw(&mut pass);
         }
-        self.crack_pipeline.draw(&mut pass, &self.blocks);
-        if let Some(block) = self.outline {
-            let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
-            self.outline_pipeline
-                .draw(&gpu.queue, &mut pass, camera.relative(corner));
-        }
+        self.overlays.draw(gpu, &mut pass, camera, &self.blocks);
         if let Some(clouds) = &clouds {
             self.blocks.set_groups(&mut pass);
             self.clouds.draw(&mut pass, clouds);
@@ -361,8 +341,7 @@ impl Renderer {
     /// Forgets every mesh (leaving a world or the title screen).
     pub fn clear(&mut self) {
         self.columns.clear();
-        self.outline = None;
-        self.cracks.clear();
+        self.overlays.clear();
         self.models.entities.clear();
         self.particles.instances.clear();
     }

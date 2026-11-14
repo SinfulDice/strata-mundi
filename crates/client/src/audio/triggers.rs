@@ -3,10 +3,11 @@
 
 use crate::world::ClientWorld;
 use glam::DVec3;
-use strata_core::audio::{Rng, SoundSet};
+use strata_core::audio::SoundSet;
 use strata_core::content::{Block, BlockId, Content, RenderKind, SoundId};
 use strata_core::coords::BlockPos;
 use strata_core::physics::Body;
+use strata_core::rng::Rng;
 
 /// A sound to play.
 #[derive(Debug, Clone, Copy, PartialEq)]

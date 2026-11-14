@@ -205,7 +205,7 @@ fn subtitles_tell_the_direction_and_expire() {
 #[test]
 fn two_plays_differ_and_buffers_are_cached() {
     let mut bank = SoundBank::new(content().sounds.clone());
-    let mut rng = strata_core::audio::Rng::new(3);
+    let mut rng = strata_core::rng::Rng::new(3);
     let step = sound_id("step_stone");
     assert!(bank.pick(step, &mut rng).is_err(), "made in the background");
     assert_eq!(bank.cached_samples(), 0);

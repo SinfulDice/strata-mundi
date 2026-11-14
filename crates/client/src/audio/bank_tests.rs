@@ -5,7 +5,7 @@ use super::output::Output;
 use super::tests::{block, content, hearing, sound_id};
 use super::*;
 use std::time::{Duration, Instant};
-use strata_core::audio::Rng;
+use strata_core::rng::Rng;
 
 #[test]
 fn no_sound_is_missing_after_loading() {

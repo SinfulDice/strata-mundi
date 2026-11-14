@@ -9,10 +9,10 @@ use crate::settings::MusicFrequency;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use strata_core::audio::Rng;
 use strata_core::audio::music::Theme;
 use strata_core::dimension::DimensionId;
 use strata_core::id::Identifier;
+use strata_core::rng::Rng;
 
 /// Silence before the first piece on the title screen.
 pub const TITLE_WAIT: (f32, f32) = (2.0, 5.0);

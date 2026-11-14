@@ -26,7 +26,7 @@ fn a_lava_lake_bubbles_at_its_surface_within_hearing() {
     let bubble = sound_id("lava_bubble");
     let ears = DVec3::new(-3.0, 22.6, 6.0);
     let mut ambient = AmbientBlocks::default();
-    let (mut rng, mut cues) = (strata_core::audio::Rng::new(9), Vec::new());
+    let (mut rng, mut cues) = (strata_core::rng::Rng::new(9), Vec::new());
     for _ in 0..600 {
         ambient.update(0.05, ears, (&world, &table), &mut rng, &mut cues);
     }

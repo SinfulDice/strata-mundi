@@ -43,9 +43,6 @@ pub enum ClientMessage {
     Command(String),
 }
 
-/// Steps of the cracks drawn over a block being broken.
-pub const CRACK_STAGES: u8 = 10;
-
 /// Clicks the server keeps waiting for their turn; the client predicts no more clicks
 /// than this without an answer.
 pub const MAX_PENDING_ACTIONS: usize = 8;
@@ -169,12 +166,13 @@ pub enum ServerMessage {
     /// Block action `id` is done or refused; the `BlockChanged` it caused (or, when
     /// refused, the actual state of the cells it aimed at) came before.
     ActionDone(ActionId),
-    /// Cracks of a block someone is breaking: stage 0 to `CRACK_STAGES - 1`, or `None`
-    /// when they stop. Drawn for every breaker, so other players' work shows too.
+    /// How far someone is breaking a block, 0 to 255 (each client turns it into its
+    /// own crack stages), or `None` when they stop. Sent for every breaker, so other
+    /// players' work shows too.
     Cracking {
         breaker: NetEntity,
         pos: BlockPos,
-        stage: Option<u8>,
+        progress: Option<u8>,
     },
     /// An entity came into existence (or is already there when the player arrives).
     EntitySpawned(EntityState),
@@ -280,7 +278,7 @@ mod tests {
             ServerMessage::Cracking {
                 breaker: id,
                 pos: BlockPos::new(-4, 300, 9),
-                stage: Some(CRACK_STAGES - 1),
+                progress: Some(200),
             },
         ];
         for message in &server {

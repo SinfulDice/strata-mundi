@@ -1,38 +1,38 @@
 //! Cracks over the blocks being broken: the crack texture of the stage on the six faces
 //! of the block's hit box, a hair outside it, blended over the world.
 
-use super::Gpu;
-use super::block_pipeline::BlockPipeline;
-use super::depth::DEPTH_FORMAT;
-use super::mesh::StreamBuffer;
+use crate::render::Gpu;
+use crate::render::block_pipeline::BlockPipeline;
+use crate::render::depth::DEPTH_FORMAT;
+use crate::render::mesh::StreamBuffer;
 use bytemuck::{Pod, Zeroable};
 use glam::{DVec3, Vec3};
-use strata_core::content::{HitBox, TextureLibrary};
+use strata_core::content::HitBox;
 use strata_core::coords::BlockPos;
-use strata_core::id::Identifier;
-use strata_protocol::CRACK_STAGES;
 
 /// Slightly larger than the block so the cracks are not hidden by its faces.
 const GROW: f32 = 0.003;
 /// Breaks drawn at once, at most (other players' included).
 pub const MAX_CRACKS: usize = 32;
 
-/// A block to draw cracked: its hit box relative to the camera.
+/// A block to draw cracked: its hit box relative to the camera, and the texture layer
+/// of its crack stage.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CrackDraw {
     pub min: Vec3,
     pub max: Vec3,
-    pub stage: u8,
+    pub layer: u32,
 }
 
 impl CrackDraw {
-    /// Cracks of `stage` on the block at `pos` whose aim stops on `shape`, seen from `eyes`.
-    pub fn on(pos: BlockPos, shape: HitBox, stage: u8, eyes: DVec3) -> Self {
+    /// Cracks drawn with texture `layer` on the block at `pos` whose aim stops on
+    /// `shape`, seen from `eyes`.
+    pub fn on(pos: BlockPos, shape: HitBox, layer: u32, eyes: DVec3) -> Self {
         let corner = DVec3::new(f64::from(pos.x), f64::from(pos.y), f64::from(pos.z));
         Self {
             min: (corner + DVec3::from(shape.min) - eyes).as_vec3(),
             max: (corner + DVec3::from(shape.max) - eyes).as_vec3(),
-            stage,
+            layer,
         }
     }
 }
@@ -48,8 +48,6 @@ struct CrackVertex {
 pub struct CrackPipeline {
     pipeline: wgpu::RenderPipeline,
     vertices: StreamBuffer,
-    /// Texture layer of each stage (`strata:crack_0` to `crack_9`), if the packs have it.
-    layers: [Option<u32>; CRACK_STAGES as usize],
     count: u32,
 }
 
@@ -58,9 +56,8 @@ impl CrackPipeline {
         device: &wgpu::Device,
         color_format: wgpu::TextureFormat,
         blocks: &BlockPipeline,
-        textures: &TextureLibrary,
     ) -> Self {
-        let shader = super::shaders::module(device, "crack.wgsl");
+        let shader = crate::render::shaders::module(device, "crack.wgsl");
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("crack layout"),
             bind_group_layouts: &[Some(&blocks.camera_layout), Some(&blocks.texture_layout)],
@@ -104,14 +101,13 @@ impl CrackPipeline {
         Self {
             pipeline,
             vertices: StreamBuffer::new("crack vertices", wgpu::BufferUsages::VERTEX),
-            layers: stage_layers(textures),
             count: 0,
         }
     }
 
     /// Uploads this frame's cracks; call before the render pass begins.
     pub fn prepare(&mut self, gpu: &Gpu, cracks: &[CrackDraw]) {
-        let vertices = crack_vertices(cracks, &self.layers);
+        let vertices = crack_vertices(cracks);
         self.count = vertices.len() as u32;
         if self.count > 0 {
             self.vertices.write(gpu, bytemuck::cast_slice(&vertices));
@@ -129,21 +125,12 @@ impl CrackPipeline {
     }
 }
 
-fn stage_layers(textures: &TextureLibrary) -> [Option<u32>; CRACK_STAGES as usize] {
-    std::array::from_fn(|stage| {
-        let id = Identifier::new("strata", &format!("crack_{stage}")).ok()?;
-        textures.layer(&id).map(|layer| u32::from(layer.0))
-    })
-}
-
 /// Two triangles per face of each crack's box, its stage's texture stretched over the
-/// face; stages without a texture are skipped.
-fn crack_vertices(cracks: &[CrackDraw], layers: &[Option<u32>]) -> Vec<CrackVertex> {
+/// face.
+fn crack_vertices(cracks: &[CrackDraw]) -> Vec<CrackVertex> {
     let mut vertices = Vec::new();
     for crack in cracks.iter().take(MAX_CRACKS) {
-        let Some(&Some(layer)) = layers.get(usize::from(crack.stage)) else {
-            continue;
-        };
+        let layer = crack.layer;
         let (a, b) = (crack.min - GROW, crack.max + GROW);
         for face in FACES {
             let corner = |i: usize| {
@@ -181,18 +168,17 @@ const UVS: [[f32; 2]; 4] = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]];
 mod tests {
     use super::*;
 
-    fn crack(stage: u8) -> CrackDraw {
+    fn crack(layer: u32) -> CrackDraw {
         CrackDraw {
             min: Vec3::ZERO,
             max: Vec3::ONE,
-            stage,
+            layer,
         }
     }
 
     #[test]
     fn each_crack_is_a_box_of_its_stage() {
-        let layers: Vec<Option<u32>> = (0..10).map(|stage| Some(100 + stage)).collect();
-        let vertices = crack_vertices(&[crack(0), crack(9)], &layers);
+        let vertices = crack_vertices(&[crack(100), crack(109)]);
         assert_eq!(vertices.len(), 2 * 36);
         assert!(vertices[..36].iter().all(|v| v.layer == 100));
         assert!(vertices[36..].iter().all(|v| v.layer == 109));
@@ -201,10 +187,8 @@ mod tests {
     }
 
     #[test]
-    fn missing_textures_and_stages_draw_nothing() {
-        let layers = [None, Some(3)];
-        assert!(crack_vertices(&[crack(0), crack(5)], &layers).is_empty());
+    fn the_number_of_cracks_is_bounded() {
         let many = vec![crack(1); MAX_CRACKS + 5];
-        assert_eq!(crack_vertices(&many, &layers).len(), MAX_CRACKS * 36);
+        assert_eq!(crack_vertices(&many).len(), MAX_CRACKS * 36);
     }
 }

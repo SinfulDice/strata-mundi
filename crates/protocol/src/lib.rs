@@ -10,7 +10,7 @@ mod worlds;
 pub use inventory::{InventoryRequest, OpenedContainer};
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{
-    ActionId, BiomeInfo, CRACK_STAGES, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,
+    ActionId, BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,
     MAX_PENDING_ACTIONS, NetEntity, ServerMessage, WorldAction,
 };
 pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};

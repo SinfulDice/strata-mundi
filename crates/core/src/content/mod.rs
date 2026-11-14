@@ -3,6 +3,7 @@
 mod attached;
 mod block;
 mod container;
+mod cracks;
 mod describe;
 mod entity;
 mod fire;
@@ -22,6 +23,7 @@ mod turned;
 pub use attached::{AttachedSides, Attachment};
 pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
 pub use container::ContainerDef;
+pub use cracks::{CracksDef, MAX_CRACK_STAGES};
 pub use entity::{DroppedItemDef, EntityDef, EntityType, ModelBox};
 pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
 pub use fluid::{
@@ -44,7 +46,7 @@ pub use registry::{
 };
 pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
 pub use tint::{BiomeTints, BlockTint, Tint, TintFaces, TintKind, UNTINTED_ALPHA};
-pub use tool::{BlockTool, TICKS_PER_SECOND, ToolDef, crack_stage};
+pub use tool::{BlockTool, TICKS_PER_SECOND, ToolDef, crack_progress, crack_stage};
 
 use crate::audio::{self, Sounds};
 use crate::cinematic::{self, Cinematic};
@@ -74,6 +76,10 @@ pub struct Content {
     pub sounds: Sounds,
     /// What broken blocks give, by table identifier.
     pub loot_tables: BTreeMap<Identifier, LootTable>,
+    /// Texture of each crack stage over a block being broken (`cracks.ron`).
+    pub crack_stages: Vec<TextureId>,
+    /// Item tooltips by language, see `item_tooltip`.
+    pub tooltips: describe::TooltipCache,
 }
 
 /// Identifier of the empty block, always `BlockId::AIR`.
@@ -96,7 +102,8 @@ impl Content {
             particles: &particles,
             sounds: &sounds,
         };
-        let (blocks, fluids) = load_blocks(packs, &presented, &mut errors);
+        let mut loot_refs = Vec::new();
+        let (blocks, fluids) = load_blocks(packs, &presented, &mut loot_refs, &mut errors);
         let entities = entity::load_entities(packs, &textures, &mut errors);
         let known = item::Known {
             blocks: &blocks,
@@ -104,12 +111,13 @@ impl Content {
         };
         let items = item::load_items(packs, &known, &textures, &mut errors);
         let loot_tables = loot::load_loot_tables(packs, &items, &mut errors);
-        loot::check_loot_names(&blocks, &loot_tables, &mut errors);
+        loot::check_loot_names(&loot_refs, &loot_tables, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
+        let crack_stages = cracks::load_cracks(&presentation, &textures, &mut errors);
         let cinematics = cinematic::load(packs, &mut errors);
         let days = sky::load_days(packs, &mut errors);
         let skies = sky::load_skies(&presentation, &textures, &mut errors);
-        let content = Self {
+        let mut content = Self {
             blocks,
             items,
             entities,
@@ -122,7 +130,10 @@ impl Content {
             particles: particles.registry,
             sounds,
             loot_tables,
+            crack_stages,
+            tooltips: Default::default(),
         };
+        content.cache_tooltips();
         (content, errors)
     }
 
@@ -256,6 +267,7 @@ struct Presented<'a> {
 fn load_blocks(
     packs: &PackSet,
     presented: &Presented<'_>,
+    loot_refs: &mut Vec<(Identifier, std::path::PathBuf)>,
     errors: &mut Vec<PackError>,
 ) -> (Registry<BlockId, Block>, BTreeMap<BlockId, Fluid>) {
     let Presented {
@@ -318,7 +330,9 @@ fn load_blocks(
             light_emission: value.light_emission.min(15),
             hardness: value.hardness,
             tool: value.tool,
-            loot: value.loot,
+            loot: value
+                .loot
+                .inspect(|table| loot_refs.push((table.clone(), source.clone()))),
             faces,
             sound: value.sound,
             category: value.category,

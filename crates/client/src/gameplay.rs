@@ -110,6 +110,7 @@ impl Gameplay {
                 biomes,
             } => {
                 self.mode = mode;
+                self.interaction.mining.clear();
                 let tints = biomes.iter().map(|biome| biome.tints).collect();
                 self.view.world.set_biome_tints(tints);
                 self.biomes = biomes;
@@ -141,8 +142,8 @@ impl Gameplay {
             ServerMessage::Cracking {
                 breaker,
                 pos,
-                stage,
-            } => self.interaction.mining.report(breaker, pos, stage),
+                progress,
+            } => self.interaction.mining.report(breaker, pos, progress),
             ServerMessage::Inventory(inventory) => self.inventory.receive(*inventory),
             ServerMessage::ContainerOpened(container) => {
                 self.container = Some(*container);
@@ -159,7 +160,10 @@ impl Gameplay {
             ServerMessage::EntityMoved { id, position, yaw } => {
                 self.view.world.entities.moved(id, position, yaw);
             }
-            ServerMessage::EntityRemoved(id) => self.view.world.entities.remove(id),
+            ServerMessage::EntityRemoved(id) => {
+                self.view.world.entities.remove(id);
+                self.interaction.mining.forget(id);
+            }
             ServerMessage::Mode(mode) => {
                 self.mode = mode;
                 self.inventory.creative = mode == GameMode::Creative;
@@ -197,6 +201,7 @@ impl Gameplay {
             if !playing.advance(dt, &mut self.camera) {
                 self.stop_cinematic();
             }
+            self.cancel_breaking(connection);
             return;
         }
         apply_look(&mut self.camera, input, dt, &self.controls);
@@ -246,13 +251,21 @@ impl Gameplay {
     /// The aimed block's outline, the cracks of the blocks being broken, and the hits of
     /// this frame (a fragment and a sound each).
     pub fn show_breaking(&mut self, renderer: &mut Renderer, audio: &mut Audio) {
-        renderer.outline = self.interaction.target.map(|hit| hit.block);
+        let overlays = &mut renderer.overlays;
+        overlays.outline = self.interaction.target.map(|hit| hit.block);
         let world = &self.view.world;
         let mining = &mut self.interaction.mining;
-        renderer.cracks = mining.draws(world, &self.info, self.camera.position);
+        overlays.cracks = mining.draws(world, &self.info, self.camera.position);
         for (pos, face) in mining.hits.drain(..) {
             self.view.particles.block_hit(pos, face, world);
             audio.block_hit(pos, world.block_at(pos));
+        }
+    }
+
+    /// A screen, a menu or another window took over: a break in progress stops.
+    pub fn cancel_breaking(&mut self, connection: &ClientConnection) {
+        if let Some(stop) = self.interaction.mining.cancel() {
+            self.send_action(stop, connection);
         }
     }
 
