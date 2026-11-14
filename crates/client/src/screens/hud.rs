@@ -1,7 +1,7 @@
 use crate::audio::{Direction, LIFETIME, Subtitle};
 use crate::gameplay::Gameplay;
 use crate::hotbar::{Hotbar, SLOTS};
-use crate::ui::{LogLine, ScreenModel, Tone};
+use crate::ui::{LogLine, ScreenModel, SlotMark, Tone};
 use strata_core::content::{Content, ItemId, ItemKind};
 
 /// Data shown by the in-game overlay (sample values in the HUD editor).
@@ -33,6 +33,13 @@ impl ScreenModel for HudModel<'_> {
 
     fn selected(&self, id: &str) -> Option<usize> {
         (id == "hotbar").then(|| self.hotbar.selected_index())
+    }
+
+    fn marks(&self, id: &str) -> Vec<SlotMark> {
+        match id {
+            "hotbar" => self.hotbar.marks(SLOTS),
+            _ => Vec::new(),
+        }
     }
 
     fn log_lines(&self, id: &str) -> Vec<LogLine> {

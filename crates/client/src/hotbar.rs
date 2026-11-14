@@ -1,3 +1,4 @@
+use crate::ui::SlotMark;
 use strata_core::content::{Item, ItemId, Registry};
 use strata_core::inventory::{Area, Click, HOTBAR, ItemStack, PlayerInventory, SlotRef, SortOrder};
 use strata_protocol::InventoryRequest;
@@ -30,6 +31,17 @@ impl Hotbar {
 
     pub fn stack(&self, index: usize) -> Option<&ItemStack> {
         self.inventory.slots.get(index)
+    }
+
+    /// Counts and locks of the first `count` slots (the hotbar), for drawing.
+    pub fn marks(&self, count: usize) -> Vec<SlotMark> {
+        (0..count)
+            .map(|index| SlotMark {
+                count: self.stack(index).map_or(0, |stack| stack.count),
+                locked: self.inventory.is_locked(index),
+                ..SlotMark::default()
+            })
+            .collect()
     }
 
     pub fn inventory(&self) -> &PlayerInventory {
@@ -120,6 +132,7 @@ impl Hotbar {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
     use strata_core::content::{ItemKind, TextureId};
@@ -135,12 +148,7 @@ mod tests {
                 durability: None,
                 equip: None,
             };
-            items.insert(
-                format!("strata:{name}")
-                    .parse()
-                    .unwrap_or_else(|_| unreachable!()),
-                item,
-            );
+            items.insert(format!("strata:{name}").parse().unwrap(), item);
         }
         items
     }

@@ -33,6 +33,9 @@ struct SceneEntity {
     position: (f64, f64, f64),
     #[serde(default)]
     yaw: f32,
+    /// What an item lying on the ground shows.
+    #[serde(default)]
+    item: Option<Identifier>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,13 +67,22 @@ pub fn load_preview(path: &Path, content: &Content) -> Result<ClientWorld, PackE
             .entities
             .key(&entity.kind)
             .ok_or_else(|| PackError::invalid(path, format!("unknown entity `{}`", entity.kind)))?;
+        let item = match &entity.item {
+            Some(id) => Some(
+                content
+                    .items
+                    .key(id)
+                    .ok_or_else(|| PackError::invalid(path, format!("unknown item `{id}`")))?,
+            ),
+            None => None,
+        };
         let (x, y, z) = entity.position;
         world.entities.spawn(EntityState {
             id: NetEntity(index as u64),
             kind,
             position: [x, y, z],
             yaw: entity.yaw,
-            item: None,
+            item,
         });
     }
     Ok(world)

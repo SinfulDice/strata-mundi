@@ -120,6 +120,13 @@ impl ScreenModel for InventoryModel<'_> {
         }
     }
 
+    fn marks(&self, id: &str) -> Vec<crate::ui::SlotMark> {
+        match id {
+            "hotbar" => self.hotbar.marks(SLOTS),
+            _ => Vec::new(),
+        }
+    }
+
     fn selected(&self, id: &str) -> Option<usize> {
         match id {
             "tabs" => Some(self.state.tab),
