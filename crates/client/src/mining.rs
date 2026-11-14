@@ -138,12 +138,7 @@ impl Mining {
             .into_iter()
             .filter_map(|(pos, stage)| {
                 let shape = info.hit_box(world.block_at(pos))?;
-                let corner = DVec3::new(f64::from(pos.x), f64::from(pos.y), f64::from(pos.z));
-                Some(CrackDraw {
-                    min: (corner + DVec3::from(shape.min) - eyes).as_vec3(),
-                    max: (corner + DVec3::from(shape.max) - eyes).as_vec3(),
-                    stage,
-                })
+                Some(CrackDraw::on(pos, shape, stage, eyes))
             })
             .collect()
     }

@@ -157,6 +157,7 @@
             (version: "0.1.0", change: Added),
             (version: "0.3.0", change: Changed(fr: "La survie arrive : blocs tirés de l'inventaire, objets lâchés à la casse.", en: "Survival arrives: blocks come from the inventory, broken ones drop their item.", lol: "SURVIVL IZ HEER: BLOKZ COM FROM UR STUFFZ, BROKD WUNZ DROP DEMSELVZ.")),
         ],
+        "mechanics/harvesting": [(version: "0.3.0", change: Added)],
         "mechanics/inventory": [(version: "0.3.0", change: Added)],
         "mechanics/saving": [(version: "0.1.0", change: Added)],
         "mechanics/sounds": [

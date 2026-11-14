@@ -1,0 +1,14 @@
+// Blocks being broken, for captures with `--crack` (`--scene mining`): a stone wall with
+// an ore, a log and dirt on a grass field, seen from close by in daylight.
+(
+    fills: [
+        (from: (-12, 0, -12), to: (12, 0, 12), block: "strata:bedrock"),
+        (from: (-12, 1, -12), to: (12, 3, 12), block: "strata:dirt"),
+        (from: (-12, 4, -12), to: (12, 4, 12), block: "strata:grass_block"),
+        (from: (-4, 5, -4), to: (4, 7, -4), block: "strata:stone"),
+        (from: (-3, 5, -4), to: (-3, 5, -4), block: "strata:iron_ore"),
+        (from: (-1, 5, -3), to: (-1, 6, -3), block: "strata:oak_log"),
+        (from: (1, 5, -3), to: (1, 5, -3), block: "strata:dirt"),
+        (from: (3, 5, -3), to: (3, 5, -3), block: "strata:oak_planks"),
+    ],
+)

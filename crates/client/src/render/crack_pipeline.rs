@@ -6,8 +6,9 @@ use super::block_pipeline::BlockPipeline;
 use super::depth::DEPTH_FORMAT;
 use super::mesh::StreamBuffer;
 use bytemuck::{Pod, Zeroable};
-use glam::Vec3;
-use strata_core::content::TextureLibrary;
+use glam::{DVec3, Vec3};
+use strata_core::content::{HitBox, TextureLibrary};
+use strata_core::coords::BlockPos;
 use strata_core::id::Identifier;
 use strata_protocol::CRACK_STAGES;
 
@@ -22,6 +23,18 @@ pub struct CrackDraw {
     pub min: Vec3,
     pub max: Vec3,
     pub stage: u8,
+}
+
+impl CrackDraw {
+    /// Cracks of `stage` on the block at `pos` whose aim stops on `shape`, seen from `eyes`.
+    pub fn on(pos: BlockPos, shape: HitBox, stage: u8, eyes: DVec3) -> Self {
+        let corner = DVec3::new(f64::from(pos.x), f64::from(pos.y), f64::from(pos.z));
+        Self {
+            min: (corner + DVec3::from(shape.min) - eyes).as_vec3(),
+            max: (corner + DVec3::from(shape.max) - eyes).as_vec3(),
+            stage,
+        }
+    }
 }
 
 #[repr(C)]

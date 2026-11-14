@@ -3,6 +3,7 @@
 mod attached;
 mod block;
 mod container;
+mod describe;
 mod entity;
 mod fire;
 mod fluid;
@@ -150,7 +151,7 @@ impl Content {
         let mut kinds: Vec<&Identifier> = blocks
             .map(|tool| &tool.kind)
             .chain(items.flat_map(|tool| &tool.kinds))
-            .chain(self.loot_tables.values().flat_map(loot::condition_kinds))
+            .chain(self.loot_tables.values().flat_map(LootTable::tool_kinds))
             .collect();
         kinds.sort();
         kinds.dedup();

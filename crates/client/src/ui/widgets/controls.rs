@@ -351,9 +351,13 @@ pub(super) fn key_grid(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     }
 }
 
+/// A box beside `anchor`; each `\n` starts a new line.
 pub(super) fn tooltip(d: &mut Draw<'_, '_>, anchor: Rect, text: &str, screen: Rect) {
-    let w = d.painter.text_width(text) + 8;
-    let h = d.painter.line_height() + 3;
+    let lines: Vec<&str> = text.lines().collect();
+    let widest = lines.iter().map(|line| d.painter.text_width(line)).max();
+    let w = widest.unwrap_or(0) + 8;
+    let line_height = d.painter.line_height();
+    let h = line_height * lines.len().max(1) as u32 + 3;
     let x = (anchor.x + anchor.w as i32 + 2).min(screen.x + screen.w as i32 - w as i32);
     let y = (anchor.y - h as i32).max(screen.y);
     let rect = Rect::new(x, y, w, h);
@@ -366,5 +370,8 @@ pub(super) fn tooltip(d: &mut Draw<'_, '_>, anchor: Rect, text: &str, screen: Re
     );
     d.painter.fill(rect, fill);
     d.painter.bevel(rect, accent, accent);
-    d.painter.text(x + 4, y + 1, text, color, shadow);
+    for (row, line) in lines.iter().enumerate() {
+        let top = y + 1 + (line_height as usize * row) as i32;
+        d.painter.text(x + 4, top, line, color, shadow);
+    }
 }

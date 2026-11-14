@@ -105,6 +105,16 @@ fn base_pack_blocks_have_tools_and_loot() {
     let leaves = content.block_loot(block("strata:oak_leaves")).unwrap();
     assert!(leaves.roll(&context, &mut rng).is_empty());
     assert!(content.block_loot(block("strata:dirt")).is_none());
+    let stone_item = content.items.key(&id("strata:stone")).unwrap();
+    let tooltip = content.item_tooltip(stone_item, "fr");
+    assert!(
+        tooltip.starts_with("Pierre\n") && tooltip.contains("pioche"),
+        "{tooltip}"
+    );
+    let diamond = content.items.key(&id("strata:diamond_ore")).unwrap();
+    assert!(content.item_tooltip(diamond, "en").contains('2'));
+    let dirt_item = content.item_tooltip(dirt, "en");
+    assert!(dirt_item.ends_with("Faster with: shovel"), "{dirt_item}");
     let kinds = content.tool_kinds();
     assert!(kinds.contains(&&id("strata:pickaxe")) && kinds.contains(&&id("strata:shears")));
 }

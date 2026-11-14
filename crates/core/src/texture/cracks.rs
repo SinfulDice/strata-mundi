@@ -6,8 +6,8 @@ use super::color::Ramp;
 use super::noise::hash;
 use super::recipe::BASE_SIZE;
 
-const BRANCHES: i32 = 7;
-const BRANCH_LENGTH: i32 = 11;
+const BRANCHES: i32 = 9;
+const BRANCH_LENGTH: i32 = 14;
 /// The eight neighbour steps, turning clockwise.
 const STEPS: [(i32, i32); 8] = [
     (1, 0),
@@ -33,15 +33,16 @@ pub fn paint(mut image: RgbaImage, ramp: &Ramp, stage: u32, stages: u32, seed: u
 }
 
 /// Pixels of every branch, in the order they appear: the branches grow together, one
-/// step each in turn, from points near the centre.
+/// step each in turn, from points spreading out from the centre.
 fn crack_pixels(seed: u64) -> Vec<(i32, i32)> {
     let size = BASE_SIZE as i32;
     let mut walkers: Vec<((i32, i32), usize)> = (0..BRANCHES)
         .map(|branch| {
-            let start = (
-                size / 2 - 2 + (hash(seed, branch, 0) % 4) as i32,
-                size / 2 - 2 + (hash(seed, branch, 1) % 4) as i32,
-            );
+            // The first branches start near the centre, the later ones farther out.
+            let spread = 2 + branch * (size / 2 - 3) / BRANCHES;
+            let around =
+                |axis| size / 2 - spread + (hash(seed, branch, axis) % (2 * spread as u32)) as i32;
+            let start = (around(0), around(1));
             (start, hash(seed, branch, 2) as usize % STEPS.len())
         })
         .collect();
@@ -55,7 +56,13 @@ fn crack_pixels(seed: u64) -> Vec<(i32, i32)> {
                 _ => *heading,
             };
             let (dx, dy) = STEPS[*heading];
-            (*x, *y) = ((*x + dx).clamp(0, size - 1), (*y + dy).clamp(0, size - 1));
+            let (nx, ny) = (*x + dx, *y + dy);
+            if !(0..size).contains(&nx) || !(0..size).contains(&ny) {
+                // A branch reaching the edge turns back instead of tracing the border.
+                *heading = (*heading + STEPS.len() / 2) % STEPS.len();
+                continue;
+            }
+            (*x, *y) = (nx, ny);
             if !pixels.contains(&(*x, *y)) {
                 pixels.push((*x, *y));
             }
@@ -89,6 +96,6 @@ mod tests {
             assert!(before.iter().all(|pixel| now.contains(pixel)));
             before = now;
         }
-        assert!(before.len() < (BASE_SIZE * BASE_SIZE) as usize / 2);
+        assert!(before.len() < (BASE_SIZE * BASE_SIZE) as usize * 3 / 5);
     }
 }

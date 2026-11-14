@@ -106,6 +106,7 @@ pub fn render_biomes(
             },
             sky,
             particles: Default::default(),
+            cracks: Vec::new(),
         };
         let path = image_path(dir, &biome.id);
         capture(content, &mut world, &view, &path)

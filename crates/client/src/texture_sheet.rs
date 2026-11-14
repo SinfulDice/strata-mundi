@@ -44,6 +44,7 @@ pub fn write_texture_sheet(
         graphics: GraphicsSettings::for_preset(Preset::Ultra),
         sky: SkyFrame::default(),
         particles: Default::default(),
+        cracks: Vec::new(),
     };
     let scene = render_image(content, preview, &view)?;
     sheet.draw(&scene, GAP, GAP + rows * (TILE + GAP));

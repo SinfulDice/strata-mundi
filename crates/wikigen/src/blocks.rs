@@ -85,21 +85,16 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, block: &Block, key: &str) -> Vec<(Strin
         RenderKind::Cross => "wiki-render-cross",
         RenderKind::Invisible => "wiki-render-invisible",
     });
-    // A negative hardness means the block cannot be broken (outside creative).
-    let hardness = if block.hardness < 0.0 {
-        escape(&ctx.tr("wiki-unbreakable"))
-    } else {
-        format!("{}", block.hardness)
-    };
     let mut rows = vec![(ctx.tr("wiki-fact-category"), escape(&category))];
     if block.has_item {
         rows.push((ctx.tr("wiki-fact-stack"), block.max_stack.to_string()));
     } else {
         rows.push((ctx.tr("wiki-fact-item"), escape(&ctx.tr("wiki-no"))));
     }
+    if let Some(key) = ctx.data.content.blocks.key(id) {
+        rows.extend(crate::harvest::facts(ctx, &page_path(id), key, block));
+    }
     rows.extend([
-        (ctx.tr("wiki-fact-hardness"), hardness),
-        (ctx.tr("wiki-fact-tool"), escape(&ctx.tr("wiki-tool-none"))),
         (ctx.tr("wiki-fact-solid"), escape(&yes_no(block.solid))),
         (ctx.tr("wiki-fact-render"), escape(&look)),
         (ctx.tr("wiki-fact-light"), block.light_opacity.to_string()),

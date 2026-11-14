@@ -170,7 +170,7 @@ impl ScreenModel for SlotsModel<'_> {
 
     fn tooltip(&self, id: &str, index: usize) -> Option<String> {
         let stack = self.stack(self.slot(id, index)?)?;
-        Some(self.name(stack.item))
+        Some(self.content.item_tooltip(stack.item, self.language))
     }
 
     fn shown(&self, id: &str) -> bool {

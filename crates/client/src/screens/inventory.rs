@@ -149,8 +149,13 @@ impl ScreenModel for InventoryModel<'_> {
 
     fn tooltip(&self, id: &str, index: usize) -> Option<String> {
         match id {
-            "items" => self.grid_item(index).map(|item| self.name(item)),
-            "hotbar" => self.hotbar.slot(index).map(|item| self.name(item)),
+            "items" => self
+                .grid_item(index)
+                .map(|item| self.content.item_tooltip(item, self.language)),
+            "hotbar" => self
+                .hotbar
+                .slot(index)
+                .map(|item| self.content.item_tooltip(item, self.language)),
             _ => None,
         }
     }

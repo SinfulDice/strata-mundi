@@ -163,6 +163,27 @@ impl LootTable {
         drops
     }
 
+    /// Every tool kind the conditions name (the wiki tells them; each needs a name).
+    pub fn tool_kinds(&self) -> Vec<&Identifier> {
+        fn walk<'a>(condition: &'a LootCondition, out: &mut Vec<&'a Identifier>) {
+            match condition {
+                LootCondition::Tool(kind) => out.push(kind),
+                LootCondition::Not(inner) => walk(inner, out),
+                LootCondition::Chance(_) => {}
+            }
+        }
+        let mut kinds = Vec::new();
+        for pool in &self.pools {
+            let entries = pool.entries.iter().flat_map(|e| &e.conditions);
+            for condition in pool.conditions.iter().chain(entries) {
+                walk(condition, &mut kinds);
+            }
+        }
+        kinds.sort();
+        kinds.dedup();
+        kinds
+    }
+
     /// Items any roll may give (the wiki lists them); `Itself` stands for `itself`.
     pub fn possible_items(&self, itself: Option<ItemId>) -> Vec<ItemId> {
         let mut items: Vec<ItemId> = self
@@ -313,25 +334,6 @@ fn check_conditions(conditions: &[LootCondition], source: &Path, errors: &mut Ve
             _ => {}
         }
     }
-}
-
-/// Every tool kind the conditions name (each needs a translated name).
-pub(super) fn condition_kinds(table: &LootTable) -> Vec<&Identifier> {
-    fn walk<'a>(condition: &'a LootCondition, out: &mut Vec<&'a Identifier>) {
-        match condition {
-            LootCondition::Tool(kind) => out.push(kind),
-            LootCondition::Not(inner) => walk(inner, out),
-            LootCondition::Chance(_) => {}
-        }
-    }
-    let mut kinds = Vec::new();
-    for pool in &table.pools {
-        let entries = pool.entries.iter().flat_map(|e| &e.conditions);
-        for condition in pool.conditions.iter().chain(entries) {
-            walk(condition, &mut kinds);
-        }
-    }
-    kinds
 }
 
 /// Blocks naming a table no pack defines.

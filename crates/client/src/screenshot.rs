@@ -3,8 +3,8 @@ use crate::mesher::{BlockTable, MeshOptions, mesh_section};
 use crate::models::ModelLibrary;
 use crate::particles::{ParticleSystem, ParticleTable};
 use crate::render::{
-    Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, RenderOptions, Renderer,
-    Target, TextureFiltering,
+    CrackDraw, Gpu, GpuError, OFFSCREEN_FORMAT, OffscreenTarget, ReadbackError, RenderOptions,
+    Renderer, Target, TextureFiltering,
 };
 use crate::settings::{GraphicsSettings, Lighting, ParticleMode};
 use crate::sky::{SkyFrame, sky_openness};
@@ -45,6 +45,8 @@ pub struct View {
     pub graphics: GraphicsSettings,
     pub sky: SkyFrame,
     pub particles: ParticleShot,
+    /// Blocks drawn cracked, with their stage (0 to 9), as while breaking them.
+    pub cracks: Vec<(BlockPos, u8)>,
 }
 
 /// Particles frozen at one moment: a block broken at the start, then `seconds` of
@@ -163,6 +165,7 @@ pub fn render_image(
     view.particles.run(&mut particles, world, camera);
     particles.write_instances(camera.position, world, &mut renderer.particles.instances);
     renderer.immersion = world.immersion(camera.position, content);
+    renderer.cracks = crack_draws(content, world, &view.cracks, camera.position);
     let target = OffscreenTarget::new(&gpu, size);
     let mut encoder = gpu.device.create_command_encoder(&Default::default());
     renderer.render(
@@ -176,6 +179,21 @@ pub fn render_image(
         None,
     );
     Ok(target.read(&gpu, encoder)?)
+}
+
+fn crack_draws(
+    content: &Content,
+    world: &ClientWorld,
+    cracks: &[(BlockPos, u8)],
+    eyes: glam::DVec3,
+) -> Vec<CrackDraw> {
+    cracks
+        .iter()
+        .filter_map(|&(pos, stage)| {
+            let shape = content.blocks.get(world.block_at(pos))?.hit_box()?;
+            Some(CrackDraw::on(pos, shape, stage, eyes))
+        })
+        .collect()
 }
 
 /// PNG file contents (world captures sent to the server).

@@ -42,6 +42,11 @@ pub struct Args {
     #[arg(long = "break", value_name = "X,Y,Z", value_parser = parse_block, allow_hyphen_values = true)]
     pub break_block: Option<[i32; 3]>,
 
+    /// Screenshot: cracks drawn on the block `x,y,z` at stage `s` (0 to 9), as while
+    /// breaking it; may be repeated.
+    #[arg(long, value_name = "X,Y,Z,S", value_parser = parse_crack, allow_hyphen_values = true)]
+    pub crack: Vec<[i32; 4]>,
+
     /// Screenshot: seconds of particles simulated before the capture (drips, fragments).
     #[arg(long, value_name = "SECONDS")]
     pub particles: Option<f32>,
@@ -139,6 +144,14 @@ fn parse_vec3(text: &str) -> Result<[f64; 3], String> {
 
 fn parse_block(text: &str) -> Result<[i32; 3], String> {
     parse_numbers(text)
+}
+
+fn parse_crack(text: &str) -> Result<[i32; 4], String> {
+    let crack: [i32; 4] = parse_numbers(text)?;
+    match crack[3] {
+        0..=9 => Ok(crack),
+        _ => Err("the stage goes from 0 to 9".into()),
+    }
 }
 
 fn parse_vec2(text: &str) -> Result<[f32; 2], String> {

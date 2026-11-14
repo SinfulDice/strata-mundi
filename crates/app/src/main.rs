@@ -186,6 +186,11 @@ fn screenshot(
             broken: args.break_block.map(|[x, y, z]| BlockPos::new(x, y, z)),
             seconds: args.particles.unwrap_or(0.0),
         },
+        cracks: args
+            .crack
+            .iter()
+            .map(|&[x, y, z, stage]| (BlockPos::new(x, y, z), stage as u8))
+            .collect(),
     };
     Ok(capture(&loaded.content, &mut world, &view, path)?)
 }
