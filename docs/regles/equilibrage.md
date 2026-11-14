@@ -48,6 +48,19 @@ Valeurs de Minecraft (difficulté normale), toutes réglables dans le pack ; bor
 
 Inflammabilité `(catch, burn)` des blocs : bûches (5, 5), planches (5, 20), feuilles (30, 60), herbes, fougères, buissons, fleurs (60, 100), liane (15, 100).
 
+## Coffres et fours améliorables (v0.3)
+
+Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
+
+| Tier | Coffre (cases) | Four : temps d'une cuisson | Four : cuissons par charbon | Emplacements d'amélioration |
+|---|---|---|---|---|
+| Bois / pierre | 27 | 10 s | 8 | 0 |
+| Fer | 45 | 8 s | 10 | 1 |
+| Or | 63 | 5 s | 12 | 2 |
+| Diamant | 81 | 3 s | 16 | 3 |
+
+Un coffre double a deux fois les cases de son tier. Le kit passe d'un tier au suivant seulement (pas de saut) ; il coûte moins que la fabrication directe du tier visé.
+
 ## Outils d'équilibrage (créés en v0.3, enrichis à chaque version)
 
 - **Tableur généré** : `cargo run -p balance -- export` produit des CSV dans `docs/equilibrage/` (armes, armures, outils, recettes et coûts, mobs, boss, sorts, temps de farm) ouvrables dans LibreOffice ou Excel, avec comparaisons par palier.
