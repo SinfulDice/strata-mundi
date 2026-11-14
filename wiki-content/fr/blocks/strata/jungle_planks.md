@@ -4,7 +4,7 @@ Des planches de jungle bien alignées, d'un bois rosé et chaleureux.
 
 ## Obtention
 
-En créatif : onglet Construction de l'inventaire, ou `/give jungle_planks`. Elles ne se trouvent pas dans le monde : c'est un bloc de construction.
+En survie : une bûche donne quatre planches, dans n'importe quelle grille (recette connue dès le départ). En créatif : onglet Construction de l'inventaire, ou `/give jungle_planks`.
 
 ## Utilisations
 

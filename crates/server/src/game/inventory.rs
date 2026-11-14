@@ -6,8 +6,8 @@ use crate::loader::ColumnLoader;
 use crate::rules::BlockRules;
 use strata_core::content::ItemId;
 use strata_core::inventory::{
-    Area, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SortOrder, Window, clear_empty,
-    sort,
+    Area, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotRef, SortOrder, Window,
+    clear_empty, sort,
 };
 use strata_protocol::{InventoryRequest, ServerMessage};
 
@@ -32,17 +32,20 @@ impl Game {
     /// The player leaves: the carried stack goes back into the inventory (or to the
     /// ground) and the open container closes.
     pub fn release_cursor(&mut self) {
+        let mut craft = self.ecs.crafts.remove(self.player).unwrap_or_default();
         let left = self
             .with_inventory(|inventory, rules| {
                 Window {
                     player: inventory,
                     open: None,
+                    craft: Some(&mut craft.grid),
                 }
                 .close(rules)
             })
-            .flatten();
+            .unwrap_or_default();
         self.throw_all(left);
         self.close_container();
+        self.reset_craft();
     }
 
     /// Applies a request; `names` gives an item's name in the request's language.
@@ -58,6 +61,15 @@ impl Game {
                     self.with_inventory(|inventory, _| inventory.selected = slot);
                 }
             }
+            InventoryRequest::Click {
+                slot:
+                    SlotRef {
+                        area: Area::CraftResult,
+                        ..
+                    },
+                click,
+            } => self.craft_click(loader, click),
+            InventoryRequest::FillRecipe { recipe, all } => self.fill_recipe(loader, recipe, all),
             InventoryRequest::Click { slot, click } => {
                 let thrown =
                     self.with_window(loader, |window, rules| window.click(slot, click, rules));
@@ -125,7 +137,7 @@ impl Game {
                     let range = 0..open.len();
                     sort(open, range, &[], rules, key)
                 }
-                (Area::Open, None) => Vec::new(),
+                (Area::Open | Area::Craft | Area::CraftResult, _) => Vec::new(),
             }
         });
         self.throw_all(left);
@@ -221,26 +233,38 @@ impl Game {
         change: impl FnOnce(&mut Window<'_>, &BlockRules) -> T,
     ) -> T {
         let mut open = self.take_open_container(loader);
+        self.check_station(loader);
+        let mut craft = self.ecs.crafts.remove(self.player);
+        let before = craft.as_ref().map(|window| window.grid.clone());
         let Some(player) = self.ecs.inventories.get_mut(self.player) else {
             return T::default();
         };
         let mut window = Window {
             player,
             open: open.as_mut().map(|(_, container)| container),
+            craft: craft.as_mut().map(|window| &mut window.grid),
         };
         let result = change(&mut window, &self.rules);
         if let Some(open) = open {
             self.put_back_open_container(open);
         }
+        if let Some(craft) = craft {
+            if before.as_ref() != Some(&craft.grid) {
+                self.craft_changed();
+            }
+            self.ecs.crafts.insert(self.player, craft);
+        }
         self.inventory_changed();
         result
     }
 
-    /// The screen closed: the carried stack goes back (or to the ground).
-    fn close_window(&mut self, loader: &ColumnLoader) {
+    /// The screen closed: the carried stack and the crafting grid go back (or to the
+    /// ground); a work station's grid gives way to the inventory's.
+    pub(super) fn close_window(&mut self, loader: &ColumnLoader) {
         let left = self.with_window(loader, |window, rules| window.close(rules));
         self.throw_all(left);
         self.close_container();
+        self.reset_craft();
     }
 
     pub(super) fn inventory_changed(&mut self) {
@@ -252,6 +276,11 @@ impl Game {
         if std::mem::take(&mut self.inventory_dirty) {
             let inventory = Box::new(self.inventory());
             self.messages.push(ServerMessage::Inventory(inventory));
+        }
+        if std::mem::take(&mut self.craft_dirty)
+            && let Some(view) = self.crafting_view()
+        {
+            self.messages.push(ServerMessage::Crafting(Box::new(view)));
         }
         std::mem::take(&mut self.messages)
     }

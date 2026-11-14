@@ -66,6 +66,8 @@ impl Screens {
                 Menu::Pause
             } else if input.just_pressed(Action::Inventory) {
                 Self::inventory_menu(game.as_deref())
+            } else if input.just_pressed(Action::Journal) {
+                Menu::Journal(Default::default())
             } else if input.just_pressed(Action::OpenConsole) {
                 Menu::Console(ConsoleState::new())
             } else {

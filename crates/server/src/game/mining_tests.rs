@@ -32,6 +32,7 @@ fn add_pickaxe(content: &mut Content) {
             level: 1,
             speed: 4.0,
         }),
+        remainder: None,
     };
     content
         .items
@@ -145,7 +146,7 @@ fn the_right_pickaxe_is_fast_harvests_and_wears() {
         Some(12)
     );
     assert!(!mine(&mut w, SPOT).is_empty());
-    assert_eq!(dropped(&w), vec![(item(&w, "strata:stone"), 1)]);
+    assert_eq!(dropped(&w), vec![(item(&w, "strata:cobblestone"), 1)]);
     let inventory = w.game.inventory();
     assert_eq!(inventory.selected_stack().unwrap().durability, Some(9));
 }

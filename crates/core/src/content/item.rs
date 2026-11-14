@@ -25,6 +25,9 @@ pub struct ItemDef {
     /// What it mines and how well (pickaxes, axes, shears…).
     #[serde(default)]
     pub tool: Option<ToolDef>,
+    /// Left in the crafting grid when used in a recipe (a water bucket leaves a bucket).
+    #[serde(default)]
+    pub remainder: Option<Identifier>,
 }
 
 /// Where a worn item goes, in the order of the armour slots.
@@ -66,6 +69,8 @@ pub struct Item {
     pub durability: Option<u16>,
     pub equip: Option<EquipSlot>,
     pub tool: Option<ToolDef>,
+    /// What stays in the crafting grid after a recipe uses it.
+    pub remainder: Option<ItemId>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -110,9 +115,11 @@ pub(super) fn load_items(
                 durability: None,
                 equip: None,
                 tool: None,
+                remainder: None,
             },
         );
     }
+    let mut remainders = Vec::new();
     for (id, Sourced { value, source }) in packs.layered::<ItemDef>("items", errors) {
         let texture = textures.layer(&value.texture).unwrap_or_else(|| {
             errors.push(PackError::invalid(
@@ -139,12 +146,26 @@ pub(super) fn load_items(
             tool: value
                 .tool
                 .and_then(|tool| valid_tool(tool, &source, errors)),
+            remainder: None,
         };
-        if items.insert(id.clone(), item).is_none() {
-            errors.push(PackError::invalid(
+        match items.insert(id.clone(), item) {
+            Some(key) => remainders.extend(value.remainder.map(|left| (key, left, source))),
+            None => errors.push(PackError::invalid(
                 &source,
                 format!("`{id}` is already a block item"),
+            )),
+        }
+    }
+    for (key, left, source) in remainders {
+        let found = items.key(&left);
+        if found.is_none() {
+            errors.push(PackError::invalid(
+                &source,
+                format!("remainder: unknown item `{left}`"),
             ));
+        }
+        if let Some(item) = items.get_mut(key) {
+            item.remainder = found;
         }
     }
     items

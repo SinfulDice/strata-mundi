@@ -4,7 +4,7 @@ A barrel of iron-hooped staves: twenty-seven slots, like a chest, in a full bloc
 
 ## How to get it
 
-In creative: Storage tab of the inventory, or `/give barrel`. Crafting arrives later.
+In creative: Storage tab of the inventory, or `/give barrel`. In survival: crafted at a crafting table (the recipe book shows how).
 
 ## Uses
 

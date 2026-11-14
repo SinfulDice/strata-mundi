@@ -1,0 +1,8 @@
+// Any planks, whatever the wood.
+Tag(items: [
+    "strata:oak_planks",
+    "strata:birch_planks",
+    "strata:fir_planks",
+    "strata:jungle_planks",
+    "strata:acacia_planks",
+])

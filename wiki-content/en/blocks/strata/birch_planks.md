@@ -4,7 +4,7 @@ Neatly lined-up birch planks of pale, almost creamy wood.
 
 ## Obtaining
 
-In creative: the Building tab of the inventory, or `/give birch_planks`. They are not found in the world: this is a building block.
+In survival: one log gives four planks, in any crafting grid (a recipe known from the start). In creative: the Building tab of the inventory, or `/give birch_planks`.
 
 ## Usage
 

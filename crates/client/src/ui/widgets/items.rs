@@ -156,7 +156,7 @@ pub(super) fn crosshair(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     }
 }
 
-fn draw_slot(
+pub(super) fn draw_slot(
     d: &mut Draw<'_, '_>,
     slot: Rect,
     item: Option<ItemId>,

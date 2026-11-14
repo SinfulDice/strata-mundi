@@ -65,6 +65,7 @@ pub struct CreateForm {
     pub day_cycle: bool,
     pub fire_spread: bool,
     pub fire_destroy: bool,
+    pub discover_recipes: bool,
     pub editor: GenerationEditor,
     pub page: Page,
     pub tab: usize,
@@ -93,6 +94,7 @@ impl CreateForm {
             day_cycle: true,
             fire_spread: true,
             fire_destroy: true,
+            discover_recipes: true,
             editor: GenerationEditor::new(catalog, blocks),
             page: Page::Main,
             tab: 0,
@@ -133,6 +135,7 @@ impl CreateForm {
             day_cycle: self.day_cycle,
             fire_spread: self.fire_spread,
             fire_destroy: self.fire_destroy,
+            discover_recipes: self.discover_recipes,
             generation: self.editor.settings.clone(),
         }
     }
@@ -242,6 +245,9 @@ impl ScreenModel for CreateModel<'_> {
             "fire_destroy" => {
                 Some(self.toggle("ui-new-world-fire-destroy", "destroy", form.fire_destroy))
             }
+            "recipes" => {
+                Some(self.toggle("ui-new-world-recipes", "discover", form.discover_recipes))
+            }
             _ => None,
         }
     }
@@ -274,6 +280,7 @@ impl ScreenModel for CreateModel<'_> {
             "day_cycle" => Some(&mut form.day_cycle),
             "fire_spread" => Some(&mut form.fire_spread),
             "fire_destroy" => Some(&mut form.fire_destroy),
+            "recipes" => Some(&mut form.discover_recipes),
             _ => None,
         };
         if let Some(flag) = flag {

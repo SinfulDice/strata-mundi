@@ -4,7 +4,7 @@ Dark brown fir planks with tight grain, smelling sweetly of resin and mountain c
 
 ## Obtaining
 
-In creative: the Building tab of the inventory, or `/give fir_planks`. They don't appear in nature; the creative inventory is their only source until crafting arrives.
+In survival: one log gives four planks, in any crafting grid (a recipe known from the start). In creative: the Building tab of the inventory, or `/give fir_planks`.
 
 ## Usage
 

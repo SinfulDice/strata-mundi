@@ -4,7 +4,7 @@ A wooden chest with an iron latch, big enough for twenty-seven stacks of items. 
 
 ## How to get it
 
-In creative: Storage tab of the inventory, or `/give chest`. Crafting arrives later.
+In creative: Storage tab of the inventory, or `/give chest`. In survival: crafted at a crafting table (the recipe book shows how).
 
 ## Uses
 

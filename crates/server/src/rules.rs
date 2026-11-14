@@ -2,8 +2,9 @@ use crate::mining_rules::MiningRules;
 use std::sync::Arc;
 use strata_core::content::{
     BlockId, ContainerDef, Content, EntityType, EntityTypeId, EquipSlot, Item, ItemAction, ItemId,
-    ItemKind, Registry,
+    ItemKind, Registry, StationDef,
 };
+use strata_core::crafting::Recipes;
 use strata_core::inventory::ItemRules;
 use strata_core::physics::LiquidCell;
 use strata_core::updates::UpdateRules;
@@ -17,6 +18,7 @@ pub struct BlockRules {
     breakable: Vec<bool>,
     replaceable: Vec<bool>,
     containers: Vec<Option<ContainerDef>>,
+    stations: Vec<Option<StationDef>>,
     items: Arc<Registry<ItemId, Item>>,
     /// The item of each block (what breaking it gives back).
     block_items: Vec<Option<ItemId>>,
@@ -26,6 +28,7 @@ pub struct BlockRules {
     updates: Arc<UpdateRules>,
     /// Break times and loot.
     pub mining: Arc<MiningRules>,
+    pub recipes: Arc<Recipes>,
 }
 
 impl BlockRules {
@@ -65,6 +68,12 @@ impl BlockRules {
                 .iter()
                 .map(|(_, _, block)| block.container)
                 .collect(),
+            stations: content
+                .blocks
+                .iter()
+                .map(|(_, _, block)| block.station)
+                .collect(),
+            recipes: Arc::new(content.recipes.clone()),
             updates: Arc::new(UpdateRules::new(content)),
             mining: Arc::new(MiningRules::new(content)),
         }
@@ -87,6 +96,11 @@ impl BlockRules {
     /// Creative mode: any block that has an item can be placed.
     pub fn container(&self, block: BlockId) -> Option<ContainerDef> {
         self.containers.get(usize::from(block.0)).copied().flatten()
+    }
+
+    /// The work station a block opens (crafting table).
+    pub fn station(&self, block: BlockId) -> Option<StationDef> {
+        self.stations.get(usize::from(block.0)).copied().flatten()
     }
 
     /// The first entity type for items on the ground, if a pack has one.
@@ -175,6 +189,10 @@ impl ItemRules for BlockRules {
 
     fn equip(&self, item: ItemId) -> Option<EquipSlot> {
         self.items.equip(item)
+    }
+
+    fn remainder(&self, item: ItemId) -> Option<ItemId> {
+        self.items.remainder(item)
     }
 }
 

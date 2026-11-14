@@ -2,6 +2,7 @@
 //! and the open container, so the server applies them and tests check them.
 
 use super::container::{ARMOR, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory};
+use super::craft_grid::CraftGrid;
 use super::stack::{ItemRules, ItemStack, clear_empty};
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +12,10 @@ pub enum Area {
     Player,
     /// The container the player opened (a chest, both halves of a double chest).
     Open,
+    /// The cells of the crafting grid.
+    Craft,
+    /// What the crafting grid makes (taken by `crafting::take_result`).
+    CraftResult,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -23,6 +28,13 @@ impl SlotRef {
     pub const fn player(index: usize) -> Self {
         Self {
             area: Area::Player,
+            index: index as u16,
+        }
+    }
+
+    pub const fn craft(index: usize) -> Self {
+        Self {
+            area: Area::Craft,
             index: index as u16,
         }
     }
@@ -53,10 +65,11 @@ pub enum Click {
     DropCursor { whole: bool },
 }
 
-/// The player's inventory and the container they opened, if any.
+/// The player's inventory, the container they opened and their crafting grid, if any.
 pub struct Window<'a> {
     pub player: &'a mut PlayerInventory,
     pub open: Option<&'a mut Container>,
+    pub craft: Option<&'a mut CraftGrid>,
 }
 
 impl Window<'_> {
@@ -82,6 +95,8 @@ impl Window<'_> {
         match slot.area {
             Area::Player => index < PLAYER_SLOTS,
             Area::Open => self.open.as_ref().is_some_and(|open| index < open.len()),
+            Area::Craft => self.craft.as_ref().is_some_and(|c| index < c.slots.len()),
+            Area::CraftResult => false,
         }
     }
 
@@ -90,13 +105,15 @@ impl Window<'_> {
         match slot.area {
             Area::Player => self.player.slots.slots.get_mut(index),
             Area::Open => self.open.as_mut()?.slots.get_mut(index),
+            Area::Craft => self.craft.as_mut()?.slots.slots.get_mut(index),
+            Area::CraftResult => None,
         }
     }
 
     fn accepts(&self, slot: SlotRef, stack: &ItemStack, rules: &impl ItemRules) -> bool {
         match slot.area {
             Area::Player => PlayerInventory::accepts(usize::from(slot.index), stack, rules),
-            Area::Open => true,
+            Area::Open | Area::Craft | Area::CraftResult => true,
         }
     }
 
@@ -168,7 +185,7 @@ impl Window<'_> {
         };
         let index = usize::from(slot.index);
         let left = match (slot.area, &mut self.open) {
-            (Area::Open, _) => self.player.give(stack, rules),
+            (Area::Open | Area::Craft | Area::CraftResult, _) => self.player.give(stack, rules),
             (Area::Player, Some(open)) => open.insert_anywhere(stack, rules),
             (Area::Player, None) => self.move_within_player(index, stack, rules),
         };
@@ -280,13 +297,25 @@ impl Window<'_> {
         dropped
     }
 
-    /// Closing the screen: the carried stack goes back into the inventory; what does not
-    /// fit is returned, to be dropped.
-    pub fn close(&mut self, rules: &impl ItemRules) -> Option<ItemStack> {
-        let carried = self.player.cursor.take()?;
+    /// Closing the screen: the carried stack and the crafting grid go back into the
+    /// inventory; what does not fit is returned, to be dropped.
+    pub fn close(&mut self, rules: &impl ItemRules) -> Vec<ItemStack> {
+        let grid = self
+            .craft
+            .as_mut()
+            .map(|c| c.slots.drain())
+            .unwrap_or_default();
         let player = &mut *self.player;
         player
-            .slots
-            .insert(carried, HOTBAR.chain(MAIN).chain([OFFHAND]), rules)
+            .cursor
+            .take()
+            .into_iter()
+            .chain(grid)
+            .filter_map(|stack| {
+                player
+                    .slots
+                    .insert(stack, HOTBAR.chain(MAIN).chain([OFFHAND]), rules)
+            })
+            .collect()
     }
 }

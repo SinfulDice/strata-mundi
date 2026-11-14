@@ -1,0 +1,5 @@
+Shapeless(
+    ingredients: [Item("strata:oak_log")],
+    result: Result(item: "strata:oak_planks", count: 4),
+    starting: true,
+)

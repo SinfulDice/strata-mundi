@@ -1,0 +1,10 @@
+// A 3×3 crafting grid, opened with a right click.
+Block(
+    textures: TopBottomSides(top: "strata:crafting_table_top", bottom: "strata:oak_planks", sides: "strata:crafting_table_side"),
+    hardness: 2.5,
+    tool: Some(BlockTool(kind: "strata:axe")),
+    sound: Some("strata:wood"),
+    category: Some("strata:building"),
+    flammability: Some((catch: 5, burn: 20)),
+    station: Some(Crafting(3)),
+)

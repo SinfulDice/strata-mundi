@@ -178,3 +178,4 @@ option-spatial-audio = Audio spatial
 option-spatial-audio-help = Avancé : écho selon le lieu (grotte, maison, plein air) et sons étouffés derrière les murs. Stéréo simple : distance et gauche/droite seulement, moins de calcul (préréglage DS).
 spatial-advanced = Avancé
 spatial-simple = Stéréo simple
+action-journal = Journal

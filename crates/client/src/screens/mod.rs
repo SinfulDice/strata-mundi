@@ -8,6 +8,7 @@ mod effects;
 mod handling;
 mod hud;
 mod inventory;
+mod journal;
 mod keyboard;
 mod menu;
 mod options;
@@ -286,7 +287,7 @@ impl Screens {
         f: impl FnOnce(&mut dyn ScreenModel) -> R,
     ) -> Option<R> {
         let menu = self.stack.last_mut()?;
-        let (inventory, container) = menu::game_parts(game);
+        let parts = menu::game_parts(game);
         let labels = &self.key_labels;
         let key_labels = |action: Action| labels.get(action.index()).cloned().unwrap_or_default();
         let shared = Shared {
@@ -294,8 +295,9 @@ impl Screens {
             settings: &mut self.settings,
             worlds: &self.worlds,
             icons: &self.icons,
-            inventory,
-            container,
+            inventory: parts.inventory,
+            container: parts.container,
+            crafting: parts.crafting,
             focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
             key_labels: &key_labels,
             newer_version: self.newer_version.as_deref(),

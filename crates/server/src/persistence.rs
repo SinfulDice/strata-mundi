@@ -8,10 +8,11 @@ use crate::save::{
     SavedInventory, WorldFolder, WorldMeta, back_up,
 };
 use glam::DVec3;
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 use strata_core::content::Content;
-use strata_core::content::EntityTypeId;
+use strata_core::content::{EntityTypeId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::dimension::DimensionId;
 use strata_core::inventory::{HOTBAR, ItemStack, PlayerInventory};
@@ -37,6 +38,8 @@ pub struct PlayerStart {
     pub inventory: PlayerInventory,
     /// Index of the boat they sat in, among the saved boats.
     pub boat: Option<usize>,
+    /// Recipes learnt that the packs still have.
+    pub recipes: BTreeSet<RecipeId>,
 }
 
 pub struct Persistence {
@@ -90,12 +93,18 @@ impl Persistence {
                 look: player.look,
                 inventory: self.inventory_from(&player),
                 boat: player.boat,
+                recipes: player
+                    .recipes
+                    .iter()
+                    .filter_map(|id| self.content.recipes.key(id))
+                    .collect(),
             },
             None => PlayerStart {
                 body: Body::at(spawn()),
                 look: [0.0; 2],
                 inventory: PlayerInventory::default(),
                 boat: None,
+                recipes: BTreeSet::new(),
             },
         }
     }
@@ -220,6 +229,11 @@ impl Persistence {
             hotbar: Vec::new(),
             selected: 0,
             boat: None,
+            recipes: game
+                .known_recipes()
+                .into_iter()
+                .filter_map(|recipe| self.content.recipes.identifier(recipe).cloned())
+                .collect(),
         })
     }
 

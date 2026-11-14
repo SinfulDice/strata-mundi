@@ -5,11 +5,13 @@ use super::console::{ConsoleLog, ConsoleModel, ConsoleState};
 use super::creation::{CreateForm, CreateModel, GenerationModel, GenerationSources, Page};
 use super::editor::EditorModel;
 use super::inventory::{InventoryModel, InventoryState};
+use super::journal::{JournalModel, JournalState};
 use super::options::{OptionsModel, OptionsState};
 use super::pause::{CrashModel, NoticeModel, PauseModel};
 use super::slots::{SlotsModel, SlotsState};
 use super::title::TitleModel;
 use super::worlds::{ConfirmModel, WorldsModel};
+use crate::crafting::ClientCrafting;
 use crate::gameplay::Gameplay;
 use crate::input::Action;
 use crate::inventory::ClientInventory;
@@ -47,6 +49,8 @@ pub enum Menu {
     /// The game crashed last time: report it or not.
     Crash,
     Console(ConsoleState),
+    /// What the player has learnt: the recipe book first.
+    Journal(JournalState),
 }
 
 impl Menu {
@@ -65,6 +69,7 @@ impl Menu {
             Self::Notice { .. } => &defs.notice,
             Self::Crash => &defs.crash,
             Self::Console(_) => &defs.console,
+            Self::Journal(_) => &defs.journal,
         }
     }
 
@@ -117,6 +122,8 @@ pub struct Shared<'a> {
     pub inventory: Option<&'a mut ClientInventory>,
     /// The container the player opened.
     pub container: Option<&'a OpenedContainer>,
+    /// The crafting grid and the recipes known.
+    pub crafting: Option<&'a ClientCrafting>,
     /// The focused element (id, index), for models that describe it.
     pub focus: Option<(String, usize)>,
     /// Keyboard and gamepad labels of an action's bindings.
@@ -144,13 +151,26 @@ impl Shared<'_> {
     }
 }
 
-/// The parts of the game the menus use: the inventory and the open container.
-pub fn game_parts(
-    game: Option<&mut Gameplay>,
-) -> (Option<&mut ClientInventory>, Option<&OpenedContainer>) {
+/// What the menus use of the game.
+pub struct GameParts<'a> {
+    pub inventory: Option<&'a mut ClientInventory>,
+    pub container: Option<&'a OpenedContainer>,
+    pub crafting: Option<&'a ClientCrafting>,
+}
+
+/// The parts of the game the menus use: the inventory, the open container, crafting.
+pub fn game_parts(game: Option<&mut Gameplay>) -> GameParts<'_> {
     match game {
-        Some(game) => (Some(&mut game.inventory), game.container.as_ref()),
-        None => (None, None),
+        Some(game) => GameParts {
+            inventory: Some(&mut game.inventory),
+            container: game.container.as_ref(),
+            crafting: Some(&game.crafting),
+        },
+        None => GameParts {
+            inventory: None,
+            container: None,
+            crafting: None,
+        },
     }
 }
 
@@ -200,10 +220,20 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
                 state,
                 inventory,
                 container: shared.container,
+                crafting: shared.crafting,
+                effects: shared.effects,
                 content: shared.content,
                 language: &shared.settings.interface.language,
             }),
             None => Box::new(Empty),
         },
+        Menu::Journal(state) => Box::new(JournalModel {
+            state,
+            inventory: shared.inventory,
+            crafting: shared.crafting,
+            content: shared.content,
+            language: &shared.settings.interface.language,
+            effects: shared.effects,
+        }),
     }
 }

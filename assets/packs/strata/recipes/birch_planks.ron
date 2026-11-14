@@ -1,0 +1,5 @@
+Shapeless(
+    ingredients: [Item("strata:birch_log")],
+    result: Result(item: "strata:birch_planks", count: 4),
+    starting: true,
+)

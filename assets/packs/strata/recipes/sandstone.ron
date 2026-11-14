@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["SS", "SS"],
+    key: {'S': Item("strata:sand")},
+    result: Result(item: "strata:sandstone"),
+)

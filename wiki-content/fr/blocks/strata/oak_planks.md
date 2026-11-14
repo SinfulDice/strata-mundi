@@ -4,7 +4,7 @@ Des planches de chêne d'un brun doré et chaleureux, bien rabotées, aux veines
 
 ## Obtention
 
-En créatif : onglet Construction de l'inventaire, ou `/give oak_planks`. Elles n'apparaissent pas dans la nature. En attendant l'artisanat, l'inventaire créatif est leur seule source.
+En survie : une bûche donne quatre planches, dans n'importe quelle grille (recette connue dès le départ). En créatif : onglet Construction de l'inventaire, ou `/give oak_planks`.
 
 ## Utilisations
 

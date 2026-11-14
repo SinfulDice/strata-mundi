@@ -1,1 +1,1 @@
-Item(texture: "strata:lava_bucket", max_stack: 1, category: Some("strata:tools"), action: Some(PlaceFluid("strata:lava")))
+Item(texture: "strata:lava_bucket", max_stack: 1, category: Some("strata:tools"), action: Some(PlaceFluid("strata:lava")), remainder: Some("strata:bucket"))

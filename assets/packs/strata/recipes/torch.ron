@@ -1,0 +1,6 @@
+Shaped(
+    pattern: ["C", "S"],
+    key: {'C': Item("strata:coal"), 'S': Item("strata:stick")},
+    result: Result(item: "strata:torch", count: 4),
+    starting: true,
+)

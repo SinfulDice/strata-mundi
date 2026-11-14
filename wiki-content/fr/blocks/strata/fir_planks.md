@@ -4,7 +4,7 @@ Des planches de sapin brun foncé, aux veines serrées, qui sentent bon la rési
 
 ## Obtention
 
-En créatif : onglet Construction de l'inventaire, ou `/give fir_planks`. Elles n'apparaissent pas dans la nature ; l'inventaire créatif est leur seule source en attendant l'artisanat.
+En survie : une bûche donne quatre planches, dans n'importe quelle grille (recette connue dès le départ). En créatif : onglet Construction de l'inventaire, ou `/give fir_planks`.
 
 ## Utilisations
 

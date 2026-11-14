@@ -1,9 +1,9 @@
 use crate::GameMode;
 use crate::commands::Feedback;
-use crate::inventory::{InventoryRequest, OpenedContainer};
+use crate::inventory::{CraftingView, InventoryRequest, OpenedContainer};
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::{BiomeMap, Column};
-use strata_core::content::{BiomeTints, BlockId, EntityTypeId, Face, ItemId};
+use strata_core::content::{BiomeTints, BlockId, EntityTypeId, Face, ItemId, RecipeId};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::dimension::DimensionId;
 use strata_core::id::Identifier;
@@ -197,6 +197,16 @@ pub enum ServerMessage {
     ContainerContents(Box<Container>),
     /// The container is gone or out of reach: the screen closes.
     ContainerClosed,
+    /// The crafting grid changed, or a work station opened (or closed: `station` empty).
+    Crafting(Box<CraftingView>),
+    /// The recipes the player knows; `all` when every recipe counts as known (creative,
+    /// or the world option « recipes: all known »).
+    Recipes {
+        known: Vec<RecipeId>,
+        all: bool,
+    },
+    /// A recipe crafted for the first time (by experimenting): now in the recipe book.
+    RecipeLearned(RecipeId),
     /// Answer to a console command.
     Feedback(Feedback),
 }
@@ -318,7 +328,7 @@ mod tests {
 
     #[test]
     fn inventory_messages_survive_serialization() {
-        use crate::inventory::{InventoryRequest, OpenedContainer};
+        use crate::inventory::{CraftingView, InventoryRequest, OpenedContainer};
         use strata_core::inventory::{Area, Click, DataValue, ItemStack, SlotRef, SortOrder};
         let mut stack = ItemStack {
             item: ItemId(4),
@@ -347,6 +357,18 @@ mod tests {
             })),
             ServerMessage::ContainerContents(Box::new(contents)),
             ServerMessage::ContainerClosed,
+            ServerMessage::Crafting(Box::new(CraftingView {
+                side: 3,
+                grid: Container::new(9),
+                result: None,
+                hint: true,
+                station: Some((BlockId(4), BlockPos::new(1, 2, 3))),
+            })),
+            ServerMessage::Recipes {
+                known: vec![RecipeId(2)],
+                all: false,
+            },
+            ServerMessage::RecipeLearned(RecipeId(3)),
         ] {
             assert_eq!(round_trip(&message), message);
         }

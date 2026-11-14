@@ -9,3 +9,18 @@ action-drop = YEET TEH THING
 ui-inventory-sort = SORT
 option-item-distance = FLOOR STUFFZ U SEE
 option-item-distance-help = HOW FAR (BLOKZ) U SEE STUFFZ ON TEH FLOOR. SHORTR = LESS WERK 4 COMPUTR.
+ui-inventory-journal = MAH DIARY
+ui-craft-arrow = =>
+ui-craft-learned = NEW HOW 2 MAEK: { $item }
+ui-craft-hint = DEZ STUFFZ LIEK EACH OTHR…
+ui-journal-title = MAH DIARY
+ui-journal-recipes = HOW 2 MAEK
+ui-journal-craftable = CAN MAEK NAO: { $only ->
+        [on] ONLY DIS
+       *[off] ALL
+    }
+ui-journal-needs-table = NEEDZ CRAFTIN TABUL
+ui-journal-empty = NO HOW 2 MAEK YET.
+ui-journal-choose = PIK WUN 2 SEE TEH GRID.
+ui-journal-fill = PUT
+ui-journal-fill-all = PUT ALL

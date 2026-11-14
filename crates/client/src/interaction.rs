@@ -217,7 +217,8 @@ impl Interaction {
         action
     }
 
-    /// Right click on a container block opens it (sneaking places against it instead).
+    /// Right click on a container or a work station opens it (sneaking places against it
+    /// instead).
     fn container_action(
         &mut self,
         world: &ClientWorld,
@@ -226,7 +227,7 @@ impl Interaction {
     ) -> Option<WorldAction> {
         let target = self.target?;
         let block = info.content.blocks.get(world.block_at(target.block))?;
-        let opens = block.container.is_some()
+        let opens = (block.container.is_some() || block.station.is_some())
             && input.just_pressed(Action::Use)
             && !input.is_held(Action::Sneak);
         if !opens {

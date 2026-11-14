@@ -1,0 +1,11 @@
+// The bucket stays in the grid, empty.
+Shapeless(
+    ingredients: [
+        Item("strata:dirt"),
+        Item("strata:dirt"),
+        Item("strata:dirt"),
+        Item("strata:dirt"),
+        Item("strata:water_bucket"),
+    ],
+    result: Result(item: "strata:mud", count: 4),
+)

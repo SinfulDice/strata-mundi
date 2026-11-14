@@ -4,7 +4,7 @@ Un coffre en bois cerclé d'un loquet de fer, assez grand pour vingt-sept piles 
 
 ## Obtention
 
-En créatif : onglet Rangement de l'inventaire, ou `/give chest`. La fabrication arrive avec l'artisanat.
+En créatif : onglet Rangement de l'inventaire, ou `/give chest`. En survie : se fabrique à l'établi (le livre de recettes montre comment).
 
 ## Utilisations
 

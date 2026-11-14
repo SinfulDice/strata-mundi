@@ -66,3 +66,18 @@ impl Support {
         Self { side, chains }
     }
 }
+
+impl super::Block {
+    /// Where the player's aim stops on this block: cubes (even without collision, like
+    /// portals) and plants, not air or liquids.
+    pub fn hit_box(&self) -> Option<HitBox> {
+        match self.render {
+            super::RenderKind::Cross => {
+                Some(self.attachment.map_or(HitBox::PLANT, HitBox::attached))
+            }
+            super::RenderKind::Invisible => None,
+            _ if self.solid || self.fluid.is_none() => Some(HitBox::FULL),
+            _ => None,
+        }
+    }
+}

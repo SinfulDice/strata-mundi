@@ -7,3 +7,5 @@ item-strata-birch_boat = Bateau en bouleau
 item-strata-jungle_boat = Bateau en bois de jungle
 item-strata-acacia_boat = Bateau en acacia
 item-strata-flint_and_steel = Briquet
+item-strata-stick = Bâton
+item-strata-coal = Charbon

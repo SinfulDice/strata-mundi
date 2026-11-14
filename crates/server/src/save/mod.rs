@@ -218,6 +218,7 @@ pub fn create(
             destroy: new.fire_destroy,
         },
         commands: Some(new.mode == strata_protocol::GameMode::Creative),
+        discover_recipes: new.discover_recipes,
         generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;
@@ -302,6 +303,7 @@ mod tests {
             day_cycle: true,
             fire_spread: true,
             fire_destroy: true,
+            discover_recipes: true,
             generation: Default::default(),
         }
     }

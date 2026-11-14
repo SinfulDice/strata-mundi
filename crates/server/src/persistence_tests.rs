@@ -28,6 +28,7 @@ fn a_saved_player_comes_back_as_left() {
         day_cycle: true,
         fire_spread: true,
         fire_destroy: true,
+        discover_recipes: true,
         generation: Default::default(),
     };
     let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
@@ -86,6 +87,7 @@ fn boats_and_the_seat_come_back_and_old_worlds_have_none() {
         day_cycle: true,
         fire_spread: true,
         fire_destroy: true,
+        discover_recipes: true,
         generation: Default::default(),
     };
     let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
@@ -134,6 +136,7 @@ fn new_world(name: &str) -> (std::path::PathBuf, save::WorldFolder, WorldMeta) {
         day_cycle: true,
         fire_spread: true,
         fire_destroy: true,
+        discover_recipes: true,
         generation: Default::default(),
     };
     let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
@@ -164,6 +167,7 @@ fn a_world_from_before_inventories_keeps_its_hotbar() {
         ],
         selected: 2,
         boat: None,
+        recipes: Vec::new(),
     };
     folder.write_player(&old).unwrap();
     let path = saves.join(&folder.id).join("player.ron");
@@ -303,5 +307,39 @@ fn a_double_chest_comes_back_whole() {
     back.set_block_entities(reopened.block_entities(&dimension));
     assert_eq!(back.block_entities, saved);
     assert_eq!(back.ecs.drops.len(), 0, "nothing over-full to throw");
+    std::fs::remove_dir_all(saves).unwrap();
+}
+
+#[test]
+fn learnt_recipes_are_saved_by_name_and_starting_ones_come_back() {
+    let (saves, folder, meta) = new_world("recipes");
+    let content = content();
+    let dimension = DimensionId("strata:terra".parse().unwrap());
+    let mut persistence = Persistence::new(settings(&folder, meta), Arc::clone(&content));
+    let body = Body::at(DVec3::new(0.5, 70.0, 0.5));
+    let mut game = Game::new(BlockRules::new(&content), 5_000, body, GameMode::Survival);
+    let barrel = content
+        .recipes
+        .key(&"strata:barrel".parse().unwrap())
+        .unwrap();
+    game.set_known_recipes(BTreeSet::from([barrel]));
+    persistence.save(&game, &mut loader(), &dimension, None);
+    let text = std::fs::read_to_string(saves.join(&folder.id).join("player.ron")).unwrap();
+    assert!(text.contains("\"strata:barrel\""), "{text}");
+
+    let reopened = Persistence::new(
+        settings(&folder, folder.read_meta().unwrap()),
+        Arc::clone(&content),
+    );
+    let start = reopened.player_start(&dimension, || DVec3::ZERO);
+    assert!(start.recipes.contains(&barrel));
+    let mut game = Game::new(BlockRules::new(&content), 5_000, body, GameMode::Survival);
+    game.set_known_recipes(start.recipes);
+    let torch = game
+        .rules
+        .recipes
+        .key(&"strata:torch".parse().unwrap())
+        .unwrap();
+    assert!(game.knows(barrel) && game.knows(torch));
     std::fs::remove_dir_all(saves).unwrap();
 }

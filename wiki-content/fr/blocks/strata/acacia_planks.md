@@ -4,7 +4,7 @@ Des planches d'acacia bien alignées, d'un bois orange vif.
 
 ## Obtention
 
-En créatif : onglet Construction de l'inventaire, ou `/give acacia_planks`. Elles ne se trouvent pas dans le monde : c'est un bloc de construction.
+En survie : une bûche donne quatre planches, dans n'importe quelle grille (recette connue dès le départ). En créatif : onglet Construction de l'inventaire, ou `/give acacia_planks`.
 
 ## Utilisations
 

@@ -4,7 +4,7 @@ Oak planks in a warm golden brown, nicely planed, with even grain. The building 
 
 ## Obtaining
 
-In creative: the Building tab of the inventory, or `/give oak_planks`. They don't appear in nature. Until crafting arrives, the creative inventory is their only source.
+In survival: one log gives four planks, in any crafting grid (a recipe known from the start). In creative: the Building tab of the inventory, or `/give oak_planks`.
 
 ## Usage
 

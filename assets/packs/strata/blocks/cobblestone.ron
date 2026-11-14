@@ -1,0 +1,7 @@
+Block(
+    textures: All("strata:cobblestone"),
+    hardness: 2.0,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
+    sound: Some("strata:stone"),
+    category: Some("strata:building"),
+)

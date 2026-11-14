@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["P P", "PPP"],
+    key: {'P': Item("strata:birch_planks")},
+    result: Result(item: "strata:birch_boat"),
+)

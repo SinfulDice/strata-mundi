@@ -4,12 +4,14 @@ mod actions;
 mod boat;
 mod bucket;
 mod containers;
+mod crafting;
 mod drops;
 mod inventory;
 mod mining;
 mod terrain;
 
 pub use containers::{BlockEntities, BlockEntity, OpenWindow};
+pub use crafting::CraftWindow;
 
 use crate::ecs::{Ecs, Entity, PlayerControl};
 use crate::loader::{Bounded, ColumnLoader};
@@ -52,6 +54,10 @@ pub struct Game {
     inventory_dirty: bool,
     /// Mixed with the block and the tick for each loot roll.
     loot_seed: u64,
+    /// The crafting grid changed since the last messages were taken.
+    craft_dirty: bool,
+    /// World option: recipes are learnt by playing.
+    discover_recipes: bool,
 }
 
 impl Game {
@@ -60,6 +66,9 @@ impl Game {
         let player = ecs.entities.spawn();
         ecs.bodies.insert(player, spawn);
         ecs.inventories.insert(player, PlayerInventory::default());
+        ecs.crafts.insert(player, CraftWindow::default());
+        ecs.recipes
+            .insert(player, rules.recipes.starting().collect());
         let movement = MovementSettings {
             can_fly: mode == GameMode::Creative,
             step_up: true,
@@ -80,6 +89,8 @@ impl Game {
             block_entities: BlockEntities::default(),
             inventory_dirty: false,
             loot_seed: 0,
+            craft_dirty: false,
+            discover_recipes: true,
         }
     }
 
@@ -309,6 +320,7 @@ impl Game {
             control.mode = mode;
             control.movement.can_fly = mode == GameMode::Creative;
             self.messages.push(ServerMessage::Mode(mode));
+            self.recipes_changed();
             if mode != GameMode::Creative
                 && let Some(body) = self.ecs.bodies.get_mut(self.player)
             {
@@ -381,3 +393,6 @@ mod conservation_tests;
 
 #[cfg(test)]
 mod mining_tests;
+
+#[cfg(test)]
+mod crafting_tests;

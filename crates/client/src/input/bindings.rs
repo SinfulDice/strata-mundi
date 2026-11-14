@@ -124,6 +124,7 @@ impl Default for Bindings {
                 (Binding::Mouse(MouseButton::Right), Use),
                 (Binding::Mouse(MouseButton::Middle), PickBlock),
                 (Key(KeyCode::KeyE), Inventory),
+                (Key(KeyCode::KeyJ), Journal),
                 (Key(KeyCode::Digit1), Hotbar1),
                 (Key(KeyCode::Digit2), Hotbar2),
                 (Key(KeyCode::Digit3), Hotbar3),

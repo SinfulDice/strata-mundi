@@ -119,6 +119,10 @@ registry_id!(
     SoundId
 );
 registry_id!(
+    /// Numeric id of a crafting recipe.
+    RecipeId
+);
+registry_id!(
     /// Layer in the block texture array; 0 is the "missing texture" pattern.
     TextureId
 );

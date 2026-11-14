@@ -123,6 +123,8 @@ pub struct ListRow {
     pub detail: String,
     /// Image in the interface atlas (world capture).
     pub icon: Option<Rect>,
+    /// An item drawn in a slot instead of the image (recipes).
+    pub item: Option<ItemId>,
     /// Shown greyed (a world that cannot be opened).
     pub dim: bool,
 }

@@ -1,7 +1,7 @@
 use super::attached::Attachment;
 use super::fire::{FireDef, Flammability};
 use super::fluid::{FluidDef, FluidState};
-use super::hit_box::{HitBox, Support};
+use super::hit_box::Support;
 use super::particle::{BlockParticles, ParticleTriggersDef};
 use super::registry::{BlockId, TextureId};
 use super::tint::BlockTint;
@@ -270,6 +270,9 @@ pub struct BlockDef {
     /// Makes it a container (chest, barrel), opened with a right click.
     #[serde(default)]
     pub container: Option<super::ContainerDef>,
+    /// Makes it a work station (crafting table), opened with a right click.
+    #[serde(default)]
+    pub station: Option<super::StationDef>,
 }
 
 fn default_slipperiness() -> f32 {
@@ -321,6 +324,7 @@ pub struct Block {
     pub tint: Option<BlockTint>,
     pub particles: BlockParticles,
     pub container: Option<super::ContainerDef>,
+    pub station: Option<super::StationDef>,
 }
 
 impl Block {
@@ -351,6 +355,7 @@ impl Block {
             tint: None,
             particles: BlockParticles::default(),
             container: None,
+            station: None,
         }
     }
 
@@ -383,16 +388,5 @@ impl Block {
     /// Neighbours of an opaque block do not need their shared face drawn.
     pub fn is_opaque(&self) -> bool {
         self.render == RenderKind::Opaque
-    }
-
-    /// Where the player's aim stops on this block: cubes (even without collision, like
-    /// portals) and plants, not air or liquids.
-    pub fn hit_box(&self) -> Option<HitBox> {
-        match self.render {
-            RenderKind::Cross => Some(self.attachment.map_or(HitBox::PLANT, HitBox::attached)),
-            RenderKind::Invisible => None,
-            _ if self.solid || self.fluid.is_none() => Some(HitBox::FULL),
-            _ => None,
-        }
     }
 }

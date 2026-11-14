@@ -51,6 +51,10 @@ pub trait ItemRules {
     /// Uses of a new one, for items that wear out.
     fn durability(&self, item: ItemId) -> Option<u16>;
     fn equip(&self, item: ItemId) -> Option<EquipSlot>;
+    /// Left in the crafting grid when a recipe uses it.
+    fn remainder(&self, _item: ItemId) -> Option<ItemId> {
+        None
+    }
 }
 
 impl ItemRules for Registry<ItemId, Item> {
@@ -64,6 +68,10 @@ impl ItemRules for Registry<ItemId, Item> {
 
     fn equip(&self, item: ItemId) -> Option<EquipSlot> {
         self.get(item)?.equip
+    }
+
+    fn remainder(&self, item: ItemId) -> Option<ItemId> {
+        self.get(item)?.remainder
     }
 }
 

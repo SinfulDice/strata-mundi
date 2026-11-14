@@ -4,6 +4,7 @@
 use crate::audio::Audio;
 use crate::camera::Camera;
 use crate::cinematic::PlayingShot;
+use crate::crafting::ClientCrafting;
 use crate::input::{Action, InputState};
 use crate::interaction::{BlockInfo, Interaction};
 use crate::inventory::ClientInventory;
@@ -60,6 +61,7 @@ pub struct Gameplay {
     pub container: Option<OpenedContainer>,
     /// A container just opened: its screen must come up.
     pub container_opened: bool,
+    pub crafting: ClientCrafting,
 }
 
 impl Gameplay {
@@ -88,6 +90,7 @@ impl Gameplay {
             border: DEFAULT_WORLD_BORDER,
             container: None,
             container_opened: false,
+            crafting: ClientCrafting::default(),
         }
     }
 
@@ -155,6 +158,11 @@ impl Gameplay {
                 }
             }
             ServerMessage::ContainerClosed => self.container = None,
+            message @ (ServerMessage::Crafting(_)
+            | ServerMessage::Recipes { .. }
+            | ServerMessage::RecipeLearned(_)) => {
+                self.crafting.receive(message);
+            }
             ServerMessage::Feedback(feedback) => self.feedback.push(feedback),
             ServerMessage::EntitySpawned(state) => self.view.world.entities.spawn(state),
             ServerMessage::EntityMoved { id, position, yaw } => {

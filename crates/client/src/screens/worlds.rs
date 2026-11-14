@@ -38,6 +38,7 @@ impl WorldsModel<'_> {
             detail,
             icon: self.shared.icons.get(index).copied().flatten(),
             dim: world.status != WorldStatus::Ready,
+            item: None,
         }
     }
 }

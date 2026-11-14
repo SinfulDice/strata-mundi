@@ -18,3 +18,10 @@ impl ContainerDef {
         usize::from(self.rows) * Self::COLUMNS
     }
 }
+
+/// What a work station block opens.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub enum StationDef {
+    /// A crafting grid of this side (3 for the crafting table).
+    Crafting(u8),
+}

@@ -6,6 +6,7 @@ pub mod bench;
 pub mod camera;
 pub mod catalog;
 mod cinematic;
+mod crafting;
 mod debug_overlay;
 pub mod entities;
 mod gameplay;

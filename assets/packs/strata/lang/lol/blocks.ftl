@@ -74,3 +74,5 @@ block-strata-portal = PRETEND DOOR 2 NOWHERE
 block-strata-bookshelf = BUKSHELF
 block-strata-chest = TREZUR BOX
 block-strata-barrel = BARRUL
+block-strata-cobblestone = LUMPY ROCK
+block-strata-crafting_table = CRAFTIN TABUL

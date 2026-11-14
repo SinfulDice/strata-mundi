@@ -60,6 +60,7 @@ impl GameLauncher {
             fluids: Default::default(),
             fire: Default::default(),
             commands: Some(true),
+            discover_recipes: true,
             generation: self.args.world_code.clone().unwrap_or_default(),
         };
         self.start(meta, None)

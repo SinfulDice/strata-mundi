@@ -49,10 +49,11 @@ pub struct ScreenDefs {
     pub notice: ScreenDef,
     pub crash: ScreenDef,
     pub console: ScreenDef,
+    pub journal: ScreenDef,
 }
 
 impl ScreenDefs {
-    fn all(&self) -> [&ScreenDef; 15] {
+    fn all(&self) -> [&ScreenDef; 16] {
         [
             &self.hud,
             &self.inventory,
@@ -69,6 +70,7 @@ impl ScreenDefs {
             &self.notice,
             &self.crash,
             &self.console,
+            &self.journal,
         ]
     }
 }
@@ -111,6 +113,7 @@ impl UiAssets {
             notice: read("notice")?,
             crash: read("crash")?,
             console: read("console")?,
+            journal: read("journal")?,
         };
         let theme = read_or_report(&ui_dir.join("theme.ron"), errors);
         let font = FontSource::load(packs, "pixel", errors);

@@ -36,10 +36,13 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
         search: "zzz".into(),
         for_container: true,
     };
+    let mut effects = Vec::new();
     let mut model = SlotsModel {
         state: &mut state,
         inventory: &mut hotbar,
         container: Some(&open),
+        crafting: None,
+        effects: &mut effects,
         content: &content,
         language: "en",
     };

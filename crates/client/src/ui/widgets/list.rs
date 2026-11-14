@@ -1,4 +1,6 @@
+use super::items::draw_slot;
 use super::{Draw, HitKind, Node, Rect};
+use crate::ui::def::SLOT;
 use crate::ui::model::Tone;
 use crate::ui::pointer::row_zones;
 use strata_core::texture::Rgba;
@@ -38,11 +40,23 @@ pub(super) fn list(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
             d.painter.fill(line, panel);
         }
         let icon_h = row_height - 4;
-        let icon_w = icon_h * 16 / 9;
+        let icon_w = match row.item {
+            Some(_) => SLOT,
+            None => icon_h * 16 / 9,
+        };
         let icon_rect = Rect::new(line.x + 1, line.y + 1, icon_w, icon_h);
-        match row.icon {
-            Some(source) => d.painter.image(icon_rect, source),
-            None => d.painter.fill(icon_rect, dark),
+        match (row.item, row.icon) {
+            (Some(item), _) => {
+                let slot = Rect::new(
+                    line.x,
+                    line.y + (*row_height as i32 - 2 - SLOT as i32) / 2,
+                    SLOT,
+                    SLOT,
+                );
+                draw_slot(d, slot, Some(item), false, false);
+            }
+            (None, Some(source)) => d.painter.image(icon_rect, source),
+            (None, None) => d.painter.fill(icon_rect, dark),
         }
         let text_x = icon_rect.x + icon_w as i32 + 4;
         d.painter

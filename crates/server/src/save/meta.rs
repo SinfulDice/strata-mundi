@@ -42,6 +42,9 @@ pub struct WorldMeta {
     /// older worlds: allowed in creative ones (see `commands_allowed`).
     #[serde(default)]
     pub commands: Option<bool>,
+    /// World option: recipes are learnt by playing; otherwise all are known.
+    #[serde(default = "yes")]
+    pub discover_recipes: bool,
     /// World type and generation settings; older worlds are of the pack's normal type.
     #[serde(default)]
     pub generation: WorldgenSettings,
@@ -85,4 +88,7 @@ pub struct PlayerData {
     /// The boat the player sits in: its index in the dimension's saved boats.
     #[serde(default)]
     pub boat: Option<usize>,
+    /// Recipes learnt, by identifier (the starting ones are added at every load).
+    #[serde(default)]
+    pub recipes: Vec<Identifier>,
 }

@@ -119,6 +119,7 @@ fn primary_click_takes_puts_merges_and_swaps() {
     let mut window = Window {
         player: &mut player,
         open: None,
+        craft: None,
     };
     window.click(SlotRef::player(0), Click::Primary, &Rules);
     assert_eq!(count(window.player.cursor.as_ref()), 40);
@@ -139,6 +140,7 @@ fn secondary_click_takes_half_and_puts_one() {
     let mut window = Window {
         player: &mut player,
         open: None,
+        craft: None,
     };
     window.click(SlotRef::player(9), Click::Secondary, &Rules);
     assert_eq!(count(window.player.cursor.as_ref()), 5);
@@ -157,6 +159,7 @@ fn armour_slots_take_only_their_piece() {
     let mut window = Window {
         player: &mut player,
         open: None,
+        craft: None,
     };
     window.click(SlotRef::player(0), Click::Primary, &Rules);
     window.click(SlotRef::player(ARMOR.start), Click::Primary, &Rules);
@@ -185,6 +188,7 @@ fn shift_click_moves_between_rows_and_containers() {
     let mut window = Window {
         player: &mut player,
         open: None,
+        craft: None,
     };
     window.click(SlotRef::player(0), Click::Transfer, &Rules);
     assert_eq!(
@@ -200,6 +204,7 @@ fn shift_click_moves_between_rows_and_containers() {
     let mut window = Window {
         player: &mut player,
         open: Some(&mut chest),
+        craft: None,
     };
     window.click(SlotRef::player(MAIN.start), Click::Transfer, &Rules);
     let chest_view = window.open.as_ref().unwrap();
@@ -224,6 +229,7 @@ fn double_click_gathers_partial_stacks_first_and_skips_locked_ones() {
     let mut window = Window {
         player: &mut player,
         open: None,
+        craft: None,
     };
     window.click(SlotRef::player(0), Click::Gather, &Rules);
     assert_eq!(count(window.player.cursor.as_ref()), 64);
@@ -246,6 +252,7 @@ fn drops_come_from_the_slot_or_the_cursor() {
     let mut window = Window {
         player: &mut player,
         open: None,
+        craft: None,
     };
     let one = window.click(SlotRef::player(3), Click::Drop { whole: false }, &Rules);
     assert_eq!(one, vec![stack(DIRT, 1)]);
@@ -273,8 +280,9 @@ fn closing_puts_the_carried_stack_back() {
     let mut window = Window {
         player: &mut player,
         open: None,
+        craft: None,
     };
-    assert_eq!(window.close(&Rules), None);
+    assert_eq!(window.close(&Rules), Vec::new());
     assert_eq!(player.slots.count(PEARL), 4);
 }
 

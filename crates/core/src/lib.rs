@@ -5,6 +5,7 @@ pub mod chunk;
 pub mod cinematic;
 pub mod content;
 pub mod coords;
+pub mod crafting;
 pub mod dimension;
 pub mod files;
 pub mod font;

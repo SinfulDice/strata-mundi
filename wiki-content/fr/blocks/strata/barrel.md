@@ -4,7 +4,7 @@ Un tonneau de douelles cerclées de fer : vingt-sept cases, comme un coffre, dan
 
 ## Obtention
 
-En créatif : onglet Rangement de l'inventaire, ou `/give barrel`. La fabrication arrive avec l'artisanat.
+En créatif : onglet Rangement de l'inventaire, ou `/give barrel`. En survie : se fabrique à l'établi (le livre de recettes montre comment).
 
 ## Utilisations
 

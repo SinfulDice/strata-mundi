@@ -7,3 +7,5 @@ item-strata-birch_boat = Birch Boat
 item-strata-jungle_boat = Jungle Boat
 item-strata-acacia_boat = Acacia Boat
 item-strata-flint_and_steel = Flint and Steel
+item-strata-stick = Stick
+item-strata-coal = Coal

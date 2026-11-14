@@ -1,0 +1,27 @@
+// A lump of coal, a few glints on top.
+Sprite(
+    colors: {
+        'O': ("coal", 0),
+        'c': ("coal", 1),
+        'C': ("coal", 2),
+        'H': ("coal", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "......OOOO......",
+        "....OOHCCcOO....",
+        "...OHCCccccOO...",
+        "...OCHCcccccO...",
+        "..OCCccccHccO...",
+        "..OCcccccCcccO..",
+        "..OcccHcccccOO..",
+        "...OcCcccccO....",
+        "...OOccccccO....",
+        ".....OOcccOO....",
+        ".......OOOO.....",
+        "................",
+        "................",
+    ],
+)

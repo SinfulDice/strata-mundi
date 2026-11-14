@@ -3,11 +3,13 @@
 
 mod click;
 mod container;
+mod craft_grid;
 mod sort;
 mod stack;
 
 pub use click::{Area, Click, SlotRef, Window};
 pub use container::{ARMOR, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory};
+pub use craft_grid::CraftGrid;
 pub use sort::{SortOrder, deposit_matching, sort};
 pub use stack::{DataValue, ItemData, ItemRules, ItemStack, clear_empty};
 

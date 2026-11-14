@@ -11,9 +11,17 @@
         "blocks/strata/bedrock": [(version: "0.1.0", change: Added)],
         "blocks/strata/cactus": [(version: "0.1.0", change: Added)],
         "blocks/strata/chest": [(version: "0.3.0", change: Added)],
-        "blocks/strata/coal_ore": [(version: "0.1.0", change: Added)],
+        "blocks/strata/coal_ore": [
+            (version: "0.1.0", change: Added),
+            (version: "0.3.0", change: Changed(fr: "Donne du charbon.", en: "Gives coal.", lol: "GIVZ COAL.")),
+        ],
+        "blocks/strata/cobblestone": [(version: "0.3.0", change: Added)],
+        "blocks/strata/crafting_table": [(version: "0.3.0", change: Added)],
         "blocks/strata/copper_ore": [(version: "0.2.0", change: Added)],
-        "blocks/strata/deep_coal_ore": [(version: "0.1.0", change: Added)],
+        "blocks/strata/deep_coal_ore": [
+            (version: "0.1.0", change: Added),
+            (version: "0.3.0", change: Changed(fr: "Donne du charbon.", en: "Gives coal.", lol: "GIVZ COAL.")),
+        ],
         "blocks/strata/deep_copper_ore": [(version: "0.2.0", change: Added)],
         "blocks/strata/deep_diamond_ore": [(version: "0.1.0", change: Added)],
         "blocks/strata/deep_gold_ore": [(version: "0.1.0", change: Added)],
@@ -48,7 +56,10 @@
         "blocks/strata/sandstone": [(version: "0.1.0", change: Added)],
         "blocks/strata/snow_block": [(version: "0.1.0", change: Added)],
         "blocks/strata/snowy_grass_block": [(version: "0.1.0", change: Added)],
-        "blocks/strata/stone": [(version: "0.1.0", change: Added)],
+        "blocks/strata/stone": [
+            (version: "0.1.0", change: Added),
+            (version: "0.3.0", change: Changed(fr: "Donne de la pierre taillée.", en: "Gives cobblestone.", lol: "GIVZ LUMPY ROCK.")),
+        ],
         "blocks/strata/verdigris_rock": [(version: "0.2.0", change: Added)],
         "blocks/strata/water": [
             (version: "0.1.0", change: Added),

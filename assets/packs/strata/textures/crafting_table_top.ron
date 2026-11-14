@@ -1,0 +1,29 @@
+// The work top of a crafting table: a framed board with a grid scored into it.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'w': ("oak_wood", 0),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        'H': ("oak_wood", 3),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "DHLLLLLLLLLLLLWD",
+        "DLWWWWdWWWWdWWwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLddddddddddddwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLddddddddddddwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLWWWWdWWWWdWWwD",
+        "DLwwwwwwwwwwwwwD",
+        "DdddddddddddddDD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

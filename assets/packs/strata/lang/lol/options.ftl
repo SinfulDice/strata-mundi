@@ -178,3 +178,4 @@ option-spatial-audio = SOUNDZ IN SPAEC
 option-spatial-audio-help = FANCY: ECHOEZ IN CAVEZ AN HOUSEZ, SOUNDZ GO MUFFLD BEHIND WALLZ. SIMPL: ONLY FAR AN LEFT/RITE, LES THINKIN (DS PRESET).
 spatial-advanced = FANCY
 spatial-simple = SIMPL STEREO
+action-journal = MAH DIARY

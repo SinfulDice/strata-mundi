@@ -1,0 +1,4 @@
+// Stone breaks into cobblestone (only with a pickaxe: stone requires one).
+LootTable(pools: [
+    Pool(entries: [Item(item: "strata:cobblestone")]),
+])

@@ -75,6 +75,8 @@ impl IntegratedServer {
             start.body,
             meta.mode,
         );
+        game.set_recipe_discovery(meta.discover_recipes);
+        game.set_known_recipes(start.recipes);
         game.set_inventory(start.inventory);
         game.set_look(start.look);
         game.set_fluid_settings(meta.fluids);

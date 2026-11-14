@@ -10,11 +10,13 @@ mod fire;
 mod fluid;
 mod hit_box;
 mod item;
+mod keys;
 mod liquid;
 mod loot;
 mod particle;
 mod png_file;
 mod registry;
+mod tags;
 mod textures;
 mod tint;
 mod tool;
@@ -22,7 +24,7 @@ mod turned;
 
 pub use attached::{AttachedSides, Attachment};
 pub use block::{Axis, Block, BlockDef, BlockTextures, Face, Orientation, Placement, RenderKind};
-pub use container::ContainerDef;
+pub use container::{ContainerDef, StationDef};
 pub use cracks::{CracksDef, MAX_CRACK_STAGES};
 pub use entity::{DroppedItemDef, EntityDef, EntityType, ModelBox};
 pub use fire::{FireDef, Flammability, MAX_FIRE_AGE};
@@ -42,14 +44,16 @@ pub use particle::{
 };
 pub use png_file::{ACCEPTED_SIZES, missing_texture};
 pub use registry::{
-    BlockId, EntityTypeId, ItemId, ParticleId, Registry, RegistryId, SoundId, TextureId,
+    BlockId, EntityTypeId, ItemId, ParticleId, RecipeId, Registry, RegistryId, SoundId, TextureId,
 };
+pub use tags::{ItemTags, TagDef};
 pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
 pub use tint::{BiomeTints, BlockTint, Tint, TintFaces, TintKind, UNTINTED_ALPHA};
 pub use tool::{BlockTool, TICKS_PER_SECOND, ToolDef, crack_progress, crack_stage};
 
 use crate::audio::{self, Sounds};
 use crate::cinematic::{self, Cinematic};
+use crate::crafting::{self, Recipes};
 use crate::dimension::DimensionId;
 use crate::id::Identifier;
 use crate::lang::Translations;
@@ -78,6 +82,9 @@ pub struct Content {
     pub loot_tables: BTreeMap<Identifier, LootTable>,
     /// Texture of each crack stage over a block being broken (`cracks.ron`).
     pub crack_stages: Vec<TextureId>,
+    /// Named groups of items (« any planks »).
+    pub tags: ItemTags,
+    pub recipes: Recipes,
     /// Item tooltips by language, see `item_tooltip`.
     pub tooltips: describe::TooltipCache,
 }
@@ -111,6 +118,12 @@ impl Content {
         };
         let items = item::load_items(packs, &known, &textures, &mut errors);
         let loot_tables = loot::load_loot_tables(packs, &items, &mut errors);
+        let tags = tags::load_tags(packs, &items, &mut errors);
+        let names = crafting::Names {
+            items: &items,
+            tags: &tags,
+        };
+        let recipes = Recipes::new(crafting::load_recipes(packs, &names, &mut errors));
         loot::check_loot_names(&loot_refs, &loot_tables, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
         let crack_stages = cracks::load_cracks(&presentation, &textures, &mut errors);
@@ -131,6 +144,8 @@ impl Content {
             sounds,
             loot_tables,
             crack_stages,
+            tags,
+            recipes,
             tooltips: Default::default(),
         };
         content.cache_tooltips();
@@ -208,52 +223,6 @@ impl Content {
     pub fn block_name(&self, block: BlockId) -> Option<&Identifier> {
         let family = self.blocks.get(block)?.family(block);
         self.blocks.identifier(family)
-    }
-
-    /// Fluent keys every language must define for this content.
-    pub fn translation_keys(&self) -> Vec<String> {
-        let blocks = self
-            .blocks
-            .iter()
-            .filter(|(key, _, block)| block.family(*key) == *key)
-            .map(|(_, id, _)| id.translation_key("block"));
-        let items = self
-            .items
-            .iter()
-            .filter_map(|(_, id, item)| match item.kind {
-                ItemKind::Flat(_) => Some(id.translation_key("item")),
-                ItemKind::Block(_) => None,
-            });
-        let categories = self
-            .blocks
-            .iter()
-            .filter_map(|(_, _, block)| block.category.as_ref())
-            .chain(
-                self.items
-                    .iter()
-                    .filter_map(|(_, _, item)| item.category.as_ref()),
-            )
-            .map(|category| category.translation_key("category"));
-        let subtitles = self
-            .cinematics
-            .values()
-            .flat_map(|shot| &shot.keyframes)
-            .filter_map(|key| key.subtitle.clone());
-        let sounds = self.sounds.subtitle_keys().cloned();
-        let tools = self
-            .tool_kinds()
-            .into_iter()
-            .map(|k| k.translation_key("tool"));
-        let mut keys: Vec<String> = blocks
-            .chain(items)
-            .chain(tools)
-            .chain(categories)
-            .chain(subtitles)
-            .chain(sounds)
-            .collect();
-        keys.sort();
-        keys.dedup();
-        keys
     }
 }
 
@@ -354,6 +323,13 @@ fn load_blocks(
                 let valid = (1..=ContainerDef::MAX_ROWS).contains(&c.rows);
                 if !valid {
                     errors.push(PackError::invalid(&source, "container: 1 to 6 rows"));
+                }
+                valid
+            }),
+            station: value.station.filter(|&StationDef::Crafting(side)| {
+                let valid = (1..=crate::crafting::MAX_GRID as u8).contains(&side);
+                if !valid {
+                    errors.push(PackError::invalid(&source, "crafting grid: 1 to 3 cells"));
                 }
                 valid
             }),

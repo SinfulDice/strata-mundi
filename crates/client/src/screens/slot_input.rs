@@ -41,7 +41,8 @@ impl Screens {
             self.slot_input = SlotInput::default();
             return;
         };
-        if std::mem::take(&mut game.container_opened) {
+        let station = std::mem::take(&mut game.crafting.station_opened);
+        if std::mem::take(&mut game.container_opened) || station {
             let shown =
                 matches!(self.stack.last(), Some(Menu::Slots(state)) if state.for_container);
             if !shown {
@@ -53,7 +54,8 @@ impl Screens {
             }
         }
         let gone = matches!(self.stack.last(), Some(Menu::Slots(state)) if state.for_container)
-            && game.container.is_none();
+            && game.container.is_none()
+            && game.crafting.view.station.is_none();
         if gone {
             self.stack.pop();
             self.reset_focus();
@@ -63,6 +65,7 @@ impl Screens {
             game.inventory
                 .request(strata_protocol::InventoryRequest::Close);
             game.container = None;
+            game.crafting.closed();
         }
         self.slot_input.was_open = open;
     }
@@ -175,9 +178,11 @@ impl Screens {
     /// sends stacks across in an inventory screen).
     pub(super) fn closes_inventory(&self, input: &InputState) -> bool {
         let inventory = matches!(self.stack.last(), Some(Menu::Inventory(_) | Menu::Slots(_)));
-        inventory
+        let journal = matches!(self.stack.last(), Some(Menu::Journal(_)));
+        (inventory
             && input.just_pressed(Action::Inventory)
-            && !input.just_pressed(Action::MenuTransfer)
+            && !input.just_pressed(Action::MenuTransfer))
+            || (journal && input.just_pressed(Action::Journal))
     }
 }
 

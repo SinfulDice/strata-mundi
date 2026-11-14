@@ -46,6 +46,10 @@ ui-new-world-fire-destroy = Burning: { $destroy ->
         [on] destroys
        *[off] harmless
     }
+ui-new-world-recipes = Recipes: { $discover ->
+        [on] to discover
+       *[off] all known
+    }
 ui-new-world-create = Create
 
 ui-delete-question = Delete "{ $name }"?

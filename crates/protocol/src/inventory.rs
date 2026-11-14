@@ -2,7 +2,7 @@
 //! (`strata_core::inventory`) and sends the new state back.
 
 use serde::{Deserialize, Serialize};
-use strata_core::content::BlockId;
+use strata_core::content::{BlockId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{Area, Click, Container, ItemStack, SlotRef, SortOrder};
 
@@ -35,6 +35,12 @@ pub enum InventoryRequest {
     DropSelected {
         whole: bool,
     },
+    /// The recipe book: lay a known recipe in the crafting grid with the inventory's
+    /// items, once or (`all`) as many times as possible.
+    FillRecipe {
+        recipe: RecipeId,
+        all: bool,
+    },
 }
 
 /// A container the player opened, as the screen shows it.
@@ -45,4 +51,18 @@ pub struct OpenedContainer {
     pub pos: BlockPos,
     /// Both halves of a double chest, in order.
     pub contents: Container,
+}
+
+/// The player's crafting grid, as the screen shows it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CraftingView {
+    /// 2 in the inventory, 3 at a crafting table.
+    pub side: u8,
+    pub grid: Container,
+    /// What taking the result would give.
+    pub result: Option<ItemStack>,
+    /// The items laid are part of a recipe not known yet.
+    pub hint: bool,
+    /// The work station opened (its name is the screen's title).
+    pub station: Option<(BlockId, BlockPos)>,
 }

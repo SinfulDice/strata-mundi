@@ -1,0 +1,4 @@
+// Coal ores give a lump of coal.
+LootTable(pools: [
+    Pool(entries: [Item(item: "strata:coal")]),
+])

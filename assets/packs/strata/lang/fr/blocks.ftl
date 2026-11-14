@@ -74,3 +74,5 @@ block-strata-portal = Portail d'essai
 block-strata-bookshelf = Bibliothèque
 block-strata-chest = Coffre
 block-strata-barrel = Tonneau
+block-strata-cobblestone = Pierre taillée
+block-strata-crafting_table = Établi

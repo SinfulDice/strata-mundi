@@ -8,9 +8,9 @@ mod storage;
 pub use entity::{Entities, Entity};
 pub use storage::Storage;
 
-use crate::game::OpenWindow;
-use std::collections::VecDeque;
-use strata_core::content::{BlockId, EntityTypeId, ItemId};
+use crate::game::{CraftWindow, OpenWindow};
+use std::collections::{BTreeSet, VecDeque};
+use strata_core::content::{BlockId, EntityTypeId, ItemId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{ItemStack, PlayerInventory};
 use strata_core::physics::{BoatBody, BoatControls, Body, ItemBody, MoveInput, MovementSettings};
@@ -29,6 +29,10 @@ pub struct Ecs {
     pub drops: Storage<DroppedItem>,
     /// The container each player has open.
     pub windows: Storage<OpenWindow>,
+    /// Each player's crafting grid (2×2, or a crafting table's 3×3).
+    pub crafts: Storage<CraftWindow>,
+    /// The recipes each player has learnt.
+    pub recipes: Storage<BTreeSet<RecipeId>>,
 }
 
 /// Items lying on the ground.
@@ -145,6 +149,8 @@ impl Ecs {
         self.mounts.remove(entity);
         self.drops.remove(entity);
         self.windows.remove(entity);
+        self.crafts.remove(entity);
+        self.recipes.remove(entity);
         self.entities.despawn(entity);
     }
 }

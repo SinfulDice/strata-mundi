@@ -1,6 +1,7 @@
-// Survival inventory; with a container open, the container on top and the player's
-// slots below. The slots take clicks: left takes or puts, right halves or puts one,
-// shift-click sends across, double-click gathers, middle click (L1) locks.
+// Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; with
+// a container open, the container on top. The player's slots are always below. Slots
+// take clicks: left takes or puts, right halves or puts one, shift-click sends across
+// (on the result: crafts as many as fit), double-click gathers, middle click (L1) locks.
 Screen(
     root: [
         Shade,
@@ -15,10 +16,23 @@ Screen(
                     SlotGrid(id: "armor", anchor: TopLeft, at: (8, 16), columns: 1, rows: 4),
                     SlotGrid(id: "offhand", anchor: TopLeft, at: (32, 76), columns: 1, rows: 1),
                     Label(id: "offhand_label", anchor: TopLeft, at: (56, 82), text: "ui-inventory-offhand", dim: true),
-                    Button(id: "sort_type", anchor: TopLeft, at: (108, 16), size: (80, 16), text: "ui-inventory-sort-type"),
-                    Button(id: "sort_name", anchor: TopLeft, at: (108, 34), size: (80, 16), text: "ui-inventory-sort-name"),
-                    Button(id: "deposit", anchor: TopLeft, at: (108, 52), size: (80, 16), text: "ui-inventory-deposit"),
+                    SlotGrid(id: "craft", anchor: TopLeft, at: (34, 20), columns: 2, rows: 2),
+                    Label(id: "craft_arrow", anchor: TopLeft, at: (76, 36), text: "ui-craft-arrow", dim: true),
+                    SlotGrid(id: "craft_result", anchor: TopLeft, at: (86, 30), columns: 1, rows: 1),
+                    Button(id: "sort_type", anchor: TopLeft, at: (112, 16), size: (76, 14), text: "ui-inventory-sort-type"),
+                    Button(id: "sort_name", anchor: TopLeft, at: (112, 32), size: (76, 14), text: "ui-inventory-sort-name"),
+                    Button(id: "deposit", anchor: TopLeft, at: (112, 48), size: (76, 14), text: "ui-inventory-deposit"),
+                    Button(id: "book", anchor: TopLeft, at: (112, 64), size: (76, 14), text: "ui-inventory-journal"),
                     Label(id: "help", anchor: TopLeft, at: (8, 100), text: "ui-inventory-survival-help", dim: true, wrap: Some(180)),
+                    Label(id: "craft_note", anchor: TopLeft, at: (8, 138), text: "@craft_note", wrap: Some(180)),
+                ]),
+                Group(id: "table_side", children: [
+                    Label(id: "station_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                    SlotGrid(id: "table", anchor: TopLeft, at: (30, 22), columns: 3, rows: 3),
+                    Label(id: "table_arrow", anchor: TopLeft, at: (96, 48), text: "ui-craft-arrow", dim: true),
+                    SlotGrid(id: "table_result", anchor: TopLeft, at: (110, 42), columns: 1, rows: 1),
+                    Button(id: "book", anchor: TopLeft, at: (112, 86), size: (76, 14), text: "ui-inventory-journal"),
+                    Label(id: "craft_note", anchor: TopLeft, at: (8, 112), text: "@craft_note", wrap: Some(180)),
                 ]),
                 Group(id: "chest_side", children: [
                     Label(id: "chest_title", anchor: TopLeft, at: (8, 4), text: "@title"),

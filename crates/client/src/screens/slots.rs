@@ -1,7 +1,10 @@
 //! Survival inventory and container screens: the player's slots, the open chest, sorting,
 //! locks, quick deposit and search. Every click becomes a request the server answers.
 
+use super::journal::JournalState;
+use super::menu::{Effect, Menu};
 use super::worlds::edit;
+use crate::crafting::ClientCrafting;
 use crate::inventory::ClientInventory;
 use crate::ui::{ScreenModel, SlotMark, SlotPress};
 use strata_core::content::{Content, ItemId};
@@ -25,6 +28,8 @@ pub struct SlotsModel<'a> {
     pub state: &'a mut SlotsState,
     pub inventory: &'a mut ClientInventory,
     pub container: Option<&'a OpenedContainer>,
+    pub crafting: Option<&'a ClientCrafting>,
+    pub effects: &'a mut Vec<Effect>,
     pub content: &'a Content,
     pub language: &'a str,
 }
@@ -37,6 +42,8 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
         "armor" => (Area::Player, ARMOR),
         "offhand" => (Area::Player, OFFHAND..OFFHAND + 1),
         "chest" => (Area::Open, 0..usize::from(u16::MAX)),
+        "craft" | "table" => (Area::Craft, 0..usize::from(u16::MAX)),
+        "craft_result" | "table_result" => (Area::CraftResult, 0..1),
         _ => return None,
     })
 }
@@ -47,8 +54,9 @@ impl SlotsModel<'_> {
         let (area, range) = grid(id)?;
         let slot = range.start + index;
         let exists = match area {
-            Area::Player => range.contains(&slot),
+            Area::Player | Area::CraftResult => range.contains(&slot),
             Area::Open => self.container.is_some_and(|c| slot < c.contents.len()),
+            Area::Craft => self.crafting.is_some_and(|c| slot < c.view.grid.len()),
         };
         exists.then_some(SlotRef {
             area,
@@ -61,6 +69,8 @@ impl SlotsModel<'_> {
         match slot.area {
             Area::Player => self.inventory.stack(index),
             Area::Open => self.container?.contents.get(index),
+            Area::Craft => self.crafting?.view.grid.get(index),
+            Area::CraftResult => self.crafting?.view.result.as_ref(),
         }
     }
 
@@ -69,8 +79,9 @@ impl SlotsModel<'_> {
             return Vec::new();
         };
         let end = match area {
-            Area::Player => range.end,
+            Area::Player | Area::CraftResult => range.end,
             Area::Open => self.container.map_or(0, |c| c.contents.len()),
+            Area::Craft => self.crafting.map_or(0, |c| c.view.grid.len()),
         };
         (range.start..end)
             .map(|index| {
@@ -108,6 +119,32 @@ impl SlotsModel<'_> {
         self.content.item_name(item, self.language)
     }
 
+    fn tr(&self, key: &str) -> String {
+        self.content.translations.text(self.language, key)
+    }
+
+    /// Under the grid: the recipe just learnt, or a hint that the items laid belong to
+    /// a recipe not known yet.
+    fn craft_note(&self) -> String {
+        let Some(crafting) = self.crafting else {
+            return String::new();
+        };
+        let learned = crafting.learned.and_then(|r| self.content.recipes.get(r));
+        match learned {
+            Some(recipe) => self.content.translations.text_with(
+                self.language,
+                "ui-craft-learned",
+                &[("item", self.name(recipe.result))],
+            ),
+            None if crafting.view.hint => self.tr("ui-craft-hint"),
+            None => String::new(),
+        }
+    }
+
+    fn station(&self) -> bool {
+        self.crafting.is_some_and(|c| c.view.station.is_some())
+    }
+
     /// A click, a press of a gamepad button or a lock toggle on element `index` of `id`.
     pub fn press(&mut self, id: &str, index: usize, press: SlotPress) -> bool {
         let Some(slot) = self.slot(id, index) else {
@@ -129,6 +166,14 @@ impl ScreenModel for SlotsModel<'_> {
     fn text(&self, id: &str) -> Option<String> {
         match id {
             "search" => Some(self.state.search.clone()),
+            "craft_note" => Some(self.craft_note()),
+            "station_title" => self
+                .crafting
+                .and_then(|c| c.view.station)
+                .map(|(block, _)| {
+                    let block = self.content.blocks.identifier(block);
+                    block.map_or_else(String::new, |b| self.tr(&b.translation_key("block")))
+                }),
             "title" => self.container.map(|open| {
                 let block = self.content.blocks.identifier(open.block);
                 block.map_or_else(String::new, |b| {
@@ -176,7 +221,9 @@ impl ScreenModel for SlotsModel<'_> {
     fn shown(&self, id: &str) -> bool {
         match id {
             "chest_side" => self.container.is_some(),
-            "player_side" => self.container.is_none(),
+            "table_side" => self.container.is_none() && self.station(),
+            "player_side" => self.container.is_none() && !self.station(),
+            "crafting" => self.crafting.is_some(),
             _ => true,
         }
     }
@@ -192,6 +239,10 @@ impl ScreenModel for SlotsModel<'_> {
                 .sort(Area::Player, SortOrder::Name, &language),
             "sort_chest" => self.inventory.sort(Area::Open, SortOrder::Type, &language),
             "deposit" => self.inventory.request(InventoryRequest::QuickDeposit),
+            "book" => self.effects.push(Effect::Push(Menu::Journal(JournalState {
+                for_grid: true,
+                ..JournalState::default()
+            }))),
             _ => {
                 self.press(id, index, SlotPress::Click(Click::Primary));
             }

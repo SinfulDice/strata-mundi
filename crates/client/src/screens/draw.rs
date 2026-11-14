@@ -99,14 +99,15 @@ impl Screens {
         }
         crate::debug_overlay::paint(debug, &mut painter, &self.assets.theme);
         if let Some(menu) = self.stack.last_mut() {
-            let (inventory, container) = menu::game_parts(game);
+            let parts = menu::game_parts(game);
             let shared = Shared {
                 content,
                 settings: &mut self.settings,
                 worlds: &self.worlds,
                 icons: &self.icons,
-                inventory,
-                container,
+                inventory: parts.inventory,
+                container: parts.container,
+                crafting: parts.crafting,
                 focus: self.focus.as_ref().map(|f| (f.id.clone(), f.index)),
                 key_labels: &key_labels,
                 newer_version: self.newer_version.as_deref(),

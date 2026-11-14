@@ -1,0 +1,32 @@
+// The journal, one tab per section (recipes for now; objects studied, bestiary, places…
+// later). Recipe book: the recipes learnt (`VISIBLE_ROWS` rows in screens/journal.rs),
+// a search, « can be made now », the selected recipe laid in a grid.
+Screen(
+    root: [
+        Shade,
+        Panel(
+            id: "window",
+            anchor: Center,
+            at: (0, 0),
+            size: (300, 210),
+            children: [
+                Label(id: "title", anchor: TopLeft, at: (8, 5), text: "ui-journal-title"),
+                Tabs(id: "tabs", anchor: TopLeft, at: (8, 16), size: (284, 14)),
+                Group(id: "recipes_section", children: [
+                    TextField(id: "search", anchor: TopLeft, at: (8, 36), size: (150, 12), placeholder: "ui-search"),
+                    Button(id: "craftable", anchor: TopLeft, at: (8, 51), size: (150, 14), text: "@craftable"),
+                    List(id: "list", anchor: TopLeft, at: (8, 68), size: (150, 134), row_height: 19),
+                    ItemGrid(id: "pattern", anchor: TopLeft, at: (172, 40), columns: 3, rows: 3),
+                    Label(id: "arrow", anchor: TopLeft, at: (237, 66), text: "ui-craft-arrow", dim: true),
+                    ItemGrid(id: "result", anchor: TopLeft, at: (250, 60), columns: 1, rows: 1),
+                    Label(id: "detail", anchor: TopLeft, at: (166, 106), text: "@detail", dim: true, wrap: Some(126)),
+                    Group(id: "fill_buttons", children: [
+                        Button(id: "fill", anchor: TopLeft, at: (166, 168), size: (60, 14), text: "ui-journal-fill"),
+                        Button(id: "fill_all", anchor: TopLeft, at: (230, 168), size: (62, 14), text: "ui-journal-fill-all"),
+                    ]),
+                    Button(id: "close", anchor: TopLeft, at: (166, 186), size: (126, 16), text: "ui-back"),
+                ]),
+            ],
+        ),
+    ],
+)

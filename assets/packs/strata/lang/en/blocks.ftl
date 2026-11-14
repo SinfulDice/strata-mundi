@@ -74,3 +74,5 @@ block-strata-portal = Test Portal
 block-strata-bookshelf = Bookshelf
 block-strata-chest = Chest
 block-strata-barrel = Barrel
+block-strata-cobblestone = Cobblestone
+block-strata-crafting_table = Crafting Table

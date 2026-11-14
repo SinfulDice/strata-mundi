@@ -29,6 +29,8 @@ pub struct NewWorld {
     pub fire_spread: bool,
     /// Burning blocks are consumed (`/fire destroy`).
     pub fire_destroy: bool,
+    /// Recipes are learnt by playing (otherwise all are known from the start).
+    pub discover_recipes: bool,
     /// World type, sliders of the generation.
     pub generation: WorldgenSettings,
 }

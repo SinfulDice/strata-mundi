@@ -5,7 +5,7 @@ use super::{Game, MAX_REACH};
 use crate::loader::ColumnLoader;
 use glam::DVec3;
 use std::collections::HashMap;
-use strata_core::content::{BlockId, Face};
+use strata_core::content::{BlockId, Face, StationDef};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{Container, ItemData, deposit_matching};
 use strata_core::updates::BlockChange;
@@ -41,6 +41,9 @@ impl Game {
         let Some(block) = loader.block(pos) else {
             return false;
         };
+        if let Some(StationDef::Crafting(side)) = self.rules.station(block) {
+            return self.open_station(loader, pos, block, side);
+        }
         if self.rules.container(block).is_none() || !self.in_reach(pos) || !self.take_action() {
             return false;
         }
@@ -214,9 +217,10 @@ impl Game {
         if broken {
             self.close_container();
         }
+        self.check_station(loader);
     }
 
-    fn within(&self, pos: BlockPos, distance: f64) -> bool {
+    pub(super) fn within(&self, pos: BlockPos, distance: f64) -> bool {
         self.player_body()
             .is_some_and(|body| body.eyes().distance(block_centre(pos)) <= distance)
     }

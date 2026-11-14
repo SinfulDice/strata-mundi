@@ -4,3 +4,6 @@ category-strata-plants = PLANTZ
 category-strata-tools = TOOLZ
 category-strata-transport = GO PLACEZ
 category-strata-storage = STASH STUFFZ
+category-strata-materials = STUFFZ 4 MAKIN
+tag-strata-planks = ANY PLANKZ
+tag-strata-logs = ANY TREE LOG

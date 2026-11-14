@@ -46,6 +46,10 @@ ui-new-world-fire-destroy = BURNY: { $destroy ->
         [on] NOMZ BLOKZ
        *[off] NO NOMZ
     }
+ui-new-world-recipes = HOW 2 MAEK: { $discover ->
+        [on] FIND URSELF
+       *[off] KNOW ALL
+    }
 ui-new-world-create = MAEK IT
 
 ui-delete-question = DELEET "{ $name }"? RLY?
