@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 use strata_core::content::{BlockId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::crafting::{GridItems, fill, grid_result, take_result};
-use strata_core::inventory::{Click, CraftGrid};
+use strata_core::inventory::{Click, CraftGrid, ItemStack};
 use strata_protocol::{CraftingView, ServerMessage};
 
 /// The grid in front of a player and the work station it belongs to, if any.
@@ -82,14 +82,33 @@ impl Game {
         });
     }
 
-    /// A recipe crafted: learnt if it was not (no penalty for knowing the game).
+    /// A recipe crafted: learnt if it was not (no penalty for knowing the game). Nothing
+    /// is learnt while every recipe counts as known.
     fn learn(&mut self, recipe: RecipeId) {
+        if self.all_recipes_known() {
+            return;
+        }
         let Some(known) = self.ecs.recipes.get_mut(self.player) else {
             return;
         };
-        if known.insert(recipe) && self.discover_recipes {
+        if known.insert(recipe) {
             self.messages.push(ServerMessage::RecipeLearned(recipe));
         }
+    }
+
+    /// What the crafting grid holds (saved with the inventory).
+    pub fn grid_stacks(&self) -> Vec<ItemStack> {
+        self.ecs
+            .crafts
+            .get(self.player)
+            .map(|window| window.grid.slots.slots.iter().flatten().cloned().collect())
+            .unwrap_or_default()
+    }
+
+    /// Stacks of a saved grid go back to the inventory (or to the ground).
+    pub fn give_back(&mut self, stacks: Vec<ItemStack>) {
+        let left: Vec<_> = stacks.into_iter().filter_map(|s| self.give(s)).collect();
+        self.throw_all(left);
     }
 
     /// A click on the result slot.

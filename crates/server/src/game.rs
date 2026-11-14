@@ -58,6 +58,8 @@ pub struct Game {
     craft_dirty: bool,
     /// World option: recipes are learnt by playing.
     discover_recipes: bool,
+    /// Recipes learnt whose pack is gone, saved again as they were.
+    pub unknown_recipes: Vec<strata_core::id::Identifier>,
 }
 
 impl Game {
@@ -91,6 +93,7 @@ impl Game {
             loot_seed: 0,
             craft_dirty: false,
             discover_recipes: true,
+            unknown_recipes: Vec::new(),
         }
     }
 

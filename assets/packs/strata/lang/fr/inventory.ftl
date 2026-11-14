@@ -26,3 +26,6 @@ ui-journal-fill = Placer
 ui-journal-fill-all = Placer tout
 ui-journal-can-make = Réalisable
 ui-journal-missing = Il manque des ingrédients
+ui-journal-ingredient = { $count } × { $name }
+ui-journal-result = { $item } ×{ $count }
+ui-journal-separator = {", "}

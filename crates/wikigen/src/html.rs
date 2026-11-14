@@ -5,8 +5,9 @@ use crate::site::{Ctx, Page};
 use strata_core::lang::LANGUAGES;
 
 /// Main sections, linked from every page (path, title key).
-const NAVIGATION: [(&str, &str); 7] = [
+const NAVIGATION: [(&str, &str); 8] = [
     ("blocks/index.html", "wiki-nav-blocks"),
+    ("items/index.html", "wiki-nav-items"),
     ("biomes/index.html", "wiki-nav-biomes"),
     ("mechanics/index.html", "wiki-nav-mechanics"),
     ("commands/index.html", "wiki-nav-commands"),

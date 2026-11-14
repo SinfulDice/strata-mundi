@@ -23,24 +23,35 @@ pub fn section(ctx: &Ctx<'_>, from: &str, item: ItemId) -> String {
     )
 }
 
+/// The things made with `item` (a link to each result's page).
+pub fn uses(ctx: &Ctx<'_>, from: &str, item: ItemId) -> String {
+    let content = &ctx.data.content;
+    let mut results: Vec<ItemId> = content
+        .recipes
+        .iter()
+        .filter(|(_, _, recipe)| recipe.ingredients().iter().any(|i| i.accepts(item)))
+        .map(|(_, _, recipe)| recipe.result)
+        .collect();
+    results.sort();
+    results.dedup();
+    if results.is_empty() {
+        return String::new();
+    }
+    let links: String = results
+        .into_iter()
+        .map(|result| format!("<li>{}</li>", crate::items::item_link(ctx, from, result)))
+        .collect();
+    format!(
+        "<h2>{}</h2><ul class=\"grid\">{links}</ul>",
+        escape(&ctx.tr("wiki-used-in"))
+    )
+}
+
 fn grid(ctx: &Ctx<'_>, from: &str, recipe: &Recipe) -> String {
     let side = recipe.grid_size().max(2);
     let mut cells: Vec<Option<&Ingredient>> = vec![None; side * side];
-    match &recipe.shape {
-        RecipeShape::Shaped {
-            width,
-            cells: pattern,
-            ..
-        } => {
-            for (index, cell) in pattern.iter().enumerate() {
-                cells[(index / width) * side + index % width] = cell.as_ref();
-            }
-        }
-        RecipeShape::Shapeless(list) => {
-            for (cell, ingredient) in cells.iter_mut().zip(list) {
-                *cell = Some(ingredient);
-            }
-        }
+    for (cell, ingredient) in recipe.cells_in(side) {
+        cells[cell] = Some(ingredient);
     }
     let rows: String = cells
         .chunks(side)
@@ -80,7 +91,7 @@ fn grid(ctx: &Ctx<'_>, from: &str, recipe: &Recipe) -> String {
 
 /// The first item of a tag stands for it; its name says « any … ».
 fn ingredient(ctx: &Ctx<'_>, from: &str, ingredient: &Ingredient) -> String {
-    let Some(&first) = ingredient.items.first() else {
+    let Some(&first) = ingredient.items().first() else {
         return String::new();
     };
     let name = match &ingredient.tag {

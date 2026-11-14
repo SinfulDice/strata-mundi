@@ -323,6 +323,7 @@ fn learnt_recipes_are_saved_by_name_and_starting_ones_come_back() {
         .key(&"strata:barrel".parse().unwrap())
         .unwrap();
     game.set_known_recipes(BTreeSet::from([barrel]));
+    game.unknown_recipes = vec!["gone:recipe".parse().unwrap()];
     persistence.save(&game, &mut loader(), &dimension, None);
     let text = std::fs::read_to_string(saves.join(&folder.id).join("player.ron")).unwrap();
     assert!(text.contains("\"strata:barrel\""), "{text}");
@@ -333,6 +334,11 @@ fn learnt_recipes_are_saved_by_name_and_starting_ones_come_back() {
     );
     let start = reopened.player_start(&dimension, || DVec3::ZERO);
     assert!(start.recipes.contains(&barrel));
+    assert_eq!(
+        start.unknown_recipes,
+        vec!["gone:recipe".parse().unwrap()],
+        "kept for its pack"
+    );
     let mut game = Game::new(BlockRules::new(&content), 5_000, body, GameMode::Survival);
     game.set_known_recipes(start.recipes);
     let torch = game
@@ -341,5 +347,36 @@ fn learnt_recipes_are_saved_by_name_and_starting_ones_come_back() {
         .key(&"strata:torch".parse().unwrap())
         .unwrap();
     assert!(game.knows(barrel) && game.knows(torch));
+    std::fs::remove_dir_all(saves).unwrap();
+}
+
+#[test]
+fn a_filled_crafting_grid_survives_saving() {
+    let (saves, folder, meta) = new_world("grid");
+    let content = content();
+    let dimension = DimensionId("strata:terra".parse().unwrap());
+    let mut persistence = Persistence::new(settings(&folder, meta), Arc::clone(&content));
+    let body = Body::at(DVec3::new(0.5, 70.0, 0.5));
+    let rules = BlockRules::new(&content);
+    let mut game = Game::new(rules.clone(), 5_000, body, GameMode::Survival);
+    let log = content
+        .items
+        .key(&"strata:oak_log".parse().unwrap())
+        .unwrap();
+    if let Some(window) = game.ecs.crafts.get_mut(game.player) {
+        window.grid.slots.slots[3] = Some(ItemStack::new(log, 7, &content.items));
+    }
+    persistence.save(&game, &mut loader(), &dimension, None);
+
+    let reopened = Persistence::new(settings(&folder, folder.read_meta().unwrap()), content);
+    let start = reopened.player_start(&dimension, || DVec3::ZERO);
+    let mut back = Game::new(rules, 5_000, start.body, GameMode::Survival);
+    back.set_inventory(start.inventory);
+    back.give_back(start.grid);
+    assert_eq!(
+        back.inventory().slots.count(log),
+        7,
+        "the grid's stack came back"
+    );
     std::fs::remove_dir_all(saves).unwrap();
 }

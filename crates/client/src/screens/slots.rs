@@ -244,10 +244,9 @@ impl ScreenModel for SlotsModel<'_> {
                 .sort(Area::Player, SortOrder::Name, &language),
             "sort_chest" => self.inventory.sort(Area::Open, SortOrder::Type, &language),
             "deposit" => self.inventory.request(InventoryRequest::QuickDeposit),
-            "book" => self.effects.push(Effect::Push(Menu::Journal(JournalState {
-                for_grid: true,
-                ..JournalState::default()
-            }))),
+            "book" => self
+                .effects
+                .push(Effect::Push(Menu::Journal(JournalState::for_grid()))),
             _ => {
                 self.press(id, index, SlotPress::Click(Click::Primary));
             }

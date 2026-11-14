@@ -1,0 +1,1 @@
+Shaped(pattern: ["x"], key: {'x': Tag("good:no_tag")}, result: Result(item: "good:fine"))

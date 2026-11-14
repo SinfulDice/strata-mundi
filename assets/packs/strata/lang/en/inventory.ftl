@@ -26,3 +26,6 @@ ui-journal-fill = Lay
 ui-journal-fill-all = Lay all
 ui-journal-can-make = Can be made
 ui-journal-missing = Ingredients missing
+ui-journal-ingredient = { $count } × { $name }
+ui-journal-result = { $item } ×{ $count }
+ui-journal-separator = {", "}

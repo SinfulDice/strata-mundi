@@ -15,6 +15,7 @@ use strata_core::content::Content;
 use strata_core::content::{EntityTypeId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::dimension::DimensionId;
+use strata_core::id::Identifier;
 use strata_core::inventory::{HOTBAR, ItemStack, PlayerInventory};
 use strata_core::physics::{BoatBody, Body, ItemBody};
 
@@ -40,6 +41,10 @@ pub struct PlayerStart {
     pub boat: Option<usize>,
     /// Recipes learnt that the packs still have.
     pub recipes: BTreeSet<RecipeId>,
+    /// Recipes learnt that no pack has now (kept, to come back with their pack).
+    pub unknown_recipes: Vec<Identifier>,
+    /// What the crafting grid held, to give back.
+    pub grid: Vec<ItemStack>,
 }
 
 pub struct Persistence {
@@ -98,6 +103,17 @@ impl Persistence {
                     .iter()
                     .filter_map(|id| self.content.recipes.key(id))
                     .collect(),
+                unknown_recipes: player
+                    .recipes
+                    .iter()
+                    .filter(|id| self.content.recipes.key(id).is_none())
+                    .cloned()
+                    .collect(),
+                grid: player
+                    .inventory
+                    .as_ref()
+                    .map(|saved| saved.grid(&self.content.items))
+                    .unwrap_or_default(),
             },
             None => PlayerStart {
                 body: Body::at(spawn()),
@@ -105,6 +121,8 @@ impl Persistence {
                 inventory: PlayerInventory::default(),
                 boat: None,
                 recipes: BTreeSet::new(),
+                unknown_recipes: Vec::new(),
+                grid: Vec::new(),
             },
         }
     }
@@ -225,7 +243,10 @@ impl Persistence {
             dimension: dimension.0.clone(),
             body,
             look: game.look(),
-            inventory: Some(SavedInventory::from_inventory(&game.inventory(), items)),
+            inventory: Some(
+                SavedInventory::from_inventory(&game.inventory(), items)
+                    .with_grid(&game.grid_stacks(), items),
+            ),
             hotbar: Vec::new(),
             selected: 0,
             boat: None,
@@ -233,6 +254,7 @@ impl Persistence {
                 .known_recipes()
                 .into_iter()
                 .filter_map(|recipe| self.content.recipes.identifier(recipe).cloned())
+                .chain(game.unknown_recipes.iter().cloned())
                 .collect(),
         })
     }

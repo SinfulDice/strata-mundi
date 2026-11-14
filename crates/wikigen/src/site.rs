@@ -3,7 +3,7 @@
 
 use crate::history::History;
 use crate::texts::Texts;
-use crate::{biomes, blocks, html, pages, reference, search};
+use crate::{biomes, blocks, html, items, pages, reference, search};
 use anyhow::Context;
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
@@ -150,6 +150,7 @@ pub fn build(data: &Data, out: &Path) -> anyhow::Result<Report> {
 fn all_pages(ctx: &Ctx<'_>) -> Vec<Page> {
     let mut pages = vec![pages::home(ctx), pages::news(ctx), pages::changelog(ctx)];
     pages.extend(blocks::pages(ctx));
+    pages.extend(items::pages(ctx));
     pages.extend(biomes::pages(ctx));
     pages.extend(reference::pages(ctx));
     pages

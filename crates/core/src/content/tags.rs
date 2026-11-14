@@ -31,7 +31,7 @@ impl ItemTags {
         self.0.iter().map(|(id, items)| (id, items.as_slice()))
     }
 
-    /// A tag made in code (tests).
+    /// Sets `tag` to `items` (sorted, without repeats), replacing what it held.
     pub fn insert(&mut self, tag: Identifier, mut items: Vec<ItemId>) {
         items.sort();
         items.dedup();

@@ -41,10 +41,7 @@ fn items() -> Registry<ItemId, Item> {
 }
 
 fn planks() -> Ingredient {
-    Ingredient {
-        items: vec![OAK, BIRCH],
-        tag: Some(id("planks")),
-    }
+    Ingredient::new(vec![BIRCH, OAK], Some(id("planks")))
 }
 
 fn shaped(width: usize, cells: Vec<Option<Ingredient>>, result: ItemId, count: u16) -> Recipe {
@@ -327,9 +324,15 @@ fn plans_count_what_the_inventory_holds() {
     let recipes = recipes();
     let table = recipes.get(recipes.key(&id("table")).unwrap()).unwrap();
     let held = [stack(OAK, 3), stack(BIRCH, 1)];
-    assert!(can_make(table, &counts(held.iter())));
-    assert!(!can_make(table, &counts(held[..1].iter())));
-    assert_eq!(plan(table, &counts(held.iter())).unwrap().len(), 4);
+    let mut available = counts(held.iter());
+    assert!(can_make(table, &mut available));
+    assert_eq!(
+        available,
+        counts(held.iter()),
+        "the counts are left as they were"
+    );
+    assert!(!can_make(table, &mut counts(held[..1].iter())));
+    assert_eq!(plan(table, &mut available).unwrap().len(), 4);
 }
 
 #[test]

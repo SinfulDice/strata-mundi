@@ -77,7 +77,9 @@ impl IntegratedServer {
         );
         game.set_recipe_discovery(meta.discover_recipes);
         game.set_known_recipes(start.recipes);
+        game.unknown_recipes = start.unknown_recipes;
         game.set_inventory(start.inventory);
+        game.give_back(start.grid);
         game.set_look(start.look);
         game.set_fluid_settings(meta.fluids);
         game.set_fire_settings(meta.fire);

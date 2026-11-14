@@ -38,6 +38,11 @@ impl Default for ClientCrafting {
 }
 
 impl ClientCrafting {
+    /// Recipes learnt (the journal rebuilds its list when this changes).
+    pub fn known_count(&self) -> usize {
+        self.known.len()
+    }
+
     pub fn knows(&self, recipe: RecipeId) -> bool {
         self.all_known || self.known.contains(&recipe)
     }

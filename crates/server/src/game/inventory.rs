@@ -32,6 +32,9 @@ impl Game {
     /// The player leaves: the carried stack goes back into the inventory (or to the
     /// ground) and the open container closes.
     pub fn release_cursor(&mut self) {
+        if self.ecs.inventories.get(self.player).is_none() {
+            return;
+        }
         let mut craft = self.ecs.crafts.remove(self.player).unwrap_or_default();
         let left = self
             .with_inventory(|inventory, rules| {
@@ -232,6 +235,9 @@ impl Game {
         loader: &ColumnLoader,
         change: impl FnOnce(&mut Window<'_>, &BlockRules) -> T,
     ) -> T {
+        if self.ecs.inventories.get(self.player).is_none() {
+            return T::default();
+        }
         let mut open = self.take_open_container(loader);
         self.check_station(loader);
         let mut craft = self.ecs.crafts.remove(self.player);

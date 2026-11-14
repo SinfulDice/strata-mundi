@@ -7,6 +7,7 @@ mod blocks;
 mod harvest;
 mod history;
 mod html;
+mod items;
 mod pages;
 mod recipes;
 mod reference;

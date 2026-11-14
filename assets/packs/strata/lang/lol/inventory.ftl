@@ -26,3 +26,6 @@ ui-journal-fill = PUT
 ui-journal-fill-all = PUT ALL
 ui-journal-can-make = CAN MAEK
 ui-journal-missing = NO HAZ ALL STUFFZ
+ui-journal-ingredient = { $count } × { $name }
+ui-journal-result = { $item } ×{ $count }
+ui-journal-separator = {" AN "}

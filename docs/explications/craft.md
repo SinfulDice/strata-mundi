@@ -28,7 +28,7 @@ Au chargement, chaque nom inconnu est signalé avec le fichier fautif, et la rec
 
 ### Trouver la recette posée
 
-On garde le plus petit rectangle qui contient tous les objets posés, puis on le compare aux formes de même taille (et à leur miroir). Pour aller vite, chaque objet connaît la liste des recettes qui l'utilisent : on ne teste que celles du premier objet posé.
+On garde le plus petit rectangle qui contient tous les objets posés, puis on le compare aux formes de même taille (et à leur miroir). Pour aller vite, chaque objet connaît la liste des recettes qui l'utilisent : on ne teste que la plus courte de ces listes parmi les objets posés.
 
 ### Qui fabrique ?
 
@@ -57,7 +57,7 @@ sequenceDiagram
 
 ### Le livre de recettes
 
-L'écran **Journal** (touche J, ou bouton « Journal » de l'inventaire et de l'établi) a un onglet par section ; la première est le livre de recettes. Il ne montre **que les recettes apprises**, avec une recherche et un filtre « réalisables maintenant ». Ouvert depuis une grille, un second clic sur une recette (ou « Placer ») demande au serveur de déplacer les ingrédients de l'inventaire vers la grille ; « Placer tout » en met autant que possible.
+L'écran **Journal** (touche J ou bouton Select de la manette, ou bouton « Journal » de l'inventaire et de l'établi) a un onglet par section ; la première est le livre de recettes. Il ne montre **que les recettes apprises**, avec une recherche et un filtre « réalisables maintenant ». Ouvert depuis une grille, un second clic sur une recette (ou « Placer ») demande au serveur de déplacer les ingrédients de l'inventaire vers la grille ; « Placer tout » en met autant que possible.
 
 ## Dans le code
 

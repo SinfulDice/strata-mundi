@@ -140,7 +140,7 @@ impl Default for Bindings {
                 (Key(KeyCode::F5), ReloadResources),
                 (Key(KeyCode::KeyT), OpenConsole),
                 (Key(KeyCode::Slash), OpenConsole),
-                (Pad(PadButton::Select), ToggleDebug),
+                (Pad(PadButton::Select), Journal),
                 (Pad(PadButton::DPadUp), MoveForward),
                 (Pad(PadButton::DPadDown), MoveBackward),
                 (Pad(PadButton::DPadLeft), MoveLeft),

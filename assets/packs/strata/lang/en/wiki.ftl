@@ -100,3 +100,6 @@ wiki-loot-with = with { $tool }
 wiki-crafting = Crafting
 wiki-recipe-shapeless = Shapeless: the ingredients go in any cells.
 wiki-recipe-table = 3×3 grid: at a crafting table.
+wiki-nav-items = Items
+wiki-used-in = Used to make
+wiki-fact-durability = Uses

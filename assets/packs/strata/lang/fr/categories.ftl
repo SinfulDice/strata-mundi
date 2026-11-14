@@ -6,4 +6,3 @@ category-strata-transport = Transport
 category-strata-storage = Rangement
 category-strata-materials = Matériaux
 tag-strata-planks = n'importe quelles planches
-tag-strata-logs = n'importe quelle bûche

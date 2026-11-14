@@ -70,7 +70,7 @@ fn page(ctx: &Ctx<'_>, id: &Identifier, block: &Block) -> Page {
         .items
         .key(id)
         .map_or_else(String::new, |item| {
-            crate::recipes::section(ctx, &path, item)
+            crate::recipes::section(ctx, &path, item) + &crate::recipes::uses(ctx, &path, item)
         });
     let body = format!(
         "{box_html}{}{found}{crafting}{}",

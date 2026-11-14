@@ -100,3 +100,6 @@ wiki-loot-with = avec { $tool }
 wiki-crafting = Fabrication
 wiki-recipe-shapeless = Sans forme : les ingrédients vont dans n'importe quelles cases.
 wiki-recipe-table = Grille 3×3 : à l'établi.
+wiki-nav-items = Objets
+wiki-used-in = Sert à fabriquer
+wiki-fact-durability = Utilisations

@@ -227,13 +227,13 @@ pub fn model<'a>(menu: &'a mut Menu, shared: Shared<'a>) -> Box<dyn ScreenModel 
             }),
             None => Box::new(Empty),
         },
-        Menu::Journal(state) => Box::new(JournalModel {
+        Menu::Journal(state) => Box::new(JournalModel::new(
             state,
-            inventory: shared.inventory,
-            crafting: shared.crafting,
-            content: shared.content,
-            language: &shared.settings.interface.language,
-            effects: shared.effects,
-        }),
+            shared.inventory,
+            shared.crafting,
+            shared.content,
+            &shared.settings.interface.language,
+            shared.effects,
+        )),
     }
 }

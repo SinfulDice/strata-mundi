@@ -29,6 +29,9 @@ pub struct SavedInventory {
     /// back on loading.
     #[serde(default)]
     pub cursor: Option<SavedStack>,
+    /// In the crafting grid when saved (a screen open); given back on loading.
+    #[serde(default)]
+    pub craft: Vec<SavedStack>,
 }
 
 impl SavedStack {
@@ -80,7 +83,24 @@ impl SavedInventory {
                 .cursor
                 .as_ref()
                 .and_then(|stack| SavedStack::from_stack(stack, items)),
+            craft: Vec::new(),
         }
+    }
+
+    /// The crafting grid's stacks, saved with the inventory.
+    pub fn with_grid(mut self, grid: &[ItemStack], items: &Registry<ItemId, Item>) -> Self {
+        self.craft = grid
+            .iter()
+            .filter_map(|stack| SavedStack::from_stack(stack, items))
+            .collect();
+        self
+    }
+
+    pub fn grid(&self, items: &Registry<ItemId, Item>) -> Vec<ItemStack> {
+        self.craft
+            .iter()
+            .filter_map(|s| s.to_stack(items))
+            .collect()
     }
 
     pub fn to_inventory(&self, items: &Registry<ItemId, Item>) -> PlayerInventory {

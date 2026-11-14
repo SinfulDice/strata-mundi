@@ -27,7 +27,7 @@ impl Recipes {
             let mut accepted: Vec<ItemId> = recipe
                 .ingredients()
                 .into_iter()
-                .flat_map(|ingredient| ingredient.items.iter().copied())
+                .flat_map(|ingredient| ingredient.items().iter().copied())
                 .collect();
             accepted.sort();
             accepted.dedup();
@@ -79,14 +79,15 @@ impl Recipes {
             .map(|(id, _, r)| (id, r))
     }
 
-    /// Recipes that may use one of the grid's items, first ones first.
+    /// Recipes that may use every item of the grid: the shortest list among them (a
+    /// recipe missing from one item's list cannot match).
     fn candidates(&self, grid: GridItems<'_>) -> &[RecipeId] {
-        grid.cells
+        let lists = grid
+            .cells
             .iter()
             .flatten()
-            .next()
-            .and_then(|item| self.by_item.get(item))
-            .map_or(&[], Vec::as_slice)
+            .map(|item| self.by_item.get(item).map_or(&[][..], Vec::as_slice));
+        lists.min_by_key(|list| list.len()).unwrap_or(&[])
     }
 
     /// The recipe laid in the grid (the first one when several match).

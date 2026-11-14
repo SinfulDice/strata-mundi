@@ -54,8 +54,8 @@ fn one() -> u16 {
 /// What one cell of a recipe accepts: one item, or any item of a tag.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ingredient {
-    /// Sorted.
-    pub items: Vec<ItemId>,
+    /// Sorted, for `accepts`.
+    items: Vec<ItemId>,
     /// The tag it came from, for the wiki and the journal.
     pub tag: Option<Identifier>,
 }
@@ -66,6 +66,18 @@ impl Ingredient {
             items: vec![item],
             tag: None,
         }
+    }
+
+    /// Any of `items` (those of `tag`, if it comes from one).
+    pub fn new(mut items: Vec<ItemId>, tag: Option<Identifier>) -> Self {
+        items.sort();
+        items.dedup();
+        Self { items, tag }
+    }
+
+    /// The items accepted, sorted.
+    pub fn items(&self) -> &[ItemId] {
+        &self.items
     }
 
     pub fn accepts(&self, item: ItemId) -> bool {
@@ -99,6 +111,21 @@ impl Recipe {
         match &self.shape {
             RecipeShape::Shaped { cells, .. } => cells.iter().flatten().collect(),
             RecipeShape::Shapeless(list) => list.iter().collect(),
+        }
+    }
+
+    /// Each ingredient with its cell in a grid of `side` (row by row): a shaped recipe
+    /// from the top left corner, a shapeless one in the first cells.
+    pub fn cells_in(&self, side: usize) -> Vec<(usize, &Ingredient)> {
+        match &self.shape {
+            RecipeShape::Shaped { width, cells, .. } => cells
+                .iter()
+                .enumerate()
+                .filter_map(|(index, cell)| {
+                    Some(((index / width) * side + index % width, cell.as_ref()?))
+                })
+                .collect(),
+            RecipeShape::Shapeless(list) => list.iter().enumerate().collect(),
         }
     }
 
@@ -172,13 +199,21 @@ fn resolve(
         errors.push(PackError::invalid(source, message));
         return None;
     };
-    if !(1..=MAX_RESULT).contains(&result.count) {
-        errors.push(PackError::invalid(source, "result count: 1 to 64"));
+    let max = names
+        .items
+        .get(item)
+        .map_or(MAX_RESULT, |entry| entry.max_stack.clamp(1, MAX_RESULT));
+    if !(1..=max).contains(&result.count) {
+        let message = format!(
+            "result count: 1 to {max} (a full stack of `{}`)",
+            result.item
+        );
+        errors.push(PackError::invalid(source, message));
     }
     Some(Recipe {
         shape,
         result: item,
-        count: result.count.clamp(1, MAX_RESULT),
+        count: result.count.clamp(1, max),
         starting,
     })
 }
@@ -266,10 +301,7 @@ fn ingredient(
             }
         },
         IngredientDef::Tag(id) => match names.tags.get(&id) {
-            Some(items) if !items.is_empty() => Some(Ingredient {
-                items: items.to_vec(),
-                tag: Some(id),
-            }),
+            Some(items) if !items.is_empty() => Some(Ingredient::new(items.to_vec(), Some(id))),
             Some(_) => {
                 errors.push(PackError::invalid(source, format!("tag `{id}` is empty")));
                 None
@@ -281,3 +313,8 @@ fn ingredient(
         },
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[path = "recipe_tests.rs"]
+mod tests;

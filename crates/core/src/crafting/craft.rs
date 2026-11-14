@@ -3,7 +3,7 @@
 
 use super::matching::{GridItems, Recipes};
 use crate::content::RecipeId;
-use crate::inventory::{Click, CraftGrid, ItemRules, ItemStack, Window, clear_empty};
+use crate::inventory::{Click, CraftGrid, HOTBAR, ItemRules, ItemStack, MAIN, Window, clear_empty};
 
 /// Crafts in one shift click at most (a full grid of full stacks).
 const MAX_REPEATS: u32 = 64 * 9;
@@ -96,14 +96,22 @@ fn into_cursor(window: &mut Window<'_>, made: ItemStack, rules: &impl ItemRules)
     }
 }
 
-/// Puts the whole result in the inventory, or nothing at all.
+/// Puts the whole result in the inventory, or nothing at all (the room is counted
+/// first, without copying the inventory).
 fn into_inventory(window: &mut Window<'_>, made: ItemStack, rules: &impl ItemRules) -> bool {
-    let mut trial = window.player.clone();
-    if trial.give(made, rules).is_some() {
+    let max = u32::from(rules.max_stack(made.item));
+    let room: u32 = HOTBAR
+        .chain(MAIN)
+        .map(|index| match window.player.slots.get(index) {
+            None => max,
+            Some(held) if held.stacks_with(&made) => max.saturating_sub(u32::from(held.count)),
+            Some(_) => 0,
+        })
+        .sum();
+    if room < u32::from(made.count) {
         return false;
     }
-    *window.player = trial;
-    true
+    window.player.give(made, rules).is_none()
 }
 
 /// One item off every filled cell; a remainder takes the emptied cell, or goes to the

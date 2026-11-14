@@ -31,6 +31,19 @@ fn load(dir: &Path) -> (Content, Vec<PackError>) {
 fn higher_priority_pack_adds_modifies_and_removes() {
     let (content, errors) = load(&fixtures("demo"));
     assert!(errors.is_empty(), "{errors:#?}");
+    let item = |name: &str| content.items.key(&id(name)).unwrap();
+    let stones = content.tags.get(&id("base:stones")).unwrap();
+    let mut merged = vec![item("base:a"), item("base:b"), item("demo:new")];
+    merged.sort();
+    assert_eq!(stones, merged.as_slice(), "a later pack adds to a tag");
+    assert_eq!(
+        content.tags.get(&id("base:swap")).unwrap(),
+        &[item("demo:new")]
+    );
+    assert!(
+        content.tags.get(&id("base:gone")).is_none(),
+        "removed by remove.ron"
+    );
     let blocks = &content.blocks;
     assert_eq!(blocks.key(&id("strata:air")), Some(BlockId::AIR));
     assert!(blocks.by_identifier(&id("demo:new")).is_some());
@@ -56,6 +69,14 @@ fn broken_pack_gives_clear_errors_without_crashing() {
         "{messages:#?}"
     );
     assert!(mentions("reference loop"), "{messages:#?}");
+    assert!(
+        mentions("odd.ron: unknown item `good:nothing_here`"),
+        "{messages:#?}"
+    );
+    assert!(
+        mentions("odd.ron: unknown tag `good:no_tag`"),
+        "{messages:#?}"
+    );
     for file in [
         "looted.ron: unknown loot table",
         "looted_too.ron: unknown loot table",
