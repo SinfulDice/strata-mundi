@@ -37,6 +37,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 27. [Particules](particules.md) : éclats, gouttes, bulles ; pool borné, un seul dessin.
 
 28. [Audio](audio.md) : sons et musique synthétisés, mixeur, son 3D, réverbération, occlusion, cache, threads. Format des packs : [guide des sons](../guide-sons.md).
+29. [Inventaire, coffres et objets au sol](inventaire.md) : piles, clics décidés par le serveur, entités de bloc, tri, dépôt rapide, objets lâchés.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

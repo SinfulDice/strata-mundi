@@ -10,8 +10,10 @@ Garder chaque monde entre deux parties, sans jamais perdre ce que le joueur a co
 
 ```text
 saves/<id>/world.ron        description : nom, graine, mode, bordure, dates, temps de jeu, version du format
-           player.ron       le personnage : dimension, position, regard, barre d'objets
+           player.ron       le personnage : dimension, position, regard, inventaire (piles par identifiant)
            icon.png         capture prise en quittant (pour la liste des mondes)
+           entities/strata/terra.ron        bateaux et objets au sol
+           block_entities/strata/terra.ron  contenu des coffres et tonneaux (voir inventaire.md)
            regions/strata/terra/r.<x>.<z>.region   les colonnes modifiées
 backups/<id>/<date>/        copies de sécurité
 ```
