@@ -2,7 +2,7 @@
 
 ## État
 
-- **Version en cours** : v0.2.1 — Retours de test, **terminée** (13/11/2026), **validée par l'utilisateur le 14/11/2026** (essai en jeu, FPS mesurés, tag `v0.2.1` poussé). Détail et rapport : `docs/versions/v0.2.1.md`. La v0.3 attend sa validation.
+- **Version en cours** : v0.2.1 — Retours de test, **terminée** (13/11/2026), **validée par l'utilisateur le 14/11/2026** (essai en jeu, FPS mesurés, tag `v0.2.1` poussé). Détail et rapport : `docs/versions/v0.2.1.md`. Prochaine : v0.3 (statut « Prêt »).
   - [x] J1 Ravins rares · [x] J2 Biomes plus grands, bandes de chaleur · [x] J3 Eau façon Minecraft · [x] J4 Pose de blocs fiable · [x] J5 Torches murales, lanternes suspendues · [x] J6 Sons · [x] J7 Curseurs · [x] J8 Clôture (captures, rapport, version 0.2.1, tag `v0.2.1` à pousser par l'utilisateur)
 - **Dernière session** : 13/11/2026
 
@@ -99,5 +99,4 @@ Mémoire et temps (cloud, rendu logiciel lavapipe, indicatif) :
 
 ## En attente de l'utilisateur
 
-- **Historique Git** : 52 Mo de musique commités par erreur puis retirés restent dans l'historique ; le garder ou le réécrire (irréversible) : à décider.
 - Repli CC0 pour les sons : reporté à plus tard (l'utilisateur, 11/11/2026 : les sons conviennent pour l'instant).
