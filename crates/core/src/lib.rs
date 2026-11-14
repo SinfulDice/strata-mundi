@@ -11,6 +11,7 @@ pub mod font;
 pub mod generation;
 pub mod hash;
 pub mod id;
+pub mod inventory;
 pub mod lang;
 pub mod light;
 pub mod pack;

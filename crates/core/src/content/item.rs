@@ -14,6 +14,25 @@ pub struct ItemDef {
     /// What using it on the world does (right click).
     #[serde(default)]
     pub action: Option<ItemActionDef>,
+    /// Uses before it breaks (tools, armour); such an item never stacks.
+    #[serde(default)]
+    pub durability: Option<u16>,
+    /// Equipment slot it may be worn in (armour).
+    #[serde(default)]
+    pub equip: Option<EquipSlot>,
+}
+
+/// Where a worn item goes, in the order of the armour slots.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, serde::Serialize)]
+pub enum EquipSlot {
+    Head,
+    Chest,
+    Legs,
+    Feet,
+}
+
+impl EquipSlot {
+    pub const ALL: [Self; 4] = [Self::Head, Self::Chest, Self::Legs, Self::Feet];
 }
 
 /// `action` of an item, naming blocks by identifier.
@@ -39,6 +58,8 @@ pub struct Item {
     pub category: Option<Identifier>,
     pub kind: ItemKind,
     pub action: Option<ItemAction>,
+    pub durability: Option<u16>,
+    pub equip: Option<EquipSlot>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

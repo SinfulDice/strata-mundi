@@ -23,7 +23,7 @@ pub use fluid::{
     Fluid, FluidDef, FluidLevel, FluidState, Hardening, HardeningDef, MAX_SLOPE_SEARCH, MAX_SPREAD,
 };
 pub use hit_box::{HitBox, Support};
-pub use item::{Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
+pub use item::{EquipSlot, Item, ItemAction, ItemActionDef, ItemDef, ItemKind};
 pub use liquid::{LiquidMotion, LiquidView, SurfaceAnimation, surface_sixteenths};
 pub use particle::{
     BlockParticles, BreakingDef, ImpactDef, MAX_BURST, Particle, ParticleDef, ParticleRole,
@@ -343,6 +343,8 @@ fn load_items(
                 category: block.category.clone(),
                 kind: ItemKind::Block(block_id),
                 action: None,
+                durability: None,
+                equip: None,
             },
         );
     }
@@ -357,11 +359,18 @@ fn load_items(
         let action = value
             .action
             .and_then(|action| item_action(known, action, &source, errors));
+        let durable = value.durability.filter(|&uses| uses > 0);
         let item = Item {
-            max_stack: value.max_stack.max(1),
+            max_stack: if durable.is_some() {
+                1
+            } else {
+                value.max_stack.max(1)
+            },
             category: value.category,
             kind: ItemKind::Flat(texture),
             action,
+            durability: durable,
+            equip: value.equip,
         };
         if items.insert(id.clone(), item).is_none() {
             errors.push(PackError::invalid(
