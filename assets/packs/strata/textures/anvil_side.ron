@@ -1,0 +1,27 @@
+// An iron anvil, its horn and its foot, set in a dark frame.
+Sprite(
+    colors: {
+        'O': ("coal", 1),
+        'K': ("iron", 0),
+        'J': ("iron", 1),
+        'I': ("iron", 2),
+    },
+    rows: [
+        "KKKKKKKKKKKKKKKK",
+        "KIIIIIIIIIIIIIIK",
+        "KJJJJJJJJJJJJJJK",
+        "KKJJJJJJJJJJJJKK",
+        "OKKKKJJJJJJKKKKO",
+        "OOOOKJJJJJJKOOOO",
+        "OOOOKJIIIIJKOOOO",
+        "OOOOKJJJJJJKOOOO",
+        "OOOOKJJJJJJKOOOO",
+        "OOOKKJJJJJJKKOOO",
+        "OOKJJJJJJJJJJKOO",
+        "OKJJJJJJJJJJJJKO",
+        "OKJIIIIIIIIIIJKO",
+        "OKJJJJJJJJJJJJKO",
+        "OKKKKKKKKKKKKKKO",
+        "OOOOOOOOOOOOOOOO",
+    ],
+)

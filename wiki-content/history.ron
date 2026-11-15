@@ -8,6 +8,8 @@
     ],
     entries: {
         "mechanics/furnaces": [(version: "0.3.0", change: Added)],
+        "mechanics/upgrades": [(version: "0.3.0", change: Added)],
+        "blocks/strata/anvil": [(version: "0.3.0", change: Added)],
         "blocks/strata/furnace": [(version: "0.3.0", change: Added)],
         "blocks/strata/iron_furnace": [(version: "0.3.0", change: Added)],
         "blocks/strata/gold_furnace": [(version: "0.3.0", change: Added)],

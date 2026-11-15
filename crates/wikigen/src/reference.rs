@@ -10,7 +10,7 @@ use strata_client::settings::{GraphicsSettings, Preset};
 use strata_protocol::commands::{COMMANDS, CommandSpec, Runs};
 
 /// Mechanics pages, by text key (`mechanics/<name>`).
-const MECHANICS: [&str; 11] = [
+const MECHANICS: [&str; 13] = [
     "world-generation",
     "fluids",
     "fire",
@@ -22,6 +22,8 @@ const MECHANICS: [&str; 11] = [
     "inventory",
     "harvesting",
     "furnaces",
+    "tools-and-armour",
+    "upgrades",
 ];
 
 pub fn pages(ctx: &Ctx<'_>) -> Vec<Page> {
@@ -82,10 +84,15 @@ fn commands_index(ctx: &Ctx<'_>) -> Page {
 
 fn mechanic(ctx: &Ctx<'_>, name: &str) -> Page {
     let key = format!("mechanics/{name}");
+    let path = format!("{key}.html");
+    let table = match name {
+        "upgrades" => crate::upgrades::table(ctx, &path),
+        _ => String::new(),
+    };
     Page {
-        path: format!("{key}.html"),
+        body: format!("{}{table}{}", ctx.text(&key), history_section(ctx, &key)),
         title: ctx.tr(&format!("wiki-mechanic-{name}")),
-        body: format!("{}{}", ctx.text(&key), history_section(ctx, &key)),
+        path,
     }
 }
 

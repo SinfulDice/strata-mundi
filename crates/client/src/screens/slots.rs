@@ -13,6 +13,7 @@ use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE
 use strata_core::inventory::{
     ARMOR, Area, Click, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
 };
+use strata_core::upgrade::max_durability;
 use strata_protocol::{InventoryRequest, OpenedContainer};
 
 const MAX_SEARCH: usize = 32;
@@ -50,8 +51,10 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
         "furnace_input" => (Area::Open, FURNACE_INPUT..FURNACE_INPUT + 1),
         "furnace_fuel" => (Area::Open, FURNACE_FUEL..FURNACE_FUEL + 1),
         "furnace_output" => (Area::Open, FURNACE_OUTPUT..FURNACE_OUTPUT + 1),
-        "craft" | "table" | "cutter" => (Area::Craft, 0..usize::from(u16::MAX)),
-        "craft_result" | "table_result" | "cutter_result" => (Area::CraftResult, 0..1),
+        "craft" | "table" | "cutter" | "anvil" => (Area::Craft, 0..usize::from(u16::MAX)),
+        "craft_result" | "table_result" | "cutter_result" | "anvil_result" => {
+            (Area::CraftResult, 0..1)
+        }
         _ => return None,
     })
 }
@@ -116,7 +119,7 @@ impl SlotsModel<'_> {
             && !self.name(stack.item).to_lowercase().contains(&query);
         SlotMark {
             count: stack.count,
-            wear: wear_share(stack, &self.content.items),
+            wear: wear_share(stack, self.content),
             locked: area == Area::Player && self.inventory.inventory().is_locked(index),
             dim: searched_out || stack.is_broken(),
         }
@@ -125,11 +128,7 @@ impl SlotsModel<'_> {
     /// The item's tooltip, with the uses left of this one (or that it is broken).
     fn stack_tooltip(&self, stack: &ItemStack) -> String {
         let mut text = self.content.item_tooltip(stack.item, self.language);
-        let full = self
-            .content
-            .items
-            .get(stack.item)
-            .and_then(|i| i.durability);
+        let full = max_durability(stack, &self.content.items, &self.content.upgrades);
         if let (Some(left), Some(full)) = (stack.durability, full) {
             let args = [("left", left.to_string()), ("full", full.to_string())];
             let tr = &self.content.translations;
@@ -139,6 +138,10 @@ impl SlotsModel<'_> {
                 text.push('\n');
                 text.push_str(&self.tr("gear-broken-line"));
             }
+        }
+        for line in self.content.stack_upgrade_lines(stack, self.language) {
+            text.push('\n');
+            text.push_str(&line);
         }
         text
     }
@@ -185,6 +188,9 @@ impl SlotsModel<'_> {
         if id == "cut_choices" {
             return self.choose_cut(index, press);
         }
+        if id == "anvil_choices" {
+            return self.choose_upgrade(index, press);
+        }
         let Some(slot) = self.slot(id, index) else {
             return false;
         };
@@ -209,12 +215,13 @@ impl ScreenModel for SlotsModel<'_> {
                 "ui-inventory-protection",
                 &[(
                     "points",
-                    self.inventory.protection(&self.content.items).to_string(),
+                    self.inventory.protection(self.content).to_string(),
                 )],
             )),
             "craft_note" => Some(self.craft_note()),
             "furnace_info" => Some(self.furnace_info()),
             "cutter_note" => Some(self.cutter_note()),
+            "anvil_note" => Some(self.anvil_note()),
             "help" => Some(
                 Some(self.craft_note())
                     .filter(|note| !note.is_empty())
@@ -232,6 +239,9 @@ impl ScreenModel for SlotsModel<'_> {
     fn items(&self, id: &str) -> Vec<Option<ItemId>> {
         if id == "cut_choices" {
             return self.cuts().map(|(_, stack)| Some(stack.item)).collect();
+        }
+        if id == "anvil_choices" {
+            return self.anvil_icons();
         }
         self.stacks(id)
             .into_iter()
@@ -262,6 +272,7 @@ impl ScreenModel for SlotsModel<'_> {
                 let chosen = self.crafting?.view.chosen?;
                 self.cuts().position(|(index, _)| *index == chosen)
             }
+            "anvil_choices" => self.anvil_selected(),
             _ => None,
         }
     }
@@ -280,6 +291,9 @@ impl ScreenModel for SlotsModel<'_> {
             let (_, stack) = self.cuts().nth(index)?;
             return Some(self.content.item_tooltip(stack.item, self.language));
         }
+        if id == "anvil_choices" {
+            return self.anvil_tooltip(index);
+        }
         let stack = self.stack(self.slot(id, index)?)?;
         Some(self.stack_tooltip(stack))
     }
@@ -295,6 +309,7 @@ impl ScreenModel for SlotsModel<'_> {
                 .is_some_and(|c| c.contents.len() <= FURNACE_MODULES),
             "table_side" => !open && matches!(station, Some(StationDef::Crafting(_))),
             "cutter_side" => !open && station == Some(StationDef::Stonecutter),
+            "anvil_side" => !open && station == Some(StationDef::Anvil),
             "player_side" => !open && station.is_none(),
             "crafting" => self.crafting.is_some(),
             _ => true,
@@ -312,6 +327,7 @@ impl ScreenModel for SlotsModel<'_> {
                 .sort(Area::Player, SortOrder::Name, &language),
             "sort_chest" => self.inventory.sort(Area::Open, SortOrder::Type, &language),
             "deposit" => self.inventory.request(InventoryRequest::QuickDeposit),
+            "anvil_repair" => self.choose_repair(),
             "book" => self
                 .effects
                 .push(Effect::Push(Menu::Journal(JournalState::for_grid()))),

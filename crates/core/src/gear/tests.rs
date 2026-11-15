@@ -5,6 +5,7 @@ use crate::content::EquipSlot;
 use crate::content::{Item, ItemId, ItemKind, Registry, TextureId};
 use crate::inventory::ItemStack;
 use crate::pack::PackError;
+use crate::upgrade::Upgrades;
 use std::path::Path;
 
 fn id(text: &str) -> Identifier {
@@ -20,6 +21,7 @@ fn iron() -> Tier {
         enchantability: 14,
         upgrade_slots: vec![id("strata:craft")],
         armor_durability: Some(15),
+        repair: None,
     }
 }
 
@@ -160,24 +162,27 @@ fn protection_adds_the_pieces_but_not_broken_ones() {
         ItemStack::new(plate, 1, &items),
         ItemStack::new(cap, 1, &items),
     ];
-    assert_eq!(worn_protection(&worn, &items), 7);
+    assert_eq!(worn_protection(&worn, &items, &Upgrades::default()), 7);
     let mut broken = worn.clone();
     broken[0].wear(100);
     assert!(broken[0].is_broken());
-    assert_eq!(worn_protection(&broken, &items), 1);
+    assert_eq!(worn_protection(&broken, &items, &Upgrades::default()), 1);
 }
 
 #[test]
 fn heavy_armour_slows_light_armour_does_not() {
     let (items, plate, cap) = armor_items();
     let light = [ItemStack::new(cap, 1, &items)];
-    assert_eq!(worn_burden(&light, &items).speed_factor(), 1.0);
+    assert_eq!(
+        worn_burden(&light, &items, &Upgrades::default()).speed_factor(),
+        1.0
+    );
     let heavy: Vec<ItemStack> = (0..4).map(|_| ItemStack::new(plate, 1, &items)).collect();
-    let burden = worn_burden(&heavy, &items);
+    let burden = worn_burden(&heavy, &items, &Upgrades::default());
     assert!((burden.speed_factor() - 0.9).abs() < 1e-5);
     assert!((burden.stamina - 0.4).abs() < 1e-5 && (burden.mana - 0.4).abs() < 1e-5);
     let many: Vec<ItemStack> = (0..40).map(|_| ItemStack::new(plate, 1, &items)).collect();
-    assert!(worn_burden(&many, &items).speed_factor() >= 1.0 - MAX_BURDEN);
+    assert!(worn_burden(&many, &items, &Upgrades::default()).speed_factor() >= 1.0 - MAX_BURDEN);
 }
 
 #[test]

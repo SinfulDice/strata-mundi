@@ -16,6 +16,7 @@ mod reference;
 mod search;
 mod site;
 mod texts;
+mod upgrades;
 
 use clap::Parser;
 use std::path::PathBuf;

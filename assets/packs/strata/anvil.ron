@@ -1,0 +1,4 @@
+// The anvil's repairs: each repair material gives back a quarter of the uses; two like
+// items joined add their uses and 12 % of a new one's. Each repair of an item costs one
+// more experience than the one before, up to 10.
+Anvil(material_share: 0.25, combine_bonus: 0.12, repair_xp: 1, repair_xp_step: 1, max_repair_xp: 10)

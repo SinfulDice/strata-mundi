@@ -2,13 +2,14 @@
 //! sends intents; the server decides (block clicks are predicted, see `prediction`).
 
 use crate::camera::Camera;
+use crate::hammer::{HeldGear, held_gear, next_area};
 use crate::input::{Action, InputState};
 use crate::inventory::ClientInventory;
 use crate::mining::{Mining, MiningInput};
 use crate::world::ClientWorld;
 use glam::DVec3;
 use std::sync::Arc;
-use strata_core::content::{BlockId, Content, HitBox, ItemAction, ItemId, ItemKind};
+use strata_core::content::{BlockId, Content, HitBox, ItemAction, ItemId, ItemKind, ToolDef};
 use strata_core::physics::{Aabb, LiquidCell};
 use strata_core::raycast::{RayHit, ray_box, raycast};
 use strata_core::updates::UpdateRules;
@@ -98,11 +99,9 @@ impl BlockInfo {
         self.items.get(usize::from(block.0)).copied().flatten()
     }
 
-    /// Ticks of hitting that break `block` with `held` in hand (`None`: never).
-    pub fn break_ticks(&self, block: BlockId, held: Option<ItemId>) -> Option<u32> {
-        let items = &self.content.items;
-        let tool = held.and_then(|item| items.get(item)?.tool.as_ref());
-        self.content.blocks.get(block)?.break_ticks(tool)
+    /// Ticks of hitting that break `block` with the `held` tool (`None`: never).
+    pub fn break_ticks(&self, block: BlockId, held: Option<&ToolDef>) -> Option<u32> {
+        self.content.blocks.get(block)?.break_ticks(held)
     }
 
     pub fn block_of(&self, item: ItemId) -> Option<BlockId> {
@@ -111,6 +110,14 @@ impl BlockInfo {
             ItemKind::Flat(_) => None,
         }
     }
+}
+
+/// The stack in hand as breaking needs it.
+#[derive(Clone, Copy)]
+struct Swing<'a> {
+    held: Option<ItemId>,
+    gear: &'a HeldGear,
+    yaw: f32,
 }
 
 #[derive(Default)]
@@ -159,8 +166,19 @@ impl Interaction {
             }
             return action;
         }
+        if input.just_pressed(Action::HammerArea)
+            && let Some(request) = next_area(hotbar, &info.content)
+        {
+            hotbar.request(request);
+        }
+        let gear = held_gear(hotbar, &info.content);
         let creative = hotbar.creative;
-        if let Some(action) = self.mine(dt, (world, info), input, held, creative) {
+        let swing = Swing {
+            held,
+            gear: &gear,
+            yaw: camera.yaw,
+        };
+        if let Some(action) = self.mine(dt, (world, info), input, swing, creative) {
             return Some(action);
         }
         let target = self.target?;
@@ -197,7 +215,7 @@ impl Interaction {
         dt: f32,
         (world, info): (&ClientWorld, &BlockInfo),
         input: &InputState,
-        held: Option<ItemId>,
+        swing: Swing<'_>,
         creative: bool,
     ) -> Option<WorldAction> {
         if creative {
@@ -207,7 +225,9 @@ impl Interaction {
             world,
             info,
             target: self.target.filter(|_| input.is_held(Action::Attack)),
-            held,
+            held: swing.held,
+            gear: swing.gear,
+            yaw: swing.yaw,
             ready: self.cooldown == 0.0,
         };
         let action = self.mining.update(dt, &mining);

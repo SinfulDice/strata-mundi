@@ -181,3 +181,4 @@ option-spatial-audio-help = Avancé : écho selon le lieu (grotte, maison, plein
 spatial-advanced = Avancé
 spatial-simple = Stéréo simple
 action-journal = Journal
+action-hammer-area = Zone du marteau

@@ -181,3 +181,4 @@ option-spatial-audio-help = Advanced: echo of the place (cave, house, open air) 
 spatial-advanced = Advanced
 spatial-simple = Simple stereo
 action-journal = Journal
+action-hammer-area = Hammer area

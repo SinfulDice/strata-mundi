@@ -32,7 +32,7 @@ pub enum RecipeDef {
     },
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub enum IngredientDef {
     Item(Identifier),
     /// Any item of the tag.

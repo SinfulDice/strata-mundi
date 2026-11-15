@@ -5,6 +5,7 @@ use crate::audio::Audio;
 use crate::camera::Camera;
 use crate::cinematic::PlayingShot;
 use crate::crafting::ClientCrafting;
+use crate::hammer::{held_gear, outline_box};
 use crate::input::{Action, InputState};
 use crate::interaction::{BlockInfo, Interaction};
 use crate::inventory::ClientInventory;
@@ -158,7 +159,7 @@ impl Gameplay {
     fn advance_player(&mut self, dt: f32, input: MoveInput, connection: &ClientConnection) {
         let terrain = terrain(&self.view.world, &self.info, self.border);
         if let Some(player) = &mut self.player {
-            player.movement.speed = self.inventory.armour_speed(&self.info.content.items);
+            player.movement.speed = self.inventory.armour_speed(&self.info.content);
             for (sequence, input) in player.advance(f64::from(dt), input, &terrain) {
                 connection.send(ClientMessage::Input { sequence, input });
             }
@@ -170,8 +171,12 @@ impl Gameplay {
     /// this frame (a fragment and a sound each).
     pub fn show_breaking(&mut self, renderer: &mut Renderer, audio: &mut Audio) {
         let overlays = &mut renderer.overlays;
-        overlays.outline = self.interaction.target.map(|hit| hit.block);
         let world = &self.view.world;
+        let content = &self.info.content;
+        let gear = held_gear(&self.inventory, content);
+        let yaw = self.camera.yaw;
+        overlays.outline =
+            (self.interaction.target).map(|hit| outline_box(hit, &gear, yaw, world, content));
         let mining = &mut self.interaction.mining;
         overlays.cracks = mining.draws(world, &self.info, self.camera.position);
         for (pos, face) in mining.hits.drain(..) {

@@ -1,0 +1,12 @@
+// Reinforcement: more uses, and more protection for armour. Heavier: it does not go with
+// lightening.
+Upgrade(
+    slot: "strata:craft",
+    applies_to: [Tool, Weapon, Armor],
+    excludes: ["strata:lightening"],
+    levels: [
+        Level(effects: [Durability(20.0), Protection(1)], xp: 2, material: Item("strata:iron_ingot"), count: 2),
+        Level(effects: [Durability(40.0), Protection(2)], xp: 4, material: Item("strata:iron_ingot"), count: 4),
+        Level(effects: [Durability(60.0), Protection(3)], xp: 7, material: Item("strata:diamond"), count: 2),
+    ],
+)

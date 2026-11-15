@@ -10,10 +10,11 @@ pub use storage::Storage;
 
 use crate::game::{CraftWindow, OpenWindow};
 use std::collections::{BTreeSet, VecDeque};
-use strata_core::content::{BlockId, EntityTypeId, ItemId, RecipeId};
+use strata_core::content::{BlockId, EntityTypeId, Face, ItemId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{ItemStack, PlayerInventory};
 use strata_core::physics::{BoatBody, BoatControls, Body, ItemBody, MoveInput, MovementSettings};
+use strata_core::upgrade::AreaSize;
 use strata_protocol::{ActionId, GameMode, WorldAction};
 
 /// Every component storage of the simulation.
@@ -111,6 +112,16 @@ pub struct Mining {
     pub needed: u32,
     /// Crack stage last reported.
     pub stage: Option<usize>,
+    /// How the block was hit, for a hammer's area.
+    pub swing: Swing,
+}
+
+/// Where and how a hit lands: the face, the hammer area chosen, the player's facing.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Swing {
+    pub face: Face,
+    pub area: AreaSize,
+    pub yaw: f32,
 }
 
 /// A click waiting for its turn.

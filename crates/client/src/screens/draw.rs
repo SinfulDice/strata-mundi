@@ -75,7 +75,8 @@ impl Screens {
             let hud = match game.as_deref() {
                 Some(game) => HudModel {
                     hotbar: &game.inventory,
-                    items: &content.items,
+                    content,
+                    area: crate::hammer::area_line(&game.inventory, content, &language),
                     target: aimed_block_name(game, content, &language),
                     mount: game
                         .is_riding()
@@ -84,7 +85,8 @@ impl Screens {
                 },
                 None => HudModel {
                     hotbar: &sample,
-                    items: &content.items,
+                    content,
+                    area: None,
                     target: Some(content.translations.text(&language, "ui-editor-sample")),
                     mount: Some(content.translations.text(&language, "hud-dismount")),
                     subtitles: subtitle_lines(&sample_subtitles(), content, &language),

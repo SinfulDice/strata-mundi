@@ -1,0 +1,27 @@
+// The anvil's face, worn bright in the middle.
+Sprite(
+    colors: {
+        'K': ("iron", 0),
+        'J': ("iron", 1),
+        'I': ("iron", 2),
+        'L': ("iron", 3),
+    },
+    rows: [
+        "KKKKKKKKKKKKKKKK",
+        "KJJJJJJJJJJJJJJK",
+        "KJJJJJJJJJJJJJJK",
+        "KJJIIIIIIIIIIJJK",
+        "KJJIIIIIIIIIIJJK",
+        "KJJIIILLLLIIIJJK",
+        "KJJIIILLLLIIIJJK",
+        "KJJIIIIIIIIIIJJK",
+        "KJJIIIIIIIIIIJJK",
+        "KJJIIILLLLIIIJJK",
+        "KJJIIILLLLIIIJJK",
+        "KJJIIIIIIIIIIJJK",
+        "KJJIIIIIIIIIIJJK",
+        "KJJJJJJJJJJJJJJK",
+        "KJJJJJJJJJJJJJJK",
+        "KKKKKKKKKKKKKKKK",
+    ],
+)

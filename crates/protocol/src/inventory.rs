@@ -44,6 +44,11 @@ pub enum InventoryRequest {
     /// The stonecutter: cut what lies in its cell with this recipe (an index in
     /// `Cooking::cuttings`).
     ChooseCut(u16),
+    /// The anvil: the upgrade to put next (an index in `Upgrades::list`), or none to
+    /// repair.
+    ChooseUpgrade(Option<u16>),
+    /// The hammer in hand breaks this area of those it unlocked (smallest first).
+    ChooseArea(u8),
 }
 
 /// A container the player opened, as the screen shows it.
@@ -73,7 +78,11 @@ pub struct CraftingView {
     /// At a stonecutter: what the item laid can become (recipe index, result), and the
     /// one chosen.
     pub cuts: Vec<(u16, ItemStack)>,
+    /// The cutting chosen, or at an anvil the upgrade chosen (an index in
+    /// `Upgrades::list`; none: repair).
     pub chosen: Option<u16>,
+    /// At an anvil: the experience taking the result costs.
+    pub cost: Option<u32>,
 }
 
 /// The open furnace's fire and cooking, for its flame and arrow.

@@ -2,6 +2,7 @@
 //! held on one block with one item, the cracks of the local break and those the server
 //! reports for every breaker. The server keeps its own count and decides.
 
+use crate::hammer::{HeldGear, blocks_at};
 use crate::interaction::BlockInfo;
 use crate::render::CrackDraw;
 use crate::world::ClientWorld;
@@ -10,6 +11,7 @@ use std::collections::HashMap;
 use strata_core::content::{BlockId, Face, ItemId, TICKS_PER_SECOND, crack_progress, crack_stage};
 use strata_core::coords::BlockPos;
 use strata_core::raycast::RayHit;
+use strata_core::upgrade::{swing_cells, swing_ticks};
 use strata_protocol::{NetEntity, WorldAction};
 
 /// A hit sound and a fragment come this often while breaking (seconds), like Minecraft.
@@ -42,8 +44,25 @@ pub struct MiningInput<'a> {
     /// The aimed block, if the attack button is held on one.
     pub target: Option<RayHit>,
     pub held: Option<ItemId>,
+    /// What the held stack mines with, and the hammer area chosen.
+    pub gear: &'a HeldGear,
+    /// The player's facing, for an area hit on a floor.
+    pub yaw: f32,
     /// The pause after a break is over: a new block may be started.
     pub ready: bool,
+}
+
+/// Ticks the hit takes: the block's, or the hardest of a hammer's area.
+fn swing_ticks_at(input: &MiningInput<'_>, hit: RayHit, block: BlockId) -> Option<u32> {
+    let tool = input.gear.tool.as_ref();
+    let single = input.info.break_ticks(block, tool)?;
+    let Some(tool) = tool else {
+        return Some(single);
+    };
+    let blocks = blocks_at(input.world, &input.info.content);
+    let swing = (input.gear.area, input.yaw);
+    let cells = swing_cells(hit.block, hit.face, swing, tool, &blocks);
+    Some(swing_ticks(&cells, single, tool, &blocks))
 }
 
 impl Mining {
@@ -63,7 +82,7 @@ impl Mining {
         if !input.ready {
             return self.current.take().map(|_| WorldAction::StopBreak);
         }
-        let ticks = input.info.break_ticks(block, input.held);
+        let ticks = swing_ticks_at(input, hit, block);
         let Some(ticks) = ticks.filter(|_| block != BlockId::AIR) else {
             return self.current.take().map(|_| WorldAction::StopBreak);
         };
@@ -79,7 +98,10 @@ impl Mining {
             needed: ticks as f32 / TICKS_PER_SECOND as f32,
             since_hit: HIT_PERIOD,
         });
-        Some(WorldAction::StartBreak { pos: hit.block })
+        Some(WorldAction::StartBreak {
+            pos: hit.block,
+            face: hit.face,
+        })
     }
 
     fn advance(&mut self, dt: f32, hit: RayHit) -> Option<WorldAction> {

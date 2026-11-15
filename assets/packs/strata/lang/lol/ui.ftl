@@ -182,3 +182,4 @@ ui-gen-preview-failed = MAP BROKED (SEE TEH LOG)
 ui-gen-copied = CODE COPEED.
 ui-gen-no-clipboard = NO CLIPBORD: WRITE TEH CODE BY PAW.
 decimal-separator = .
+hud-hammer-area = BONK SIZE: { $width }×{ $height } (<key:HammerArea>)

@@ -1,0 +1,13 @@
+// The head of a miner's hammer, widened level after level, each dearer: 3×1, 5×1, 3×3,
+// 3×5 then 5×5 (width × height on a wall). Every area unlocked stays at hand.
+Upgrade(
+    slot: "strata:area",
+    applies_to: [Tool],
+    levels: [
+        Level(effects: [Area(3, 1)], xp: 3, material: Item("strata:iron_ingot"), count: 4),
+        Level(effects: [Area(5, 1)], xp: 5, material: Item("strata:iron_ingot"), count: 8),
+        Level(effects: [Area(3, 3)], xp: 8, material: Item("strata:gold_ingot"), count: 8),
+        Level(effects: [Area(3, 5)], xp: 12, material: Item("strata:diamond"), count: 3),
+        Level(effects: [Area(5, 5)], xp: 18, material: Item("strata:diamond"), count: 6),
+    ],
+)

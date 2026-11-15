@@ -9,6 +9,7 @@ use strata_core::crafting::Recipes;
 use strata_core::inventory::ItemRules;
 use strata_core::physics::LiquidCell;
 use strata_core::updates::UpdateRules;
+use strata_core::upgrade::Upgrades;
 
 /// What the server needs to know about blocks, items and entity types to judge
 /// collisions and player actions.
@@ -34,6 +35,8 @@ pub struct BlockRules {
     pub recipes: Arc<Recipes>,
     /// Fuels, cooking and cutting recipes, furnace tiers.
     pub cooking: Arc<Cooking>,
+    /// Anvil upgrades and repairs.
+    pub upgrades: Arc<Upgrades>,
 }
 
 impl BlockRules {
@@ -86,6 +89,7 @@ impl BlockRules {
                 .collect(),
             recipes: Arc::new(content.recipes.clone()),
             cooking: Arc::new(content.cooking.clone()),
+            upgrades: Arc::new(content.upgrades.clone()),
             updates: Arc::new(UpdateRules::new(content)),
             mining: Arc::new(MiningRules::new(content)),
         }

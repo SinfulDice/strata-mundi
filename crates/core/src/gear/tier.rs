@@ -1,5 +1,6 @@
 use super::slots::{UpgradeSlotFamily, valid_slots};
 use crate::content::ToolDef;
+use crate::crafting::IngredientDef;
 use crate::id::Identifier;
 use crate::pack::PackError;
 use serde::Deserialize;
@@ -36,6 +37,9 @@ pub struct Tier {
     /// (head, chest, legs, feet).
     #[serde(default)]
     pub armor_durability: Option<u16>,
+    /// Mends its items at the anvil (an ingot, planks).
+    #[serde(default)]
+    pub repair: Option<IngredientDef>,
 }
 
 impl Tier {

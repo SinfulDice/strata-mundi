@@ -71,6 +71,7 @@ use crate::lang::Translations;
 use crate::pack::{PackError, PackSet};
 use crate::physics::LiquidCell;
 use crate::sky::{self, DayCycle, Sky};
+use crate::upgrade::{Upgrades, load_upgrades};
 use block_load::{BlockRefs, Presented, load_blocks};
 use std::collections::BTreeMap;
 
@@ -101,6 +102,8 @@ pub struct Content {
     pub cooking: Cooking,
     /// Tool tiers and armour weights.
     pub gear: Gear,
+    /// Upgrades put in items at the anvil, and the repair rules.
+    pub upgrades: Upgrades,
     /// Item tooltips by language, see `item_tooltip`.
     pub tooltips: describe::TooltipCache,
 }
@@ -143,6 +146,7 @@ impl Content {
         };
         let recipes = Recipes::new(crafting::load_recipes(packs, &names, &mut errors));
         let cooking = cooking::load_cooking(packs, &names, &blocks, &mut errors);
+        let upgrades = load_upgrades(packs, &names, &gear.slot_families, &mut errors);
         loot::check_loot_names(&refs.loot, &loot_tables, &mut errors);
         worked::resolve_worked(&mut blocks, refs.worked, &items, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
@@ -168,6 +172,7 @@ impl Content {
             recipes,
             cooking,
             gear,
+            upgrades,
             tooltips: Default::default(),
         };
         content.cache_tooltips();

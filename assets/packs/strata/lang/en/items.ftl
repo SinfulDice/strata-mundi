@@ -87,3 +87,7 @@ item-strata-diamond_scale_helmet = Diamond Scale Helmet
 item-strata-diamond_scale_chestplate = Diamond Scale Chestplate
 item-strata-diamond_scale_leggings = Diamond Scale Leggings
 item-strata-diamond_scale_boots = Diamond Scale Boots
+item-strata-stone_hammer = Stone Miner's Hammer
+item-strata-iron_hammer = Iron Miner's Hammer
+item-strata-golden_hammer = Golden Miner's Hammer
+item-strata-diamond_hammer = Diamond Miner's Hammer

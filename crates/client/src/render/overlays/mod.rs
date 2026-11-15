@@ -10,15 +10,16 @@ use super::Gpu;
 use super::block_pipeline::BlockPipeline;
 use crate::camera::Camera;
 use cracks::CrackPipeline;
-use glam::DVec3;
+use glam::{DVec3, Vec3};
 use outline::OutlinePipeline;
 use strata_core::coords::BlockPos;
 
 pub struct Overlays {
     outline_pipeline: OutlinePipeline,
     crack_pipeline: CrackPipeline,
-    /// Block drawn with an outline (the one the player aims at).
-    pub outline: Option<BlockPos>,
+    /// Box drawn with an outline, lowest and highest block: the one the player aims at,
+    /// or a hammer's whole area.
+    pub outline: Option<(BlockPos, BlockPos)>,
     /// Blocks being broken, drawn cracked this frame.
     pub cracks: Vec<CrackDraw>,
 }
@@ -50,10 +51,12 @@ impl Overlays {
         blocks: &BlockPipeline,
     ) {
         self.crack_pipeline.draw(pass, blocks);
-        if let Some(block) = self.outline {
-            let corner = DVec3::new(f64::from(block.x), f64::from(block.y), f64::from(block.z));
+        if let Some((low, high)) = self.outline {
+            let corner = DVec3::new(f64::from(low.x), f64::from(low.y), f64::from(low.z));
+            let size = (high.x - low.x + 1, high.y - low.y + 1, high.z - low.z + 1);
+            let size = Vec3::new(size.0 as f32, size.1 as f32, size.2 as f32);
             self.outline_pipeline
-                .draw(&gpu.queue, pass, camera.relative(corner));
+                .draw(&gpu.queue, pass, camera.relative(corner), size);
         }
     }
 

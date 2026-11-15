@@ -2,6 +2,7 @@
 //! sickle sweeps the plants around the one cut; worn armour slows the player.
 
 use super::Game;
+use super::hammer::add_to_heap;
 use crate::loader::ColumnLoader;
 use strata_core::content::{BlockId, Face, ItemId};
 use strata_core::coords::BlockPos;
@@ -21,7 +22,7 @@ impl Game {
         let Some(block) = loader.block(pos) else {
             return changes;
         };
-        let Some(worked) = self.rules.mining.worked(block, self.held_item()) else {
+        let Some(worked) = self.rules.mining.worked(block, self.held_tool().as_ref()) else {
             return changes;
         };
         let covered =
@@ -47,7 +48,8 @@ impl Game {
         if self.is_creative() {
             return;
         }
-        let held = self.held_item();
+        let tool = self.held_tool();
+        let held = tool.as_ref();
         let reach = i32::from(self.rules.mining.sweep(block, held));
         let mining = std::sync::Arc::clone(&self.rules.mining);
         let Some(kind) = mining.tool_kind(block).filter(|_| reach > 0) else {
@@ -81,17 +83,10 @@ impl Game {
             return;
         };
         let worn = ARMOR.filter_map(|slot| inventory.slots.get(slot));
-        let speed = worn_burden(worn, self.rules.items()).speed_factor();
+        let speed = worn_burden(worn, self.rules.items(), &self.rules.upgrades).speed_factor();
         if let Some(control) = self.ecs.controls.get_mut(self.player) {
             control.movement.speed = f64::from(speed);
         }
-    }
-}
-
-fn add_to_heap(heap: &mut Vec<(ItemId, u16)>, item: ItemId, count: u16) {
-    match heap.iter_mut().find(|(kept, _)| *kept == item) {
-        Some((_, total)) => *total = total.saturating_add(count),
-        None => heap.push((item, count)),
     }
 }
 

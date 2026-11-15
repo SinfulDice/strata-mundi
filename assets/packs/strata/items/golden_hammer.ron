@@ -1,0 +1,10 @@
+// A miner's hammer: digs what a pickaxe digs, slower, but over an area widened at the
+// anvil (its own slot); twice the uses of the tier's pickaxe.
+Item(
+    texture: "strata:golden_hammer",
+    tier: "strata:gold",
+    category: Some("strata:tools"),
+    durability: 96,
+    upgrade_slots: ["strata:area", "strata:craft", "strata:craft"],
+    tool: Some(Tool(kinds: ["strata:pickaxe"], speed: 7.2)),
+)

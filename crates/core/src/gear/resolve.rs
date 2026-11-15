@@ -3,6 +3,7 @@
 use super::slots::valid_slots;
 use super::{ArmorDef, Gear, ItemGear, Tier, ToolSpec, WeaponDef, piece_durability};
 use crate::content::{EquipSlot, ToolDef};
+use crate::crafting::IngredientDef;
 use crate::id::Identifier;
 use crate::pack::PackError;
 use std::path::Path;
@@ -18,6 +19,8 @@ pub struct GearFields {
     pub equip: Option<EquipSlot>,
     /// The item's own slots, instead of its tier's.
     pub upgrade_slots: Option<Vec<Identifier>>,
+    /// The item's own repair material, instead of its tier's.
+    pub repair: Option<IngredientDef>,
 }
 
 /// An item's equipment once resolved: tier values fill what the item leaves out.
@@ -69,6 +72,9 @@ impl Gear {
                 armor,
                 upgrade_slots,
                 enchantability: tier.map_or(0, |tier| tier.enchantability),
+                repair: fields
+                    .repair
+                    .or_else(|| tier.and_then(|tier| tier.repair.clone())),
             },
             tool,
             durability,

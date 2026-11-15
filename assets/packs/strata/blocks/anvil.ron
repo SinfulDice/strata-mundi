@@ -1,0 +1,10 @@
+// Upgrades and repairs: an item, then a material (or a second like item); the upgrade is
+// chosen in a list, a repair needs no choice.
+Block(
+    textures: TopBottomSides(top: "strata:anvil_top", bottom: "strata:anvil_top", sides: "strata:anvil_side"),
+    hardness: 5.0,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
+    sound: Some("strata:metal"),
+    category: Some("strata:stations"),
+    station: Some(Anvil),
+)

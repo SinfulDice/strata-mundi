@@ -44,6 +44,8 @@ impl Content {
             .map(|id| id.translation_key("armor-weight"));
         let slots = self.gear.slot_families.keys();
         let slots = slots.map(|id| id.translation_key("upgrade-slot"));
+        let upgrades = self.upgrades.list().iter();
+        let upgrades = upgrades.map(|u| u.id.translation_key("upgrade"));
         let mut keys: Vec<String> = blocks
             .chain(tags)
             .chain(items)
@@ -51,6 +53,7 @@ impl Content {
             .chain(tiers)
             .chain(weights)
             .chain(slots)
+            .chain(upgrades)
             .chain(categories)
             .chain(subtitles)
             .chain(sounds)

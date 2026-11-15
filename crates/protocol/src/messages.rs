@@ -57,7 +57,7 @@ pub struct ActionId(pub u32);
 pub enum WorldAction {
     /// Survival: starts hitting the block at `pos` (the server counts the time from here).
     /// Another block, or `StopBreak`, ends the previous one.
-    StartBreak { pos: BlockPos },
+    StartBreak { pos: BlockPos, face: Face },
     /// Survival: the player stopped hitting before the block broke.
     StopBreak,
     /// Breaks the block: at once in creative; in survival, once it has been hit long
@@ -309,6 +309,7 @@ mod tests {
                 id: ActionId(5),
                 action: WorldAction::StartBreak {
                     pos: BlockPos::new(1, 2, 3),
+                    face: Face::East,
                 },
             },
             ClientMessage::Action {
@@ -368,6 +369,7 @@ mod tests {
                 station: Some((BlockId(4), BlockPos::new(1, 2, 3))),
                 cuts: vec![(3, stack.clone())],
                 chosen: Some(3),
+                cost: Some(2),
             })),
             ServerMessage::Furnace(FurnaceView {
                 burn_left: 4,

@@ -12,6 +12,7 @@ pub mod entities;
 mod furnace;
 mod gameplay;
 pub mod generation;
+mod hammer;
 pub mod input;
 mod interaction;
 mod inventory;

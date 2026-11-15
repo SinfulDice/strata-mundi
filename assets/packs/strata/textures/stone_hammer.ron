@@ -1,0 +1,30 @@
+// A miner's hammer: a broad stone head on a long handle.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        'H': ("stone", 1),
+        'S': ("stone", 2),
+        'L': ("stone", 3),
+        's': ("stick", 0),
+        't': ("stick", 1),
+        'T': ("stick", 2),
+    },
+    rows: [
+        "................",
+        "..mmmmmmmmmmmm..",
+        ".mHLLLLLLLLLLHm.",
+        ".mHSSSSSSSSSSHm.",
+        ".mHSSSSSSSSSSHm.",
+        ".mHHHHHtTHHHHHm.",
+        "..mmmmmtTmmmmm..",
+        ".......tT.......",
+        ".......tT.......",
+        ".......tT.......",
+        ".......tT.......",
+        ".......tT.......",
+        ".......tT.......",
+        ".......sT.......",
+        ".......ss.......",
+        "................",
+    ],
+)

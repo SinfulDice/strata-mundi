@@ -76,6 +76,8 @@ impl Game {
             } => self.craft_click(loader, click),
             InventoryRequest::FillRecipe { recipe, all } => self.fill_recipe(loader, recipe, all),
             InventoryRequest::ChooseCut(choice) => self.choose_cut(choice),
+            InventoryRequest::ChooseUpgrade(choice) => self.choose_upgrade(choice),
+            InventoryRequest::ChooseArea(index) => self.choose_area(index),
             InventoryRequest::Click { slot, click } => {
                 let thrown =
                     self.with_window(loader, |window, rules| window.click(slot, click, rules));

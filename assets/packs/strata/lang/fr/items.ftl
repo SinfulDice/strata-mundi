@@ -87,3 +87,7 @@ item-strata-diamond_scale_helmet = Casque d'écailles de diamant
 item-strata-diamond_scale_chestplate = Plastron d'écailles de diamant
 item-strata-diamond_scale_leggings = Jambières d'écailles de diamant
 item-strata-diamond_scale_boots = Bottes d'écailles de diamant
+item-strata-stone_hammer = Marteau de mineur en pierre
+item-strata-iron_hammer = Marteau de mineur en fer
+item-strata-golden_hammer = Marteau de mineur en or
+item-strata-diamond_hammer = Marteau de mineur en diamant

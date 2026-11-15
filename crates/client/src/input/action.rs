@@ -54,10 +54,12 @@ pub enum Action {
     MenuLock,
     /// Opens the journal (recipe book first).
     Journal,
+    /// With a miner's hammer in hand: the next area unlocked.
+    HammerArea,
 }
 
 impl Action {
-    pub const COUNT: usize = 43;
+    pub const COUNT: usize = 44;
     pub const ALL: [Action; Self::COUNT] = [
         Self::MoveForward,
         Self::MoveBackward,
@@ -102,6 +104,7 @@ impl Action {
         Self::MenuDrop,
         Self::MenuLock,
         Self::Journal,
+        Self::HammerArea,
     ];
 
     /// Names used in `<key:…>` markup, in the order of `ALL`.
@@ -149,6 +152,7 @@ impl Action {
         "MenuDrop",
         "MenuLock",
         "Journal",
+        "HammerArea",
     ];
 
     /// By its name in the code (`Inventory`), as written in `<key:…>` markup.

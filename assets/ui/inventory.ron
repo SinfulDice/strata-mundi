@@ -1,5 +1,6 @@
 // Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; at a
-// stonecutter, its cell and the variants to choose; with a container open, the container
+// stonecutter, its cell and the variants to choose; at an anvil, the item, the material,
+// the upgrades it can take (shown by their material) and the repair; with a container open, the container
 // (or the furnace: input, fuel and its flame, the arrow, output, upgrade slots) on top. The player's slots are always below. Slots
 // take clicks (the help below gives way to the crafting hint or the recipe learnt): left takes or puts, right halves or puts one, shift-click sends across
 // (on the result: crafts as many as fit), double-click gathers, middle click (L1) locks.
@@ -64,6 +65,15 @@ Screen(
                     Label(id: "cutter_arrow", anchor: TopLeft, at: (134, 46), text: "ui-craft-arrow", dim: true),
                     SlotGrid(id: "cutter_result", anchor: TopLeft, at: (150, 40), columns: 1, rows: 1),
                     Label(id: "cutter_note", anchor: TopLeft, at: (8, 100), text: "@cutter_note", dim: true, wrap: Some(180)),
+                ]),
+                Group(id: "anvil_side", children: [
+                    Label(id: "anvil_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                    SlotGrid(id: "anvil", anchor: TopLeft, at: (8, 40), columns: 2, rows: 1),
+                    ItemGrid(id: "anvil_choices", anchor: TopLeft, at: (56, 20), columns: 4, rows: 2),
+                    Button(id: "anvil_repair", anchor: TopLeft, at: (56, 62), size: (76, 14), text: "ui-anvil-repair-button"),
+                    Label(id: "anvil_arrow", anchor: TopLeft, at: (140, 46), text: "ui-craft-arrow", dim: true),
+                    SlotGrid(id: "anvil_result", anchor: TopLeft, at: (156, 40), columns: 1, rows: 1),
+                    Label(id: "anvil_note", anchor: TopLeft, at: (8, 86), text: "@anvil_note", wrap: Some(180)),
                 ]),
                 SlotGrid(id: "main", anchor: TopLeft, at: (8, 152), columns: 9, rows: 3),
                 SlotGrid(id: "hotbar", anchor: TopLeft, at: (8, 214), columns: 9, rows: 1),

@@ -73,3 +73,51 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
         ]
     );
 }
+
+#[test]
+fn the_anvil_lists_what_the_item_laid_can_take() {
+    let content = content();
+    let anvil = content
+        .blocks
+        .key(&"strata:anvil".parse().unwrap())
+        .unwrap();
+    let sword = item(&content, "strata:iron_sword");
+    let mut crafting = ClientCrafting::default();
+    crafting.view.station = Some((anvil, BlockPos::new(0, 0, 0)));
+    crafting.view.grid = Container::new(2);
+    crafting.view.grid.slots[0] = Some(ItemStack::new(sword, 1, &content.items));
+    let mut hotbar = ClientInventory::default();
+    let mut state = SlotsState::default();
+    let mut effects = Vec::new();
+    let mut model = SlotsModel {
+        state: &mut state,
+        inventory: &mut hotbar,
+        container: None,
+        crafting: Some(&crafting),
+        effects: &mut effects,
+        content: &content,
+        language: "fr",
+    };
+    assert!(model.shown("anvil_side") && !model.shown("table_side"));
+    let copper = item(&content, "strata:copper_ingot");
+    let iron = item(&content, "strata:iron_ingot");
+    assert_eq!(model.items("anvil_choices"), [Some(iron), Some(copper)]);
+    let tooltip = model.tooltip("anvil_choices", 1).unwrap();
+    assert!(
+        tooltip.contains("Aiguisage 1") && tooltip.contains("2 XP"),
+        "{tooltip}"
+    );
+    assert_eq!(model.slot("anvil", 1).map(|s| s.index), Some(1));
+    assert!(model.press("anvil_choices", 1, SlotPress::Click(Click::Primary)));
+    model.activate("anvil_repair", 0);
+    let sharpening = content
+        .upgrades
+        .index_of(&"strata:sharpening".parse().unwrap());
+    assert_eq!(
+        hotbar.take_requests(),
+        [
+            InventoryRequest::ChooseUpgrade(sharpening),
+            InventoryRequest::ChooseUpgrade(None)
+        ]
+    );
+}

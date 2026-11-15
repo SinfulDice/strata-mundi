@@ -27,6 +27,8 @@ pub enum StationDef {
     Crafting(u8),
     /// One input cut into the variant chosen in a list (`stonecutting/` recipes).
     Stonecutter,
+    /// An item and a material: upgrades (`upgrades/`) and repairs.
+    Anvil,
 }
 
 /// A crafting grid of 1 to 3 cells a side; other stations need nothing.

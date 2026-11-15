@@ -39,6 +39,9 @@ pub struct ItemDef {
     /// Its own upgrade slot families, instead of its tier's (leather, named uniques).
     #[serde(default)]
     pub upgrade_slots: Option<Vec<Identifier>>,
+    /// Mends it at the anvil, instead of its tier's material (leather for leather).
+    #[serde(default)]
+    pub repair: Option<crate::crafting::IngredientDef>,
     /// Left in the crafting grid when used in a recipe (a water bucket leaves a bucket).
     #[serde(default)]
     pub remainder: Option<Identifier>,
@@ -172,6 +175,7 @@ pub(super) fn load_items(
                 durability: value.durability,
                 equip: value.equip,
                 upgrade_slots: value.upgrade_slots,
+                repair: value.repair,
             },
             &source,
             errors,

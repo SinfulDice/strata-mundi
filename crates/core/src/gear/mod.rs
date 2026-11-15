@@ -15,6 +15,7 @@ pub use resolve::{GearFields, Resolved};
 pub use slots::{MAX_UPGRADE_SLOTS, UpgradeSlotFamily, count_slots};
 pub use tier::{Tier, ToolSpec, WeaponDef};
 
+use crate::crafting::IngredientDef;
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced};
 use std::collections::BTreeMap;
@@ -38,6 +39,8 @@ pub struct ItemGear {
     pub upgrade_slots: Vec<Identifier>,
     /// From the tier; read by enchanting when it comes.
     pub enchantability: u8,
+    /// Mends it at the anvil: the item's own, or its tier's.
+    pub repair: Option<IngredientDef>,
 }
 
 impl Gear {

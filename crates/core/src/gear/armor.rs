@@ -3,6 +3,7 @@ use crate::content::{EquipSlot, Item, ItemId, Registry};
 use crate::id::Identifier;
 use crate::inventory::ItemStack;
 use crate::pack::PackError;
+use crate::upgrade::{Upgrades, stack_stats};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -120,28 +121,34 @@ impl Burden {
     }
 }
 
-fn armor_of<'a>(stack: &ItemStack, items: &'a Registry<ItemId, Item>) -> Option<&'a Armor> {
-    items.get(stack.item)?.gear.armor.as_ref()
+fn armor_of(
+    stack: &ItemStack,
+    items: &Registry<ItemId, Item>,
+    upgrades: &Upgrades,
+) -> Option<Armor> {
+    stack_stats(stack, items, upgrades).armor
 }
 
-/// Protection points of the worn pieces; a broken one (kept until repaired) protects
-/// nothing.
+/// Protection points of the worn pieces, upgrades counted; a broken one (kept until
+/// repaired) protects nothing.
 pub fn worn_protection<'a>(
     worn: impl IntoIterator<Item = &'a ItemStack>,
     items: &Registry<ItemId, Item>,
+    upgrades: &Upgrades,
 ) -> u16 {
     worn.into_iter()
         .filter(|stack| !stack.is_broken())
-        .filter_map(|stack| armor_of(stack, items))
+        .filter_map(|stack| armor_of(stack, items, upgrades))
         .fold(0, |total, armor| total.saturating_add(armor.protection))
 }
 
-/// What the worn pieces weigh, broken or not.
+/// What the worn pieces weigh, broken or not, lightening counted.
 pub fn worn_burden<'a>(
     worn: impl IntoIterator<Item = &'a ItemStack>,
     items: &Registry<ItemId, Item>,
+    upgrades: &Upgrades,
 ) -> Burden {
     worn.into_iter()
-        .filter_map(|stack| armor_of(stack, items))
+        .filter_map(|stack| armor_of(stack, items, upgrades))
         .fold(Burden::default(), |total, armor| total.add(armor.burden))
 }

@@ -3,7 +3,7 @@
 use super::mining::long_enough;
 use super::tests::{World, block, hold, mine, wait, world_with};
 use super::*;
-use strata_core::content::{Content, Item, ItemId, ItemKind, TextureId, ToolDef};
+use strata_core::content::{Content, Face, Item, ItemId, ItemKind, TextureId, ToolDef};
 use strata_core::content::{LootDrop, LootEntry, LootPool, LootTable};
 use strata_protocol::{ActionId, WorldAction};
 
@@ -83,7 +83,7 @@ fn survival_breaks_only_once_hit_long_enough() {
         w.game.break_block(&mut w.loader, SPOT).is_empty(),
         "never hit"
     );
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 12);
     assert!(
         w.game.break_block(&mut w.loader, SPOT).is_empty(),
@@ -114,7 +114,7 @@ fn creative_breaks_at_once_and_drops_nothing() {
 fn changing_the_held_item_or_the_block_ends_the_break() {
     let mut w = survival_with("strata:dirt");
     hold(&mut w, None);
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 8);
     let stone = item(&w, "strata:stone");
     hold(&mut w, Some(stone));
@@ -122,7 +122,7 @@ fn changing_the_held_item_or_the_block_ends_the_break() {
     assert!(w.game.break_block(&mut w.loader, SPOT).is_empty());
     assert_eq!(cracks(&mut w).last(), Some(&None), "the cracks went away");
     hold(&mut w, None);
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 8);
     assert!(w.loader.set_block(SPOT, block(&w.content, "strata:sand")));
     wait(&mut w, 8);
@@ -146,7 +146,10 @@ fn the_right_pickaxe_is_fast_harvests_and_wears() {
     hold(&mut w, Some(pickaxe));
     let stone = block(&w.content, "strata:stone");
     assert_eq!(
-        w.game.rules.mining.break_ticks(stone, Some(pickaxe)),
+        w.game
+            .rules
+            .mining
+            .break_ticks(stone, w.game.held_tool().as_ref()),
         Some(12)
     );
     assert!(!mine(&mut w, SPOT).is_empty());
@@ -203,7 +206,10 @@ fn starting_a_break_skips_the_rate_limit_but_keeps_the_order() {
             .request_action(&mut w.loader, ActionId(1), poppy)
             .is_empty()
     );
-    let start = WorldAction::StartBreak { pos: SPOT };
+    let start = WorldAction::StartBreak {
+        pos: SPOT,
+        face: Face::Up,
+    };
     w.game.request_action(&mut w.loader, ActionId(2), start);
     let mining = w.game.ecs.controls.get(w.game.player).unwrap().mining;
     assert_eq!(mining.map(|m| m.pos), Some(SPOT), "started at once");
@@ -220,13 +226,13 @@ fn starting_a_break_skips_the_rate_limit_but_keeps_the_order() {
 fn the_server_breaks_the_block_when_the_client_is_late() {
     let mut w = survival_with("strata:dirt");
     hold(&mut w, None);
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 5);
     assert!(
         w.game.break_block(&mut w.loader, SPOT).is_empty(),
         "too early"
     );
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 10);
     assert_eq!(
         w.loader.block(SPOT),
@@ -244,14 +250,14 @@ fn the_server_breaks_the_block_when_the_client_is_late() {
 fn going_out_of_reach_or_into_creative_ends_the_break() {
     let mut w = survival_with("strata:oak_planks");
     hold(&mut w, None);
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 10);
     w.game.ecs.bodies.get_mut(w.game.player).unwrap().position.x = 40.0;
     wait(&mut w, 1);
     assert!(mining(&w).is_none());
     assert_eq!(cracks(&mut w).last(), Some(&None));
     w.game.ecs.bodies.get_mut(w.game.player).unwrap().position.x = 8.5;
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 10);
     w.game.set_mode(GameMode::Creative);
     wait(&mut w, 1);
@@ -263,9 +269,9 @@ fn going_out_of_reach_or_into_creative_ends_the_break() {
 fn stopping_clears_the_cracks_and_a_new_start_keeps_the_time() {
     let mut w = survival_with("strata:oak_planks");
     hold(&mut w, None);
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     wait(&mut w, 10);
-    w.game.start_break(&w.loader, SPOT);
+    w.game.start_break(&w.loader, SPOT, Face::Up);
     assert_eq!(mining(&w).unwrap().started, 0, "same block, same item");
     w.game.take_messages();
     let stop = WorldAction::StopBreak;

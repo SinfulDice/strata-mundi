@@ -1,9 +1,10 @@
 use crate::ui::SlotMark;
-use strata_core::content::{Item, ItemId, Registry};
+use strata_core::content::{Content, Item, ItemId, Registry};
 use strata_core::gear::{worn_burden, worn_protection};
 use strata_core::inventory::{
-    ARMOR, Area, Click, HOTBAR, ItemRules, ItemStack, PlayerInventory, SlotRef, SortOrder,
+    ARMOR, Area, Click, HOTBAR, ItemStack, PlayerInventory, SlotRef, SortOrder,
 };
+use strata_core::upgrade::max_durability;
 use strata_protocol::InventoryRequest;
 
 pub const SLOTS: usize = HOTBAR.end;
@@ -41,13 +42,13 @@ impl ClientInventory {
     }
 
     /// Counts and locks of the first `count` slots (the hotbar), for drawing.
-    pub fn marks(&self, count: usize, items: &Registry<ItemId, Item>) -> Vec<SlotMark> {
+    pub fn marks(&self, count: usize, content: &Content) -> Vec<SlotMark> {
         (0..count)
             .map(|index| {
                 let stack = self.stack(index);
                 SlotMark {
                     count: stack.map_or(0, |stack| stack.count),
-                    wear: stack.and_then(|stack| wear_share(stack, items)),
+                    wear: stack.and_then(|stack| wear_share(stack, content)),
                     locked: self.inventory.is_locked(index),
                     dim: stack.is_some_and(ItemStack::is_broken),
                 }
@@ -60,13 +61,14 @@ impl ClientInventory {
     }
 
     /// Protection points of the armour worn, shown in the inventory.
-    pub fn protection(&self, items: &Registry<ItemId, Item>) -> u16 {
-        worn_protection(self.worn(), items)
+    pub fn protection(&self, content: &Content) -> u16 {
+        worn_protection(self.worn(), &content.items, &content.upgrades)
     }
 
     /// Walking speed allowed by the armour worn, as the server computes it.
-    pub fn armour_speed(&self, items: &Registry<ItemId, Item>) -> f64 {
-        f64::from(worn_burden(self.worn(), items).speed_factor())
+    pub fn armour_speed(&self, content: &Content) -> f64 {
+        let burden = worn_burden(self.worn(), &content.items, &content.upgrades);
+        f64::from(burden.speed_factor())
     }
 
     pub fn inventory(&self) -> &PlayerInventory {
@@ -158,8 +160,8 @@ impl ClientInventory {
 }
 
 /// Uses left as a share of a new one's, for the wear bar; `None` if it does not wear.
-pub fn wear_share(stack: &ItemStack, items: &Registry<ItemId, Item>) -> Option<f32> {
-    let full = items.durability(stack.item)?;
+pub fn wear_share(stack: &ItemStack, content: &Content) -> Option<f32> {
+    let full = max_durability(stack, &content.items, &content.upgrades)?;
     let left = stack.durability?;
     Some(f32::from(left) / f32::from(full.max(1)))
 }

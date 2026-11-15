@@ -40,25 +40,24 @@ impl MiningRules {
         self.tools.get(usize::from(item?.0))?.as_ref()
     }
 
-    /// Ticks of hitting that break `block` with `held` in hand; `None` = unbreakable.
-    pub fn break_ticks(&self, block: BlockId, held: Option<ItemId>) -> Option<u32> {
-        self.blocks
-            .get(usize::from(block.0))?
-            .break_ticks(self.tool(held))
+    pub fn block(&self, block: BlockId) -> Option<&Block> {
+        self.blocks.get(usize::from(block.0))
     }
 
-    /// What using `held` on `block` turns it into (a hoe on dirt).
-    pub fn worked(&self, block: BlockId, held: Option<ItemId>) -> Option<Worked> {
-        let tool = self.tool(held)?;
-        self.blocks
-            .get(usize::from(block.0))?
-            .worked_by(&tool.kinds)
+    /// Ticks of hitting that break `block` with the `held` tool (a hand when `None`);
+    /// `None` = unbreakable.
+    pub fn break_ticks(&self, block: BlockId, held: Option<&ToolDef>) -> Option<u32> {
+        self.block(block)?.break_ticks(held)
+    }
+
+    /// What using the `held` tool on `block` turns it into (a hoe on dirt).
+    pub fn worked(&self, block: BlockId, held: Option<&ToolDef>) -> Option<Worked> {
+        self.block(block)?.worked_by(&held?.kinds)
     }
 
     /// How far around `block` breaking it with `held` also breaks its like (a sickle).
-    pub fn sweep(&self, block: BlockId, held: Option<ItemId>) -> u8 {
-        let block = self.blocks.get(usize::from(block.0));
-        match (self.tool(held), block) {
+    pub fn sweep(&self, block: BlockId, held: Option<&ToolDef>) -> u8 {
+        match (held, self.block(block)) {
             (Some(tool), Some(block)) => tool.sweep_on(block),
             _ => 0,
         }
@@ -73,11 +72,10 @@ impl MiningRules {
     pub fn loot(
         &self,
         block: BlockId,
-        held: Option<ItemId>,
+        tool: Option<&ToolDef>,
         itself: Option<ItemId>,
         rng: &mut Rng,
     ) -> Vec<(ItemId, u16)> {
-        let tool = self.tool(held);
         let index = usize::from(block.0);
         let harvested = self.blocks.get(index).is_some_and(|b| b.harvests(tool));
         match (harvested, self.loot.get(index)) {

@@ -4,5 +4,6 @@ Item(
     equip: Some(Head),
     durability: 55,
     upgrade_slots: ["strata:craft"],
+    repair: Item("strata:leather"),
     armor: Some(Armor(protection: 1, weight: "strata:light")),
 )

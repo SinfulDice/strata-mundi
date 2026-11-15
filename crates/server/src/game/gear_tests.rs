@@ -67,8 +67,10 @@ fn faster_tiers_break_sooner() {
     let w = survival();
     let stone = block(&w.content, "strata:stone");
     let ticks = |name: &str| {
-        let pickaxe = Some(item(&w, name));
-        w.game.rules.mining.break_ticks(stone, pickaxe).unwrap()
+        let mining = &w.game.rules.mining;
+        mining
+            .break_ticks(stone, mining.tool(Some(item(&w, name))))
+            .unwrap()
     };
     let order = [
         ticks("strata:golden_pickaxe"),
@@ -83,15 +85,15 @@ fn faster_tiers_break_sooner() {
 #[test]
 fn the_multi_tool_digs_chops_and_shovels() {
     let w = survival();
-    let multi = Some(item(&w, "strata:multi_tool"));
     let rules = &w.game.rules.mining;
+    let multi = rules.tool(Some(item(&w, "strata:multi_tool")));
     for (name, single) in [
         ("strata:stone", "strata:iron_pickaxe"),
         ("strata:oak_log", "strata:iron_axe"),
         ("strata:dirt", "strata:iron_shovel"),
     ] {
         let target = block(&w.content, name);
-        let alone = rules.break_ticks(target, Some(item(&w, single)));
+        let alone = rules.break_ticks(target, rules.tool(Some(item(&w, single))));
         assert_eq!(rules.break_ticks(target, multi), alone, "{name}");
         assert!(alone < rules.break_ticks(target, None), "{name}");
     }
@@ -165,7 +167,11 @@ fn a_worn_out_tool_breaks_or_stays_broken_by_the_world_option() {
     assert_eq!(w.game.held_item(), None, "a broken tool is a bare hand");
     set(&mut w, SPOT, "strata:stone");
     let stone = block(&w.content, "strata:stone");
-    let ticks = w.game.rules.mining.break_ticks(stone, w.game.held_item());
+    let ticks = w
+        .game
+        .rules
+        .mining
+        .break_ticks(stone, w.game.held_tool().as_ref());
     assert_eq!(ticks, Some(150));
 }
 
@@ -246,5 +252,9 @@ fn heavy_armour_slows_the_player_light_armour_does_not() {
     let items = w.game.rules.items();
     let inventory = w.game.ecs.inventories.get(w.game.player).unwrap();
     let worn = ARMOR.filter_map(|slot| inventory.slots.get(slot));
-    assert_eq!(strata_core::gear::worn_protection(worn, items), 15);
+    let upgrades = &w.game.rules.upgrades;
+    assert_eq!(
+        strata_core::gear::worn_protection(worn, items, upgrades),
+        15
+    );
 }

@@ -1,12 +1,14 @@
 //! The authoritative game state: players (ECS entities) and the blocks around them.
 
 mod actions;
+mod anvil;
 mod boat;
 mod bucket;
 mod containers;
 mod crafting;
 mod drops;
 mod furnaces;
+mod hammer;
 mod inventory;
 mod mining;
 mod placing;
@@ -350,3 +352,9 @@ mod furnace_tests;
 
 #[cfg(test)]
 mod gear_tests;
+
+#[cfg(test)]
+mod anvil_tests;
+
+#[cfg(test)]
+mod hammer_tests;

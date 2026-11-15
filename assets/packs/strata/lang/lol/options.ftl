@@ -181,3 +181,4 @@ option-spatial-audio-help = FANCY: ECHOEZ IN CAVEZ AN HOUSEZ, SOUNDZ GO MUFFLD B
 spatial-advanced = FANCY
 spatial-simple = SIMPL STEREO
 action-journal = MAH DIARY
+action-hammer-area = BONK SIZE

@@ -95,3 +95,4 @@ block-strata-cut_sandstone = CHOPPD SANDZ ROCK
 block-strata-farmland = DIRT 4 FOODZ
 block-strata-chiseled_stone_bricks = FANCY ROCK BRIKZ
 block-strata-patterned_stone_bricks = SWIRLY ROCK BRIKZ
+block-strata-anvil = BONK BLOK

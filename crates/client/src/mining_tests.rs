@@ -49,6 +49,8 @@ fn frame(mining: &mut Mining, scene: &Scene, target: Option<RayHit>) -> Option<W
         info: &scene.info,
         target,
         held: None,
+        gear: &HeldGear::default(),
+        yaw: 0.0,
         ready: true,
     };
     mining.update(TICK, &input)
@@ -59,7 +61,13 @@ fn holding_on_a_block_starts_then_breaks_it_in_time() {
     let scene = scene();
     let mut mining = Mining::default();
     let start = frame(&mut mining, &scene, aim(DIRT));
-    assert_eq!(start, Some(WorldAction::StartBreak { pos: DIRT }));
+    assert_eq!(
+        start,
+        Some(WorldAction::StartBreak {
+            pos: DIRT,
+            face: Face::Up
+        })
+    );
     let ticks = (1..100)
         .find(|_| frame(&mut mining, &scene, aim(DIRT)).is_some())
         .unwrap();
@@ -79,7 +87,13 @@ fn letting_go_or_looking_away_stops() {
     assert_eq!(frame(&mut mining, &scene, None), None);
     frame(&mut mining, &scene, aim(DIRT));
     let other = frame(&mut mining, &scene, aim(STONE));
-    assert_eq!(other, Some(WorldAction::StartBreak { pos: STONE }));
+    assert_eq!(
+        other,
+        Some(WorldAction::StartBreak {
+            pos: STONE,
+            face: Face::Up
+        })
+    );
 }
 
 #[test]

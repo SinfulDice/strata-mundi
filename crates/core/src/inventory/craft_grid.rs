@@ -28,6 +28,14 @@ impl CraftGrid {
         }
     }
 
+    /// The anvil's two cells: the item worked on, then what pays.
+    pub fn anvil() -> Self {
+        Self {
+            side: 1,
+            slots: Container::new(2),
+        }
+    }
+
     /// The item of each cell, row by row.
     pub fn items(&self) -> Vec<Option<ItemId>> {
         self.slots

@@ -1,0 +1,11 @@
+// Sharpening: a keener edge, more damage and faster digging. Each level replaces the one
+// before (it does not add up with it).
+Upgrade(
+    slot: "strata:craft",
+    applies_to: [Tool, Weapon],
+    levels: [
+        Level(effects: [Damage(10.0), MiningSpeed(10.0)], xp: 2, material: Item("strata:copper_ingot"), count: 2),
+        Level(effects: [Damage(20.0), MiningSpeed(20.0)], xp: 4, material: Item("strata:iron_ingot"), count: 2),
+        Level(effects: [Damage(30.0), MiningSpeed(30.0)], xp: 7, material: Item("strata:diamond"), count: 1),
+    ],
+)

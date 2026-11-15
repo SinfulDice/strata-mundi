@@ -20,6 +20,8 @@ pub struct CraftWindow {
     /// At a stonecutter: the cutting chosen (an index in `Cooking::cuttings`).
     pub cut: Option<u16>,
     pub stonecutter: bool,
+    /// At an anvil, `cut` is the upgrade chosen (an index in `Upgrades::list`).
+    pub anvil: bool,
 }
 
 impl Game {
@@ -36,15 +38,17 @@ impl Game {
             return false;
         }
         self.close_window(loader);
-        let (side, stonecutter) = match station {
-            StationDef::Crafting(side) => (side, false),
-            StationDef::Stonecutter => (1, true),
+        let grid = match station {
+            StationDef::Crafting(side) => CraftGrid::new(side),
+            StationDef::Stonecutter => CraftGrid::new(1),
+            StationDef::Anvil => CraftGrid::anvil(),
         };
         let window = CraftWindow {
-            grid: CraftGrid::new(side),
+            grid,
             station: Some((block, pos)),
             cut: None,
-            stonecutter,
+            stonecutter: station == StationDef::Stonecutter,
+            anvil: station == StationDef::Anvil,
         };
         self.ecs.crafts.insert(self.player, window);
         self.craft_changed();
@@ -124,6 +128,10 @@ impl Game {
 
     /// A click on the result slot.
     pub(super) fn craft_click(&mut self, loader: &ColumnLoader, click: Click) {
+        if self.ecs.crafts.get(self.player).is_some_and(|w| w.anvil) {
+            self.anvil_click(loader, click);
+            return;
+        }
         if let Some(choice) = self.stonecutter_choice() {
             let cooking = std::sync::Arc::clone(&self.rules.cooking);
             self.with_window(loader, |window, rules| {
@@ -143,7 +151,12 @@ impl Game {
 
     /// The recipe book: lays a known recipe with the inventory's items.
     pub(super) fn fill_recipe(&mut self, loader: &ColumnLoader, recipe: RecipeId, all: bool) {
-        if !self.knows(recipe) || self.stonecutter_choice().is_some() {
+        let special = self
+            .ecs
+            .crafts
+            .get(self.player)
+            .is_some_and(|w| w.stonecutter || w.anvil);
+        if !self.knows(recipe) || special {
             return;
         }
         let recipes = std::sync::Arc::clone(&self.rules.recipes);
@@ -209,6 +222,9 @@ impl Game {
         if window.stonecutter {
             return Some(self.cutting_view(window));
         }
+        if window.anvil {
+            return Some(self.anvil_view(window));
+        }
         let recipes = &self.rules.recipes;
         let items = window.grid.items();
         let grid = GridItems {
@@ -223,6 +239,7 @@ impl Game {
             station: window.station,
             cuts: Vec::new(),
             chosen: None,
+            cost: None,
         })
     }
 
@@ -243,6 +260,7 @@ impl Game {
             station: window.station,
             cuts,
             chosen: window.cut,
+            cost: None,
         }
     }
 }

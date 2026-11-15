@@ -87,3 +87,7 @@ item-strata-diamond_scale_helmet = SHINY SKALEZ HAT
 item-strata-diamond_scale_chestplate = SHINY SKALEZ SHIRT
 item-strata-diamond_scale_leggings = SHINY SKALEZ PANTZ
 item-strata-diamond_scale_boots = SHINY SKALEZ FOOT BOXEZ
+item-strata-stone_hammer = ROCK BONK STIK
+item-strata-iron_hammer = IRON BONK STIK
+item-strata-golden_hammer = GOLD BONK STIK
+item-strata-diamond_hammer = SHINY BONK STIK

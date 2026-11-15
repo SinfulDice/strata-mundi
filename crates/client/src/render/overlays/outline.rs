@@ -1,7 +1,8 @@
 use crate::render::depth::DEPTH_FORMAT;
 use glam::Vec3;
 
-/// The 12 edges of the aimed block, drawn as thin dark lines over the world.
+/// The 12 edges of the aimed block (or a hammer's area), drawn as thin dark lines over
+/// the world.
 pub struct OutlinePipeline {
     pipeline: wgpu::RenderPipeline,
     vertices: wgpu::Buffer,
@@ -70,9 +71,16 @@ impl OutlinePipeline {
         Self { pipeline, vertices }
     }
 
-    /// `min` is the block corner relative to the camera. The camera bind group must be set.
-    pub fn draw(&self, queue: &wgpu::Queue, pass: &mut wgpu::RenderPass<'_>, min: Vec3) {
-        let (a, b) = (min - GROW, min + 1.0 + GROW);
+    /// `min` is the box corner relative to the camera, `size` its size in blocks. The
+    /// camera bind group must be set.
+    pub fn draw(
+        &self,
+        queue: &wgpu::Queue,
+        pass: &mut wgpu::RenderPass<'_>,
+        min: Vec3,
+        size: Vec3,
+    ) {
+        let (a, b) = (min - GROW, min + size + GROW);
         let corner = |i: u32| {
             Vec3::new(
                 if i & 1 == 0 { a.x } else { b.x },

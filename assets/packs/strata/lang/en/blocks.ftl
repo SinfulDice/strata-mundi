@@ -95,3 +95,4 @@ block-strata-cut_sandstone = Cut Sandstone
 block-strata-farmland = Farmland
 block-strata-chiseled_stone_bricks = Chiseled Stone Bricks
 block-strata-patterned_stone_bricks = Patterned Stone Bricks
+block-strata-anvil = Anvil

@@ -82,8 +82,8 @@ impl Game {
         action: WorldAction,
     ) -> Vec<BlockChange> {
         let changes = match action {
-            WorldAction::StartBreak { pos } => {
-                self.start_break(loader, pos);
+            WorldAction::StartBreak { pos, face } => {
+                self.start_break(loader, pos, face);
                 Vec::new()
             }
             WorldAction::StopBreak => {
