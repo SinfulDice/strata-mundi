@@ -1,0 +1,10 @@
+// Amulet of short breath: a little longer under water.
+Item(
+    texture: "strata:amulet_of_short_breath",
+    max_stack: 1,
+    category: Some("strata:accessories"),
+    equip: Some(Amulet),
+    worn: [
+        Stat(stat: "strata:breath", op: Add, value: 5.0),
+    ],
+)

@@ -1,0 +1,31 @@
+// The jeweller's side: drawers with gold knobs, a loupe hung on a nail.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'w': ("oak_wood", 0),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        'G': ("gold", 2),
+        'I': ("iron", 1),
+        'b': ("glass", 2),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "dLLLLLLLLLLLLLLd",
+        "DddddddddddddddD",
+        "DWWWWWWWDWWWWWWD",
+        "DWWWGWWWDWWWGWWD",
+        "DwwwwwwwDwwwwwwD",
+        "DDDDDDDDDDDDDDDD",
+        "DWWWWWWWDWWIIWWD",
+        "DWWWGWWWDWIbbIWD",
+        "DwwwwwwwDwIbbIwD",
+        "DDDDDDDDDWWIIWWD",
+        "DWWWWWWWDWWWIWWD",
+        "DWWWGWWWDWWWIWWD",
+        "DwwwwwwwDwwwwwwD",
+        "DddddddddddddddD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

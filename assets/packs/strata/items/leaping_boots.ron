@@ -1,0 +1,13 @@
+// Leaping boots: light boots that jump once more in the air.
+Item(
+    texture: "strata:leaping_boots",
+    category: Some("strata:armor"),
+    equip: Some(Feet),
+    durability: 65,
+    upgrade_slots: ["strata:craft"],
+    repair: Item("strata:leather"),
+    armor: Some(Armor(protection: 1, weight: "strata:light")),
+    worn: [
+        Stat(stat: "strata:air_jumps", op: Add, value: 1.0),
+    ],
+)

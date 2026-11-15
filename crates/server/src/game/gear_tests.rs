@@ -249,12 +249,9 @@ fn heavy_armour_slows_the_player_light_armour_does_not() {
         "strata:iron_plate_boots",
     ];
     assert!((wear(&mut w, &plate) - 0.9).abs() < 1e-6);
-    let items = w.game.rules.items();
-    let inventory = w.game.ecs.inventories.get(w.game.player).unwrap();
-    let worn = ARMOR.filter_map(|slot| inventory.slots.get(slot));
-    let upgrades = &w.game.rules.upgrades;
     assert_eq!(
-        strata_core::gear::worn_protection(worn, items, upgrades),
-        15
+        w.game.worn_stats().protection,
+        15 + 3,
+        "four plates: set bonus"
     );
 }

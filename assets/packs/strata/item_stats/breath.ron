@@ -1,0 +1,2 @@
+// Seconds of breath added under water (applied with drowning, milestone 8). Bounds of the values effects give it.
+ItemStat(min: -60.0, max: 120.0)

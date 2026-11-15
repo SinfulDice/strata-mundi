@@ -8,7 +8,9 @@ use std::collections::BTreeSet;
 use strata_core::content::{BlockId, RecipeId, StationDef};
 use strata_core::cooking::{cut_choices, cut_result, take_cut};
 use strata_core::coords::BlockPos;
+use strata_core::crafting::BENCH_SIDE;
 use strata_core::crafting::{GridItems, fill, grid_result, take_result};
+use strata_core::id::Identifier;
 use strata_core::inventory::{Click, CraftGrid, ItemStack};
 use strata_protocol::{CraftingView, ServerMessage};
 
@@ -22,6 +24,8 @@ pub struct CraftWindow {
     pub stonecutter: bool,
     /// At an anvil, `cut` is the upgrade chosen (an index in `Upgrades::list`).
     pub anvil: bool,
+    /// At a bench, `cut` is the recipe chosen (an index in `Benches::list`).
+    pub bench: Option<Identifier>,
 }
 
 impl Game {
@@ -42,6 +46,7 @@ impl Game {
             StationDef::Crafting(side) => CraftGrid::new(side),
             StationDef::Stonecutter => CraftGrid::new(1),
             StationDef::Anvil => CraftGrid::anvil(),
+            StationDef::Bench(_) => CraftGrid::new(BENCH_SIDE),
         };
         let window = CraftWindow {
             grid,
@@ -49,6 +54,10 @@ impl Game {
             cut: None,
             stonecutter: station == StationDef::Stonecutter,
             anvil: station == StationDef::Anvil,
+            bench: match station {
+                StationDef::Bench(bench) => Some(bench),
+                _ => None,
+            },
         };
         self.ecs.crafts.insert(self.player, window);
         self.craft_changed();
@@ -132,6 +141,15 @@ impl Game {
             self.anvil_click(loader, click);
             return;
         }
+        if self
+            .ecs
+            .crafts
+            .get(self.player)
+            .is_some_and(|w| w.bench.is_some())
+        {
+            self.bench_click(loader, click);
+            return;
+        }
         if let Some(choice) = self.stonecutter_choice() {
             let cooking = std::sync::Arc::clone(&self.rules.cooking);
             self.with_window(loader, |window, rules| {
@@ -155,7 +173,7 @@ impl Game {
             .ecs
             .crafts
             .get(self.player)
-            .is_some_and(|w| w.stonecutter || w.anvil);
+            .is_some_and(|w| w.stonecutter || w.anvil || w.bench.is_some());
         if !self.knows(recipe) || special {
             return;
         }
@@ -201,8 +219,18 @@ impl Game {
         window.stonecutter.then_some(window.cut)
     }
 
-    /// The stonecutter: the cutting chosen for what lies in its cell.
-    pub(super) fn choose_cut(&mut self, choice: u16) {
+    /// The stonecutter: the cutting chosen for what lies in its cell; a bench: the
+    /// recipe chosen.
+    pub(super) fn choose_cut(&mut self, loader: &ColumnLoader, choice: u16) {
+        if self
+            .ecs
+            .crafts
+            .get(self.player)
+            .is_some_and(|w| w.bench.is_some())
+        {
+            self.choose_bench_recipe(loader, choice);
+            return;
+        }
         let cooking = std::sync::Arc::clone(&self.rules.cooking);
         let Some(window) = self.ecs.crafts.get_mut(self.player) else {
             return;
@@ -224,6 +252,9 @@ impl Game {
         }
         if window.anvil {
             return Some(self.anvil_view(window));
+        }
+        if let Some(bench) = &window.bench {
+            return Some(self.bench_view(window, bench));
         }
         let recipes = &self.rules.recipes;
         let items = window.grid.items();

@@ -22,6 +22,8 @@ pub struct LocalPlayer {
     jump_was_held: bool,
     /// A double tap waiting for the next tick (frames usually outnumber ticks).
     toggle_pending: bool,
+    /// A dash press waiting for the next tick.
+    dash_pending: bool,
     /// Sitting in a boat: the server moves the body, inputs only steer.
     pub riding: bool,
 }
@@ -38,6 +40,7 @@ impl LocalPlayer {
             since_jump_press: f64::INFINITY,
             jump_was_held: false,
             toggle_pending: false,
+            dash_pending: false,
             riding: false,
         }
     }
@@ -57,11 +60,13 @@ impl LocalPlayer {
             self.since_jump_press = if double_tap { f64::INFINITY } else { 0.0 };
         }
         self.jump_was_held = input.jump;
+        self.dash_pending |= input.dash;
         let mut sent = Vec::new();
         while self.since_tick >= TICK {
             self.since_tick -= TICK;
             self.sequence = self.sequence.wrapping_add(1);
             input.toggle_flight = std::mem::take(&mut self.toggle_pending);
+            input.dash = std::mem::take(&mut self.dash_pending);
             self.previous = self.body;
             if !self.riding {
                 step(&mut self.body, &input, &self.movement, terrain);
@@ -119,6 +124,7 @@ mod tests {
             step_up: true,
             auto_jump: false,
             speed: 1.0,
+            ..MovementSettings::default()
         }
     }
 

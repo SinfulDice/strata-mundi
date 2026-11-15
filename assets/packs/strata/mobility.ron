@@ -1,0 +1,10 @@
+// Movement abilities given by equipment (which pieces give them: the stats
+// strata:air_jumps, strata:dash and strata:climb). Speeds in blocks per second, times in
+// ticks (20 a second). The world option « Movement from equipment » turns them off.
+Mobility(
+    air_jump_speed: 7.6,
+    dash_speed: 14.0,
+    dash_ticks: 4,
+    dash_cooldown: 30,
+    climb_speed: 2.4,
+)

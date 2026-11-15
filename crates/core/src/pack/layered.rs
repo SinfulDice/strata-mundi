@@ -19,7 +19,7 @@ pub struct Sourced<T> {
 pub struct Removals(HashMap<String, Vec<Identifier>>);
 
 /// Categories `remove.ron` may name.
-pub const REMOVABLE: [&str; 21] = [
+pub const REMOVABLE: [&str; 23] = [
     "blocks",
     "items",
     "textures",
@@ -41,6 +41,8 @@ pub const REMOVABLE: [&str; 21] = [
     "upgrade_slots",
     "upgrades",
     "item_stats",
+    "sets",
+    "bench_recipes",
 ];
 
 impl Removals {

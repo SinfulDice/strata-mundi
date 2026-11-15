@@ -21,7 +21,7 @@ impl ContainerDef {
 }
 
 /// What a work station block opens.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub enum StationDef {
     /// A crafting grid of this side (3 for the crafting table).
     Crafting(u8),
@@ -29,15 +29,17 @@ pub enum StationDef {
     Stonecutter,
     /// An item and a material: upgrades (`upgrades/`) and repairs.
     Anvil,
+    /// Four cells and a list of recipes (`bench_recipes/` naming this bench).
+    Bench(crate::id::Identifier),
 }
 
 /// A crafting grid of 1 to 3 cells a side; other stations need nothing.
 pub(super) fn valid_station(
-    station: StationDef,
+    station: &StationDef,
     source: &std::path::Path,
     errors: &mut Vec<PackError>,
 ) -> bool {
-    let StationDef::Crafting(side) = station else {
+    let StationDef::Crafting(side) = *station else {
         return true;
     };
     let valid = (1..=crate::crafting::MAX_GRID as u8).contains(&side);

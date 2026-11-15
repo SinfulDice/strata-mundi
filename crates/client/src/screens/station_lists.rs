@@ -1,5 +1,5 @@
-//! The lists of the work stations in the inventory screen: the stonecutter's variants
-//! and the anvil's upgrades. Each takes clicks like slots, shows a choice and tooltips.
+//! The lists of the work stations in the inventory screen: the stonecutter's variants,
+//! the anvil's upgrades and the benches' recipes. Each takes clicks like slots, shows a choice and tooltips.
 
 use super::slots::SlotsModel;
 use crate::ui::SlotPress;
@@ -12,6 +12,7 @@ impl SlotsModel<'_> {
         match id {
             "cut_choices" => Some(self.cuts().map(|(_, stack)| Some(stack.item)).collect()),
             "anvil_choices" => Some(self.anvil_icons()),
+            "bench_choices" => Some(self.bench_icons()),
             _ => None,
         }
     }
@@ -23,6 +24,7 @@ impl SlotsModel<'_> {
                 self.cuts().position(|(index, _)| *index == chosen)
             }
             "anvil_choices" => self.anvil_selected(),
+            "bench_choices" => self.bench_selected(),
             _ => None,
         }
     }
@@ -35,6 +37,7 @@ impl SlotsModel<'_> {
                 Some(tooltip.map(|(_, s)| self.content.item_tooltip(s.item, self.language)))
             }
             "anvil_choices" => Some(self.anvil_tooltip(index)),
+            "bench_choices" => Some(self.bench_tooltip(index)),
             "anvil" => self.anvil_cell_tip(index).map(Some),
             _ => None,
         }
@@ -44,6 +47,7 @@ impl SlotsModel<'_> {
         match id {
             "cut_choices" => Some(self.choose_cut(index, press)),
             "anvil_choices" => Some(self.choose_upgrade(index, press)),
+            "bench_choices" => Some(self.choose_bench_recipe(index, press)),
             _ => None,
         }
     }

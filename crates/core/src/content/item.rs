@@ -51,19 +51,36 @@ pub struct ItemDef {
     /// Goes in an upgrade slot (furnace modules); such an item never stacks.
     #[serde(default)]
     pub module: Option<ModuleDef>,
+    /// What it gives while worn (with `equip`), in the bricks of upgrades.
+    #[serde(default)]
+    pub worn: Vec<crate::upgrade::Effect>,
 }
 
-/// Where a worn item goes, in the order of the armour slots.
+/// Where a worn item goes: an armour slot, or an accessory slot (two rings, an amulet,
+/// a belt, a cloak). Special boots go in the feet slot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, serde::Serialize)]
 pub enum EquipSlot {
     Head,
     Chest,
     Legs,
     Feet,
+    Ring,
+    Amulet,
+    Belt,
+    Cloak,
 }
 
 impl EquipSlot {
-    pub const ALL: [Self; 4] = [Self::Head, Self::Chest, Self::Legs, Self::Feet];
+    /// In the order of the armour slots.
+    pub const ARMOR: [Self; 4] = [Self::Head, Self::Chest, Self::Legs, Self::Feet];
+    /// In the order of the accessory slots.
+    pub const ACCESSORIES: [Self; 5] = [
+        Self::Ring,
+        Self::Ring,
+        Self::Amulet,
+        Self::Belt,
+        Self::Cloak,
+    ];
 }
 
 /// `action` of an item, naming blocks by identifier.
@@ -176,6 +193,7 @@ pub(super) fn load_items(
                 equip: value.equip,
                 upgrade_slots: value.upgrade_slots,
                 repair: value.repair,
+                worn: value.worn,
             },
             &source,
             errors,

@@ -1,0 +1,13 @@
+// Crampon boots: light boots that climb the walls walked into.
+Item(
+    texture: "strata:crampon_boots",
+    category: Some("strata:armor"),
+    equip: Some(Feet),
+    durability: 65,
+    upgrade_slots: ["strata:craft"],
+    repair: Item("strata:leather"),
+    armor: Some(Armor(protection: 1, weight: "strata:light")),
+    worn: [
+        Stat(stat: "strata:climb", op: Add, value: 1.0),
+    ],
+)

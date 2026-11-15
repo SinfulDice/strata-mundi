@@ -182,3 +182,4 @@ spatial-advanced = FANCY
 spatial-simple = SIMPL STEREO
 action-journal = MAH DIARY
 action-hammer-area = BONK SIZE
+action-dash = ZOOMIES

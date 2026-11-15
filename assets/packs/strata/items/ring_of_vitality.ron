@@ -1,0 +1,10 @@
+// Ring of vitality: more health.
+Item(
+    texture: "strata:ring_of_vitality",
+    max_stack: 1,
+    category: Some("strata:accessories"),
+    equip: Some(Ring),
+    worn: [
+        Stat(stat: "strata:max_health", op: Add, value: 4.0),
+    ],
+)

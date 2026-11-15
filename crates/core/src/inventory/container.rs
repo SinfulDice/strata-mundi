@@ -5,10 +5,31 @@ use std::ops::Range;
 
 pub const HOTBAR: Range<usize> = 0..9;
 pub const MAIN: Range<usize> = 9..36;
-/// Head, chest, legs, feet (`EquipSlot::ALL` order).
+/// Head, chest, legs, feet (`EquipSlot::ARMOR` order).
 pub const ARMOR: Range<usize> = 36..40;
 pub const OFFHAND: usize = 40;
-pub const PLAYER_SLOTS: usize = 41;
+/// Two rings, an amulet, a belt, a cloak (`EquipSlot::ACCESSORIES` order); saves from
+/// before them have 41 slots and get these empty.
+pub const ACCESSORIES: Range<usize> = 41..46;
+pub const PLAYER_SLOTS: usize = 46;
+
+/// The slots whose stack is worn: armour, then accessories.
+pub fn worn_slots() -> impl Iterator<Item = usize> + Clone {
+    ARMOR.chain(ACCESSORIES)
+}
+
+/// The kind of piece slot `index` takes, for armour and accessory slots.
+pub fn slot_equip(index: usize) -> Option<EquipSlot> {
+    if ARMOR.contains(&index) {
+        return EquipSlot::ARMOR.get(index - ARMOR.start).copied();
+    }
+    if ACCESSORIES.contains(&index) {
+        return EquipSlot::ACCESSORIES
+            .get(index - ACCESSORIES.start)
+            .copied();
+    }
+    None
+}
 
 /// A fixed number of slots (a chest, a barrel, the player's inventory).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -142,7 +163,7 @@ impl Container {
     }
 }
 
-/// The player's 41 slots (hotbar, main, armour, off hand), the selected hotbar slot,
+/// The player's 46 slots (hotbar, main, armour, off hand, accessories), the selected hotbar slot,
 /// the locked slots and the stack carried under the pointer while a screen is open.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerInventory {
@@ -192,13 +213,12 @@ impl PlayerInventory {
         lockable
     }
 
-    /// Whether `stack` may lie in slot `index` (armour slots take only their piece).
+    /// Whether `stack` may lie in slot `index` (armour and accessory slots take only
+    /// their piece).
     pub fn accepts(index: usize, stack: &ItemStack, rules: &impl ItemRules) -> bool {
-        match index.checked_sub(ARMOR.start) {
-            Some(offset) if ARMOR.contains(&index) => {
-                rules.equip(stack.item) == EquipSlot::ALL.get(offset).copied()
-            }
-            _ => index < PLAYER_SLOTS,
+        match slot_equip(index) {
+            Some(equip) => rules.equip(stack.item) == Some(equip),
+            None => index < PLAYER_SLOTS,
         }
     }
 
@@ -208,7 +228,7 @@ impl PlayerInventory {
     }
 
     /// Makes a restored inventory valid: current number of slots, stacks within their
-    /// limit, armour only in its slot, the carried stack put back. What was moved out
+    /// limit, armour and accessories only in their slot, the carried stack put back. What was moved out
     /// goes into the hotbar and main slots; what does not fit is returned, to be thrown.
     pub fn sanitize(&mut self, rules: &impl ItemRules) -> Vec<ItemStack> {
         self.normalize();

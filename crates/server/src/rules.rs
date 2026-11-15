@@ -5,11 +5,12 @@ use strata_core::content::{
     ItemAction, ItemId, ItemKind, Registry, StationDef,
 };
 use strata_core::cooking::Cooking;
-use strata_core::crafting::Recipes;
+use strata_core::crafting::{Benches, Recipes};
 use strata_core::inventory::ItemRules;
 use strata_core::physics::LiquidCell;
 use strata_core::updates::UpdateRules;
 use strata_core::upgrade::Upgrades;
+use strata_core::worn::Worn;
 
 /// What the server needs to know about blocks, items and entity types to judge
 /// collisions and player actions.
@@ -37,6 +38,10 @@ pub struct BlockRules {
     pub cooking: Arc<Cooking>,
     /// Anvil upgrades and repairs.
     pub upgrades: Arc<Upgrades>,
+    /// Sets and the abilities equipment gives.
+    pub worn: Arc<Worn>,
+    /// Recipes of the benches (jeweller…).
+    pub benches: Arc<Benches>,
 }
 
 impl BlockRules {
@@ -79,7 +84,7 @@ impl BlockRules {
             stations: content
                 .blocks
                 .iter()
-                .map(|(_, _, block)| block.station)
+                .map(|(_, _, block)| block.station.clone())
                 .collect(),
             facings: content.blocks.iter().map(|(_, _, b)| b.facing).collect(),
             furnaces: content
@@ -90,6 +95,8 @@ impl BlockRules {
             recipes: Arc::new(content.recipes.clone()),
             cooking: Arc::new(content.cooking.clone()),
             upgrades: Arc::new(content.upgrades.clone()),
+            worn: Arc::new(content.worn.clone()),
+            benches: Arc::new(content.benches.clone()),
             updates: Arc::new(UpdateRules::new(content)),
             mining: Arc::new(MiningRules::new(content)),
         }
@@ -116,7 +123,7 @@ impl BlockRules {
 
     /// The work station a block opens (crafting table).
     pub fn station(&self, block: BlockId) -> Option<StationDef> {
-        self.stations.get(usize::from(block.0)).copied().flatten()
+        self.stations.get(usize::from(block.0)).cloned().flatten()
     }
 
     /// The front and lit variants of a block that has a front (furnaces).

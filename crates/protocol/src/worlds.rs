@@ -34,6 +34,8 @@ pub struct NewWorld {
     pub discover_recipes: bool,
     /// Worn-out items break, or stay until repaired.
     pub durability: DurabilityMode,
+    /// Equipment may give movement abilities.
+    pub gear_mobility: bool,
     /// World type, sliders of the generation.
     pub generation: WorldgenSettings,
 }

@@ -8,7 +8,10 @@ mod sort;
 mod stack;
 
 pub use click::{Area, Click, SlotPolicy, SlotRef, Window};
-pub use container::{ARMOR, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory};
+pub use container::{
+    ACCESSORIES, ARMOR, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory,
+    slot_equip, worn_slots,
+};
 pub use craft_grid::CraftGrid;
 pub use sort::{SortOrder, deposit_matching, sort};
 pub use stack::{

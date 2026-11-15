@@ -68,6 +68,7 @@ pub struct CreateForm {
     pub fire_destroy: bool,
     pub discover_recipes: bool,
     pub durability: DurabilityMode,
+    pub gear_mobility: bool,
     pub editor: GenerationEditor,
     pub page: Page,
     pub tab: usize,
@@ -98,6 +99,7 @@ impl CreateForm {
             fire_destroy: true,
             discover_recipes: true,
             durability: DurabilityMode::Break,
+            gear_mobility: true,
             editor: GenerationEditor::new(catalog, blocks),
             page: Page::Main,
             tab: 0,
@@ -140,6 +142,7 @@ impl CreateForm {
             fire_destroy: self.fire_destroy,
             discover_recipes: self.discover_recipes,
             durability: self.durability,
+            gear_mobility: self.gear_mobility,
             generation: self.editor.settings.clone(),
         }
     }
@@ -256,6 +259,9 @@ impl ScreenModel for CreateModel<'_> {
                 let keep = form.durability == DurabilityMode::KeepBroken;
                 Some(self.toggle("ui-new-world-durability", "keep", keep))
             }
+            "gear_mobility" => {
+                Some(self.toggle("ui-new-world-gear-mobility", "allowed", form.gear_mobility))
+            }
             _ => None,
         }
     }
@@ -289,6 +295,7 @@ impl ScreenModel for CreateModel<'_> {
             "fire_spread" => Some(&mut form.fire_spread),
             "fire_destroy" => Some(&mut form.fire_destroy),
             "recipes" => Some(&mut form.discover_recipes),
+            "gear_mobility" => Some(&mut form.gear_mobility),
             _ => None,
         };
         if let Some(flag) = flag {

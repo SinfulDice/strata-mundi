@@ -139,18 +139,24 @@ fn held_upgrades<'a>(stack: &ItemStack, upgrades: &'a Upgrades) -> Vec<(&'a Upgr
         .collect()
 }
 
-/// One brick of each kind, the strongest; additions before percentages.
+/// One brick of each kind, the strongest, of the levels held.
 fn strongest(held: &[(&Upgrade, u8)]) -> Vec<Effect> {
     let effects = held
         .iter()
         .filter_map(|(upgrade, level)| upgrade.levels.get(usize::from(*level) - 1))
-        .flat_map(|level| level.effects.iter());
+        .flat_map(|level| level.effects.iter().cloned());
+    strongest_bricks(effects)
+}
+
+/// Same effect, not cumulative: one brick of each kind (same stat and operation), the
+/// strongest; additions before percentages.
+pub fn strongest_bricks(effects: impl IntoIterator<Item = Effect>) -> Vec<Effect> {
     let mut kept: Vec<Effect> = Vec::new();
     for effect in effects {
-        match kept.iter_mut().find(|other| other.same_kind(effect)) {
-            Some(other) if effect.strength() > other.strength() => *other = effect.clone(),
+        match kept.iter_mut().find(|other| other.same_kind(&effect)) {
+            Some(other) if effect.strength() > other.strength() => *other = effect,
             Some(_) => {}
-            None => kept.push(effect.clone()),
+            None => kept.push(effect),
         }
     }
     kept.sort_by_key(|effect| {

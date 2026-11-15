@@ -54,6 +54,10 @@ ui-new-world-durability = Worn-out items: { $keep ->
         [on] kept until repaired
        *[off] break
     }
+ui-new-world-gear-mobility = Movement from equipment: { $allowed ->
+        [on] on
+       *[off] off
+    }
 ui-new-world-create = Create
 
 ui-delete-question = Delete "{ $name }"?

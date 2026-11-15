@@ -41,7 +41,7 @@ impl Gameplay {
                     auto_jump: movement.auto_jump,
                     step_up: movement.step_up,
                 });
-                self.player = Some(LocalPlayer::new(body, movement));
+                self.player = Some(LocalPlayer::new(*body, *movement));
             }
             ServerMessage::PlayerState { sequence, body } => {
                 let terrain = terrain(&self.view.world, &self.info, self.border);

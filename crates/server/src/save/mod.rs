@@ -220,6 +220,7 @@ pub fn create(
         commands: Some(new.mode == strata_protocol::GameMode::Creative),
         discover_recipes: new.discover_recipes,
         durability: new.durability,
+        gear_mobility: new.gear_mobility,
         generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;
@@ -306,6 +307,7 @@ mod tests {
             fire_destroy: true,
             discover_recipes: true,
             durability: Default::default(),
+            gear_mobility: true,
             generation: Default::default(),
         }
     }

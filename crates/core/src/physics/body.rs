@@ -1,3 +1,4 @@
+use super::abilities::{self, AbilityState, Mobility};
 use super::swim;
 use super::{Aabb, Terrain};
 use crate::content::LiquidMotion;
@@ -42,6 +43,9 @@ pub struct MoveInput {
     pub sprint: bool,
     /// Creative: start or stop flying (double jump).
     pub toggle_flight: bool,
+    /// Dash pressed (with equipment that dashes).
+    #[serde(default)]
+    pub dash: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -54,10 +58,33 @@ pub struct MovementSettings {
     /// Multiplies walking, sprinting and sneaking (heavy armour slows), not flying.
     #[serde(default = "full_speed")]
     pub speed: f64,
+    /// World option: equipment may give movement abilities.
+    #[serde(default = "yes")]
+    pub gear_mobility: bool,
+    /// What the worn equipment gives (none when `gear_mobility` is off).
+    #[serde(default)]
+    pub mobility: Mobility,
 }
 
 fn full_speed() -> f64 {
     1.0
+}
+
+fn yes() -> bool {
+    true
+}
+
+impl Default for MovementSettings {
+    fn default() -> Self {
+        Self {
+            can_fly: false,
+            step_up: true,
+            auto_jump: true,
+            speed: 1.0,
+            gear_mobility: true,
+            mobility: Mobility::default(),
+        }
+    }
 }
 
 /// Position (feet, bottom centre) and motion of a moving body.
@@ -67,6 +94,8 @@ pub struct Body {
     pub velocity: DVec3,
     pub on_ground: bool,
     pub flying: bool,
+    #[serde(default)]
+    pub abilities: AbilityState,
 }
 
 impl Body {
@@ -76,6 +105,7 @@ impl Body {
             velocity: DVec3::ZERO,
             on_ground: false,
             flying: false,
+            abilities: AbilityState::default(),
         }
     }
 
@@ -109,21 +139,33 @@ pub fn step(
     } else {
         wish * settings.speed.clamp(0.0, MAX_SPEED_FACTOR)
     };
+    abilities::begin(body);
+    let walking = liquid.is_none() && !body.flying;
     match liquid {
         Some(_) => swim::steer(body, wish, input.jump),
         None => steer(body, wish, input),
     }
+    if walking {
+        abilities::steer(body, input, &settings.mobility, wish);
+    }
     let delta = body.velocity * TICK;
     let blocked = move_body(body, delta, input, settings, &solid);
-    let Some(motion) = liquid else {
-        fall(body);
-        after_dry_move(body, input, settings, wish, blocked, &solid);
-        return;
-    };
-    swim::sink(body, motion);
-    if blocked {
-        swim::climb_out(body, wish, &solid);
+    match liquid {
+        None => {
+            fall(body);
+            after_dry_move(body, input, settings, wish, blocked, &solid);
+            if walking && !body.flying {
+                abilities::climb(body, input, &settings.mobility, wish, &solid);
+            }
+        }
+        Some(motion) => {
+            swim::sink(body, motion);
+            if blocked {
+                swim::climb_out(body, wish, &solid);
+            }
+        }
     }
+    abilities::end(body, input);
 }
 
 fn after_dry_move(

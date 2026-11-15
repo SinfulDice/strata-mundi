@@ -1,16 +1,14 @@
 //! Tools, weapons and armour beyond mining: material tiers (`tiers/`), armour weights
 //! (`armor_weights/`), upgrade slot families (`upgrade_slots/`), the weapon and armour
-//! stats of items, and what worn armour adds up to (protection, burden).
+//! stats of items and what one piece weighs (what all worn pieces add up to is in
+//! `worn`).
 
 mod armor;
 mod resolve;
 mod slots;
 mod tier;
 
-pub use armor::{
-    Armor, ArmorDef, ArmorWeight, Burden, MAX_BURDEN, piece_durability, worn_burden,
-    worn_protection,
-};
+pub use armor::{Armor, ArmorDef, ArmorWeight, Burden, MAX_BURDEN, piece_durability};
 pub use resolve::{GearFields, Resolved};
 pub use slots::{MAX_UPGRADE_SLOTS, UpgradeSlotFamily, count_slots};
 pub use tier::{Tier, ToolSpec, WeaponDef};
@@ -41,6 +39,8 @@ pub struct ItemGear {
     pub enchantability: u8,
     /// Mends it at the anvil: the item's own, or its tier's.
     pub repair: Option<IngredientDef>,
+    /// Bricks given while worn (checked against `item_stats/` once they are read).
+    pub worn: Vec<crate::upgrade::Effect>,
 }
 
 impl Gear {

@@ -57,14 +57,15 @@ fn page(ctx: &Ctx<'_>, key: ItemId, id: &Identifier, item: &Item) -> Page {
     let path = page_path(id);
     let title = ctx.data.content.item_name(key, ctx.lang);
     let picture = image(ctx, &path, "icons", &id_path(id), &title, "");
-    let box_html = infobox(&title, &picture, &facts(ctx, id, item));
+    let box_html = infobox(&title, &picture, &facts(ctx, id, key, item));
     let text = ctx
         .data
         .texts
         .html(ctx.lang, &format!("items/{}", id_path(id)))
         .unwrap_or_default();
-    let crafting =
-        crate::recipes::section(ctx, &path, key) + &crate::cooking::sections(ctx, &path, key);
+    let crafting = crate::recipes::section(ctx, &path, key)
+        + &crate::worn::made_at_bench(ctx, &path, key)
+        + &crate::cooking::sections(ctx, &path, key);
     let uses = crate::recipes::uses(ctx, &path, key);
     Page {
         path,
@@ -73,7 +74,7 @@ fn page(ctx: &Ctx<'_>, key: ItemId, id: &Identifier, item: &Item) -> Page {
     }
 }
 
-fn facts(ctx: &Ctx<'_>, id: &Identifier, item: &Item) -> Vec<(String, String)> {
+fn facts(ctx: &Ctx<'_>, id: &Identifier, key: ItemId, item: &Item) -> Vec<(String, String)> {
     let category = item
         .category
         .as_ref()
@@ -86,6 +87,7 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, item: &Item) -> Vec<(String, String)> {
         rows.push((ctx.tr("wiki-fact-durability"), uses.to_string()));
     }
     rows.extend(crate::gear::facts(ctx, item));
+    rows.extend(crate::worn::facts(ctx, key, item));
     rows.push((ctx.tr("wiki-fact-id"), format!("<code>{id}</code>")));
     rows
 }

@@ -19,7 +19,7 @@ pub use area::{area_bounds, area_cells, fits_area, swing_cells, swing_ticks};
 pub use cache::StatsCache;
 pub use defs::{AnvilRules, AreaSize, Effect, ItemStatDef, LevelDef, StatOp, UpgradeDef};
 pub use installed::{chosen_area, installed, repairs, with_area, with_upgrade};
-pub use stats::{ItemStats, applies, max_durability, stack_stats, stack_tool};
+pub use stats::{ItemStats, applies, max_durability, stack_stats, stack_tool, strongest_bricks};
 
 use crate::content::ItemId;
 use crate::crafting::Ingredient;
@@ -94,7 +94,7 @@ impl Upgrades {
 }
 
 pub use load::MAX_AREA;
-pub(crate) use load::load_upgrades;
+pub(crate) use load::{bounded, load_upgrades};
 
 #[cfg(test)]
 mod tests;

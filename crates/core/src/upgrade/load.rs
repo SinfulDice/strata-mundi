@@ -119,7 +119,7 @@ fn targets(
 
 /// A stat brick of a known stat, its value within the stat's bounds; an area within
 /// `MAX_AREA`.
-pub(super) fn bounded(
+pub(crate) fn bounded(
     effect: Effect,
     stats: &BTreeMap<Identifier, ItemStatDef>,
     source: &Path,

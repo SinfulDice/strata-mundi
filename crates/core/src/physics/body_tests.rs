@@ -6,6 +6,7 @@ fn settings() -> MovementSettings {
         step_up: true,
         auto_jump: false,
         speed: 1.0,
+        ..MovementSettings::default()
     }
 }
 

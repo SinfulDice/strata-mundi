@@ -96,3 +96,4 @@ block-strata-farmland = Terre labourée
 block-strata-chiseled_stone_bricks = Briques de pierre sculptées
 block-strata-patterned_stone_bricks = Briques de pierre ouvragées
 block-strata-anvil = Enclume
+block-strata-jeweller = Joaillier

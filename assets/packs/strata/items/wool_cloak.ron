@@ -1,0 +1,10 @@
+// Wool cloak: keeps the cold out.
+Item(
+    texture: "strata:wool_cloak",
+    max_stack: 1,
+    category: Some("strata:accessories"),
+    equip: Some(Cloak),
+    worn: [
+        Stat(stat: "strata:insulation", op: Add, value: 4.0),
+    ],
+)

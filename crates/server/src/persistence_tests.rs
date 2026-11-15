@@ -29,6 +29,7 @@ fn a_saved_player_comes_back_as_left() {
         fire_spread: true,
         fire_destroy: true,
         discover_recipes: true,
+        gear_mobility: true,
         durability: Default::default(),
         generation: Default::default(),
     };
@@ -89,6 +90,7 @@ fn boats_and_the_seat_come_back_and_old_worlds_have_none() {
         fire_spread: true,
         fire_destroy: true,
         discover_recipes: true,
+        gear_mobility: true,
         durability: Default::default(),
         generation: Default::default(),
     };
@@ -139,6 +141,7 @@ pub(super) fn new_world(name: &str) -> (std::path::PathBuf, save::WorldFolder, W
         fire_spread: true,
         fire_destroy: true,
         discover_recipes: true,
+        gear_mobility: true,
         durability: Default::default(),
         generation: Default::default(),
     };

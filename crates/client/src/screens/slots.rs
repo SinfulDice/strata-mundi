@@ -11,7 +11,7 @@ use crate::ui::{ScreenModel, SlotMark, SlotPress};
 use strata_core::content::{Content, ItemId, StationDef};
 use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE_OUTPUT};
 use strata_core::inventory::{
-    ARMOR, Area, Click, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
+    ACCESSORIES, ARMOR, Area, Click, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
 };
 use strata_core::upgrade::max_durability;
 use strata_protocol::{InventoryRequest, OpenedContainer};
@@ -46,6 +46,7 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
         "main" => (Area::Player, MAIN),
         "armor" => (Area::Player, ARMOR),
         "offhand" => (Area::Player, OFFHAND..OFFHAND + 1),
+        "accessories" => (Area::Player, ACCESSORIES),
         "chest" | "furnace_modules" => {
             let start = if id == "chest" { 0 } else { FURNACE_MODULES };
             (Area::Open, start..usize::from(u16::MAX))
@@ -53,8 +54,8 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
         "furnace_input" => (Area::Open, FURNACE_INPUT..FURNACE_INPUT + 1),
         "furnace_fuel" => (Area::Open, FURNACE_FUEL..FURNACE_FUEL + 1),
         "furnace_output" => (Area::Open, FURNACE_OUTPUT..FURNACE_OUTPUT + 1),
-        "craft" | "table" | "cutter" | "anvil" => (Area::Craft, 0..usize::from(u16::MAX)),
-        "craft_result" | "table_result" | "cutter_result" | "anvil_result" => {
+        "craft" | "table" | "cutter" | "anvil" | "bench" => (Area::Craft, 0..usize::from(u16::MAX)),
+        "craft_result" | "table_result" | "cutter_result" | "anvil_result" | "bench_result" => {
             (Area::CraftResult, 0..1)
         }
         _ => return None,
@@ -141,7 +142,14 @@ impl SlotsModel<'_> {
                 text.push_str(&self.tr("gear-broken-line"));
             }
         }
-        for line in self.content.stack_upgrade_lines(stack, self.language) {
+        let worn = self.inventory.worn_stats(self.content);
+        let sets = self.content.set_lines(stack.item, &worn, self.language);
+        for line in self
+            .content
+            .stack_upgrade_lines(stack, self.language)
+            .into_iter()
+            .chain(sets)
+        {
             text.push('\n');
             text.push_str(&line);
         }
@@ -176,7 +184,7 @@ impl SlotsModel<'_> {
 
     fn station(&self) -> Option<StationDef> {
         let (block, _) = self.crafting?.view.station?;
-        self.content.blocks.get(block)?.station
+        self.content.blocks.get(block)?.station.clone()
     }
 
     fn furnace(&self) -> bool {
@@ -209,18 +217,24 @@ impl ScreenModel for SlotsModel<'_> {
     fn text(&self, id: &str) -> Option<String> {
         match id {
             "search" => Some(self.state.search.clone()),
-            "protection" => Some(self.content.translations.text_with(
-                self.language,
-                "ui-inventory-protection",
-                &[(
-                    "points",
-                    self.inventory.protection(self.content).to_string(),
-                )],
-            )),
+            "protection" => Some(
+                self.content.translations.text_with(
+                    self.language,
+                    "ui-inventory-protection",
+                    &[(
+                        "points",
+                        self.inventory
+                            .worn_stats(self.content)
+                            .protection
+                            .to_string(),
+                    )],
+                ),
+            ),
             "craft_note" => Some(self.craft_note()),
             "furnace_info" => Some(self.furnace_info()),
             "cutter_note" => Some(self.cutter_note()),
             "anvil_note" => Some(self.anvil_note()),
+            "bench_note" => Some(self.bench_note()),
             "help" => Some(
                 Some(self.craft_note())
                     .filter(|note| !note.is_empty())
@@ -297,6 +311,7 @@ impl ScreenModel for SlotsModel<'_> {
             "table_side" => !open && matches!(station, Some(StationDef::Crafting(_))),
             "cutter_side" => !open && station == Some(StationDef::Stonecutter),
             "anvil_side" => !open && station == Some(StationDef::Anvil),
+            "bench_side" => !open && matches!(station, Some(StationDef::Bench(_))),
             "anvil_scroll" => self.upgrades_scroll(),
             "player_side" => !open && station.is_none(),
             "crafting" => self.crafting.is_some(),

@@ -1,0 +1,2 @@
+// Jumps in the air before landing (double jump). Bounds of the values effects give it.
+ItemStat(min: 0.0, max: 3.0)

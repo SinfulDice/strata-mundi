@@ -25,3 +25,4 @@ pub mod sky;
 pub mod texture;
 pub mod updates;
 pub mod upgrade;
+pub mod worn;

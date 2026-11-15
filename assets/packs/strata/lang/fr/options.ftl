@@ -182,3 +182,4 @@ spatial-advanced = Avancé
 spatial-simple = Stéréo simple
 action-journal = Journal
 action-hammer-area = Zone du marteau
+action-dash = Esquive (dash)

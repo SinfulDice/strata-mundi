@@ -1,0 +1,9 @@
+BenchRecipe(
+    bench: "strata:jeweller",
+    ingredients: [
+        (Item("strata:leather"), 2),
+        (Item("strata:gold_ingot"), 1),
+        (Item("strata:copper_ingot"), 1),
+    ],
+    result: Result(item: "strata:dash_belt"),
+)

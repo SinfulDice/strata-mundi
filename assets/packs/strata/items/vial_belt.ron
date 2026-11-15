@@ -1,0 +1,10 @@
+// Vial belt: potion slots for when potions come.
+Item(
+    texture: "strata:vial_belt",
+    max_stack: 1,
+    category: Some("strata:accessories"),
+    equip: Some(Belt),
+    worn: [
+        Stat(stat: "strata:potion_slots", op: Add, value: 3.0),
+    ],
+)

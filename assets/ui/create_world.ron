@@ -1,5 +1,6 @@
 // New world: name, seed (empty = random), world border, game mode, liquids, day cycle,
-// recipes to discover, worn-out items (break or kept broken), fire,
+// recipes to discover, worn-out items (break or kept broken), movement abilities given by
+// equipment, fire,
 // world type and the generation editor (world_generation.ron).
 Screen(
     root: [
@@ -7,7 +8,7 @@ Screen(
             id: "window",
             anchor: Center,
             at: (0, 0),
-            size: (240, 250),
+            size: (240, 266),
             children: [
                 Label(id: "title", anchor: TopLeft, at: (8, 5), text: "ui-new-world-title"),
                 Label(id: "name_label", anchor: TopLeft, at: (8, 17), text: "ui-new-world-name", dim: true),
@@ -23,8 +24,9 @@ Screen(
                 Button(id: "fire_destroy", anchor: TopLeft, at: (122, 140), size: (110, 14), text: "@fire_destroy"),
                 Button(id: "recipes", anchor: TopLeft, at: (8, 156), size: (224, 14), text: "@recipes"),
                 Button(id: "durability", anchor: TopLeft, at: (8, 172), size: (224, 14), text: "@durability"),
-                Slider(id: "world_type", anchor: TopLeft, at: (8, 190), size: (224, 14)),
-                Button(id: "customize", anchor: TopLeft, at: (8, 206), size: (224, 14), text: "ui-new-world-customize"),
+                Button(id: "gear_mobility", anchor: TopLeft, at: (8, 188), size: (224, 14), text: "@gear_mobility"),
+                Slider(id: "world_type", anchor: TopLeft, at: (8, 206), size: (224, 14)),
+                Button(id: "customize", anchor: TopLeft, at: (8, 222), size: (224, 14), text: "ui-new-world-customize"),
                 Button(id: "create", anchor: BottomLeft, at: (8, -6), size: (108, 16), text: "ui-new-world-create"),
                 Button(id: "back", anchor: BottomRight, at: (-8, -6), size: (108, 16), text: "ui-back"),
             ],

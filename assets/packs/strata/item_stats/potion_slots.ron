@@ -1,0 +1,2 @@
+// Potion slots of a belt (used when potions come). Bounds of the values effects give it.
+ItemStat(min: 0.0, max: 9.0)

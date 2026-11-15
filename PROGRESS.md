@@ -14,6 +14,8 @@
     - Note pour J13 : les statistiques des infobulles (dégâts, protection, emplacements) passent toutes par `Content::stats_known` (toujours vrai) : y brancher le savoir.
     - [x] J4b marteau de mineur, améliorations génériques, enclume, réparation (améliorations en pack par briques, calcul unique des statistiques, non-cumul, enclume et son écran, réparation par matériau ou objet identique, marteaux à zone 3×1 → 5×5, contour et choix de zone ; XP affichée mais offerte jusqu'au J9 : `Game::can_pay_xp`/`pay_xp`, D082 ; pas d'usure d'enclume)
   - [ ] J5 Accessoires et sets
+    - [x] J5a emplacements d'accessoires (46 cases, migration), stats portées uniques (armure + accessoires + sets, non-cumul), sets en pack, mobilité (double saut, esquive, escalade) partagée serveur/client, option de monde, joaillier (établi générique `Bench`, `bench_recipes/`), accessoires et bottes, laine provisoire, wiki
+    - [ ] J5b captures, docs (explication, décisions, équilibrage), relecture
   - [ ] J6 Stations de travail spécialisées
   - [ ] J7 Rangement (sac à dos, bourses, coffres et tonneaux améliorables)
   - [ ] J8 Jauges de survie (vie, faim, soif, température, endurance, dégâts, soins, HUD)

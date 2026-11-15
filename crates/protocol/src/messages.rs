@@ -125,8 +125,8 @@ pub enum ServerMessage {
     /// First message: where and how the player starts.
     Welcome {
         dimension: DimensionId,
-        body: Body,
-        movement: MovementSettings,
+        body: Box<Body>,
+        movement: Box<MovementSettings>,
         /// Half-width of the world, in blocks.
         border: i32,
         inventory: Box<PlayerInventory>,

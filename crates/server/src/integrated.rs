@@ -77,6 +77,7 @@ impl IntegratedServer {
         );
         game.set_recipe_discovery(meta.discover_recipes);
         game.durability = meta.durability;
+        game.set_gear_mobility(meta.gear_mobility);
         game.set_known_recipes(start.recipes);
         game.unknown_recipes = start.unknown_recipes;
         game.set_inventory(start.inventory);
@@ -91,8 +92,8 @@ impl IntegratedServer {
         if let (Some(body), Some(movement)) = (game.player_body(), game.movement()) {
             connection.send(ServerMessage::Welcome {
                 dimension: config.dimension.clone(),
-                body: *body,
-                movement,
+                body: Box::new(*body),
+                movement: Box::new(movement),
                 border: game.border,
                 inventory: Box::new(game.inventory()),
                 mode: game.mode(),

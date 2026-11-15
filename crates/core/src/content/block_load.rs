@@ -116,7 +116,7 @@ pub(super) fn load_blocks(
             }),
             station: value
                 .station
-                .filter(|&station| container::valid_station(station, &source, errors)),
+                .filter(|station| container::valid_station(station, &source, errors)),
             facing: None,
             furnace: value.furnace,
             worked: Vec::new(),

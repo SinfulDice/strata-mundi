@@ -1,0 +1,10 @@
+// Accessories, rings and amulets: four cells and a list of what it makes
+// (bench_recipes/ of strata:jeweller).
+Block(
+    textures: TopBottomSides(top: "strata:jeweller_top", bottom: "strata:oak_planks", sides: "strata:jeweller_side"),
+    hardness: 2.5,
+    tool: Some(BlockTool(kind: "strata:axe", required: false)),
+    sound: Some("strata:wood"),
+    category: Some("strata:stations"),
+    station: Some(Bench("strata:jeweller")),
+)

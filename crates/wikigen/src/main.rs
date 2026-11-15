@@ -17,6 +17,7 @@ mod search;
 mod site;
 mod texts;
 mod upgrades;
+mod worn;
 
 use clap::Parser;
 use std::path::PathBuf;

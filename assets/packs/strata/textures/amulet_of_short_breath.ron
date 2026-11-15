@@ -1,0 +1,30 @@
+// Amulet of short breath: a copper pendant holding a bubble of glass.
+Sprite(
+    colors: {
+        'c': ("stick", 0),
+        'O': ("copper_ore", 0),
+        'o': ("copper_ore", 1),
+        'C': ("copper_ore", 2),
+        'b': ("glass", 0),
+        'B': ("glass", 2),
+        'H': ("glass", 3),
+    },
+    rows: [
+        "................",
+        "...c........c...",
+        "....c......c....",
+        ".....c....c.....",
+        "......c..c......",
+        ".......cc.......",
+        "......OCCO......",
+        ".....OobbCO.....",
+        "....OobBHbCO....",
+        "....ObBHHBbO....",
+        "....ObBBBBbO....",
+        ".....ObbbbO.....",
+        "......OooO......",
+        ".......OO.......",
+        "................",
+        "................",
+    ],
+)

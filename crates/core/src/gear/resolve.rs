@@ -21,6 +21,8 @@ pub struct GearFields {
     pub upgrade_slots: Option<Vec<Identifier>>,
     /// The item's own repair material, instead of its tier's.
     pub repair: Option<IngredientDef>,
+    /// Bricks given while worn.
+    pub worn: Vec<crate::upgrade::Effect>,
 }
 
 /// An item's equipment once resolved: tier values fill what the item leaves out.
@@ -75,6 +77,11 @@ impl Gear {
                 repair: fields
                     .repair
                     .or_else(|| tier.and_then(|tier| tier.repair.clone())),
+                worn: if fields.equip.is_some() {
+                    fields.worn
+                } else {
+                    Vec::new()
+                },
             },
             tool,
             durability,
@@ -95,5 +102,5 @@ fn derived_uses(
         return Some(tier.durability);
     }
     let factor = tier.armor_durability.filter(|_| worn)?;
-    Some(factor.saturating_mul(piece_durability(equip?)))
+    Some(factor.saturating_mul(piece_durability(equip?)?))
 }

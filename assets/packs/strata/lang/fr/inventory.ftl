@@ -48,3 +48,7 @@ ui-anvil-item-tip = L'outil, l'arme ou l'armure à améliorer ou à réparer.
 ui-anvil-material-tip = Le matériau de l'amélioration choisie ; sans choix, celui de l'objet (lingot de son tier, cuir, tissu…) ou un second objet identique sans amélioration, pour le réparer.
 ui-anvil-earlier = <
 ui-anvil-later = >
+ui-inventory-accessories = Accessoires
+ui-bench-help = Choisissez un objet dans la liste : ses ingrédients viennent de l'inventaire. Survolez pour voir ce qu'il demande.
+ui-bench-missing = Ingrédients manquants.
+ui-bench-ingredient = { $count } × { $item }

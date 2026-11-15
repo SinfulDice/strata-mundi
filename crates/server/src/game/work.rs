@@ -1,13 +1,11 @@
 //! Tools used beyond breaking: a hoe tills and a chisel carves the block aimed at, a
-//! sickle sweeps the plants around the one cut; worn armour slows the player.
+//! sickle sweeps the plants around the one cut.
 
 use super::Game;
 use super::hammer::add_to_heap;
 use crate::loader::ColumnLoader;
 use strata_core::content::{BlockId, Face, ItemId};
 use strata_core::coords::BlockPos;
-use strata_core::gear::Burden;
-use strata_core::inventory::ARMOR;
 use strata_core::updates::BlockChange;
 
 impl Game {
@@ -74,26 +72,6 @@ impl Game {
         self.spawn_loot(heap, pos);
         if swept {
             self.wear_held(1);
-        }
-    }
-
-    /// Each tick: the player walks as fast as their armour lets them (its stats are
-    /// cached until the pieces change).
-    pub(super) fn apply_armour_weight(&mut self) {
-        let Some(inventory) = self.ecs.inventories.get(self.player) else {
-            return;
-        };
-        let burden = ARMOR
-            .filter_map(|slot| Some((slot, inventory.slots.get(slot)?)))
-            .filter_map(|(slot, stack)| {
-                self.slot_stats(slot, stack)
-                    .armor
-                    .as_ref()
-                    .map(|a| a.burden)
-            })
-            .fold(Burden::default(), |total, burden| total + burden);
-        if let Some(control) = self.ecs.controls.get_mut(self.player) {
-            control.movement.speed = f64::from(burden.speed_factor());
         }
     }
 }

@@ -2,12 +2,14 @@
 //! the same code on both sides, so they agree tick after tick.
 
 mod aabb;
+mod abilities;
 mod boat;
 mod body;
 mod item;
 mod swim;
 
 pub use aabb::Aabb;
+pub use abilities::{AbilityState, Dash, Mobility};
 pub use boat::{
     BoatBody, BoatControls, BoatHandling, BoxSize, DEFAULT_SLIPPERINESS, liquid_surface, step_boat,
 };

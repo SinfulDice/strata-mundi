@@ -63,7 +63,7 @@ pub use worked::{Worked, WorkedDef};
 use crate::audio::{self, Sounds};
 use crate::cinematic::{self, Cinematic};
 use crate::cooking::{self, Cooking};
-use crate::crafting::{self, Recipes};
+use crate::crafting::{self, Benches, Recipes};
 use crate::dimension::DimensionId;
 use crate::gear::Gear;
 use crate::id::Identifier;
@@ -72,6 +72,7 @@ use crate::pack::{PackError, PackSet};
 use crate::physics::LiquidCell;
 use crate::sky::{self, DayCycle, Sky};
 use crate::upgrade::{Upgrades, load_upgrades};
+use crate::worn::{Worn, bound_worn_effects, load_worn};
 use block_load::{BlockRefs, Presented, load_blocks};
 use std::collections::BTreeMap;
 
@@ -104,6 +105,10 @@ pub struct Content {
     pub gear: Gear,
     /// Upgrades put in items at the anvil, and the repair rules.
     pub upgrades: Upgrades,
+    /// Sets and the movement abilities equipment gives.
+    pub worn: Worn,
+    /// Recipes of the benches (jeweller…).
+    pub benches: Benches,
     /// Item tooltips by language, see `item_tooltip`.
     pub tooltips: describe::TooltipCache,
 }
@@ -137,7 +142,7 @@ impl Content {
             entities: &entities,
             gear: &gear,
         };
-        let items = item::load_items(packs, &known, &textures, &mut errors);
+        let mut items = item::load_items(packs, &known, &textures, &mut errors);
         let loot_tables = loot::load_loot_tables(packs, &items, &mut errors);
         let tags = tags::load_tags(packs, &items, &mut errors);
         let names = crafting::Names {
@@ -145,8 +150,11 @@ impl Content {
             tags: &tags,
         };
         let recipes = Recipes::new(crafting::load_recipes(packs, &names, &mut errors));
+        let benches = crafting::load_benches(packs, &names, &mut errors);
         let cooking = cooking::load_cooking(packs, &names, &blocks, &mut errors);
         let upgrades = load_upgrades(packs, &names, &gear.slot_families, &mut errors);
+        bound_worn_effects(&mut items, &upgrades.stats, &mut errors);
+        let worn = load_worn(packs, &items, &upgrades.stats, &mut errors);
         loot::check_loot_names(&refs.loot, &loot_tables, &mut errors);
         worked::resolve_worked(&mut blocks, refs.worked, &items, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
@@ -173,6 +181,8 @@ impl Content {
             cooking,
             gear,
             upgrades,
+            worn,
+            benches,
             tooltips: Default::default(),
         };
         content.cache_tooltips();

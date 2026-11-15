@@ -1,9 +1,7 @@
 use super::tier::bounded;
-use crate::content::{EquipSlot, Item, ItemId, Registry};
+use crate::content::EquipSlot;
 use crate::id::Identifier;
-use crate::inventory::ItemStack;
 use crate::pack::PackError;
-use crate::upgrade::{Upgrades, stack_stats};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -39,13 +37,14 @@ impl ArmorWeight {
 }
 
 /// Share of one piece in its set's uses (Minecraft's): multiplied by the tier's
-/// `armor_durability`.
-pub fn piece_durability(slot: EquipSlot) -> u16 {
+/// `armor_durability`; accessories take no wear.
+pub fn piece_durability(slot: EquipSlot) -> Option<u16> {
     match slot {
-        EquipSlot::Head => 11,
-        EquipSlot::Chest => 16,
-        EquipSlot::Legs => 15,
-        EquipSlot::Feet => 13,
+        EquipSlot::Head => Some(11),
+        EquipSlot::Chest => Some(16),
+        EquipSlot::Legs => Some(15),
+        EquipSlot::Feet => Some(13),
+        EquipSlot::Ring | EquipSlot::Amulet | EquipSlot::Belt | EquipSlot::Cloak => None,
     }
 }
 
@@ -124,36 +123,4 @@ impl Burden {
     pub fn speed_factor(&self) -> f32 {
         1.0 - self.speed.clamp(0.0, MAX_BURDEN)
     }
-}
-
-fn armor_of(
-    stack: &ItemStack,
-    items: &Registry<ItemId, Item>,
-    upgrades: &Upgrades,
-) -> Option<Armor> {
-    stack_stats(stack, items, upgrades).armor
-}
-
-/// Protection points of the worn pieces, upgrades counted; a broken one (kept until
-/// repaired) protects nothing.
-pub fn worn_protection<'a>(
-    worn: impl IntoIterator<Item = &'a ItemStack>,
-    items: &Registry<ItemId, Item>,
-    upgrades: &Upgrades,
-) -> u16 {
-    worn.into_iter()
-        .filter(|stack| !stack.is_broken())
-        .filter_map(|stack| armor_of(stack, items, upgrades))
-        .fold(0, |total, armor| total.saturating_add(armor.protection))
-}
-
-/// What the worn pieces weigh, broken or not, lightening counted.
-pub fn worn_burden<'a>(
-    worn: impl IntoIterator<Item = &'a ItemStack>,
-    items: &Registry<ItemId, Item>,
-    upgrades: &Upgrades,
-) -> Burden {
-    worn.into_iter()
-        .filter_map(|stack| armor_of(stack, items, upgrades))
-        .fold(Burden::default(), |total, armor| total + armor.burden)
 }

@@ -2,11 +2,13 @@
 
 mod actions;
 mod anvil;
+mod bench;
 mod boat;
 mod bucket;
 mod containers;
 mod crafting;
 mod drops;
+mod equipment;
 mod furnaces;
 mod hammer;
 mod inventory;
@@ -90,9 +92,7 @@ impl Game {
             .insert(player, rules.recipes.starting().collect());
         let movement = MovementSettings {
             can_fly: mode == GameMode::Creative,
-            step_up: true,
-            auto_jump: true,
-            speed: 1.0,
+            ..MovementSettings::default()
         };
         ecs.controls
             .insert(player, PlayerControl::new(movement, mode));
@@ -204,7 +204,7 @@ impl Game {
     /// Runs one tick of player and boat physics, liquids and fire; returns the blocks changed.
     pub fn tick(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         self.tick += 1;
-        self.apply_armour_weight();
+        self.apply_equipment();
         let border = self.border;
         let terrain = terrain::WorldTerrain {
             loader,
@@ -361,3 +361,6 @@ mod anvil_tests;
 
 #[cfg(test)]
 mod hammer_tests;
+
+#[cfg(test)]
+mod equipment_tests;

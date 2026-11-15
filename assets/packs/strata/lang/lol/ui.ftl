@@ -54,6 +54,10 @@ ui-new-world-durability = OLD STUFFZ: { $keep ->
         [on] KEEP 4 FIXIN
        *[off] GO BREAKZ
     }
+ui-new-world-gear-mobility = JUMPY BOOTZ: { $allowed ->
+        [on] YUS
+       *[off] NOPE
+    }
 ui-new-world-create = MAEK IT
 
 ui-delete-question = DELEET "{ $name }"? RLY?

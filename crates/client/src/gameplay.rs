@@ -21,7 +21,7 @@ use glam::DVec3;
 use strata_core::cinematic::Cinematic;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
 use strata_core::dimension::DimensionId;
-use strata_core::physics::{Body, EYE_HEIGHT, MoveInput, Terrain, TerrainFns, solid_at};
+use strata_core::physics::{Body, EYE_HEIGHT, Mobility, MoveInput, Terrain, TerrainFns, solid_at};
 use strata_core::sky::DayCycle;
 use strata_protocol::commands::Feedback;
 use strata_protocol::{
@@ -137,6 +137,7 @@ impl Gameplay {
             sneak: input.is_held(Action::Sneak),
             sprint: input.is_held(Action::Sprint),
             toggle_flight: false,
+            dash: input.just_pressed(Action::Dash),
         };
         self.ease_sprint_zoom(dt, move_input.sprint && move_input.wish != [0.0; 2]);
         self.advance_player(dt, move_input, connection);
@@ -159,7 +160,14 @@ impl Gameplay {
     fn advance_player(&mut self, dt: f32, input: MoveInput, connection: &ClientConnection) {
         let terrain = terrain(&self.view.world, &self.info, self.border);
         if let Some(player) = &mut self.player {
-            player.movement.speed = self.inventory.armour_speed(&self.info.content);
+            let worn = self.inventory.worn_stats(&self.info.content);
+            let movement = &mut player.movement;
+            movement.speed = f64::from(worn.burden.speed_factor());
+            movement.mobility = if movement.gear_mobility {
+                self.info.content.worn.mobility.mobility(&worn)
+            } else {
+                Mobility::default()
+            };
             for (sequence, input) in player.advance(f64::from(dt), input, &terrain) {
                 connection.send(ClientMessage::Input { sequence, input });
             }

@@ -141,10 +141,40 @@ fn every_tool_weapon_and_armour_piece_can_be_made() {
     });
     let mut count = 0;
     for (key, name, _) in made {
-        assert!(content.recipes.making(key).next().is_some(), "{name}");
+        let at_bench = content.benches.list().iter().any(|r| r.result == key);
+        assert!(
+            content.recipes.making(key).next().is_some() || at_bench,
+            "{name}"
+        );
         count += 1;
     }
     assert!(count >= 60, "{count}");
+}
+
+#[test]
+fn every_accessory_and_set_loads_and_the_jeweller_makes_the_accessories() {
+    let content = game();
+    let accessories: Vec<_> = content
+        .items
+        .iter()
+        .filter(|(_, _, item)| {
+            item.category
+                .as_ref()
+                .is_some_and(|c| c.name() == "accessories")
+        })
+        .collect();
+    assert!(accessories.len() >= 5);
+    let jeweller: Identifier = "strata:jeweller".parse().unwrap();
+    for (key, name, item) in accessories {
+        assert!(!item.gear.worn.is_empty(), "{name} gives something");
+        let made = content.benches.of(&jeweller).any(|(_, r)| r.result == key);
+        assert!(made, "{name} at the jeweller");
+    }
+    assert!(content.worn.sets.len() >= 8);
+    for set in &content.worn.sets {
+        assert_eq!(set.size(), 4, "{}", set.id);
+        assert!(set.bonuses.len() >= 2, "{}", set.id);
+    }
 }
 
 #[test]

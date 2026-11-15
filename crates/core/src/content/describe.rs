@@ -79,6 +79,13 @@ impl Content {
             let args = [("points", armor.protection.to_string()), ("weight", weight)];
             lines.push(tr.text_with(language, "gear-armor-line", &args));
         }
+        if !item.gear.worn.is_empty() {
+            let effects: Vec<String> = (item.gear.worn.iter())
+                .map(|effect| self.effect_text(effect, language))
+                .collect();
+            let args = [("effects", effects.join(", "))];
+            lines.push(tr.text_with(language, "gear-worn-line", &args));
+        }
         if !item.gear.upgrade_slots.is_empty() {
             let slots = [(
                 "slots",

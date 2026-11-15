@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["CIC", "PPP"],
+    key: {'C': Item("strata:copper_ingot"), 'I': Item("strata:iron_ingot"), 'P': Tag("strata:planks")},
+    result: Result(item: "strata:jeweller"),
+)

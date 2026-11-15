@@ -1,0 +1,13 @@
+// Each bonus replaces the one before: it repeats what it keeps of it.
+Set(
+    pieces: [
+        "strata:cloth_hood",
+        "strata:cloth_tunic",
+        "strata:cloth_trousers",
+        "strata:cloth_shoes",
+    ],
+    bonuses: [
+        Bonus(pieces: 2, effects: [Stat(stat: "strata:insulation", op: Add, value: 1.0)]),
+        Bonus(pieces: 4, effects: [Stat(stat: "strata:insulation", op: Add, value: 3.0)]),
+    ],
+)

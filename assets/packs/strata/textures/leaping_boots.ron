@@ -1,0 +1,2 @@
+// Leaping boots: light boots dyed green, springier.
+Recolor(base: "strata:leather_boots", swap: {"leather": "grass"})

@@ -75,7 +75,7 @@ impl Game {
                 click,
             } => self.craft_click(loader, click),
             InventoryRequest::FillRecipe { recipe, all } => self.fill_recipe(loader, recipe, all),
-            InventoryRequest::ChooseCut(choice) => self.choose_cut(choice),
+            InventoryRequest::ChooseCut(choice) => self.choose_cut(loader, choice),
             InventoryRequest::ChooseUpgrade(choice) => self.choose_upgrade(choice),
             InventoryRequest::ChooseArea(index) => self.choose_area(index),
             InventoryRequest::Click { slot, click } => {
@@ -274,7 +274,8 @@ impl Game {
         if let Some(mut craft) = craft {
             if let Some(before) = before.filter(|before| *before != craft.grid) {
                 let first = |grid: &CraftGrid| grid.slots.get(0).map(|s| s.item);
-                if first(&before) != first(&craft.grid) {
+                let kept = craft.bench.is_some();
+                if !kept && first(&before) != first(&craft.grid) {
                     craft.cut = None;
                 }
                 self.craft_changed();

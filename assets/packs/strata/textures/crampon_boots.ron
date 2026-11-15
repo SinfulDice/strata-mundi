@@ -1,0 +1,2 @@
+// Crampon boots: light boots shod with iron spikes.
+Recolor(base: "strata:leather_boots", swap: {"leather": "iron"})

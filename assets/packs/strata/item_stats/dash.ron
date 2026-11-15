@@ -1,0 +1,2 @@
+// More than 0: a short dash on its key. Bounds of the values effects give it.
+ItemStat(min: 0.0, max: 1.0)

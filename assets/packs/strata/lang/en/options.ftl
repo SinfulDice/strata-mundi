@@ -182,3 +182,4 @@ spatial-advanced = Advanced
 spatial-simple = Simple stereo
 action-journal = Journal
 action-hammer-area = Hammer area
+action-dash = Dash

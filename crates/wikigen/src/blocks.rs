@@ -71,11 +71,13 @@ fn page(ctx: &Ctx<'_>, id: &Identifier, block: &Block) -> Page {
         .key(id)
         .map_or_else(String::new, |item| {
             crate::recipes::section(ctx, &path, item)
+                + &crate::worn::made_at_bench(ctx, &path, item)
                 + &crate::cooking::sections(ctx, &path, item)
                 + &crate::recipes::uses(ctx, &path, item)
         });
+    let makes = crate::worn::bench_makes(ctx, &path, block);
     let body = format!(
-        "{box_html}{}{found}{crafting}{}",
+        "{box_html}{}{found}{crafting}{makes}{}",
         ctx.text(&key),
         history_section(ctx, &key)
     );

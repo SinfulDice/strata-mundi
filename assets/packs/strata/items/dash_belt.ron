@@ -1,0 +1,10 @@
+// Runner's belt: a short dash on its key.
+Item(
+    texture: "strata:dash_belt",
+    max_stack: 1,
+    category: Some("strata:accessories"),
+    equip: Some(Belt),
+    worn: [
+        Stat(stat: "strata:dash", op: Add, value: 1.0),
+    ],
+)

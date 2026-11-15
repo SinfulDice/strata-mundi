@@ -1,0 +1,2 @@
+// Wool. Until sheep come (v0.4), spun from plant fibres (provisional recipe).
+Item(texture: "strata:wool", category: Some("strata:materials"))

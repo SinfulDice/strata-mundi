@@ -1,6 +1,7 @@
 //! Everything drawn over the world: the HUD in play, menus on demand, the title screen.
 
 mod anvil;
+mod bench;
 mod console;
 mod creation;
 mod draw;

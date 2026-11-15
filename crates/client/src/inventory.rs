@@ -1,11 +1,11 @@
 use crate::ui::SlotMark;
 use std::sync::Arc;
 use strata_core::content::{Content, Item, ItemId, Registry};
-use strata_core::gear::Burden;
 use strata_core::inventory::{
-    ARMOR, Area, Click, HOTBAR, ItemStack, PlayerInventory, SlotRef, SortOrder,
+    Area, Click, HOTBAR, ItemStack, PlayerInventory, SlotRef, SortOrder, worn_slots,
 };
 use strata_core::upgrade::{ItemStats, StatsCache, max_durability};
+use strata_core::worn::{WornStats, worn_stats};
 use strata_protocol::InventoryRequest;
 
 pub const SLOTS: usize = HOTBAR.end;
@@ -68,27 +68,12 @@ impl ClientInventory {
         )
     }
 
-    /// The armour worn and its stats.
-    fn worn(&self, content: &Content) -> impl Iterator<Item = (&ItemStack, Arc<ItemStats>)> {
-        ARMOR.filter_map(|slot| Some((self.stack(slot)?, self.slot_stats(slot, content)?)))
-    }
-
-    /// Protection points of the armour worn, shown in the inventory; a broken piece
-    /// protects nothing.
-    pub fn protection(&self, content: &Content) -> u16 {
-        self.worn(content)
-            .filter(|(stack, _)| !stack.is_broken())
-            .filter_map(|(_, stats)| stats.armor.as_ref().map(|armor| armor.protection))
-            .fold(0, u16::saturating_add)
-    }
-
-    /// Walking speed allowed by the armour worn, as the server computes it.
-    pub fn armour_speed(&self, content: &Content) -> f64 {
-        let burden = self
-            .worn(content)
-            .filter_map(|(_, stats)| stats.armor.as_ref().map(|armor| armor.burden))
-            .fold(Burden::default(), |total, burden| total + burden);
-        f64::from(burden.speed_factor())
+    /// What the armour, accessories and sets worn come to, as the server computes it
+    /// (protection shown in the inventory, speed and abilities predicted).
+    pub fn worn_stats(&self, content: &Content) -> WornStats {
+        let worn = worn_slots()
+            .filter_map(|slot| Some((self.stack(slot)?, self.slot_stats(slot, content)?)));
+        worn_stats(worn, &content.items, &content.worn)
     }
 
     pub fn inventory(&self) -> &PlayerInventory {

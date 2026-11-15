@@ -49,6 +49,9 @@ pub struct WorldMeta {
     /// World option: worn-out items break, or stay useless until repaired.
     #[serde(default)]
     pub durability: DurabilityMode,
+    /// World option: equipment may give movement abilities (double jump, dash, climbing).
+    #[serde(default = "yes")]
+    pub gear_mobility: bool,
     /// World type and generation settings; older worlds are of the pack's normal type.
     #[serde(default)]
     pub generation: WorldgenSettings,
