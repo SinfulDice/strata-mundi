@@ -1,0 +1,4 @@
+// Crafted upgrades (sharpening, reinforcement, lightening), applied at the anvil
+// (milestone 4b). Machine modules (v0.8), runes and staff parts (v0.9) will be families
+// of their own.
+UpgradeSlot(max_per_item: 4)

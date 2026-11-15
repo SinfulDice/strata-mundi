@@ -36,6 +36,9 @@ pub struct ItemDef {
     /// Protection and weight of a worn piece (with `equip`).
     #[serde(default)]
     pub armor: Option<ArmorDef>,
+    /// Its own upgrade slot families, instead of its tier's (leather, named uniques).
+    #[serde(default)]
+    pub upgrade_slots: Option<Vec<Identifier>>,
     /// Left in the crafting grid when used in a recipe (a water bucket leaves a bucket).
     #[serde(default)]
     pub remainder: Option<Identifier>,
@@ -167,6 +170,8 @@ pub(super) fn load_items(
                 weapon: value.weapon,
                 armor: value.armor,
                 durability: value.durability,
+                equip: value.equip,
+                upgrade_slots: value.upgrade_slots,
             },
             &source,
             errors,

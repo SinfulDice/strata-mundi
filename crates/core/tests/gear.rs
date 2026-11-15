@@ -56,7 +56,15 @@ fn tiers_go_up_in_level_and_leave_room_for_more() {
         .map(level),
         [0, 1, 2, 3]
     );
-    let slots = |name: &str| content.gear.tiers.get(&id(name)).unwrap().upgrade_slots;
+    let slots = |name: &str| {
+        content
+            .gear
+            .tiers
+            .get(&id(name))
+            .unwrap()
+            .upgrade_slots
+            .len()
+    };
     assert!(slots("strata:wood") <= slots("strata:iron"));
     assert!(slots("strata:iron") < slots("strata:diamond"));
     assert!(content.gear.tiers.values().all(|tier| tier.level < u8::MAX));
@@ -156,6 +164,19 @@ fn armour_weighs_by_its_kind_and_metals_come_in_several_weights() {
     assert!(armor("strata:iron_plate_chestplate").burden.speed > 0.0);
     assert_eq!(armor("strata:iron_mail_shirt").burden.speed, 0.0);
     assert!(armor("strata:iron_mail_shirt").burden.stamina > 0.0);
+    let item_of = |name: &str| content.items.get(item(&content, name)).unwrap();
+    assert_eq!(
+        item_of("strata:iron_plate_chestplate").durability,
+        Some(15 * 16)
+    );
+    assert_eq!(
+        item_of("strata:diamond_plate_boots").durability,
+        Some(33 * 13)
+    );
+    assert_eq!(
+        item_of("strata:leather_cap").gear.upgrade_slots,
+        vec![id("strata:craft")]
+    );
     let protection = |name: &str| armor(name).protection;
     assert!(protection("strata:iron_plate_chestplate") > protection("strata:iron_mail_shirt"));
     assert!(protection("strata:iron_mail_shirt") > protection("strata:leather_tunic"));
@@ -167,7 +188,7 @@ fn tooltips_tell_damage_protection_and_upgrades() {
     let tooltip = |name: &str, lang| content.item_tooltip(item(&content, name), lang);
     let sword = tooltip("strata:iron_sword", "fr");
     assert!(sword.contains("Dégâts : 6"), "{sword}");
-    assert!(sword.contains("amélioration : 1"), "{sword}");
+    assert!(sword.contains("amélioration : artisanal ×1"), "{sword}");
     let plate = tooltip("strata:diamond_plate_chestplate", "en");
     assert!(plate.contains("Protection: 8 (heavy armour)"), "{plate}");
     let multi = tooltip("strata:multi_tool", "en");

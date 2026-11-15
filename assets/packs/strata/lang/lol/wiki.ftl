@@ -124,3 +124,5 @@ wiki-fact-protection = SHIELDY
 wiki-fact-weight = CLANKY WEIGHT
 wiki-fact-slowdown = MAEKS U SLOW BY
 wiki-fact-enchantability = MAGIC SPARKLEZ (LATR)
+wiki-value-times = ×{ $value }
+wiki-value-percent = { $value } %

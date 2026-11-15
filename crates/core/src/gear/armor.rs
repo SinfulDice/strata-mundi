@@ -1,5 +1,5 @@
 use super::tier::bounded;
-use crate::content::{Item, ItemId, Registry};
+use crate::content::{EquipSlot, Item, ItemId, Registry};
 use crate::id::Identifier;
 use crate::inventory::ItemStack;
 use crate::pack::PackError;
@@ -34,6 +34,17 @@ impl ArmorWeight {
             stamina: share(self.stamina),
             mana: share(self.mana),
         }
+    }
+}
+
+/// Share of one piece in its set's uses (Minecraft's): multiplied by the tier's
+/// `armor_durability`.
+pub fn piece_durability(slot: EquipSlot) -> u16 {
+    match slot {
+        EquipSlot::Head => 11,
+        EquipSlot::Chest => 16,
+        EquipSlot::Legs => 15,
+        EquipSlot::Feet => 13,
     }
 }
 

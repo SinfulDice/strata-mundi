@@ -1,2 +1,2 @@
 // Stone tools: cobblestone heads, mine iron and copper.
-Tier(level: 1, speed: 4.0, durability: 131, damage: 1.0, enchantability: 5, upgrade_slots: 0)
+Tier(level: 1, speed: 4.0, durability: 131, damage: 1.0, enchantability: 5, upgrade_slots: [])

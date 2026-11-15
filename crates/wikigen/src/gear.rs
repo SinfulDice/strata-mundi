@@ -45,13 +45,14 @@ pub fn facts(ctx: &Ctx<'_>, item: &Item) -> Vec<(String, String)> {
         rows.push((ctx.tr("wiki-fact-protection"), armor.protection.to_string()));
         rows.push((ctx.tr("wiki-fact-weight"), escape(&weight)));
         if armor.burden.speed > 0.0 {
-            let percent = number(armor.burden.speed * 100.0);
-            rows.push((ctx.tr("wiki-fact-slowdown"), format!("{percent} %")));
+            let value = number(armor.burden.speed * 100.0);
+            let percent = ctx.tr_with("wiki-value-percent", &[("value", value)]);
+            rows.push((ctx.tr("wiki-fact-slowdown"), escape(&percent)));
         }
     }
-    if item.gear.upgrade_slots > 0 {
-        let slots = item.gear.upgrade_slots.to_string();
-        rows.push((ctx.tr("wiki-fact-upgrade-slots"), slots));
+    if !item.gear.upgrade_slots.is_empty() {
+        let slots = content.slot_counts(&item.gear.upgrade_slots, ctx.lang);
+        rows.push((ctx.tr("wiki-fact-upgrade-slots"), escape(&slots)));
     }
     if item.gear.enchantability > 0 {
         let value = item.gear.enchantability.to_string();

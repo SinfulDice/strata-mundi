@@ -24,3 +24,5 @@ tier-strata-stone = stone
 tier-strata-iron = iron
 tier-strata-gold = gold
 tier-strata-diamond = diamond
+upgrade-slot-count = { $family } ×{ $count }
+upgrade-slot-strata-craft = craft

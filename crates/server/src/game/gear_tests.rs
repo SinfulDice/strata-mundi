@@ -121,6 +121,22 @@ fn the_sickle_cuts_the_plants_around_for_one_use() {
     assert!(air(&w, BlockPos::new(8, 64, 6)) && air(&w, BlockPos::new(12, 64, 10)));
     assert!(!air(&w, far), "three blocks away stays");
     assert_eq!(held_uses(&w), Some(full - 1));
+    let fiber = item(&w, "strata:plant_fiber");
+    let heaps = w
+        .game
+        .ecs
+        .drops
+        .iter()
+        .filter(|(_, d)| d.stack.item == fiber)
+        .count();
+    assert!(
+        dropped(&w, "strata:plant_fiber") > 1,
+        "24 plants, one chance in four each"
+    );
+    assert!(
+        heaps <= 2,
+        "the cut plant's fibre and one heap for the others: {heaps}"
+    );
     wait(&mut w, 2);
     hold(&mut w, None);
     set(&mut w, SPOT, "strata:tall_grass");

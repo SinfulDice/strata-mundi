@@ -1,5 +1,5 @@
-//! Items used on the world: buckets pour and take liquid sources, flint and steel lights
-//! fires, boats are put down.
+//! Items used on the world (right click): buckets pour and take liquid sources, flint and
+//! steel lights fires, boats are put down; hoes and chisels hand over to `work.rs`.
 
 use super::Game;
 use crate::loader::{Bounded, ColumnLoader};
@@ -9,8 +9,8 @@ use strata_core::updates::BlockChange;
 
 impl Game {
     /// Validated use of `item`, in the selected hotbar slot, on `face` of the block at
-    /// `against`. In survival a bucket is filled or emptied, flint and steel wears and a
-    /// boat is used up.
+    /// `against`. In survival a bucket is filled or emptied, flint and steel wears, a
+    /// boat is used up, a hoe or chisel works the block.
     pub fn use_item(
         &mut self,
         loader: &mut ColumnLoader,

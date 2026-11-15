@@ -1,11 +1,11 @@
+use super::slots::{UpgradeSlotFamily, valid_slots};
 use crate::content::ToolDef;
 use crate::id::Identifier;
 use crate::pack::PackError;
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::path::Path;
 
-/// More would not fit the anvil's screen.
-pub const MAX_UPGRADE_SLOTS: u8 = 8;
 const MAX_DAMAGE: f32 = 1000.0;
 const MAX_ATTACK_SPEED: f32 = 20.0;
 /// Widest area a sweeping tool (sickle) clears around the block hit.
@@ -28,24 +28,28 @@ pub struct Tier {
     /// How well it takes enchantments, once enchanting exists.
     #[serde(default)]
     pub enchantability: u8,
-    /// Upgrade slots of its tools and armour, filled at the anvil.
+    /// Upgrade slots of its tools and armour, one family each (`upgrade_slots/`):
+    /// filled at the anvil. An item may list its own instead.
     #[serde(default)]
-    pub upgrade_slots: u8,
+    pub upgrade_slots: Vec<Identifier>,
+    /// Armour of this tier that gives no durability lasts this × 11, 16, 15 or 13 uses
+    /// (head, chest, legs, feet).
+    #[serde(default)]
+    pub armor_durability: Option<u16>,
 }
 
 impl Tier {
-    pub(super) fn validated(mut self, source: &Path, errors: &mut Vec<PackError>) -> Option<Self> {
+    pub(super) fn validated(
+        mut self,
+        families: &BTreeMap<Identifier, UpgradeSlotFamily>,
+        source: &Path,
+        errors: &mut Vec<PackError>,
+    ) -> Option<Self> {
         if self.durability == 0 {
             errors.push(PackError::invalid(source, "a tier needs a durability"));
             return None;
         }
-        if self.upgrade_slots > MAX_UPGRADE_SLOTS {
-            errors.push(PackError::invalid(
-                source,
-                format!("upgrade_slots: {MAX_UPGRADE_SLOTS} at most"),
-            ));
-            self.upgrade_slots = MAX_UPGRADE_SLOTS;
-        }
+        self.upgrade_slots = valid_slots(self.upgrade_slots, families, source, errors);
         self.damage = bounded(self.damage, 0.0, MAX_DAMAGE);
         Some(self)
     }

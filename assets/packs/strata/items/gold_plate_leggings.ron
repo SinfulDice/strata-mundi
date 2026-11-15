@@ -3,6 +3,5 @@ Item(
     tier: "strata:gold",
     category: Some("strata:armor"),
     equip: Some(Legs),
-    durability: 105,
     armor: Some(Armor(protection: 4, weight: "strata:heavy")),
 )

@@ -1,8 +1,11 @@
 #![allow(clippy::unwrap_used)]
 
 use super::*;
+use crate::content::EquipSlot;
 use crate::content::{Item, ItemId, ItemKind, Registry, TextureId};
 use crate::inventory::ItemStack;
+use crate::pack::PackError;
+use std::path::Path;
 
 fn id(text: &str) -> Identifier {
     text.parse().unwrap()
@@ -15,12 +18,15 @@ fn iron() -> Tier {
         durability: 250,
         damage: 2.0,
         enchantability: 14,
-        upgrade_slots: 1,
+        upgrade_slots: vec![id("strata:craft")],
+        armor_durability: Some(15),
     }
 }
 
 fn gear() -> Gear {
     let mut gear = Gear::default();
+    let craft = UpgradeSlotFamily { max_per_item: 2 };
+    gear.slot_families.insert(id("strata:craft"), craft);
     gear.tiers.insert(id("strata:iron"), iron());
     let heavy = ArmorWeight {
         speed: 0.025,
@@ -36,10 +42,7 @@ fn gear() -> Gear {
 fn fields(tier: Option<&str>) -> GearFields {
     GearFields {
         tier: tier.map(id),
-        tool: None,
-        weapon: None,
-        armor: None,
-        durability: None,
+        ..GearFields::default()
     }
 }
 
@@ -68,7 +71,7 @@ fn a_tier_fills_what_the_tool_leaves_out() {
     let tool = resolved.tool.unwrap();
     assert_eq!((tool.level, tool.speed), (2, 6.0));
     assert_eq!(resolved.durability, Some(250));
-    assert_eq!(resolved.gear.upgrade_slots, 1);
+    assert_eq!(resolved.gear.upgrade_slots, vec![id("strata:craft")]);
     assert_eq!(resolved.gear.enchantability, 14);
 }
 
@@ -175,4 +178,53 @@ fn heavy_armour_slows_light_armour_does_not() {
     assert!((burden.stamina - 0.4).abs() < 1e-5 && (burden.mana - 0.4).abs() < 1e-5);
     let many: Vec<ItemStack> = (0..40).map(|_| ItemStack::new(plate, 1, &items)).collect();
     assert!(worn_burden(&many, &items).speed_factor() >= 1.0 - MAX_BURDEN);
+}
+
+#[test]
+fn an_item_may_list_its_own_upgrade_slots_within_the_limits() {
+    let own = |slots: &[&str]| {
+        resolve(GearFields {
+            upgrade_slots: Some(slots.iter().map(|slot| id(slot)).collect()),
+            ..fields(Some("strata:iron"))
+        })
+    };
+    let (none, errors) = own(&[]);
+    assert!(none.gear.upgrade_slots.is_empty() && errors.is_empty());
+    let (capped, errors) = own(&[
+        "strata:craft",
+        "strata:craft",
+        "strata:craft",
+        "strata:rune",
+    ]);
+    assert_eq!(
+        capped.gear.upgrade_slots.len(),
+        2,
+        "two craft slots at most"
+    );
+    assert_eq!(errors.len(), 2, "a third craft slot and an unknown family");
+    assert_eq!(
+        count_slots(&capped.gear.upgrade_slots),
+        vec![(&id("strata:craft"), 2)]
+    );
+}
+
+#[test]
+fn armour_without_durability_takes_the_tier_s_share_or_is_an_error() {
+    let plate = ArmorDef {
+        protection: 6,
+        weight: id("strata:heavy"),
+    };
+    let (chest, errors) = resolve(GearFields {
+        armor: Some(plate.clone()),
+        equip: Some(EquipSlot::Chest),
+        ..fields(Some("strata:iron"))
+    });
+    assert!(errors.is_empty(), "{errors:?}");
+    assert_eq!(chest.durability, Some(15 * 16));
+    let (_, errors) = resolve(GearFields {
+        armor: Some(plate),
+        equip: Some(EquipSlot::Chest),
+        ..fields(None)
+    });
+    assert_eq!(errors.len(), 1, "no tier, no durability");
 }

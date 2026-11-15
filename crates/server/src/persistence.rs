@@ -339,3 +339,7 @@ fn is_small_png(bytes: &[u8]) -> bool {
 #[cfg(test)]
 #[path = "persistence_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "persistence_gear_tests.rs"]
+mod gear_tests;

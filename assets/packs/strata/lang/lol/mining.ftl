@@ -24,3 +24,5 @@ tier-strata-stone = ROCK
 tier-strata-iron = IRON
 tier-strata-gold = GOLD
 tier-strata-diamond = SHINY
+upgrade-slot-count = { $family } ×{ $count }
+upgrade-slot-strata-craft = HANDMAED

@@ -1,2 +1,2 @@
 // Iron tools: mine gold and diamond.
-Tier(level: 2, speed: 6.0, durability: 250, damage: 2.0, enchantability: 14, upgrade_slots: 1)
+Tier(level: 2, speed: 6.0, durability: 250, damage: 2.0, enchantability: 14, upgrade_slots: ["strata:craft"], armor_durability: 15)

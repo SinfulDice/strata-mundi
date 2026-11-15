@@ -9,7 +9,7 @@ use strata_core::inventory::{DataValue, OFFHAND};
 use strata_core::pack::PackSet;
 use strata_protocol::{GameMode, NewWorld};
 
-fn content() -> Arc<Content> {
+pub(super) fn content() -> Arc<Content> {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
     let packs = PackSet::discover(&dir, &mut Vec::new());
     Arc::new(Content::load(&packs, &PackSet::default()).0)
@@ -126,7 +126,7 @@ fn boats_and_the_seat_come_back_and_old_worlds_have_none() {
     std::fs::remove_dir_all(saves).unwrap();
 }
 
-fn new_world(name: &str) -> (std::path::PathBuf, save::WorldFolder, WorldMeta) {
+pub(super) fn new_world(name: &str) -> (std::path::PathBuf, save::WorldFolder, WorldMeta) {
     let saves = std::env::temp_dir().join(format!("strata-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&saves);
     let new = NewWorld {
@@ -146,7 +146,7 @@ fn new_world(name: &str) -> (std::path::PathBuf, save::WorldFolder, WorldMeta) {
     (saves, folder, meta)
 }
 
-fn settings(folder: &save::WorldFolder, meta: WorldMeta) -> WorldSettings {
+pub(super) fn settings(folder: &save::WorldFolder, meta: WorldMeta) -> WorldSettings {
     WorldSettings {
         meta,
         folder: Some(folder.clone()),

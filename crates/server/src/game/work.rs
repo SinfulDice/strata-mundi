@@ -3,7 +3,7 @@
 
 use super::Game;
 use crate::loader::ColumnLoader;
-use strata_core::content::{BlockId, Face};
+use strata_core::content::{BlockId, Face, ItemId};
 use strata_core::coords::BlockPos;
 use strata_core::gear::worn_burden;
 use strata_core::inventory::ARMOR;
@@ -35,7 +35,8 @@ impl Game {
     }
 
     /// Survival: a sweeping tool (sickle) that broke `block` at `pos` also breaks the
-    /// instant blocks of the same tool kind around it, one block up and down, for one use.
+    /// instant blocks of the same tool kind around it, one block up and down, for one use;
+    /// what they give falls in one heap per item where the cut began.
     pub(super) fn sweep_around(
         &mut self,
         loader: &mut ColumnLoader,
@@ -43,15 +44,16 @@ impl Game {
         block: BlockId,
         changes: &mut Vec<BlockChange>,
     ) {
-        let held = self.held_item();
-        let reach = i32::from(self.rules.mining.sweep(block, held));
-        if reach == 0 || self.is_creative() {
+        if self.is_creative() {
             return;
         }
+        let held = self.held_item();
+        let reach = i32::from(self.rules.mining.sweep(block, held));
         let mining = std::sync::Arc::clone(&self.rules.mining);
-        let Some(kind) = mining.tool_kind(block) else {
+        let Some(kind) = mining.tool_kind(block).filter(|_| reach > 0) else {
             return;
         };
+        let mut heap: Vec<(ItemId, u16)> = Vec::new();
         let mut swept = false;
         for at in around(pos, reach) {
             let Some(other) = loader.block(at).filter(|&b| b != BlockId::AIR) else {
@@ -60,11 +62,14 @@ impl Game {
             let alike =
                 mining.tool_kind(other) == Some(kind) && mining.break_ticks(other, held) == Some(0);
             if alike && at.is_valid(self.border) {
-                self.drop_broken(other, at);
+                for (item, count) in self.roll_loot(other, at) {
+                    add_to_heap(&mut heap, item, count);
+                }
                 self.set_block(loader, at, BlockId::AIR, changes);
                 swept = true;
             }
         }
+        self.spawn_loot(heap, pos);
         if swept {
             self.wear_held(1);
         }
@@ -72,18 +77,21 @@ impl Game {
 
     /// Each tick: the player walks as fast as their armour lets them.
     pub(super) fn apply_armour_weight(&mut self) {
-        let worn = self.worn_armour();
-        let speed = worn_burden(worn.iter().copied(), self.rules.items()).speed_factor();
+        let Some(inventory) = self.ecs.inventories.get(self.player) else {
+            return;
+        };
+        let worn = ARMOR.filter_map(|slot| inventory.slots.get(slot));
+        let speed = worn_burden(worn, self.rules.items()).speed_factor();
         if let Some(control) = self.ecs.controls.get_mut(self.player) {
             control.movement.speed = f64::from(speed);
         }
     }
+}
 
-    fn worn_armour(&self) -> Vec<&strata_core::inventory::ItemStack> {
-        let Some(inventory) = self.ecs.inventories.get(self.player) else {
-            return Vec::new();
-        };
-        ARMOR.filter_map(|slot| inventory.slots.get(slot)).collect()
+fn add_to_heap(heap: &mut Vec<(ItemId, u16)>, item: ItemId, count: u16) {
+    match heap.iter_mut().find(|(kept, _)| *kept == item) {
+        Some((_, total)) => *total = total.saturating_add(count),
+        None => heap.push((item, count)),
     }
 }
 

@@ -124,3 +124,5 @@ wiki-fact-protection = Protection
 wiki-fact-weight = Armour weight
 wiki-fact-slowdown = Slows walking by
 wiki-fact-enchantability = Enchantability (to come)
+wiki-value-times = ×{ $value }
+wiki-value-percent = { $value } %

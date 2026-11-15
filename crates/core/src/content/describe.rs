@@ -2,6 +2,7 @@
 //! tool mines.
 
 use super::{BlockTool, Content, Item, ItemAction, ItemId, ItemKind, ToolDef};
+use crate::gear::count_slots;
 use crate::id::Identifier;
 use crate::lang::LANGUAGES;
 use std::collections::HashMap;
@@ -47,7 +48,9 @@ impl Content {
             if let Some(tool) = &entry.tool {
                 lines.push(self.tool_text(tool, language));
             }
-            lines.extend(self.gear_lines(entry, language));
+            if self.stats_known(item) {
+                lines.extend(self.gear_lines(entry, language));
+            }
         }
         lines.join("\n")
     }
@@ -76,11 +79,34 @@ impl Content {
             let args = [("points", armor.protection.to_string()), ("weight", weight)];
             lines.push(tr.text_with(language, "gear-armor-line", &args));
         }
-        if item.gear.upgrade_slots > 0 {
-            let slots = [("slots", item.gear.upgrade_slots.to_string())];
+        if !item.gear.upgrade_slots.is_empty() {
+            let slots = [(
+                "slots",
+                self.slot_counts(&item.gear.upgrade_slots, language),
+            )];
             lines.push(tr.text_with(language, "gear-upgrade-line", &slots));
         }
         lines
+    }
+
+    /// The single check of whether an item's stats (damage, protection, slots) are
+    /// known: all are until the knowledge system of milestone 13 answers here.
+    pub fn stats_known(&self, _item: ItemId) -> bool {
+        true
+    }
+
+    /// « artisanal ×2 », one family after the other.
+    pub fn slot_counts(&self, slots: &[Identifier], language: &str) -> String {
+        let tr = &self.translations;
+        let counts: Vec<String> = count_slots(slots)
+            .into_iter()
+            .map(|(family, count)| {
+                let name = tr.text(language, &family.translation_key("upgrade-slot"));
+                let args = [("family", name), ("count", count.to_string())];
+                tr.text_with(language, "upgrade-slot-count", &args)
+            })
+            .collect();
+        counts.join(", ")
     }
 
     /// Translated name of a tool kind (`strata:pickaxe` → « pioche »).

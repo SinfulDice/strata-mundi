@@ -8,7 +8,7 @@ use super::Game;
 use crate::ecs::Mining;
 use crate::loader::ColumnLoader;
 use glam::DVec3;
-use strata_core::content::{BlockId, crack_progress, crack_stage};
+use strata_core::content::{BlockId, ItemId, crack_progress, crack_stage};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{ItemRules, ItemStack};
 use strata_core::rng::Rng;
@@ -158,10 +158,26 @@ impl Game {
         if self.is_creative() {
             return;
         }
+        let loot = self.roll_loot(block, pos);
+        self.spawn_loot(loot, pos);
         let held = self.held_item();
+        let worn = self.rules.mining.tool(held).is_some()
+            && self.rules.mining.break_ticks(block, None) != Some(0);
+        if worn {
+            self.wear_held(1);
+        }
+    }
+
+    /// What breaking `block` at `pos` with the held item gives.
+    pub(super) fn roll_loot(&self, block: BlockId, pos: BlockPos) -> Vec<(ItemId, u16)> {
         let itself = self.rules.block_item(block);
         let mut rng = Rng::new(self.loot_seed(pos));
-        let loot = self.rules.mining.loot(block, held, itself, &mut rng);
+        let held = self.held_item();
+        self.rules.mining.loot(block, held, itself, &mut rng)
+    }
+
+    /// Items laid on the ground at `pos`, in stacks no bigger than the item's.
+    pub(super) fn spawn_loot(&mut self, loot: Vec<(ItemId, u16)>, pos: BlockPos) {
         let at = super::containers::block_centre(pos) - DVec3::Y * 0.25;
         for (item, count) in loot {
             let max = self.rules.max_stack(item).max(1);
@@ -169,11 +185,6 @@ impl Game {
                 let stack = ItemStack::new(item, size, &self.rules);
                 self.spawn_drop(stack, at, DVec3::new(0.0, 0.1, 0.0));
             }
-        }
-        let worn = self.rules.mining.tool(held).is_some()
-            && self.rules.mining.break_ticks(block, None) != Some(0);
-        if worn {
-            self.wear_held(1);
         }
     }
 

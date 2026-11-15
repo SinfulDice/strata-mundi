@@ -24,3 +24,5 @@ tier-strata-stone = pierre
 tier-strata-iron = fer
 tier-strata-gold = or
 tier-strata-diamond = diamant
+upgrade-slot-count = { $family } ×{ $count }
+upgrade-slot-strata-craft = artisanal

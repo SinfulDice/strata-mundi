@@ -3,5 +3,6 @@ Item(
     category: Some("strata:armor"),
     equip: Some(Head),
     durability: 55,
+    upgrade_slots: ["strata:craft"],
     armor: Some(Armor(protection: 1, weight: "strata:light")),
 )
