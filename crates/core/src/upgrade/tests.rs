@@ -100,7 +100,11 @@ fn reinforcement_and_lightening_change_armour_and_uses() {
 fn the_same_effect_does_not_add_up() {
     let material = crate::crafting::Ingredient::item(stack("strata:stick").item);
     let level = |percent| UpgradeLevel {
-        effects: vec![Effect::Damage(percent)],
+        effects: vec![Effect::Stat {
+            stat: id("strata:damage"),
+            op: StatOp::Percent,
+            value: percent,
+        }],
         xp: 0,
         material: material.clone(),
         count: 1,
@@ -108,7 +112,7 @@ fn the_same_effect_does_not_add_up() {
     let upgrade = |name: &str, percent| Upgrade {
         id: id(name),
         slot: id("strata:craft"),
-        applies_to: Vec::new(),
+        applies_to: None,
         levels: vec![level(percent)],
         requires: Vec::new(),
         excludes: Vec::new(),
@@ -342,4 +346,64 @@ fn taking_the_result_uses_the_item_and_the_material_paid() {
     assert_eq!(grid.slots.get(ANVIL_MATERIAL).unwrap().count, 3);
     let carried = player.cursor.unwrap();
     assert_eq!(installed(&carried).len(), 1);
+}
+
+#[test]
+fn a_worn_or_upgraded_material_is_never_used_up() {
+    let sword = stack("strata:iron_sword");
+    let mut copper = some("strata:copper_ingot", 3);
+    copper.data = upgraded("strata:iron_sword", &[("strata:sharpening", 1)]).data;
+    assert_eq!(outcome(&sword, &copper, Some("strata:sharpening")), None);
+    let mut worn = stack("strata:iron_pickaxe");
+    worn.durability = Some(10);
+    let mut ingots = some("strata:iron_ingot", 3);
+    ingots.durability = Some(1);
+    assert_eq!(outcome(&worn, &ingots, None), None);
+}
+
+#[test]
+fn unknown_stats_and_links_are_reported() {
+    let mut errors = Vec::new();
+    let effect = Effect::Stat {
+        stat: id("test:luck"),
+        op: StatOp::Add,
+        value: 1.0,
+    };
+    let stats = &content().upgrades.stats;
+    let source = Path::new("upgrades/test.ron");
+    assert_eq!(
+        super::load::bounded(effect, stats, source, &mut errors),
+        None
+    );
+    let huge = Effect::Stat {
+        stat: id("strata:damage"),
+        op: StatOp::Percent,
+        value: 1.0e9,
+    };
+    let kept = super::load::bounded(huge, stats, source, &mut errors).unwrap();
+    assert!(matches!(kept, Effect::Stat { value, .. } if value <= 1000.0));
+    let mut lonely = content()
+        .upgrades
+        .get(&id("strata:lightening"))
+        .unwrap()
+        .clone();
+    lonely.requires = vec![id("test:nothing")];
+    lonely.excludes.clear();
+    super::load::check_links(&[lonely], &mut errors);
+    assert_eq!(
+        errors.len(),
+        2,
+        "an unknown stat and an unknown upgrade: {errors:?}"
+    );
+}
+
+#[test]
+fn a_tooltip_lists_only_the_bricks_that_change_the_item() {
+    let c = content();
+    let pick = upgraded("strata:iron_pickaxe", &[("strata:sharpening", 1)]);
+    let lines = c.stack_upgrade_lines(&pick, "en").join("\n");
+    assert!(
+        lines.contains("mining speed") && !lines.contains("damage"),
+        "{lines}"
+    );
 }

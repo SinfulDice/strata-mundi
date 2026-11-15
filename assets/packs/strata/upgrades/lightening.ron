@@ -2,11 +2,11 @@
 // reinforcement.
 Upgrade(
     slot: "strata:craft",
-    applies_to: [Armor],
+    applies_to: ["strata:armour"],
     excludes: ["strata:reinforcement"],
     levels: [
-        Level(effects: [Lighten(25.0)], xp: 2, material: Item("strata:cloth"), count: 4),
-        Level(effects: [Lighten(50.0)], xp: 4, material: Item("strata:gold_ingot"), count: 2),
-        Level(effects: [Lighten(75.0)], xp: 7, material: Item("strata:diamond"), count: 2),
+        Level(effects: [Stat(stat: "strata:weight", op: Percent, value: -25.0)], xp: 2, material: Item("strata:cloth"), count: 4),
+        Level(effects: [Stat(stat: "strata:weight", op: Percent, value: -50.0)], xp: 4, material: Item("strata:gold_ingot"), count: 2),
+        Level(effects: [Stat(stat: "strata:weight", op: Percent, value: -75.0)], xp: 7, material: Item("strata:diamond"), count: 2),
     ],
 )

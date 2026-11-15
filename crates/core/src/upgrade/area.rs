@@ -26,6 +26,29 @@ pub fn area_cells(center: BlockPos, face: Face, area: AreaSize, yaw: f32) -> Vec
     cells
 }
 
+/// The lowest and highest cells of the area, without listing its cells (drawn every
+/// frame).
+pub fn area_bounds(center: BlockPos, face: Face, area: AreaSize, yaw: f32) -> (BlockPos, BlockPos) {
+    let (across, along) = axes(face, yaw);
+    let (wide, high) = (span(area.width), span(area.height));
+    let ends = |range: &std::ops::Range<i32>| [range.start, range.end - 1];
+    let corners = ends(&wide).into_iter().flat_map(|a| {
+        ends(&high).map(|b| {
+            BlockPos::new(
+                center.x + across[0] * a + along[0] * b,
+                center.y + across[1] * a + along[1] * b,
+                center.z + across[2] * a + along[2] * b,
+            )
+        })
+    });
+    corners.fold((center, center), |(low, high), cell| {
+        (
+            BlockPos::new(low.x.min(cell.x), low.y.min(cell.y), low.z.min(cell.z)),
+            BlockPos::new(high.x.max(cell.x), high.y.max(cell.y), high.z.max(cell.z)),
+        )
+    })
+}
+
 /// Offsets of a side of `size` cells, centred (an even side leans forward).
 fn span(size: u8) -> std::ops::Range<i32> {
     let size = i32::from(size.max(1));

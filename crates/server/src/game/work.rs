@@ -6,7 +6,7 @@ use super::hammer::add_to_heap;
 use crate::loader::ColumnLoader;
 use strata_core::content::{BlockId, Face, ItemId};
 use strata_core::coords::BlockPos;
-use strata_core::gear::worn_burden;
+use strata_core::gear::Burden;
 use strata_core::inventory::ARMOR;
 use strata_core::updates::BlockChange;
 
@@ -77,15 +77,23 @@ impl Game {
         }
     }
 
-    /// Each tick: the player walks as fast as their armour lets them.
+    /// Each tick: the player walks as fast as their armour lets them (its stats are
+    /// cached until the pieces change).
     pub(super) fn apply_armour_weight(&mut self) {
         let Some(inventory) = self.ecs.inventories.get(self.player) else {
             return;
         };
-        let worn = ARMOR.filter_map(|slot| inventory.slots.get(slot));
-        let speed = worn_burden(worn, self.rules.items(), &self.rules.upgrades).speed_factor();
+        let burden = ARMOR
+            .filter_map(|slot| Some((slot, inventory.slots.get(slot)?)))
+            .filter_map(|(slot, stack)| {
+                self.slot_stats(slot, stack)
+                    .armor
+                    .as_ref()
+                    .map(|a| a.burden)
+            })
+            .fold(Burden::default(), |total, burden| total + burden);
         if let Some(control) = self.ecs.controls.get_mut(self.player) {
-            control.movement.speed = f64::from(speed);
+            control.movement.speed = f64::from(burden.speed_factor());
         }
     }
 }

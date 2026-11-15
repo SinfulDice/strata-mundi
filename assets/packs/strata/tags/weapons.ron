@@ -1,0 +1,8 @@
+// Weapons.
+Tag(items: [
+    "strata:diamond_sword",
+    "strata:golden_sword",
+    "strata:iron_sword",
+    "strata:stone_sword",
+    "strata:wooden_sword",
+])

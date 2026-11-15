@@ -5,6 +5,7 @@
 
 mod anvil;
 mod area;
+mod cache;
 mod defs;
 mod describe;
 mod installed;
@@ -14,22 +15,24 @@ mod stats;
 pub use anvil::{
     ANVIL_ITEM, ANVIL_MATERIAL, Blocked, Choice, Outcome, anvil_outcome, choices, take_outcome,
 };
-pub use area::{area_cells, fits_area, swing_cells, swing_ticks};
-pub use defs::{AnvilRules, AreaSize, Effect, LevelDef, Target, UpgradeDef};
+pub use area::{area_bounds, area_cells, fits_area, swing_cells, swing_ticks};
+pub use cache::StatsCache;
+pub use defs::{AnvilRules, AreaSize, Effect, ItemStatDef, LevelDef, StatOp, UpgradeDef};
 pub use installed::{chosen_area, installed, repairs, with_area, with_upgrade};
-pub use stats::{ItemStats, max_durability, stack_stats, stack_tool};
+pub use stats::{ItemStats, applies, max_durability, stack_stats, stack_tool};
 
 use crate::content::ItemId;
 use crate::crafting::Ingredient;
 use crate::id::Identifier;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 /// An upgrade, its materials resolved.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Upgrade {
     pub id: Identifier,
     pub slot: Identifier,
-    pub applies_to: Vec<Target>,
+    /// The items it suits; any item with a slot of its family when `None`.
+    pub applies_to: Option<Ingredient>,
     pub levels: Vec<UpgradeLevel>,
     pub requires: Vec<Identifier>,
     pub excludes: Vec<Identifier>,
@@ -50,6 +53,8 @@ pub struct Upgrades {
     list: Vec<Upgrade>,
     pub repairs: HashMap<ItemId, Ingredient>,
     pub anvil: AnvilRules,
+    /// Stats effects may change (`item_stats/`).
+    pub stats: BTreeMap<Identifier, ItemStatDef>,
 }
 
 impl Upgrades {
@@ -63,6 +68,7 @@ impl Upgrades {
             list,
             repairs,
             anvil,
+            stats: BTreeMap::new(),
         }
     }
 

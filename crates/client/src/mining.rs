@@ -54,7 +54,7 @@ pub struct MiningInput<'a> {
 
 /// Ticks the hit takes: the block's, or the hardest of a hammer's area.
 fn swing_ticks_at(input: &MiningInput<'_>, hit: RayHit, block: BlockId) -> Option<u32> {
-    let tool = input.gear.tool.as_ref();
+    let tool = input.gear.tool();
     let single = input.info.break_ticks(block, tool)?;
     let Some(tool) = tool else {
         return Some(single);

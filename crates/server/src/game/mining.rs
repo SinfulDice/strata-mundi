@@ -8,7 +8,7 @@ use super::Game;
 use crate::ecs::{Mining, Swing};
 use crate::loader::ColumnLoader;
 use glam::DVec3;
-use strata_core::content::{BlockId, Face, ItemId, crack_progress, crack_stage};
+use strata_core::content::{BlockId, Face, ItemId, ToolDef, crack_progress, crack_stage};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{ItemRules, ItemStack};
 use strata_core::rng::Rng;
@@ -41,7 +41,7 @@ impl Game {
         if self.is_creative() || !pos.is_valid(self.border) || !self.in_reach(pos) {
             return;
         }
-        let Some(block) = block else {
+        let Some(block) = block.filter(|_| self.face_seen(loader, pos, face)) else {
             return;
         };
         let tool = self.held_tool();
@@ -67,6 +67,26 @@ impl Game {
                 swing,
             });
         }
+    }
+
+    /// Whether the player can be hitting `face` of `pos`: the eyes are on its side and
+    /// the cell in front of it is not solid (a hammer's area follows the face).
+    fn face_seen(&self, loader: &ColumnLoader, pos: BlockPos, face: Face) -> bool {
+        let front = pos.neighbour(face);
+        let open = loader.block(front).is_some_and(|b| !self.rules.is_solid(b));
+        let Some(eyes) = self.player_body().map(|body| body.eyes()) else {
+            return false;
+        };
+        let (x, y, z) = (f64::from(pos.x), f64::from(pos.y), f64::from(pos.z));
+        let facing = match face {
+            Face::Up => eyes.y >= y + 1.0,
+            Face::Down => eyes.y <= y,
+            Face::South => eyes.z >= z + 1.0,
+            Face::North => eyes.z <= z,
+            Face::East => eyes.x >= x + 1.0,
+            Face::West => eyes.x <= x,
+        };
+        open && facing
     }
 
     /// The player stopped hitting (or the block broke): the cracks go away.
@@ -148,27 +168,42 @@ impl Game {
         block: BlockId,
     ) -> Vec<BlockChange> {
         let mut changes = Vec::new();
-        let cells = self.area_left(loader, pos);
+        let area = self.area_left(loader, pos);
         let mut heap = self.drop_broken(block, pos);
         self.stop_break();
         self.set_block(loader, pos, BlockId::AIR, &mut changes);
-        if cells.is_empty() {
-            self.sweep_around(loader, pos, block, &mut changes);
-        } else {
-            self.break_area(loader, cells, &mut heap, &mut changes);
+        match area {
+            Some((cells, tool)) => self.break_area(loader, (cells, &tool), &mut heap, &mut changes),
+            None => self.sweep_around(loader, pos, block, &mut changes),
         }
         self.spawn_loot(heap, pos);
         changes
     }
 
-    /// The other cells of the hammer's area for the break in progress at `pos`.
-    fn area_left(&self, loader: &ColumnLoader, pos: BlockPos) -> Vec<BlockPos> {
+    /// The other cells of the hammer's area for the break in progress at `pos`, and
+    /// the hammer: the area chosen now if smaller than at the start, and only the cells
+    /// hit long enough for their own time (a harder block put there since stays).
+    fn area_left(&self, loader: &ColumnLoader, pos: BlockPos) -> Option<(Vec<BlockPos>, ToolDef)> {
         let mining = self.ecs.controls.get(self.player).and_then(|c| c.mining);
-        let Some(mining) = mining.filter(|m| m.pos == pos && !self.is_creative()) else {
-            return Vec::new();
-        };
-        let tool = self.held_tool();
-        self.swing_cells(loader, pos, mining.swing, tool.as_ref())
+        let mining = mining.filter(|m| m.pos == pos && !self.is_creative())?;
+        let tool = self.held_tool()?;
+        let held = self.held_area();
+        let mut swing = mining.swing;
+        if held.cells() < swing.area.cells() {
+            swing.area = held;
+        }
+        let elapsed = self.tick.saturating_sub(mining.started);
+        let cells: Vec<BlockPos> = self
+            .swing_cells(loader, pos, swing, Some(&tool))
+            .into_iter()
+            .filter(|&at| {
+                let ticks = loader
+                    .block(at)
+                    .and_then(|b| self.rules.mining.break_ticks(b, Some(&tool)));
+                ticks.is_some_and(|ticks| long_enough(elapsed, ticks))
+            })
+            .collect();
+        (!cells.is_empty()).then_some((cells, tool))
     }
 
     fn report_cracks(&mut self, pos: BlockPos, progress: Option<u8>) {
@@ -197,12 +232,20 @@ impl Game {
 
     /// What breaking `block` at `pos` with the held item gives.
     pub(super) fn roll_loot(&self, block: BlockId, pos: BlockPos) -> Vec<(ItemId, u16)> {
+        let tool = self.held_tool();
+        self.roll_loot_with(block, pos, tool.as_ref())
+    }
+
+    /// What breaking `block` at `pos` with `tool` gives.
+    pub(super) fn roll_loot_with(
+        &self,
+        block: BlockId,
+        pos: BlockPos,
+        tool: Option<&ToolDef>,
+    ) -> Vec<(ItemId, u16)> {
         let itself = self.rules.block_item(block);
         let mut rng = Rng::new(self.loot_seed(pos));
-        let tool = self.held_tool();
-        self.rules
-            .mining
-            .loot(block, tool.as_ref(), itself, &mut rng)
+        self.rules.mining.loot(block, tool, itself, &mut rng)
     }
 
     /// Items laid on the ground at `pos`, in stacks no bigger than the item's.

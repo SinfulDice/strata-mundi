@@ -4,7 +4,7 @@
 
 use super::installed::{count_repair, install, installed, repairs};
 use super::stats::max_durability;
-use super::{Target, Upgrade, UpgradeLevel, Upgrades};
+use super::{Upgrade, UpgradeLevel, Upgrades};
 use crate::content::{Item, ItemId, Registry};
 use crate::crafting::{into_cursor, into_inventory};
 use crate::id::Identifier;
@@ -62,7 +62,7 @@ pub fn choices<'a>(
         .iter()
         .enumerate()
         .filter(|(_, upgrade)| item.gear.upgrade_slots.contains(&upgrade.slot))
-        .filter(|(_, upgrade)| suits(upgrade, item))
+        .filter(|(_, upgrade)| suits(upgrade, stack.item))
         .filter_map(|(index, upgrade)| {
             let now = held.iter().find(|(id, _)| *id == upgrade.id).map(|h| h.1);
             let level = now.unwrap_or(0).saturating_add(1);
@@ -78,13 +78,11 @@ pub fn choices<'a>(
         .collect()
 }
 
-fn suits(upgrade: &Upgrade, item: &Item) -> bool {
-    upgrade.applies_to.is_empty()
-        || upgrade.applies_to.iter().any(|target| match target {
-            Target::Tool => item.tool.is_some(),
-            Target::Weapon => item.gear.weapon.is_some(),
-            Target::Armor => item.gear.armor.is_some(),
-        })
+fn suits(upgrade: &Upgrade, item: ItemId) -> bool {
+    upgrade
+        .applies_to
+        .as_ref()
+        .is_none_or(|items| items.accepts(item))
 }
 
 fn blocked(
@@ -144,7 +142,8 @@ fn upgrade_outcome(
         .iter()
         .find(|c| c.index == index && c.blocked.is_none())?;
     let cost = choice.cost;
-    if !cost.material.accepts(material.item) || material.count < cost.count {
+    let accepted = cost.material.accepts(material.item) && plain(material);
+    if !accepted || material.count < cost.count {
         return None;
     }
     let mut result = target.clone();
@@ -187,7 +186,7 @@ fn repair_outcome(
         (other.saturating_add(bonus), 1)
     } else {
         let mends = upgrades.repairs.get(&target.item)?;
-        if !mends.accepts(material.item) {
+        if !mends.accepts(material.item) || !plain(material) {
             return None;
         }
         let per = ((f32::from(full) * rules.material_share).ceil() as u16).max(1);
@@ -203,6 +202,11 @@ fn repair_outcome(
         material: used,
         xp: rules.repair_cost(before),
     })
+}
+
+/// A material as made: worn or upgraded items are never used up as one.
+fn plain(material: &ItemStack) -> bool {
+    material.data.is_empty() && material.durability.is_none()
 }
 
 /// A click on the anvil's result: it goes to the hand (or the inventory with a shift

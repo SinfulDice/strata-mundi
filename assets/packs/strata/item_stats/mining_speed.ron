@@ -1,0 +1,2 @@
+// Breaking speed of a tool. Bounds of the values effects give it.
+ItemStat(min: -90.0, max: 1000.0)

@@ -134,3 +134,35 @@ fn closing_or_losing_the_anvil_gives_its_items_back() {
     w.game.tick(&mut w.loader);
     assert_eq!(w.game.inventory().slots.count(sword.item), 1);
 }
+
+#[test]
+fn a_result_taken_once_the_anvil_is_gone_gives_nothing() {
+    let w = world();
+    let mut pick = stack(&w, "strata:iron_pickaxe", 1);
+    pick.durability = Some(10);
+    let ingots = stack(&w, "strata:iron_ingot", 4);
+    let mut w = at_anvil(pick.clone(), Some(ingots));
+    assert!(w.loader.set_block(SPOT, BlockId::AIR));
+    click(&mut w, RESULT, Click::Primary);
+    let inventory = w.game.inventory();
+    assert!(inventory.cursor.is_none(), "no repaired pickaxe");
+    let back = inventory.slots.slots.iter().flatten();
+    let back: Vec<_> = back.filter(|s| s.item == pick.item).collect();
+    assert_eq!(back, [&pick], "the worn pickaxe came back as it was");
+    assert_eq!(inventory.slots.count(item(&w, "strata:iron_ingot")), 4);
+}
+
+#[test]
+fn the_choice_goes_when_another_item_is_laid() {
+    let w = world();
+    let sword = stack(&w, "strata:iron_sword", 1);
+    let mut w = at_anvil(sword, None);
+    let sharpening = upgrade_index(&w, "strata:sharpening");
+    request(&mut w, InventoryRequest::ChooseUpgrade(Some(sharpening)));
+    assert_eq!(w.game.crafting_view().unwrap().chosen, Some(sharpening));
+    let pick = stack(&w, "strata:iron_pickaxe", 1);
+    put(&mut w, 11, pick);
+    click(&mut w, SlotRef::player(11), Click::Primary);
+    click(&mut w, SlotRef::craft(0), Click::Primary);
+    assert_eq!(w.game.crafting_view().unwrap().chosen, None);
+}

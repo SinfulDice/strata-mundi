@@ -46,6 +46,8 @@ impl Content {
         let slots = slots.map(|id| id.translation_key("upgrade-slot"));
         let upgrades = self.upgrades.list().iter();
         let upgrades = upgrades.map(|u| u.id.translation_key("upgrade"));
+        let stats = self.upgrades.stats.keys();
+        let stats = stats.map(|id| id.translation_key("item-stat"));
         let mut keys: Vec<String> = blocks
             .chain(tags)
             .chain(items)
@@ -54,6 +56,7 @@ impl Content {
             .chain(weights)
             .chain(slots)
             .chain(upgrades)
+            .chain(stats)
             .chain(categories)
             .chain(subtitles)
             .chain(sounds)

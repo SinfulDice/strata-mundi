@@ -2,7 +2,7 @@
 // 3×5 then 5×5 (width × height on a wall). Every area unlocked stays at hand.
 Upgrade(
     slot: "strata:area",
-    applies_to: [Tool],
+    applies_to: ["strata:tools"],
     levels: [
         Level(effects: [Area(3, 1)], xp: 3, material: Item("strata:iron_ingot"), count: 4),
         Level(effects: [Area(5, 1)], xp: 5, material: Item("strata:iron_ingot"), count: 8),

@@ -122,3 +122,81 @@ fn the_hardest_block_of_the_area_sets_the_time() {
     let stone = block(&w.content, "strata:stone");
     assert!(needed > mining.break_ticks(stone, tool.as_ref()).unwrap());
 }
+
+#[test]
+fn a_face_the_player_cannot_see_starts_nothing() {
+    let mut w = with_hammer(3);
+    w.game.start_break(&w.loader, FLOOR, Face::Down);
+    assert!(
+        w.game
+            .ecs
+            .controls
+            .get(w.game.player)
+            .unwrap()
+            .mining
+            .is_none()
+    );
+    w.game.start_break(&w.loader, FLOOR, Face::North);
+    assert!(
+        w.game
+            .ecs
+            .controls
+            .get(w.game.player)
+            .unwrap()
+            .mining
+            .is_none(),
+        "stone in front of that face"
+    );
+}
+
+#[test]
+fn the_area_ends_when_the_hammer_breaks() {
+    let mut w = with_hammer(3);
+    w.game.with_inventory(|inventory, _| {
+        let hammer = inventory.selected_slot_mut().as_mut().unwrap();
+        hammer.durability = Some(3);
+    });
+    mine(&mut w, FLOOR);
+    assert_eq!(air_around(&w), 3, "the hit block and two more");
+    let hammer = item(&w, "strata:iron_hammer");
+    assert_eq!(
+        w.game.inventory().slots.count(hammer),
+        0,
+        "the hammer broke"
+    );
+}
+
+#[test]
+fn a_smaller_area_chosen_while_hitting_is_kept_at_the_end() {
+    let mut w = with_hammer(3);
+    w.game.start_break(&w.loader, FLOOR, Face::Up);
+    let request = InventoryRequest::ChooseArea(1);
+    w.game
+        .inventory_request(&w.loader, request, &|_, _| String::new());
+    for _ in 0..200 {
+        w.game.tick(&mut w.loader);
+    }
+    assert_eq!(air_around(&w), 3, "3×1, not the 3×3 of the start");
+}
+
+#[test]
+fn a_harder_block_put_since_the_start_stays() {
+    let mut w = with_hammer(3);
+    w.game.start_break(&w.loader, FLOOR, Face::Up);
+    let ore = block(&w.content, "strata:iron_ore");
+    assert!(w.loader.set_block(BlockPos::new(9, 63, 9), ore));
+    let needed = w
+        .game
+        .ecs
+        .controls
+        .get(w.game.player)
+        .unwrap()
+        .mining
+        .unwrap()
+        .needed;
+    for _ in 0..=needed {
+        w.game.tick(&mut w.loader);
+    }
+    assert_eq!(air_around(&w), 8);
+    assert_eq!(w.loader.block(BlockPos::new(9, 63, 9)), Some(ore));
+}

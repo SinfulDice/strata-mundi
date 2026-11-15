@@ -25,6 +25,8 @@ pub struct SlotsState {
     pub search: String,
     /// Opened for a container: closes when the container goes.
     pub for_container: bool,
+    /// Rows of the anvil's list scrolled past.
+    pub upgrade_scroll: usize,
 }
 
 pub struct SlotsModel<'a> {
@@ -185,11 +187,8 @@ impl SlotsModel<'_> {
 
     /// A click, a press of a gamepad button or a lock toggle on element `index` of `id`.
     pub fn press(&mut self, id: &str, index: usize, press: SlotPress) -> bool {
-        if id == "cut_choices" {
-            return self.choose_cut(index, press);
-        }
-        if id == "anvil_choices" {
-            return self.choose_upgrade(index, press);
+        if let Some(pressed) = self.list_press(id, index, press) {
+            return pressed;
         }
         let Some(slot) = self.slot(id, index) else {
             return false;
@@ -237,11 +236,8 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn items(&self, id: &str) -> Vec<Option<ItemId>> {
-        if id == "cut_choices" {
-            return self.cuts().map(|(_, stack)| Some(stack.item)).collect();
-        }
-        if id == "anvil_choices" {
-            return self.anvil_icons();
+        if let Some(items) = self.list_items(id) {
+            return items;
         }
         self.stacks(id)
             .into_iter()
@@ -268,12 +264,7 @@ impl ScreenModel for SlotsModel<'_> {
     fn selected(&self, id: &str) -> Option<usize> {
         match id {
             "hotbar" => Some(self.inventory.selected_index()),
-            "cut_choices" => {
-                let chosen = self.crafting?.view.chosen?;
-                self.cuts().position(|(index, _)| *index == chosen)
-            }
-            "anvil_choices" => self.anvil_selected(),
-            _ => None,
+            _ => self.list_selected(id),
         }
     }
 
@@ -287,12 +278,8 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn tooltip(&self, id: &str, index: usize) -> Option<String> {
-        if id == "cut_choices" {
-            let (_, stack) = self.cuts().nth(index)?;
-            return Some(self.content.item_tooltip(stack.item, self.language));
-        }
-        if id == "anvil_choices" {
-            return self.anvil_tooltip(index);
+        if let Some(tooltip) = self.list_tooltip(id, index) {
+            return tooltip;
         }
         let stack = self.stack(self.slot(id, index)?)?;
         Some(self.stack_tooltip(stack))
@@ -310,6 +297,7 @@ impl ScreenModel for SlotsModel<'_> {
             "table_side" => !open && matches!(station, Some(StationDef::Crafting(_))),
             "cutter_side" => !open && station == Some(StationDef::Stonecutter),
             "anvil_side" => !open && station == Some(StationDef::Anvil),
+            "anvil_scroll" => self.upgrades_scroll(),
             "player_side" => !open && station.is_none(),
             "crafting" => self.crafting.is_some(),
             _ => true,
@@ -328,6 +316,8 @@ impl ScreenModel for SlotsModel<'_> {
             "sort_chest" => self.inventory.sort(Area::Open, SortOrder::Type, &language),
             "deposit" => self.inventory.request(InventoryRequest::QuickDeposit),
             "anvil_repair" => self.choose_repair(),
+            "anvil_earlier" => self.scroll_upgrades(-1),
+            "anvil_later" => self.scroll_upgrades(1),
             "book" => self
                 .effects
                 .push(Effect::Push(Menu::Journal(JournalState::for_grid()))),
@@ -345,6 +335,12 @@ impl ScreenModel for SlotsModel<'_> {
         self.press(id, index, SlotPress::Click(Click::HotbarSwap(slot as u8)));
     }
 
+    fn scroll(&mut self, id: &str, rows: i32) {
+        if id == "anvil_choices" {
+            self.scroll_upgrades(rows);
+        }
+    }
+
     fn type_text(&mut self, id: &str, text: &str) {
         if id == "search" {
             edit(&mut self.state.search, text, MAX_SEARCH, |_| true);
@@ -353,34 +349,10 @@ impl ScreenModel for SlotsModel<'_> {
 }
 
 impl SlotsModel<'_> {
-    /// What the stonecutter can make of the item laid: (recipe index, result).
-    fn cuts(&self) -> impl Iterator<Item = &(u16, ItemStack)> {
-        self.crafting.into_iter().flat_map(|c| c.view.cuts.iter())
-    }
-
-    fn choose_cut(&mut self, index: usize, press: SlotPress) -> bool {
-        let Some(&(choice, _)) = self.cuts().nth(index) else {
-            return false;
-        };
-        if matches!(press, SlotPress::Click(Click::Primary | Click::Transfer)) {
-            self.inventory.request(InventoryRequest::ChooseCut(choice));
-        }
-        true
-    }
-
     /// A block's name; a lit or turned variant is named like its family.
     fn block_title(&self, block: strata_core::content::BlockId) -> String {
         let id = self.content.block_name(block);
         id.map_or_else(String::new, |id| self.tr(&id.translation_key("block")))
-    }
-
-    fn cutter_note(&self) -> String {
-        let laid = self.crafting.is_some_and(|c| c.view.grid.get(0).is_some());
-        if laid && self.cuts().next().is_none() {
-            self.tr("ui-stonecutter-none")
-        } else {
-            self.tr("ui-stonecutter-help")
-        }
     }
 
     /// The open furnace's speed and economy, for a usual cooking and the reference fuel.

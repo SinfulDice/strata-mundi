@@ -1,9 +1,9 @@
 //! What the interface tells about upgrades: their effects, what a stack holds, what the
 //! anvil offers and what it costs.
 
-use super::defs::Effect;
-use super::{Blocked, Choice, installed, stack_stats};
-use crate::content::Content;
+use super::defs::{Effect, StatOp};
+use super::{Blocked, Choice, applies, installed, stack_stats};
+use crate::content::{Content, ItemId};
 use crate::id::Identifier;
 use crate::inventory::ItemStack;
 
@@ -17,33 +17,52 @@ impl Content {
     /// « +20 % damage », one brick.
     pub fn effect_text(&self, effect: &Effect, language: &str) -> String {
         let tr = &self.translations;
-        let number = |value: f32| tr.short_decimal(language, f64::from(value));
-        let (key, args) = match *effect {
-            Effect::Damage(p) => ("upgrade-effect-damage", vec![("value", number(p))]),
-            Effect::MiningSpeed(p) => ("upgrade-effect-mining-speed", vec![("value", number(p))]),
-            Effect::Durability(p) => ("upgrade-effect-durability", vec![("value", number(p))]),
-            Effect::Protection(points) => (
-                "upgrade-effect-protection",
-                vec![("value", points.to_string())],
-            ),
-            Effect::Lighten(p) => ("upgrade-effect-lighten", vec![("value", number(p))]),
-            Effect::Area(width, height) => (
-                "upgrade-effect-area",
-                vec![("width", width.to_string()), ("height", height.to_string())],
-            ),
-        };
-        tr.text_with(language, key, &args)
+        match effect {
+            Effect::Stat { stat, op, value } => {
+                let sign = if *value < 0.0 { "−" } else { "+" };
+                let number = tr.short_decimal(language, f64::from(value.abs()));
+                let args = [
+                    ("value", format!("{sign}{number}")),
+                    (
+                        "stat",
+                        tr.text(language, &stat.translation_key("item-stat")),
+                    ),
+                ];
+                let key = match op {
+                    StatOp::Add => "upgrade-effect-add",
+                    StatOp::Percent => "upgrade-effect-percent",
+                };
+                tr.text_with(language, key, &args)
+            }
+            Effect::Area(width, height) => {
+                let args = [("width", width.to_string()), ("height", height.to_string())];
+                tr.text_with(language, "upgrade-effect-area", &args)
+            }
+        }
     }
 
-    /// « Sharpening 2: +20 % damage, +20 % mining speed »
-    pub fn upgrade_level_text(&self, upgrade: &Identifier, level: u8, language: &str) -> String {
+    /// « Sharpening 2: +20 % damage, +20 % mining speed »; on `item`, only the bricks
+    /// that change it, and none while its stats are not known.
+    pub fn upgrade_level_text(
+        &self,
+        upgrade: &Identifier,
+        level: u8,
+        item: Option<ItemId>,
+        language: &str,
+    ) -> String {
+        let entry = item.and_then(|item| self.items.get(item));
+        let known = item.is_none_or(|item| self.stats_known(item));
         let effects: Vec<String> = self
             .upgrades
             .get(upgrade)
             .and_then(|u| u.levels.get(usize::from(level).checked_sub(1)?))
+            .filter(|_| known)
             .map(|level| {
                 let effects = level.effects.iter();
-                effects.map(|e| self.effect_text(e, language)).collect()
+                effects
+                    .filter(|e| entry.is_none_or(|entry| applies(e, entry)))
+                    .map(|e| self.effect_text(e, language))
+                    .collect()
             })
             .unwrap_or_default();
         let args = [
@@ -59,12 +78,13 @@ impl Content {
     /// area chosen.
     pub fn stack_upgrade_lines(&self, stack: &ItemStack, language: &str) -> Vec<String> {
         let held = installed(stack);
+        let item = Some(stack.item);
         let mut lines: Vec<String> = held
             .iter()
-            .map(|(id, level)| self.upgrade_level_text(id, *level, language))
+            .map(|(id, level)| self.upgrade_level_text(id, *level, item, language))
             .collect();
         let stats = stack_stats(stack, &self.items, &self.upgrades);
-        if !held.is_empty() {
+        if !held.is_empty() && self.stats_known(stack.item) {
             lines.extend(self.upgraded_stats(&stats, language));
         }
         if stats.areas.len() > 1 {
@@ -106,9 +126,10 @@ impl Content {
 
     /// What the anvil offers: the level and its effects, its price, and why it is not
     /// possible yet.
-    pub fn choice_tooltip(&self, choice: &Choice<'_>, language: &str) -> String {
+    pub fn choice_tooltip(&self, choice: &Choice<'_>, item: ItemId, language: &str) -> String {
         let tr = &self.translations;
-        let mut lines = vec![self.upgrade_level_text(&choice.upgrade.id, choice.level, language)];
+        let upgrade = &choice.upgrade.id;
+        let mut lines = vec![self.upgrade_level_text(upgrade, choice.level, Some(item), language)];
         let material = choice.cost.material.items().first().copied();
         let args = [
             ("count", choice.cost.count.to_string()),
@@ -124,7 +145,7 @@ impl Content {
 
     fn ingredient_name(
         &self,
-        first: Option<crate::content::ItemId>,
+        first: Option<ItemId>,
         choice: &Choice<'_>,
         language: &str,
     ) -> String {

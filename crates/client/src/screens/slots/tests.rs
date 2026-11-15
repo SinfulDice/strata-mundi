@@ -36,6 +36,7 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
     let mut state = SlotsState {
         search: "zzz".into(),
         for_container: true,
+        upgrade_scroll: 0,
     };
     let mut effects = Vec::new();
     let mut model = SlotsModel {
@@ -108,6 +109,14 @@ fn the_anvil_lists_what_the_item_laid_can_take() {
         "{tooltip}"
     );
     assert_eq!(model.slot("anvil", 1).map(|s| s.index), Some(1));
+    assert!(!model.shown("anvil_scroll"), "two upgrades fit");
+    model.scroll("anvil_choices", 3);
+    assert_eq!(model.items("anvil_choices").len(), 2, "nothing to scroll");
+    let tip = model.tooltip("anvil", 1).unwrap();
+    assert!(
+        tip.contains("matériau"),
+        "an empty cell says what goes there: {tip}"
+    );
     assert!(model.press("anvil_choices", 1, SlotPress::Click(Click::Primary)));
     model.activate("anvil_repair", 0);
     let sharpening = content

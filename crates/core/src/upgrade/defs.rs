@@ -10,9 +10,9 @@ use serde::{Deserialize, Serialize};
 pub struct UpgradeDef {
     /// The slot family it goes in (`upgrade_slots/`).
     pub slot: Identifier,
-    /// Items it suits; any equipment when empty.
+    /// Item tags (`tags/`) of the items it suits; any item with such a slot when empty.
     #[serde(default)]
-    pub applies_to: Vec<Target>,
+    pub applies_to: Vec<Identifier>,
     /// Level 1 first; each replaces the one before.
     pub levels: Vec<LevelDef>,
     /// Upgrades the item must hold first.
@@ -41,28 +41,36 @@ fn one() -> u16 {
     1
 }
 
-/// Kinds of items an upgrade suits.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-pub enum Target {
-    Tool,
-    Weapon,
-    Armor,
+/// A stat an effect may change (`item_stats/<name>.ron`), with the bounds of the values
+/// effects give it. The engine applies those it knows (damage, mining speed, durability,
+/// protection, weight); the others wait in `ItemStats::extra` for the systems that will
+/// read them.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(rename = "ItemStat", deny_unknown_fields)]
+pub struct ItemStatDef {
+    pub min: f32,
+    pub max: f32,
 }
 
-/// One brick of what an upgrade does. Two upgrades giving the same brick do not add up:
-/// the strongest counts.
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+/// How an effect changes its stat.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+pub enum StatOp {
+    /// Adds `value` (points; for weight, points of percent).
+    Add,
+    /// Multiplies by 1 + `value` / 100.
+    Percent,
+}
+
+/// One brick of what an upgrade does. Two upgrades giving the same brick (same stat and
+/// operation) do not add up: the strongest counts.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum Effect {
-    /// Weapon damage, in percent.
-    Damage(f32),
-    /// Breaking speed of a tool, in percent.
-    MiningSpeed(f32),
-    /// Uses of a new one, in percent.
-    Durability(f32),
-    /// Protection points of a worn piece.
-    Protection(u16),
-    /// Share of the armour's burden (speed, stamina, mana) taken off, in percent.
-    Lighten(f32),
+    /// Changes a named stat.
+    Stat {
+        stat: Identifier,
+        op: StatOp,
+        value: f32,
+    },
     /// Unlocks breaking this area at once (a miner's hammer), width × height.
     Area(u8, u8),
 }
@@ -70,7 +78,21 @@ pub enum Effect {
 impl Effect {
     /// Bricks of the same kind do not add up.
     pub fn same_kind(&self, other: &Self) -> bool {
-        std::mem::discriminant(self) == std::mem::discriminant(other)
+        match (self, other) {
+            (Self::Stat { stat, op, .. }, Self::Stat { stat: s, op: o, .. }) => {
+                stat == s && op == o
+            }
+            (Self::Area(..), Self::Area(..)) => true,
+            _ => false,
+        }
+    }
+
+    /// Which of two bricks of a kind counts.
+    pub(super) fn strength(&self) -> f32 {
+        match self {
+            Self::Stat { value, .. } => value.abs(),
+            Self::Area(w, h) => f32::from(*w) * f32::from(*h),
+        }
     }
 }
 

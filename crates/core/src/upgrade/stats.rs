@@ -1,13 +1,14 @@
 //! The one computation of what a stack does: its item's values (base and tier, resolved
 //! when the packs load), then its upgrades, each brick counted once (the strongest).
 
-use super::defs::{AreaSize, Effect};
+use super::defs::{AreaSize, Effect, StatOp};
 use super::installed::installed;
 use super::{Upgrade, Upgrades};
 use crate::content::{Item, ItemId, Registry, ToolDef};
 use crate::gear::{Armor, WeaponDef};
 use crate::id::Identifier;
 use crate::inventory::ItemStack;
+use std::collections::BTreeMap;
 
 /// What a stack is as equipment once its upgrades count.
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -21,6 +22,47 @@ pub struct ItemStats {
     pub areas: Vec<AreaSize>,
     /// The upgrades counted, with their level.
     pub upgrades: Vec<(Identifier, u8)>,
+    /// Stats of the packs the engine does not apply yet, from 0.
+    pub extra: BTreeMap<Identifier, f32>,
+}
+
+/// The stats the engine applies itself.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EngineStat {
+    Damage,
+    MiningSpeed,
+    Durability,
+    Protection,
+    Weight,
+}
+
+fn engine_stat(stat: &Identifier) -> Option<EngineStat> {
+    if stat.namespace() != "strata" {
+        return None;
+    }
+    Some(match stat.name() {
+        "damage" => EngineStat::Damage,
+        "mining_speed" => EngineStat::MiningSpeed,
+        "durability" => EngineStat::Durability,
+        "protection" => EngineStat::Protection,
+        "weight" => EngineStat::Weight,
+        _ => return None,
+    })
+}
+
+/// Whether `effect` changes something on `item` (a weapon brick on a pickaxe does not).
+pub fn applies(effect: &Effect, item: &Item) -> bool {
+    let stat = match effect {
+        Effect::Area(..) => return item.tool.is_some(),
+        Effect::Stat { stat, .. } => stat,
+    };
+    match engine_stat(stat) {
+        Some(EngineStat::Damage) => item.gear.weapon.is_some(),
+        Some(EngineStat::MiningSpeed) => item.tool.is_some(),
+        Some(EngineStat::Durability) => item.durability.is_some(),
+        Some(EngineStat::Protection | EngineStat::Weight) => item.gear.armor.is_some(),
+        None => true,
+    }
 }
 
 pub fn stack_stats(
@@ -31,19 +73,7 @@ pub fn stack_stats(
     let Some(item) = items.get(stack.item) else {
         return ItemStats::default();
     };
-    let held: Vec<(&Upgrade, u8)> = installed(stack)
-        .into_iter()
-        .filter_map(|(id, level)| {
-            let upgrade = upgrades.get(&id)?;
-            let level = level.min(u8::try_from(upgrade.levels.len()).unwrap_or(u8::MAX));
-            Some((upgrade, level))
-        })
-        .collect();
-    let effects = strongest(
-        held.iter()
-            .filter_map(|(upgrade, level)| upgrade.levels.get(usize::from(*level) - 1))
-            .flat_map(|level| level.effects.iter().copied()),
-    );
+    let held = held_upgrades(stack, upgrades);
     let mut stats = ItemStats {
         tool: item.tool.clone(),
         weapon: item.gear.weapon,
@@ -54,9 +84,10 @@ pub fn stack_stats(
             .iter()
             .map(|(u, level)| (u.id.clone(), *level))
             .collect(),
+        extra: BTreeMap::new(),
     };
-    for effect in effects {
-        apply(&mut stats, effect);
+    for effect in strongest(&held) {
+        apply(&mut stats, &effect);
     }
     stats
 }
@@ -70,36 +101,68 @@ pub fn stack_tool(
     stack_stats(stack, items, upgrades).tool
 }
 
-/// Uses of a new one of this stack, its upgrades counted.
+/// Uses of a new one of this stack, its upgrades counted (only durability bricks are
+/// looked at: the wear bar asks for every slot drawn).
 pub fn max_durability(
     stack: &ItemStack,
     items: &Registry<ItemId, Item>,
     upgrades: &Upgrades,
 ) -> Option<u16> {
-    stack_stats(stack, items, upgrades).durability
+    let base = items.get(stack.item)?.durability?;
+    if stack.data.is_empty() {
+        return Some(base);
+    }
+    let held = held_upgrades(stack, upgrades);
+    let uses = strongest(&held)
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::Stat { stat, op, value }
+                if engine_stat(stat) == Some(EngineStat::Durability) =>
+            {
+                Some((*op, *value))
+            }
+            _ => None,
+        })
+        .fold(f32::from(base), |uses, (op, value)| change(uses, op, value));
+    Some(uses.round().clamp(1.0, f32::from(u16::MAX)) as u16)
 }
 
-/// One brick of each kind: the strongest of those given.
-fn strongest(effects: impl Iterator<Item = Effect>) -> Vec<Effect> {
+/// The known upgrades of the stack, their level within those the packs give.
+fn held_upgrades<'a>(stack: &ItemStack, upgrades: &'a Upgrades) -> Vec<(&'a Upgrade, u8)> {
+    installed(stack)
+        .into_iter()
+        .filter_map(|(id, level)| {
+            let upgrade = upgrades.get(&id)?;
+            let level = level.min(u8::try_from(upgrade.levels.len()).unwrap_or(u8::MAX));
+            Some((upgrade, level))
+        })
+        .collect()
+}
+
+/// One brick of each kind, the strongest; additions before percentages.
+fn strongest(held: &[(&Upgrade, u8)]) -> Vec<Effect> {
+    let effects = held
+        .iter()
+        .filter_map(|(upgrade, level)| upgrade.levels.get(usize::from(*level) - 1))
+        .flat_map(|level| level.effects.iter());
     let mut kept: Vec<Effect> = Vec::new();
     for effect in effects {
-        match kept.iter_mut().find(|other| other.same_kind(&effect)) {
-            Some(other) if strength(effect) > strength(*other) => *other = effect,
+        match kept.iter_mut().find(|other| other.same_kind(effect)) {
+            Some(other) if effect.strength() > other.strength() => *other = effect.clone(),
             Some(_) => {}
-            None => kept.push(effect),
+            None => kept.push(effect.clone()),
         }
     }
+    kept.sort_by_key(|effect| {
+        !matches!(
+            effect,
+            Effect::Stat {
+                op: StatOp::Add,
+                ..
+            }
+        )
+    });
     kept
-}
-
-fn strength(effect: Effect) -> f32 {
-    match effect {
-        Effect::Damage(p) | Effect::MiningSpeed(p) | Effect::Durability(p) | Effect::Lighten(p) => {
-            p
-        }
-        Effect::Protection(points) => f32::from(points),
-        Effect::Area(w, h) => f32::from(w) * f32::from(h),
-    }
 }
 
 /// Every area unlocked by the levels held, and 1×1, smallest first.
@@ -110,7 +173,7 @@ fn areas(held: &[(&Upgrade, u8)]) -> Vec<AreaSize> {
         .flat_map(|level| level.effects.iter())
         .filter_map(|effect| match *effect {
             Effect::Area(width, height) => Some(AreaSize { width, height }),
-            _ => None,
+            Effect::Stat { .. } => None,
         })
         .collect();
     if areas.is_empty() {
@@ -122,39 +185,57 @@ fn areas(held: &[(&Upgrade, u8)]) -> Vec<AreaSize> {
     areas
 }
 
-fn apply(stats: &mut ItemStats, effect: Effect) {
-    let factor = |percent: f32| (1.0 + percent / 100.0).max(0.1);
-    match effect {
-        Effect::Damage(p) => {
+fn change(value: f32, op: StatOp, by: f32) -> f32 {
+    match op {
+        StatOp::Add => value + by,
+        StatOp::Percent => value * (1.0 + by / 100.0).max(0.0),
+    }
+}
+
+fn apply(stats: &mut ItemStats, effect: &Effect) {
+    let Effect::Stat { stat, op, value } = effect else {
+        return;
+    };
+    let (op, value) = (*op, *value);
+    match engine_stat(stat) {
+        Some(EngineStat::Damage) => {
             if let Some(weapon) = &mut stats.weapon {
-                weapon.damage *= factor(p);
+                weapon.damage = change(weapon.damage, op, value).max(0.0);
             }
         }
-        Effect::MiningSpeed(p) => {
+        Some(EngineStat::MiningSpeed) => {
             if let Some(tool) = stats.tool.take() {
-                let speed = tool.speed * factor(p);
+                let speed = change(tool.speed, op, value);
                 stats.tool = Some(ToolDef { speed, ..tool }.clamped());
             }
         }
-        Effect::Durability(p) => {
+        Some(EngineStat::Durability) => {
             stats.durability = stats.durability.map(|uses| {
-                let more = (f32::from(uses) * factor(p)).round();
+                let more = change(f32::from(uses), op, value).round();
                 more.clamp(1.0, f32::from(u16::MAX)) as u16
             });
         }
-        Effect::Protection(points) => {
+        Some(EngineStat::Protection) => {
             if let Some(armor) = &mut stats.armor {
-                armor.protection = armor.protection.saturating_add(points);
+                let points = change(f32::from(armor.protection), op, value).round();
+                armor.protection = points.clamp(0.0, f32::from(u16::MAX)) as u16;
             }
         }
-        Effect::Lighten(p) => {
+        Some(EngineStat::Weight) => {
             if let Some(armor) = &mut stats.armor {
-                let kept = 1.0 - (p / 100.0).clamp(0.0, 1.0);
-                armor.burden.speed *= kept;
-                armor.burden.stamina *= kept;
-                armor.burden.mana *= kept;
+                let burden = &mut armor.burden;
+                for share in [&mut burden.speed, &mut burden.stamina, &mut burden.mana] {
+                    let points = match op {
+                        StatOp::Add => *share + value / 100.0,
+                        StatOp::Percent => change(*share, op, value),
+                    };
+                    *share = points.max(0.0);
+                }
             }
         }
-        Effect::Area(..) => {}
+        None => {
+            let entry = stats.extra.entry(stat.clone()).or_insert(0.0);
+            *entry = change(*entry, op, value);
+        }
     }
 }

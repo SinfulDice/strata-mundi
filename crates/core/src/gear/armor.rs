@@ -96,6 +96,19 @@ pub struct Burden {
     pub mana: f32,
 }
 
+/// Both burdens together, within `MAX_BURDEN`.
+impl std::ops::Add for Burden {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            speed: (self.speed + other.speed).min(MAX_BURDEN),
+            stamina: (self.stamina + other.stamina).min(MAX_BURDEN),
+            mana: (self.mana + other.mana).min(MAX_BURDEN),
+        }
+    }
+}
+
 impl From<ArmorWeight> for Burden {
     fn from(weight: ArmorWeight) -> Self {
         Self {
@@ -110,14 +123,6 @@ impl Burden {
     /// Multiplies walking speed: 1 unburdened.
     pub fn speed_factor(&self) -> f32 {
         1.0 - self.speed.clamp(0.0, MAX_BURDEN)
-    }
-
-    fn add(self, other: Self) -> Self {
-        Self {
-            speed: (self.speed + other.speed).min(MAX_BURDEN),
-            stamina: (self.stamina + other.stamina).min(MAX_BURDEN),
-            mana: (self.mana + other.mana).min(MAX_BURDEN),
-        }
     }
 }
 
@@ -150,5 +155,5 @@ pub fn worn_burden<'a>(
 ) -> Burden {
     worn.into_iter()
         .filter_map(|stack| armor_of(stack, items, upgrades))
-        .fold(Burden::default(), |total, armor| total.add(armor.burden))
+        .fold(Burden::default(), |total, armor| total + armor.burden)
 }

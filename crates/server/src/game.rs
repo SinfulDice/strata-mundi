@@ -75,6 +75,8 @@ pub struct Game {
     waiting_furnaces: HashMap<strata_core::coords::ColumnPos, Vec<BlockPos>>,
     /// Fire and cooking of the open furnace, as the client last knew them.
     furnace_view: Option<FurnaceView>,
+    /// Stats of the hand and the armour, upgrades counted.
+    stats_cache: strata_core::upgrade::StatsCache,
 }
 
 impl Game {
@@ -113,6 +115,7 @@ impl Game {
             unknown_recipes: Vec::new(),
             furnaces: BTreeMap::new(),
             waiting_furnaces: HashMap::new(),
+            stats_cache: Default::default(),
             furnace_view: None,
         }
     }

@@ -1,0 +1,2 @@
+// Weapon damage. Bounds of the values effects give it.
+ItemStat(min: -90.0, max: 1000.0)

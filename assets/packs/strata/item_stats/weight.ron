@@ -1,0 +1,2 @@
+// Weight of a worn piece (its speed, stamina and mana shares). Bounds of the values effects give it.
+ItemStat(min: -100.0, max: 100.0)

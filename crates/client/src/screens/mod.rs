@@ -17,6 +17,7 @@ mod pause;
 mod pointer;
 mod slot_input;
 mod slots;
+mod station_lists;
 mod system;
 mod title;
 mod worlds;
