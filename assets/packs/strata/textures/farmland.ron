@@ -1,0 +1,27 @@
+// Tilled earth: furrows of dark, loose dirt.
+Sprite(
+    colors: {
+        'd': ("dirt", 0),
+        'e': ("dirt", 1),
+        'E': ("dirt", 2),
+        'F': ("dirt", 3),
+    },
+    rows: [
+        "EFEEFEEEFEEFEEEF",
+        "eEeeEeeeEeeEeeeE",
+        "dddddddddddddddd",
+        "FEEFEEEFEEFEEEFE",
+        "EeeEeeeEeeEeeeEe",
+        "dddddddddddddddd",
+        "EEFEEFEEEFEEFEEE",
+        "eeEeeEeeeEeeEeee",
+        "dddddddddddddddd",
+        "EFEEEFEEFEEEFEEF",
+        "eEeeeEeeEeeeEeeE",
+        "dddddddddddddddd",
+        "FEEFEEEFEEFEEEFE",
+        "EeeEeeeEeeEeeeEe",
+        "dddddddddddddddd",
+        "EEFEEEFEEFEEEFEE",
+    ],
+)

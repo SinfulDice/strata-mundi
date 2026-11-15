@@ -1,0 +1,7 @@
+// Cuts every plant up to two blocks around the one cut, for one use.
+Item(
+    texture: "strata:sickle",
+    tier: "strata:iron",
+    category: Some("strata:tools"),
+    tool: Some(Tool(kinds: ["strata:sickle"], sweep: 2)),
+)

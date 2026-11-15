@@ -1,0 +1,6 @@
+Item(
+    texture: "strata:diamond_shovel",
+    tier: "strata:diamond",
+    category: Some("strata:tools"),
+    tool: Some(Tool(kinds: ["strata:shovel"])),
+)

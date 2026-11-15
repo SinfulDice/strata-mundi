@@ -15,3 +15,5 @@ tag-strata-iron_ores = minerai de fer
 tag-strata-copper_ores = minerai de cuivre
 tag-strata-gold_ores = minerai d'or
 tag-strata-diamond_ores = minerai de diamant
+category-strata-weapons = Armes
+category-strata-armor = Armures

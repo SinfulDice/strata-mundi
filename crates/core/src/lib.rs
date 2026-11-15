@@ -10,6 +10,7 @@ pub mod crafting;
 pub mod dimension;
 pub mod files;
 pub mod font;
+pub mod gear;
 pub mod generation;
 pub mod hash;
 pub mod id;

@@ -1,0 +1,9 @@
+// Carves patterns: used on stone bricks, goes through their carved variants.
+Item(
+    texture: "strata:chisel",
+    tier: "strata:iron",
+    category: Some("strata:tools"),
+    durability: 128,
+    tool: Some(Tool(kinds: ["strata:chisel"])),
+    action: Some(Work),
+)

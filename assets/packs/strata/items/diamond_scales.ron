@@ -1,0 +1,2 @@
+// Scales of diamond scale armour.
+Item(texture: "strata:diamond_scales", category: Some("strata:materials"))

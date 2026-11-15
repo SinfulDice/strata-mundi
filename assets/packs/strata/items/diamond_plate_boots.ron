@@ -1,0 +1,8 @@
+Item(
+    texture: "strata:diamond_plate_boots",
+    tier: "strata:diamond",
+    category: Some("strata:armor"),
+    equip: Some(Feet),
+    durability: 429,
+    armor: Some(Armor(protection: 3, weight: "strata:heavy")),
+)

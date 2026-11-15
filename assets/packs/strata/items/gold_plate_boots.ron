@@ -1,0 +1,8 @@
+Item(
+    texture: "strata:gold_plate_boots",
+    tier: "strata:gold",
+    category: Some("strata:armor"),
+    equip: Some(Feet),
+    durability: 91,
+    armor: Some(Armor(protection: 2, weight: "strata:heavy")),
+)

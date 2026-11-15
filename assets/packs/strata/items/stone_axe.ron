@@ -1,0 +1,6 @@
+Item(
+    texture: "strata:stone_axe",
+    tier: "strata:stone",
+    category: Some("strata:tools"),
+    tool: Some(Tool(kinds: ["strata:axe"])),
+)

@@ -48,6 +48,13 @@ pub struct MovementSettings {
     pub step_up: bool,
     /// Jump automatically onto a one-block step when walking into it.
     pub auto_jump: bool,
+    /// Multiplies walking, sprinting and sneaking (heavy armour slows), not flying.
+    #[serde(default = "full_speed")]
+    pub speed: f64,
+}
+
+fn full_speed() -> f64 {
+    1.0
 }
 
 /// Position (feet, bottom centre) and motion of a moving body.
@@ -94,6 +101,11 @@ pub fn step(
         swim::immersion(body, terrain)
     };
     let wish = wished_velocity(body, input, liquid);
+    let wish = if body.flying {
+        wish
+    } else {
+        wish * settings.speed.clamp(0.0, 1.0)
+    };
     match liquid {
         Some(_) => swim::steer(body, wish, input.jump),
         None => steer(body, wish, input),
@@ -274,6 +286,7 @@ mod tests {
             can_fly: true,
             step_up: true,
             auto_jump: false,
+            speed: 1.0,
         }
     }
 
@@ -320,6 +333,27 @@ mod tests {
         };
         run(&mut body, east, 100);
         assert!((body.position.x - (5.0 - WIDTH / 2.0)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn a_slower_body_walks_less_far() {
+        let walk = |speed| {
+            let mut body = Body::at(DVec3::new(0.5, 0.0, 0.5));
+            let north = MoveInput {
+                wish: [0.0, 1.0],
+                ..MoveInput::default()
+            };
+            let slowed = MovementSettings {
+                speed,
+                ..settings()
+            };
+            for _ in 0..40 {
+                step(&mut body, &north, &slowed, &world);
+            }
+            0.5 - body.position.z
+        };
+        let ratio = walk(0.9) / walk(1.0);
+        assert!((ratio - 0.9).abs() < 0.01, "{ratio}");
     }
 
     #[test]

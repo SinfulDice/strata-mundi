@@ -20,6 +20,7 @@ use std::sync::Arc;
 use strata_core::content::{Content, ItemKind};
 use strata_core::coords::DEFAULT_WORLD_BORDER;
 use strata_core::id::Identifier;
+use strata_core::inventory::DurabilityMode;
 use strata_protocol::{GameMode, NewWorld};
 
 const MAX_NAME: usize = 32;
@@ -66,6 +67,7 @@ pub struct CreateForm {
     pub fire_spread: bool,
     pub fire_destroy: bool,
     pub discover_recipes: bool,
+    pub durability: DurabilityMode,
     pub editor: GenerationEditor,
     pub page: Page,
     pub tab: usize,
@@ -95,6 +97,7 @@ impl CreateForm {
             fire_spread: true,
             fire_destroy: true,
             discover_recipes: true,
+            durability: DurabilityMode::Break,
             editor: GenerationEditor::new(catalog, blocks),
             page: Page::Main,
             tab: 0,
@@ -136,6 +139,7 @@ impl CreateForm {
             fire_spread: self.fire_spread,
             fire_destroy: self.fire_destroy,
             discover_recipes: self.discover_recipes,
+            durability: self.durability,
             generation: self.editor.settings.clone(),
         }
     }
@@ -248,6 +252,10 @@ impl ScreenModel for CreateModel<'_> {
             "recipes" => {
                 Some(self.toggle("ui-new-world-recipes", "discover", form.discover_recipes))
             }
+            "durability" => {
+                let keep = form.durability == DurabilityMode::KeepBroken;
+                Some(self.toggle("ui-new-world-durability", "keep", keep))
+            }
             _ => None,
         }
     }
@@ -285,6 +293,13 @@ impl ScreenModel for CreateModel<'_> {
         };
         if let Some(flag) = flag {
             *flag = !*flag;
+            return;
+        }
+        if id == "durability" {
+            form.durability = match form.durability {
+                DurabilityMode::Break => DurabilityMode::KeepBroken,
+                DurabilityMode::KeepBroken => DurabilityMode::Break,
+            };
             return;
         }
         let effect = match id {

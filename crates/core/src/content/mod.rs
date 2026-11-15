@@ -23,6 +23,7 @@ mod textures;
 mod tint;
 mod tool;
 mod turned;
+mod worked;
 
 pub use crate::cooking::FurnaceDef;
 pub use attached::{AttachedSides, Attachment};
@@ -56,12 +57,14 @@ pub use tags::{ItemTags, TagDef};
 pub use textures::{MAX_LAYERS, TextureLayout, TextureLibrary, missing_id, position_hash};
 pub use tint::{BiomeTints, BlockTint, Tint, TintFaces, TintKind, UNTINTED_ALPHA};
 pub use tool::{BlockTool, TICKS_PER_SECOND, ToolDef, crack_progress, crack_stage};
+pub use worked::{Worked, WorkedDef};
 
 use crate::audio::{self, Sounds};
 use crate::cinematic::{self, Cinematic};
 use crate::cooking::{self, Cooking};
 use crate::crafting::{self, Recipes};
 use crate::dimension::DimensionId;
+use crate::gear::Gear;
 use crate::id::Identifier;
 use crate::lang::Translations;
 use crate::pack::{PackError, PackSet, Sourced};
@@ -94,6 +97,8 @@ pub struct Content {
     pub recipes: Recipes,
     /// Furnaces (fuels, cooking recipes, tiers) and the stonecutter.
     pub cooking: Cooking,
+    /// Tool tiers and armour weights.
+    pub gear: Gear,
     /// Item tooltips by language, see `item_tooltip`.
     pub tooltips: describe::TooltipCache,
 }
@@ -121,9 +126,11 @@ impl Content {
         let mut loot_refs = Vec::new();
         let (blocks, fluids) = load_blocks(packs, &presented, &mut loot_refs, &mut errors);
         let entities = entity::load_entities(packs, &textures, &mut errors);
+        let gear = Gear::load(packs, &mut errors);
         let known = item::Known {
             blocks: &blocks,
             entities: &entities,
+            gear: &gear,
         };
         let items = item::load_items(packs, &known, &textures, &mut errors);
         let loot_tables = loot::load_loot_tables(packs, &items, &mut errors);
@@ -157,6 +164,7 @@ impl Content {
             tags,
             recipes,
             cooking,
+            gear,
             tooltips: Default::default(),
         };
         content.cache_tooltips();
@@ -257,6 +265,7 @@ fn load_blocks(
     } = *presented;
     let mut blocks = Registry::default();
     let mut fluids = Vec::new();
+    let mut worked = Vec::new();
     blocks.insert(air_id(), Block::air());
     for (id, Sourced { value, source }) in packs.layered::<BlockDef>("blocks", errors) {
         if id == air_id() {
@@ -339,10 +348,12 @@ fn load_blocks(
             }),
             station: value
                 .station
-                .filter(|&station| valid_station(station, &source, errors)),
+                .filter(|&station| container::valid_station(station, &source, errors)),
             facing: None,
             furnace: value.furnace,
+            worked: Vec::new(),
         };
+        worked.push((id.clone(), value.worked, source.clone()));
         let lit = facing::lit_look(&placement, textures, &source, errors);
         let inserted = match (fluid_def, &placement) {
             (Some(def), Placement::Fixed) => {
@@ -380,21 +391,7 @@ fn load_blocks(
             ));
         }
     }
+    worked::resolve_worked(&mut blocks, worked, errors);
     let fluids = fluid::resolve(&blocks, fluids, errors);
     (blocks, fluids)
-}
-
-fn valid_station(
-    station: StationDef,
-    source: &std::path::Path,
-    errors: &mut Vec<PackError>,
-) -> bool {
-    let StationDef::Crafting(side) = station else {
-        return true;
-    };
-    let valid = (1..=crate::crafting::MAX_GRID as u8).contains(&side);
-    if !valid {
-        errors.push(PackError::invalid(source, "crafting grid: 1 to 3 cells"));
-    }
-    valid
 }

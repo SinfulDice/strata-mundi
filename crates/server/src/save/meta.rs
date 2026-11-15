@@ -2,6 +2,7 @@ use super::stacks::SavedInventory;
 use serde::{Deserialize, Serialize};
 use strata_core::generation::WorldgenSettings;
 use strata_core::id::Identifier;
+use strata_core::inventory::DurabilityMode;
 use strata_core::physics::Body;
 use strata_core::updates::{FireSettings, FluidSettings};
 use strata_protocol::GameMode;
@@ -45,6 +46,9 @@ pub struct WorldMeta {
     /// World option: recipes are learnt by playing; otherwise all are known.
     #[serde(default = "yes")]
     pub discover_recipes: bool,
+    /// World option: worn-out items break, or stay useless until repaired.
+    #[serde(default)]
+    pub durability: DurabilityMode,
     /// World type and generation settings; older worlds are of the pack's normal type.
     #[serde(default)]
     pub generation: WorldgenSettings,

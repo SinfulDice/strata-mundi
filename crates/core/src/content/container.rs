@@ -1,3 +1,4 @@
+use crate::pack::PackError;
 use serde::Deserialize;
 
 /// Slots of a container block, in rows of nine.
@@ -26,4 +27,20 @@ pub enum StationDef {
     Crafting(u8),
     /// One input cut into the variant chosen in a list (`stonecutting/` recipes).
     Stonecutter,
+}
+
+/// A crafting grid of 1 to 3 cells a side; other stations need nothing.
+pub(super) fn valid_station(
+    station: StationDef,
+    source: &std::path::Path,
+    errors: &mut Vec<PackError>,
+) -> bool {
+    let StationDef::Crafting(side) = station else {
+        return true;
+    };
+    let valid = (1..=crate::crafting::MAX_GRID as u8).contains(&side);
+    if !valid {
+        errors.push(PackError::invalid(source, "crafting grid: 1 to 3 cells"));
+    }
+    valid
 }

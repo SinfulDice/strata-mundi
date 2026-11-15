@@ -1,0 +1,2 @@
+// Gold tools: very fast and soon worn, with room for upgrades.
+Tier(level: 2, speed: 12.0, durability: 48, damage: 1.0, enchantability: 22, upgrade_slots: 2)

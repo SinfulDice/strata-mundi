@@ -2,11 +2,12 @@ use crate::audio::{Direction, LIFETIME, Subtitle};
 use crate::gameplay::Gameplay;
 use crate::inventory::{ClientInventory, SLOTS};
 use crate::ui::{LogLine, ScreenModel, SlotMark, Tone};
-use strata_core::content::{Content, ItemId, ItemKind};
+use strata_core::content::{Content, Item, ItemId, ItemKind, Registry};
 
 /// Data shown by the in-game overlay (sample values in the HUD editor).
 pub struct HudModel<'a> {
     pub hotbar: &'a ClientInventory,
+    pub items: &'a Registry<ItemId, Item>,
     /// Translated name of the aimed block, if shown.
     pub target: Option<String>,
     /// How to get off the boat, while riding.
@@ -37,7 +38,7 @@ impl ScreenModel for HudModel<'_> {
 
     fn marks(&self, id: &str) -> Vec<SlotMark> {
         match id {
-            "hotbar" => self.hotbar.marks(SLOTS),
+            "hotbar" => self.hotbar.marks(SLOTS, self.items),
             _ => Vec::new(),
         }
     }

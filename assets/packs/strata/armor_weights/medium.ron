@@ -1,0 +1,2 @@
+// Medium armour (mail, scales): a little stamina and mana per piece. Stamina (milestone 8) and mana (v0.9) read their shares later.
+ArmorWeight(speed: 0.0, stamina: 0.025, mana: 0.025)

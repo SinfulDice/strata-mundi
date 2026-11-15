@@ -1,0 +1,2 @@
+// Wooden tools: the first ones, from planks.
+Tier(level: 0, speed: 2.0, durability: 59, damage: 0.0, enchantability: 15, upgrade_slots: 0)

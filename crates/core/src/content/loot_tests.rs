@@ -78,8 +78,7 @@ fn counts_stay_within_bounds_and_reach_both() {
 fn tool_conditions_choose_the_entry() {
     let shears = ToolDef {
         kinds: vec![kind("shears")],
-        level: 0,
-        speed: 1.0,
+        ..ToolDef::default()
     };
     let mut with_shears = entry(LootDrop::Itself, 1, (1, 1));
     with_shears.conditions = vec![LootCondition::Tool(kind("shears"))];

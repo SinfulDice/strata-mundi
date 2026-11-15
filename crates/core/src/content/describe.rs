@@ -1,7 +1,7 @@
 //! What the interface tells about an item beyond its name: the tool a block needs, what a
 //! tool mines.
 
-use super::{BlockTool, Content, ItemId, ItemKind, ToolDef};
+use super::{BlockTool, Content, Item, ItemAction, ItemId, ItemKind, ToolDef};
 use crate::id::Identifier;
 use crate::lang::LANGUAGES;
 use std::collections::HashMap;
@@ -47,8 +47,40 @@ impl Content {
             if let Some(tool) = &entry.tool {
                 lines.push(self.tool_text(tool, language));
             }
+            lines.extend(self.gear_lines(entry, language));
         }
         lines.join("\n")
+    }
+
+    /// Sweep, use on blocks, weapon, armour and upgrade slots of an item.
+    fn gear_lines(&self, item: &Item, language: &str) -> Vec<String> {
+        let tr = &self.translations;
+        let number = |value: f32| tr.short_decimal(language, f64::from(value));
+        let mut lines = Vec::new();
+        if let Some(sweep) = item.tool.as_ref().map(|t| t.sweep).filter(|&s| s > 0) {
+            let blocks = [("blocks", sweep.to_string())];
+            lines.push(tr.text_with(language, "mining-tool-sweep", &blocks));
+        }
+        if item.action == Some(ItemAction::Work) {
+            lines.push(tr.text(language, "gear-works-line"));
+        }
+        if let Some(weapon) = &item.gear.weapon {
+            let args = [
+                ("damage", number(weapon.damage)),
+                ("speed", number(weapon.attack_speed)),
+            ];
+            lines.push(tr.text_with(language, "gear-weapon-line", &args));
+        }
+        if let Some(armor) = &item.gear.armor {
+            let weight = tr.text(language, &armor.weight.translation_key("armor-weight"));
+            let args = [("points", armor.protection.to_string()), ("weight", weight)];
+            lines.push(tr.text_with(language, "gear-armor-line", &args));
+        }
+        if item.gear.upgrade_slots > 0 {
+            let slots = [("slots", item.gear.upgrade_slots.to_string())];
+            lines.push(tr.text_with(language, "gear-upgrade-line", &slots));
+        }
+        lines
     }
 
     /// Translated name of a tool kind (`strata:pickaxe` → « pioche »).

@@ -1,0 +1,8 @@
+// Pickaxe, axe and shovel in one, at iron level, but wears out sooner.
+Item(
+    texture: "strata:multi_tool",
+    tier: "strata:iron",
+    category: Some("strata:tools"),
+    durability: 150,
+    tool: Some(Tool(kinds: ["strata:pickaxe", "strata:axe", "strata:shovel"])),
+)

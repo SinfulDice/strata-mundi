@@ -76,6 +76,7 @@ impl IntegratedServer {
             meta.mode,
         );
         game.set_recipe_discovery(meta.discover_recipes);
+        game.durability = meta.durability;
         game.set_known_recipes(start.recipes);
         game.unknown_recipes = start.unknown_recipes;
         game.set_inventory(start.inventory);

@@ -11,7 +11,9 @@ pub use click::{Area, Click, SlotPolicy, SlotRef, Window};
 pub use container::{ARMOR, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory};
 pub use craft_grid::CraftGrid;
 pub use sort::{SortOrder, deposit_matching, sort};
-pub use stack::{DataValue, ItemData, ItemRules, ItemStack, clear_empty};
+pub use stack::{
+    DataValue, DurabilityMode, ItemData, ItemRules, ItemStack, clear_empty, wear_slot,
+};
 
 #[cfg(test)]
 mod tests;

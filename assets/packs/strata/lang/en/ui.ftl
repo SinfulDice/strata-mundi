@@ -50,6 +50,10 @@ ui-new-world-recipes = Recipes: { $discover ->
         [on] to discover
        *[off] all known
     }
+ui-new-world-durability = Worn-out items: { $keep ->
+        [on] kept until repaired
+       *[off] break
+    }
 ui-new-world-create = Create
 
 ui-delete-question = Delete "{ $name }"?

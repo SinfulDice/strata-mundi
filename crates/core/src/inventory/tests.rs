@@ -86,6 +86,24 @@ fn wear_and_data_keep_stacks_apart() {
 }
 
 #[test]
+fn a_worn_out_item_goes_or_stays_broken_by_the_world_option() {
+    let mut gone = Some(stack(PICK, 1));
+    assert!(!wear_slot(&mut gone, 49, DurabilityMode::Break));
+    assert!(wear_slot(&mut gone, 1, DurabilityMode::Break));
+    assert!(gone.is_none());
+    let mut kept = Some(stack(PICK, 1));
+    assert!(wear_slot(&mut kept, 60, DurabilityMode::KeepBroken));
+    let broken = kept.unwrap();
+    assert!(broken.is_broken() && broken.durability == Some(0));
+    let mut dirt = Some(stack(DIRT, 3));
+    assert!(!wear_slot(&mut dirt, 1, DurabilityMode::Break));
+    assert!(
+        !dirt.unwrap().is_broken(),
+        "what does not wear never breaks"
+    );
+}
+
+#[test]
 fn splitting_takes_the_larger_half() {
     let mut odd = stack(DIRT, 7);
     assert_eq!(odd.take_half().unwrap().count, 4);

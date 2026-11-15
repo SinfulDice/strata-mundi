@@ -1,0 +1,2 @@
+// Sometimes left by tall grass and ferns cut without shears.
+Item(texture: "strata:plant_fiber", category: Some("strata:materials"))

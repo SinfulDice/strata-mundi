@@ -1,0 +1,7 @@
+Item(
+    texture: "strata:leather_tunic",
+    category: Some("strata:armor"),
+    equip: Some(Chest),
+    durability: 80,
+    armor: Some(Armor(protection: 3, weight: "strata:light")),
+)

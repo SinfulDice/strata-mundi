@@ -36,6 +36,7 @@ fn items() -> Registry<ItemId, Item> {
             remainder: (name == "water").then_some(BUCKET),
             kit: None,
             module: None,
+            gear: Default::default(),
         };
         items.insert(id(name), item);
     }

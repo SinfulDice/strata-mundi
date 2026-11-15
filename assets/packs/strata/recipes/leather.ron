@@ -1,0 +1,9 @@
+// Provisional (v0.3): leather will come from animals in v0.4.
+Shapeless(
+    ingredients: [
+        Item("strata:plant_fiber"),
+        Item("strata:plant_fiber"),
+        Item("strata:mud"),
+    ],
+    result: Result(item: "strata:leather"),
+)

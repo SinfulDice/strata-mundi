@@ -1,0 +1,27 @@
+// Diamond scales: overlapping cut plates.
+Sprite(
+    colors: {
+        'O': ("diamond", 0),
+        'h': ("diamond", 1),
+        'H': ("diamond", 2),
+        'W': ("diamond", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "....OOO..OOO....",
+        "...OWHhOOWHhO...",
+        "...OHHhOOHHhO...",
+        "....OhOOOOhO....",
+        "......OWHhO.....",
+        "......OHHhO.....",
+        ".......OhO......",
+        "....OOO..OOO....",
+        "...OWHhOOWHhO...",
+        "...OHHhOOHHhO...",
+        "....OhO..OhO....",
+        ".....O....O.....",
+        "................",
+    ],
+)

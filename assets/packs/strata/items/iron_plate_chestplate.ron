@@ -1,0 +1,8 @@
+Item(
+    texture: "strata:iron_plate_chestplate",
+    tier: "strata:iron",
+    category: Some("strata:armor"),
+    equip: Some(Chest),
+    durability: 240,
+    armor: Some(Armor(protection: 6, weight: "strata:heavy")),
+)

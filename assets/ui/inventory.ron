@@ -17,6 +17,7 @@ Screen(
                     SlotGrid(id: "armor", anchor: TopLeft, at: (8, 16), columns: 1, rows: 4),
                     SlotGrid(id: "offhand", anchor: TopLeft, at: (32, 76), columns: 1, rows: 1),
                     Label(id: "offhand_label", anchor: TopLeft, at: (56, 82), text: "ui-inventory-offhand", dim: true),
+                    Label(id: "protection", anchor: TopLeft, at: (34, 62), text: "@protection"),
                     SlotGrid(id: "craft", anchor: TopLeft, at: (34, 20), columns: 2, rows: 2),
                     Label(id: "craft_arrow", anchor: TopLeft, at: (76, 36), text: "ui-craft-arrow", dim: true),
                     SlotGrid(id: "craft_result", anchor: TopLeft, at: (86, 30), columns: 1, rows: 1),

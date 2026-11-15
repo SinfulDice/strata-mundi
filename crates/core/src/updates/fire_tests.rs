@@ -190,7 +190,7 @@ fn a_forest_fire_matches_its_reference() {
     let changes = forest_fire(1, "strata:terra");
     assert_eq!(
         (changes.len(), digest(&changes)),
-        (863, 9_570_170_561_057_100_865)
+        (863, 4_216_882_150_709_456_141)
     );
 }
 

@@ -1,0 +1,2 @@
+// Heavy armour (plates): each piece slows walking by 2.5 % (10 % for a full set). Stamina (milestone 8) and mana (v0.9) read their shares later.
+ArmorWeight(speed: 0.025, stamina: 0.05, mana: 0.05)

@@ -1,0 +1,27 @@
+// Stone bricks carved with a framed square.
+Sprite(
+    colors: {
+        'm': ("stone", 0),
+        's': ("stone", 1),
+        'S': ("stone", 2),
+        'H': ("stone", 3),
+    },
+    rows: [
+        "HHHHHHHHHHHHHHHs",
+        "HSSSSSSSSSSSSSsm",
+        "HSmmmmmmmmmmmSsm",
+        "HSmHHHHHHHHHsmsm",
+        "HSmHSSSSSSSSsmsm",
+        "HSmHSmmmmmmSsmsm",
+        "HSmHSmHHHHsSsmsm",
+        "HSmHSmHSSmsSsmsm",
+        "HSmHSmHSSmsSsmsm",
+        "HSmHSmsssssSsmsm",
+        "HSmHSSSSSSSSsmsm",
+        "HSmHsssssssssmsm",
+        "HSmmmmmmmmmmmmsm",
+        "HSsssssssssssssm",
+        "Hsmmmmmmmmmmmmmm",
+        "smmmmmmmmmmmmmmm",
+    ],
+)

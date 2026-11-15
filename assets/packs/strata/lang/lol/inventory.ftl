@@ -1,6 +1,7 @@
 ui-mode-survival = SURVIVL
 ui-inventory-survival-title = MAH STUFFZ
 ui-inventory-offhand = OTHR PAW
+ui-inventory-protection = SHIELDY: { $points }
 ui-inventory-sort-type = SORT (KIND)
 ui-inventory-sort-name = SORT (NAEM)
 ui-inventory-deposit = STASH IT

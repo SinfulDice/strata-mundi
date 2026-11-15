@@ -85,6 +85,7 @@ fn facts(ctx: &Ctx<'_>, id: &Identifier, item: &Item) -> Vec<(String, String)> {
     if let Some(uses) = item.durability {
         rows.push((ctx.tr("wiki-fact-durability"), uses.to_string()));
     }
+    rows.extend(crate::gear::facts(ctx, item));
     rows.push((ctx.tr("wiki-fact-id"), format!("<code>{id}</code>")));
     rows
 }

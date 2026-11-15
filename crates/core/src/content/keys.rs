@@ -36,10 +36,18 @@ impl Content {
             .into_iter()
             .map(|k| k.translation_key("tool"));
         let tags = self.tags.iter().map(|(id, _)| id.translation_key("tag"));
+        let tiers = self.gear.tiers.keys().map(|id| id.translation_key("tier"));
+        let weights = self
+            .gear
+            .weights
+            .keys()
+            .map(|id| id.translation_key("armor-weight"));
         let mut keys: Vec<String> = blocks
             .chain(tags)
             .chain(items)
             .chain(tools)
+            .chain(tiers)
+            .chain(weights)
             .chain(categories)
             .chain(subtitles)
             .chain(sounds)

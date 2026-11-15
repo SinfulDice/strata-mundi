@@ -1,0 +1,7 @@
+// Cuts leaves, vines and tall plants so that they are kept.
+Item(
+    texture: "strata:shears",
+    category: Some("strata:tools"),
+    durability: 238,
+    tool: Some(Tool(kinds: ["strata:shears"], speed: 5.0)),
+)

@@ -1,0 +1,6 @@
+Item(
+    texture: "strata:diamond_sword",
+    tier: "strata:diamond",
+    category: Some("strata:weapons"),
+    weapon: Some(Weapon(damage: 4.0, attack_speed: 1.6)),
+)

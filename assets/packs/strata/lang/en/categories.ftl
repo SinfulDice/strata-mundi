@@ -15,3 +15,5 @@ tag-strata-iron_ores = iron ore
 tag-strata-copper_ores = copper ore
 tag-strata-gold_ores = gold ore
 tag-strata-diamond_ores = diamond ore
+category-strata-weapons = Weapons
+category-strata-armor = Armour

@@ -1,0 +1,6 @@
+Shaped(
+    pattern: ["MM", " S", " S"],
+    key: {'M': Item("strata:cobblestone"), 'S': Item("strata:stick")},
+    result: Result(item: "strata:stone_hoe"),
+    starting: true,
+)

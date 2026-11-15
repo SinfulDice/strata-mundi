@@ -1,0 +1,6 @@
+Item(
+    texture: "strata:diamond_pickaxe",
+    tier: "strata:diamond",
+    category: Some("strata:tools"),
+    tool: Some(Tool(kinds: ["strata:pickaxe"])),
+)

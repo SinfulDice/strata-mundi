@@ -6,12 +6,12 @@ use super::journal::JournalState;
 use super::menu::{Effect, Menu};
 use super::worlds::edit;
 use crate::crafting::ClientCrafting;
-use crate::inventory::ClientInventory;
+use crate::inventory::{ClientInventory, wear_share};
 use crate::ui::{ScreenModel, SlotMark, SlotPress};
 use strata_core::content::{Content, ItemId, StationDef};
 use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE_OUTPUT};
 use strata_core::inventory::{
-    ARMOR, Area, Click, HOTBAR, ItemRules, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
+    ARMOR, Area, Click, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
 };
 use strata_protocol::{InventoryRequest, OpenedContainer};
 
@@ -110,19 +110,37 @@ impl SlotsModel<'_> {
                 ..SlotMark::default()
             };
         };
-        let full = self.content.items.durability(stack.item);
         let query = self.state.search.to_lowercase();
+        let searched_out = area == Area::Open
+            && !query.is_empty()
+            && !self.name(stack.item).to_lowercase().contains(&query);
         SlotMark {
             count: stack.count,
-            wear: stack
-                .durability
-                .zip(full)
-                .map(|(left, full)| f32::from(left) / f32::from(full.max(1))),
+            wear: wear_share(stack, &self.content.items),
             locked: area == Area::Player && self.inventory.inventory().is_locked(index),
-            dim: area == Area::Open
-                && !query.is_empty()
-                && !self.name(stack.item).to_lowercase().contains(&query),
+            dim: searched_out || stack.is_broken(),
         }
+    }
+
+    /// The item's tooltip, with the uses left of this one (or that it is broken).
+    fn stack_tooltip(&self, stack: &ItemStack) -> String {
+        let mut text = self.content.item_tooltip(stack.item, self.language);
+        let full = self
+            .content
+            .items
+            .get(stack.item)
+            .and_then(|i| i.durability);
+        if let (Some(left), Some(full)) = (stack.durability, full) {
+            let args = [("left", left.to_string()), ("full", full.to_string())];
+            let tr = &self.content.translations;
+            text.push('\n');
+            text.push_str(&tr.text_with(self.language, "gear-uses-line", &args));
+            if stack.is_broken() {
+                text.push('\n');
+                text.push_str(&self.tr("gear-broken-line"));
+            }
+        }
+        text
     }
 
     fn name(&self, item: ItemId) -> String {
@@ -186,6 +204,14 @@ impl ScreenModel for SlotsModel<'_> {
     fn text(&self, id: &str) -> Option<String> {
         match id {
             "search" => Some(self.state.search.clone()),
+            "protection" => Some(self.content.translations.text_with(
+                self.language,
+                "ui-inventory-protection",
+                &[(
+                    "points",
+                    self.inventory.protection(&self.content.items).to_string(),
+                )],
+            )),
             "craft_note" => Some(self.craft_note()),
             "furnace_info" => Some(self.furnace_info()),
             "cutter_note" => Some(self.cutter_note()),
@@ -255,7 +281,7 @@ impl ScreenModel for SlotsModel<'_> {
             return Some(self.content.item_tooltip(stack.item, self.language));
         }
         let stack = self.stack(self.slot(id, index)?)?;
-        Some(self.content.item_tooltip(stack.item, self.language))
+        Some(self.stack_tooltip(stack))
     }
 
     fn shown(&self, id: &str) -> bool {

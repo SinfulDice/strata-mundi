@@ -126,7 +126,13 @@ impl ItemStack {
         self.take(self.count.div_ceil(2))
     }
 
-    /// Spends one use; `true` when the item broke.
+    /// Worn down to no use left: kept only when the world keeps broken items until they
+    /// are repaired, and then useless (a hand, no protection).
+    pub fn is_broken(&self) -> bool {
+        self.durability == Some(0)
+    }
+
+    /// Spends uses; `true` when the item broke.
     pub fn wear(&mut self, uses: u16) -> bool {
         match &mut self.durability {
             Some(left) => {
@@ -136,6 +142,26 @@ impl ItemStack {
             None => false,
         }
     }
+}
+
+/// World option: what becomes of an item at the end of its uses.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DurabilityMode {
+    /// It breaks and is gone (Minecraft).
+    #[default]
+    Break,
+    /// It stays, useless and greyed out, until it is repaired.
+    KeepBroken,
+}
+
+/// Wears the stack in `slot` by `uses`; `true` when it reached the end of its uses (and,
+/// unless broken items are kept, went).
+pub fn wear_slot(slot: &mut Option<ItemStack>, uses: u16, mode: DurabilityMode) -> bool {
+    let broke = slot.as_mut().is_some_and(|stack| stack.wear(uses));
+    if broke && mode == DurabilityMode::Break {
+        *slot = None;
+    }
+    broke
 }
 
 /// Removes the stack from `slot` when it became empty.

@@ -1,0 +1,30 @@
+// A multi-tool: a pickaxe head with an axe blade and a spade tip.
+Sprite(
+    colors: {
+        'O': ("iron", 0),
+        'h': ("iron", 1),
+        'H': ("iron", 2),
+        'W': ("iron", 3),
+        's': ("stick", 0),
+        't': ("stick", 1),
+        'T': ("stick", 2),
+    },
+    rows: [
+        "................",
+        "....OOOOOO......",
+        "...OHWWHHhO.....",
+        "....OOhhHHhO....",
+        "........OHhO..OO",
+        "..........OhOOWO",
+        "........stTOhHhO",
+        ".......stT..OhO.",
+        "......stT...OO..",
+        ".....stT........",
+        "....stT.........",
+        "...stT..........",
+        "..stT...........",
+        ".stT............",
+        "stT.............",
+        "................",
+    ],
+)

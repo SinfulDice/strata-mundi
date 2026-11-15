@@ -10,6 +10,8 @@
     - [x] J3a grille/recettes/livre (recettes et tags en pack, 2×2 et établi 3×3 côté serveur, Maj-clic, restes, recettes apprises et expérimentation, option « recettes à découvrir », journal avec livre de recettes)
     - [x] J3b fours, tailleur, fours améliorables (combustibles, cuisson et taille en pack, façade orientée et allumée, fours actifs seulement, kits sur place, modules, écrans, sauvegarde)
   - [ ] J4 Outils, armes, armures (tiers, poids, outils spécialisés, marteau de mineur, durabilité, améliorations génériques, réparation)
+    - [ ] J4a tiers, outils, armes, armures, outils spécialisés, durabilité (tiers et poids d'armure en pack, pioche/hache/pelle/houe/épée par tier, cisailles, faucille, burin, outil multi-usage, armures légère/intermédiaire/lourde, protection dans l'inventaire, option « objets usés »)
+    - [ ] J4b marteau de mineur, améliorations génériques, enclume, réparation
   - [ ] J5 Accessoires et sets
   - [ ] J6 Stations de travail spécialisées
   - [ ] J7 Rangement (sac à dos, bourses, coffres et tonneaux améliorables)

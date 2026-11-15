@@ -1,0 +1,29 @@
+// A sword: a long blade, a guard and a short grip.
+Sprite(
+    colors: {
+        'O': ("oak_wood", 0),
+        'h': ("oak_wood", 1),
+        'H': ("oak_wood", 2),
+        'W': ("oak_wood", 3),
+        't': ("stick", 1),
+        'T': ("stick", 2),
+    },
+    rows: [
+        "..............OO",
+        ".............OWO",
+        "............OWHO",
+        "...........OWHO.",
+        "..........OWHO..",
+        ".........OWHO...",
+        "........OWHO....",
+        ".......OWHO.....",
+        "...OO.OWHO......",
+        "...OhOWHO.......",
+        "....OhHO........",
+        "....OtOhO.......",
+        "...OtTO.OO......",
+        "..OtTO..........",
+        ".OOTO...........",
+        ".OOO............",
+    ],
+)

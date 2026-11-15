@@ -54,6 +54,7 @@ fn items() -> Registry<ItemId, Item> {
             remainder: (name == "lava").then_some(BUCKET),
             kit: None,
             module,
+            gear: Default::default(),
         };
         items.insert(id(name), item);
     }

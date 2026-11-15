@@ -15,3 +15,5 @@ tag-strata-iron_ores = IRON IN TEH ROCK
 tag-strata-copper_ores = COPPR IN TEH ROCK
 tag-strata-gold_ores = GOLD IN TEH ROCK
 tag-strata-diamond_ores = SHINY IN TEH ROCK
+category-strata-weapons = STABBY STUFFZ
+category-strata-armor = CLANKY CLOTHEZ

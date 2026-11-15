@@ -1,6 +1,9 @@
 use crate::ui::SlotMark;
 use strata_core::content::{Item, ItemId, Registry};
-use strata_core::inventory::{Area, Click, HOTBAR, ItemStack, PlayerInventory, SlotRef, SortOrder};
+use strata_core::gear::{worn_burden, worn_protection};
+use strata_core::inventory::{
+    ARMOR, Area, Click, HOTBAR, ItemRules, ItemStack, PlayerInventory, SlotRef, SortOrder,
+};
 use strata_protocol::InventoryRequest;
 
 pub const SLOTS: usize = HOTBAR.end;
@@ -21,8 +24,12 @@ impl ClientInventory {
         self.inventory.selected_index()
     }
 
+    /// The item in hand; a broken one is no better than a hand.
     pub fn selected(&self) -> Option<ItemId> {
-        self.inventory.selected_stack().map(|stack| stack.item)
+        self.inventory
+            .selected_stack()
+            .filter(|stack| !stack.is_broken())
+            .map(|stack| stack.item)
     }
 
     pub fn slot(&self, index: usize) -> Option<ItemId> {
@@ -34,14 +41,32 @@ impl ClientInventory {
     }
 
     /// Counts and locks of the first `count` slots (the hotbar), for drawing.
-    pub fn marks(&self, count: usize) -> Vec<SlotMark> {
+    pub fn marks(&self, count: usize, items: &Registry<ItemId, Item>) -> Vec<SlotMark> {
         (0..count)
-            .map(|index| SlotMark {
-                count: self.stack(index).map_or(0, |stack| stack.count),
-                locked: self.inventory.is_locked(index),
-                ..SlotMark::default()
+            .map(|index| {
+                let stack = self.stack(index);
+                SlotMark {
+                    count: stack.map_or(0, |stack| stack.count),
+                    wear: stack.and_then(|stack| wear_share(stack, items)),
+                    locked: self.inventory.is_locked(index),
+                    dim: stack.is_some_and(ItemStack::is_broken),
+                }
             })
             .collect()
+    }
+
+    fn worn(&self) -> impl Iterator<Item = &ItemStack> {
+        ARMOR.filter_map(|slot| self.stack(slot))
+    }
+
+    /// Protection points of the armour worn, shown in the inventory.
+    pub fn protection(&self, items: &Registry<ItemId, Item>) -> u16 {
+        worn_protection(self.worn(), items)
+    }
+
+    /// Walking speed allowed by the armour worn, as the server computes it.
+    pub fn armour_speed(&self, items: &Registry<ItemId, Item>) -> f64 {
+        f64::from(worn_burden(self.worn(), items).speed_factor())
     }
 
     pub fn inventory(&self) -> &PlayerInventory {
@@ -132,6 +157,13 @@ impl ClientInventory {
     }
 }
 
+/// Uses left as a share of a new one's, for the wear bar; `None` if it does not wear.
+pub fn wear_share(stack: &ItemStack, items: &Registry<ItemId, Item>) -> Option<f32> {
+    let full = items.durability(stack.item)?;
+    let left = stack.durability?;
+    Some(f32::from(left) / f32::from(full.max(1)))
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
@@ -152,6 +184,7 @@ mod tests {
                 remainder: None,
                 kit: None,
                 module: None,
+                gear: Default::default(),
             };
             items.insert(format!("strata:{name}").parse().unwrap(), item);
         }

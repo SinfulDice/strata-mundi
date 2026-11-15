@@ -8,7 +8,7 @@ use strata_core::content::ItemId;
 use strata_core::cooking::FurnaceSlots;
 use strata_core::inventory::{
     Area, CraftGrid, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotPolicy, SlotRef,
-    SortOrder, Window, clear_empty, sort,
+    SortOrder, Window, clear_empty, sort, wear_slot,
 };
 use strata_protocol::{InventoryRequest, ServerMessage};
 
@@ -164,10 +164,13 @@ impl Game {
         left
     }
 
-    /// The item in the selected hotbar slot.
+    /// The item in the selected hotbar slot; a broken one is no better than a hand.
     pub(super) fn held_item(&self) -> Option<ItemId> {
         let inventory = self.ecs.inventories.get(self.player)?;
-        inventory.selected_stack().map(|stack| stack.item)
+        inventory
+            .selected_stack()
+            .filter(|stack| !stack.is_broken())
+            .map(|stack| stack.item)
     }
 
     /// Survival: one held item is used up (a block placed, a boat put down).
@@ -184,16 +187,15 @@ impl Game {
         });
     }
 
-    /// Survival: the held item wears; it breaks at the end of its uses.
+    /// Survival: the held item wears; at the end of its uses it breaks, or stays broken
+    /// (world option).
     pub(super) fn wear_held(&mut self, uses: u16) {
         if self.is_creative() {
             return;
         }
+        let mode = self.durability;
         self.with_inventory(|inventory, _| {
-            let slot = inventory.selected_slot_mut();
-            if slot.as_mut().is_some_and(|stack| stack.wear(uses)) {
-                *slot = None;
-            }
+            wear_slot(inventory.selected_slot_mut(), uses, mode);
         });
     }
 

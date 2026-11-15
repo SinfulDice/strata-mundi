@@ -1,0 +1,2 @@
+// Provisional until animals give hides (v0.4): fibres bound with mud.
+Item(texture: "strata:leather", category: Some("strata:materials"))

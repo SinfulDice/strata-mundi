@@ -139,6 +139,7 @@ impl Game {
         self.drop_broken(block, pos);
         self.stop_break();
         self.set_block(loader, pos, BlockId::AIR, &mut changes);
+        self.sweep_around(loader, pos, block, &mut changes);
         changes
     }
 
@@ -153,7 +154,7 @@ impl Game {
 
     /// Survival: a broken block leaves its loot on the ground, in stacks no bigger than
     /// the item's, and the tool wears.
-    fn drop_broken(&mut self, block: BlockId, pos: BlockPos) {
+    pub(super) fn drop_broken(&mut self, block: BlockId, pos: BlockPos) {
         if self.is_creative() {
             return;
         }

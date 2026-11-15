@@ -1,0 +1,8 @@
+Item(
+    texture: "strata:gold_mail_leggings",
+    tier: "strata:gold",
+    category: Some("strata:armor"),
+    equip: Some(Legs),
+    durability: 90,
+    armor: Some(Armor(protection: 3, weight: "strata:medium")),
+)

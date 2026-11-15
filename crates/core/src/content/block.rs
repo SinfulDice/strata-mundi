@@ -251,6 +251,10 @@ pub struct BlockDef {
     /// Makes it a furnace: cooks with fuel, by recipes of the `cooking/` folder.
     #[serde(default)]
     pub furnace: Option<super::FurnaceDef>,
+    /// What a tool kind used on it (right click) turns it into: a hoe tills dirt, a
+    /// chisel carves stone bricks.
+    #[serde(default)]
+    pub worked: std::collections::BTreeMap<Identifier, super::WorkedDef>,
 }
 
 fn default_slipperiness() -> f32 {
@@ -305,6 +309,8 @@ pub struct Block {
     pub station: Option<super::StationDef>,
     pub facing: Option<super::Facing>,
     pub furnace: Option<super::FurnaceDef>,
+    /// By tool kind (see `worked_by`).
+    pub worked: Vec<(Identifier, super::Worked)>,
 }
 
 impl Block {
@@ -338,6 +344,7 @@ impl Block {
             station: None,
             facing: None,
             furnace: None,
+            worked: Vec::new(),
         }
     }
 

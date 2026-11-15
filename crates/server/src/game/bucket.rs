@@ -53,6 +53,7 @@ impl Game {
                 }
                 return Vec::new();
             }
+            ItemAction::Work => return self.work_block(loader, against),
         };
         let mut changes = Vec::new();
         if self.in_reach(target) && self.take_action() {
@@ -74,7 +75,7 @@ impl Game {
                 self.wear_held(1);
                 None
             }
-            ItemAction::PlaceEntity(_) => None,
+            ItemAction::PlaceEntity(_) | ItemAction::Work => None,
         };
         if let Some(item) = exchanged {
             self.exchange_held(item);

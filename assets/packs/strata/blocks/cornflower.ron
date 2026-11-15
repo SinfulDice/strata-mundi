@@ -4,6 +4,7 @@ Block(
     solid: false,
     light_opacity: 0,
     hardness: 0.0,
+    tool: Some(BlockTool(kind: "strata:sickle")),
     sound: Some("strata:grass"),
     category: Some("strata:plants"),
     replaceable: true,

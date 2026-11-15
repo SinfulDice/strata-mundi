@@ -1,0 +1,9 @@
+// Dirt tilled with a hoe; crops will grow on it (v0.5). Gives dirt back.
+Block(
+    textures: TopBottomSides(top: "strata:farmland", bottom: "strata:dirt", sides: "strata:dirt"),
+    hardness: 0.6,
+    tool: Some(BlockTool(kind: "strata:shovel")),
+    loot: Some("strata:dirt_from_grass"),
+    sound: Some("strata:dirt"),
+    category: Some("strata:natural"),
+)

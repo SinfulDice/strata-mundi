@@ -1,0 +1,27 @@
+// Cloth: a folded square of woven fabric.
+Sprite(
+    colors: {
+        'o': ("cloth", 0),
+        'h': ("cloth", 1),
+        'H': ("cloth", 2),
+        'W': ("cloth", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "...oooooooooo...",
+        "...oWHWHWHWHo...",
+        "...oHhHhHhHho...",
+        "...oWHWHWHWHo...",
+        "...oHhHhHhHho...",
+        "...oooooooooo...",
+        "...oWHWHWHWHo...",
+        "...oHhHhHhHho...",
+        "...ohhhhhhhho...",
+        "...oooooooooo...",
+        "................",
+        "................",
+        "................",
+    ],
+)

@@ -1,0 +1,2 @@
+// Links of mail armour.
+Item(texture: "strata:iron_rings", category: Some("strata:materials"))

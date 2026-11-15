@@ -1,0 +1,7 @@
+Item(
+    texture: "strata:cloth_hood",
+    category: Some("strata:armor"),
+    equip: Some(Head),
+    durability: 44,
+    armor: Some(Armor(protection: 1, weight: "strata:light")),
+)

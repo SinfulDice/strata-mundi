@@ -15,6 +15,7 @@ fn items() -> Registry<ItemId, Item> {
             remainder: None,
             kit: None,
             module: None,
+            gear: Default::default(),
         };
         items.insert(format!("test:{name}").parse().unwrap(), item);
     }

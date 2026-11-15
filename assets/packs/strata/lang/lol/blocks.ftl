@@ -92,3 +92,6 @@ block-strata-stonecutter = ROCK CHOPPA
 block-strata-stone_bricks = ROCK BRIKZ
 block-strata-polished_stone = SMOOF ROCK
 block-strata-cut_sandstone = CHOPPD SANDZ ROCK
+block-strata-farmland = DIRT 4 FOODZ
+block-strata-chiseled_stone_bricks = FANCY ROCK BRIKZ
+block-strata-patterned_stone_bricks = SWIRLY ROCK BRIKZ

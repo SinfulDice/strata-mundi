@@ -258,6 +258,7 @@ impl Gameplay {
     fn advance_player(&mut self, dt: f32, input: MoveInput, connection: &ClientConnection) {
         let terrain = terrain(&self.view.world, &self.info, self.border);
         if let Some(player) = &mut self.player {
+            player.movement.speed = self.inventory.armour_speed(&self.info.content.items);
             for (sequence, input) in player.advance(f64::from(dt), input, &terrain) {
                 connection.send(ClientMessage::Input { sequence, input });
             }

@@ -1,0 +1,8 @@
+Item(
+    texture: "strata:iron_mail_coif",
+    tier: "strata:iron",
+    category: Some("strata:armor"),
+    equip: Some(Head),
+    durability: 143,
+    armor: Some(Armor(protection: 2, weight: "strata:medium")),
+)

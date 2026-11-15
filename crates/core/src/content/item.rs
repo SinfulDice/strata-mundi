@@ -1,6 +1,7 @@
 use super::registry::{BlockId, EntityTypeId, ItemId, Registry, TextureId};
 use super::{Block, EntityType, FluidLevel, TextureLibrary, ToolDef};
 use crate::cooking::{KitDef, ModuleDef};
+use crate::gear::{ArmorDef, Gear, GearFields, ItemGear, ToolSpec, WeaponDef};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced};
 use serde::Deserialize;
@@ -25,7 +26,16 @@ pub struct ItemDef {
     pub equip: Option<EquipSlot>,
     /// What it mines and how well (pickaxes, axes, shears…).
     #[serde(default)]
-    pub tool: Option<ToolDef>,
+    pub tool: Option<ToolSpec>,
+    /// Material tier (`tiers/`): fills the tool's level and speed, the weapon's damage,
+    /// the durability and the upgrade slots the item leaves out.
+    #[serde(default)]
+    pub tier: Option<Identifier>,
+    #[serde(default)]
+    pub weapon: Option<WeaponDef>,
+    /// Protection and weight of a worn piece (with `equip`).
+    #[serde(default)]
+    pub armor: Option<ArmorDef>,
     /// Left in the crafting grid when used in a recipe (a water bucket leaves a bucket).
     #[serde(default)]
     pub remainder: Option<Identifier>,
@@ -61,6 +71,9 @@ pub enum ItemActionDef {
     PlaceEntity(Identifier),
     /// Lights this fire against the aimed face (flint and steel).
     Ignite(Identifier),
+    /// Turns the aimed block into what its `worked` says for one of the item's tool
+    /// kinds (a hoe tills, a chisel carves).
+    Work,
 }
 
 fn default_stack() -> u16 {
@@ -80,6 +93,8 @@ pub struct Item {
     pub remainder: Option<ItemId>,
     pub kit: Option<KitDef>,
     pub module: Option<ModuleDef>,
+    /// Tier, weapon and armour stats.
+    pub gear: ItemGear,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,6 +105,7 @@ pub enum ItemAction {
     PlaceEntity(EntityTypeId),
     /// Fire block lit.
     Ignite(BlockId),
+    Work,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -104,6 +120,7 @@ pub enum ItemKind {
 pub(super) struct Known<'a> {
     pub(super) blocks: &'a Registry<BlockId, Block>,
     pub(super) entities: &'a Registry<EntityTypeId, EntityType>,
+    pub(super) gear: &'a Gear,
 }
 
 pub(super) fn load_items(
@@ -127,6 +144,7 @@ pub(super) fn load_items(
                 remainder: None,
                 kit: None,
                 module: None,
+                gear: ItemGear::default(),
             },
         );
     }
@@ -142,7 +160,18 @@ pub(super) fn load_items(
         let action = value
             .action
             .and_then(|action| item_action(known, action, &source, errors));
-        let durable = value.durability.filter(|&uses| uses > 0);
+        let resolved = known.gear.resolve(
+            GearFields {
+                tier: value.tier,
+                tool: value.tool,
+                weapon: value.weapon,
+                armor: value.armor,
+                durability: value.durability,
+            },
+            &source,
+            errors,
+        );
+        let durable = resolved.durability;
         let single = durable.is_some() || value.module.is_some();
         let item = Item {
             max_stack: if single { 1 } else { value.max_stack.max(1) },
@@ -151,12 +180,11 @@ pub(super) fn load_items(
             action,
             durability: durable,
             equip: value.equip,
-            tool: value
-                .tool
-                .and_then(|tool| valid_tool(tool, &source, errors)),
+            tool: resolved.tool,
             remainder: None,
             kit: value.kit,
             module: value.module,
+            gear: resolved.gear,
         };
         match items.insert(id.clone(), item) {
             Some(key) => remainders.extend(value.remainder.map(|left| (key, left, source))),
@@ -181,18 +209,6 @@ pub(super) fn load_items(
     items
 }
 
-fn valid_tool(
-    tool: ToolDef,
-    source: &std::path::Path,
-    errors: &mut Vec<PackError>,
-) -> Option<ToolDef> {
-    if tool.kinds.is_empty() {
-        errors.push(PackError::invalid(source, "a tool needs at least one kind"));
-        return None;
-    }
-    Some(tool.clamped())
-}
-
 fn item_action(
     known: &Known<'_>,
     action: ItemActionDef,
@@ -202,6 +218,7 @@ fn item_action(
     let blocks = known.blocks;
     match action {
         ItemActionDef::TakeFluid => Some(ItemAction::TakeFluid),
+        ItemActionDef::Work => Some(ItemAction::Work),
         ItemActionDef::PlaceEntity(id) => {
             let entity = known.entities.key(&id);
             if entity.is_none() {

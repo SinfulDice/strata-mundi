@@ -4,4 +4,5 @@ Block(
     tool: Some(BlockTool(kind: "strata:shovel")),
     sound: Some("strata:dirt"),
     category: Some("strata:natural"),
+    worked: {"strata:hoe": Worked(into: "strata:farmland", open_above: true)},
 )

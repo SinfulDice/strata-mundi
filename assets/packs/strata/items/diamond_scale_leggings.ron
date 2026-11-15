@@ -1,0 +1,8 @@
+Item(
+    texture: "strata:diamond_scale_leggings",
+    tier: "strata:diamond",
+    category: Some("strata:armor"),
+    equip: Some(Legs),
+    durability: 420,
+    armor: Some(Armor(protection: 5, weight: "strata:medium")),
+)

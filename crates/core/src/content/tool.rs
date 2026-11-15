@@ -14,18 +14,28 @@ const WRONG_TOOL_FACTOR: f32 = 100.0;
 const MIN_SPEED: f32 = 0.01;
 const MAX_SPEED: f32 = 1000.0;
 
-/// `tool` of an item: what it mines and how well.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(rename = "Tool", deny_unknown_fields)]
+/// What an item mines and how well, its tier's values filled in (see `gear::ToolSpec`).
+#[derive(Debug, Clone, PartialEq)]
 pub struct ToolDef {
     /// Tool kinds it counts as (`strata:pickaxe`); several for a multi-tool.
     pub kinds: Vec<Identifier>,
     /// Mining level: 0 wood, 1 stone, 2 iron, 3 diamond; higher tiers come later.
-    #[serde(default)]
     pub level: u8,
     /// Multiplies the breaking speed on the blocks of its kinds (a bare hand is 1).
-    #[serde(default = "one")]
     pub speed: f32,
+    /// Instant blocks of its kinds this many blocks around the one broken break too.
+    pub sweep: u8,
+}
+
+impl Default for ToolDef {
+    fn default() -> Self {
+        Self {
+            kinds: Vec::new(),
+            level: 0,
+            speed: 1.0,
+            sweep: 0,
+        }
+    }
 }
 
 /// `tool` of a block: the kind of tool that breaks it best.
@@ -41,13 +51,15 @@ pub struct BlockTool {
     pub required: bool,
 }
 
-fn one() -> f32 {
-    1.0
-}
-
 impl ToolDef {
     pub fn is(&self, kind: &Identifier) -> bool {
         self.kinds.contains(kind)
+    }
+
+    /// The sweep of this tool around a broken `block`: only for blocks of its kinds.
+    pub fn sweep_on(&self, block: &Block) -> u8 {
+        let fits = block.tool.as_ref().is_some_and(|tool| self.is(&tool.kind));
+        if fits { self.sweep } else { 0 }
     }
 
     /// Bounds a pack value: a speed of zero or less would never break anything.
@@ -134,6 +146,7 @@ mod tests {
             kinds: vec![kind("pickaxe")],
             level,
             speed,
+            sweep: 0,
         }
     }
 
@@ -166,6 +179,7 @@ mod tests {
             kinds: vec![kind("shovel")],
             level: 3,
             speed: 8.0,
+            sweep: 0,
         };
         assert_eq!(stone.break_ticks(Some(&shovel)), Some(150));
         assert!(!stone.harvests(Some(&shovel)));
@@ -195,8 +209,8 @@ mod tests {
         assert!(log.harvests(None));
         let axe = ToolDef {
             kinds: vec![kind("axe")],
-            level: 0,
             speed: 2.0,
+            ..ToolDef::default()
         };
         assert_eq!(log.break_ticks(Some(&axe)), Some(30));
         let multi = ToolDef {

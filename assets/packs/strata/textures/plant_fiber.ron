@@ -1,0 +1,27 @@
+// Plant fibres: a twisted bunch of green strands.
+Sprite(
+    colors: {
+        'o': ("fiber", 0),
+        'f': ("fiber", 1),
+        'F': ("fiber", 2),
+        'W': ("fiber", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "..........o.....",
+        ".........oFo....",
+        "...o....oFo.....",
+        "..oWo..oFo..o...",
+        "...oFooFo..oWo..",
+        "....oFFfo.oFo...",
+        ".....oFFfoFo....",
+        "....oFfFFfo.....",
+        "...oFo.oFfo.....",
+        "..oFo...oFo.....",
+        "..oo.....oFo....",
+        "..........oo....",
+        "................",
+        "................",
+    ],
+)

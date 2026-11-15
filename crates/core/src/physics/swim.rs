@@ -107,6 +107,7 @@ mod tests {
             can_fly: true,
             step_up: true,
             auto_jump: false,
+            speed: 1.0,
         }
     }
 

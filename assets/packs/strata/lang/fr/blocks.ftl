@@ -92,3 +92,6 @@ block-strata-stonecutter = Tailleur de pierre
 block-strata-stone_bricks = Briques de pierre
 block-strata-polished_stone = Pierre polie
 block-strata-cut_sandstone = Grès taillé
+block-strata-farmland = Terre labourée
+block-strata-chiseled_stone_bricks = Briques de pierre sculptées
+block-strata-patterned_stone_bricks = Briques de pierre ouvragées

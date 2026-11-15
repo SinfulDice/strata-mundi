@@ -1,0 +1,27 @@
+// Leather: a folded hide, lit from the top left.
+Sprite(
+    colors: {
+        'o': ("leather", 0),
+        'h': ("leather", 1),
+        'H': ("leather", 2),
+        'W': ("leather", 3),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "....oooooooo....",
+        "...oWWWHHHHho...",
+        "..oWHHHHHHHHho..",
+        "..oHHHHHHHhhho..",
+        "..oHHhHHHHHhho..",
+        "..oHHHHHHhHhho..",
+        "..oHHHHHHHHhho..",
+        "...ohHHhHHhho...",
+        "...ohhhhhhhhho..",
+        "....oooooooooo..",
+        "................",
+        "................",
+        "................",
+    ],
+)

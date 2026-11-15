@@ -122,7 +122,7 @@ impl ScreenModel for InventoryModel<'_> {
 
     fn marks(&self, id: &str) -> Vec<crate::ui::SlotMark> {
         match id {
-            "hotbar" => self.hotbar.marks(SLOTS),
+            "hotbar" => self.hotbar.marks(SLOTS, &self.content.items),
             _ => Vec::new(),
         }
     }

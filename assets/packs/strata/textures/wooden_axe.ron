@@ -1,0 +1,30 @@
+// An axe: a broad blade at the top of a stick (recoloured by material).
+Sprite(
+    colors: {
+        'O': ("oak_wood", 0),
+        'h': ("oak_wood", 1),
+        'H': ("oak_wood", 2),
+        'W': ("oak_wood", 3),
+        's': ("stick", 0),
+        't': ("stick", 1),
+        'T': ("stick", 2),
+    },
+    rows: [
+        "................",
+        "........OOO.....",
+        ".......OWWHO....",
+        "......OWHHHhO...",
+        "......OWHHhhO...",
+        "......OHHhhO....",
+        ".......OhhO.....",
+        ".......sOO......",
+        "......stT.......",
+        ".....stT........",
+        "....stT.........",
+        "...stT..........",
+        "..stT...........",
+        ".stT............",
+        "stT.............",
+        "................",
+    ],
+)

@@ -61,6 +61,7 @@ impl GameLauncher {
             fire: Default::default(),
             commands: Some(true),
             discover_recipes: true,
+            durability: Default::default(),
             generation: self.args.world_code.clone().unwrap_or_default(),
         };
         self.start(meta, None)

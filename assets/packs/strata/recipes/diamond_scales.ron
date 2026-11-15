@@ -1,0 +1,6 @@
+Shapeless(
+    ingredients: [
+        Item("strata:diamond"),
+    ],
+    result: Result(item: "strata:diamond_scales", count: 2),
+)

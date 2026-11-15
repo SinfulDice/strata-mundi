@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["MMM", "M M"],
+    key: {'M': Item("strata:iron_rings")},
+    result: Result(item: "strata:iron_mail_coif"),
+)

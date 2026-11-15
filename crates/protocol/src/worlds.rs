@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use strata_core::generation::WorldgenSettings;
+use strata_core::inventory::DurabilityMode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum GameMode {
@@ -31,6 +32,8 @@ pub struct NewWorld {
     pub fire_destroy: bool,
     /// Recipes are learnt by playing (otherwise all are known from the start).
     pub discover_recipes: bool,
+    /// Worn-out items break, or stay until repaired.
+    pub durability: DurabilityMode,
     /// World type, sliders of the generation.
     pub generation: WorldgenSettings,
 }

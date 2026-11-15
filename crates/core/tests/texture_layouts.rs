@@ -82,12 +82,14 @@ fn extra_images_follow_every_first_image() {
     assert_ne!(distinct[0], distinct[1]);
 }
 
+/// Every desktop driver (Mesa for the DS and lavapipe, NVIDIA, AMD, Metal) allows 2 048
+/// layers; the Vulkan minimum of 256 only concerns phones (D079).
 #[test]
-fn the_game_fits_the_smallest_gpu_texture_array() {
+fn the_game_fits_the_texture_arrays_of_every_target() {
     let content = game();
     assert!(
-        content.textures.layer_count() <= 256,
-        "{} layers; every Vulkan device has 256",
+        content.textures.layer_count() <= 2048,
+        "{} layers; desktop drivers have 2 048",
         content.textures.layer_count()
     );
 }

@@ -1,0 +1,9 @@
+// Stone bricks carved with a chisel; the chisel goes on to the next pattern.
+Block(
+    textures: All("strata:chiseled_stone_bricks"),
+    hardness: 1.5,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
+    sound: Some("strata:stone"),
+    category: Some("strata:building"),
+    worked: {"strata:chisel": Worked(into: "strata:patterned_stone_bricks")},
+)

@@ -1,6 +1,7 @@
 ui-mode-survival = Survival
 ui-inventory-survival-title = Inventory
 ui-inventory-offhand = Off hand
+ui-inventory-protection = Protection: { $points }
 ui-inventory-sort-type = Sort (type)
 ui-inventory-sort-name = Sort (name)
 ui-inventory-deposit = Stash

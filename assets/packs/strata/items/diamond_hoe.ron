@@ -1,0 +1,7 @@
+Item(
+    texture: "strata:diamond_hoe",
+    tier: "strata:diamond",
+    category: Some("strata:tools"),
+    tool: Some(Tool(kinds: ["strata:hoe"])),
+    action: Some(Work),
+)

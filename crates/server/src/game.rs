@@ -11,6 +11,7 @@ mod inventory;
 mod mining;
 mod placing;
 mod terrain;
+mod work;
 
 pub use containers::{BlockEntities, BlockEntity, OpenWindow};
 pub use crafting::CraftWindow;
@@ -25,7 +26,7 @@ use std::sync::Arc;
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
 use strata_core::dimension::DimensionId;
-use strata_core::inventory::PlayerInventory;
+use strata_core::inventory::{DurabilityMode, PlayerInventory};
 use strata_core::physics::{Body, MoveInput, MovementSettings};
 pub use strata_core::updates::BlockChange;
 use strata_core::updates::{BlockUpdates, FireSettings, FluidSettings};
@@ -61,6 +62,8 @@ pub struct Game {
     craft_dirty: bool,
     /// World option: recipes are learnt by playing.
     discover_recipes: bool,
+    /// World option: what becomes of worn-out items.
+    pub durability: DurabilityMode,
     /// Recipes learnt whose pack is gone, saved again as they were.
     pub unknown_recipes: Vec<strata_core::id::Identifier>,
     /// Furnaces burning or cooling: only these are stepped each tick, with their speed
@@ -85,6 +88,7 @@ impl Game {
             can_fly: mode == GameMode::Creative,
             step_up: true,
             auto_jump: true,
+            speed: 1.0,
         };
         ecs.controls
             .insert(player, PlayerControl::new(movement, mode));
@@ -103,6 +107,7 @@ impl Game {
             loot_seed: 0,
             craft_dirty: false,
             discover_recipes: true,
+            durability: DurabilityMode::default(),
             unknown_recipes: Vec::new(),
             furnaces: BTreeMap::new(),
             waiting_furnaces: HashMap::new(),
@@ -194,6 +199,7 @@ impl Game {
     /// Runs one tick of player and boat physics, liquids and fire; returns the blocks changed.
     pub fn tick(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         self.tick += 1;
+        self.apply_armour_weight();
         let border = self.border;
         let terrain = terrain::WorldTerrain {
             loader,
@@ -341,3 +347,6 @@ mod crafting_tests;
 
 #[cfg(test)]
 mod furnace_tests;
+
+#[cfg(test)]
+mod gear_tests;

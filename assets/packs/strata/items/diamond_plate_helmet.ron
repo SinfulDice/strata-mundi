@@ -1,0 +1,8 @@
+Item(
+    texture: "strata:diamond_plate_helmet",
+    tier: "strata:diamond",
+    category: Some("strata:armor"),
+    equip: Some(Head),
+    durability: 363,
+    armor: Some(Armor(protection: 3, weight: "strata:heavy")),
+)

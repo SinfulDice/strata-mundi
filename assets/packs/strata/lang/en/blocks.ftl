@@ -92,3 +92,6 @@ block-strata-stonecutter = Stonecutter
 block-strata-stone_bricks = Stone Bricks
 block-strata-polished_stone = Polished Stone
 block-strata-cut_sandstone = Cut Sandstone
+block-strata-farmland = Farmland
+block-strata-chiseled_stone_bricks = Chiseled Stone Bricks
+block-strata-patterned_stone_bricks = Patterned Stone Bricks

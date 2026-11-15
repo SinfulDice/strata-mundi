@@ -1,0 +1,8 @@
+// Tall grass and ferns: kept with shears, otherwise sometimes a plant fibre.
+LootTable(pools: [
+    Pool(conditions: [Tool("strata:shears")], entries: [Itself()]),
+    Pool(conditions: [Not(Tool("strata:shears"))], entries: [
+        Nothing(weight: 3),
+        Item(item: "strata:plant_fiber"),
+    ]),
+])

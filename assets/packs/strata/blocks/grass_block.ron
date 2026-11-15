@@ -5,5 +5,6 @@ Block(
     loot: Some("strata:dirt_from_grass"),
     sound: Some("strata:grass"),
     category: Some("strata:natural"),
+    worked: {"strata:hoe": Worked(into: "strata:farmland", open_above: true)},
     tint: (kind: Grass, faces: TopFringe),
 )

@@ -5,6 +5,7 @@
 mod biomes;
 mod blocks;
 mod cooking;
+mod gear;
 mod harvest;
 mod history;
 mod html;

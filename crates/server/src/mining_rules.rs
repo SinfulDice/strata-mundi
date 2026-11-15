@@ -1,7 +1,7 @@
 //! How long each block takes to break with the held item, and what it gives.
 
 use strata_core::content::{
-    Block, BlockId, Content, ItemId, LootContext, LootTable, Registry, ToolDef,
+    Block, BlockId, Content, ItemId, LootContext, LootTable, Registry, ToolDef, Worked,
 };
 use strata_core::rng::Rng;
 
@@ -45,6 +45,28 @@ impl MiningRules {
         self.blocks
             .get(usize::from(block.0))?
             .break_ticks(self.tool(held))
+    }
+
+    /// What using `held` on `block` turns it into (a hoe on dirt).
+    pub fn worked(&self, block: BlockId, held: Option<ItemId>) -> Option<Worked> {
+        let tool = self.tool(held)?;
+        self.blocks
+            .get(usize::from(block.0))?
+            .worked_by(&tool.kinds)
+    }
+
+    /// How far around `block` breaking it with `held` also breaks its like (a sickle).
+    pub fn sweep(&self, block: BlockId, held: Option<ItemId>) -> u8 {
+        let block = self.blocks.get(usize::from(block.0));
+        match (self.tool(held), block) {
+            (Some(tool), Some(block)) => tool.sweep_on(block),
+            _ => 0,
+        }
+    }
+
+    /// The tool kind `block` is best broken with.
+    pub fn tool_kind(&self, block: BlockId) -> Option<&strata_core::id::Identifier> {
+        Some(&self.blocks.get(usize::from(block.0))?.tool.as_ref()?.kind)
     }
 
     /// Items given by breaking `block` with `held`: nothing without the tool it requires.

@@ -1,6 +1,7 @@
 ui-mode-survival = Survie
 ui-inventory-survival-title = Inventaire
 ui-inventory-offhand = Main secondaire
+ui-inventory-protection = Protection : { $points }
 ui-inventory-sort-type = Trier (type)
 ui-inventory-sort-name = Trier (nom)
 ui-inventory-deposit = Ranger

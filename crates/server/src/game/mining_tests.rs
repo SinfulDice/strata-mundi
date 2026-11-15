@@ -18,7 +18,7 @@ fn survival_with(name: &str) -> World {
     w
 }
 
-/// A stone-level test pickaxe: the base pack has no tools before milestone 4.
+/// A stone-level test pickaxe that breaks after 10 uses.
 pub(super) fn add_pickaxe(content: &mut Content) {
     let item = Item {
         max_stack: 1,
@@ -31,10 +31,12 @@ pub(super) fn add_pickaxe(content: &mut Content) {
             kinds: vec!["strata:pickaxe".parse().unwrap()],
             level: 1,
             speed: 4.0,
+            sweep: 0,
         }),
         remainder: None,
         kit: None,
         module: None,
+        gear: Default::default(),
     };
     content
         .items
