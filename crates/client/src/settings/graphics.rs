@@ -1,66 +1,7 @@
 //! Graphics settings and the quality presets that fill them.
 
+pub use super::preset::Preset;
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::FromStr;
-
-/// Quality presets. Changing any single graphics setting switches to "custom".
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Preset {
-    VeryLow,
-    Low,
-    Medium,
-    High,
-    Ultra,
-    /// The player's handheld console (Intel N100, 30 FPS target).
-    Ds,
-}
-
-impl Preset {
-    pub const ALL: [Preset; 6] = [
-        Self::VeryLow,
-        Self::Low,
-        Self::Medium,
-        Self::High,
-        Self::Ultra,
-        Self::Ds,
-    ];
-
-    pub const fn id(self) -> &'static str {
-        match self {
-            Self::VeryLow => "very-low",
-            Self::Low => "low",
-            Self::Medium => "medium",
-            Self::High => "high",
-            Self::Ultra => "ultra",
-            Self::Ds => "ds",
-        }
-    }
-}
-
-impl fmt::Display for Preset {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.id())
-    }
-}
-
-impl FromStr for Preset {
-    type Err = String;
-
-    fn from_str(text: &str) -> Result<Self, Self::Err> {
-        Self::ALL
-            .into_iter()
-            .find(|preset| preset.id() == text)
-            .ok_or_else(|| {
-                let names: Vec<_> = Self::ALL.iter().map(|p| p.id()).collect();
-                format!(
-                    "unknown preset `{text}` (expected one of: {})",
-                    names.join(", ")
-                )
-            })
-    }
-}
 
 /// How many plants (crossed planes) are drawn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -214,6 +155,10 @@ pub struct GraphicsSettings {
     pub clouds: CloudMode,
     /// Smaller copies of textures for distant blocks (less shimmering).
     pub mipmaps: bool,
+    /// Texture images larger than this side are halved on loading (0: as made); saves
+    /// GPU memory with high-resolution resource packs.
+    #[serde(default)]
+    pub max_texture_size: u32,
     /// Anisotropic filtering: 1 (off), 2, 4, 8 or 16.
     pub anisotropy: u32,
     pub vegetation: Vegetation,
@@ -277,6 +222,11 @@ impl GraphicsSettings {
                 _ => CloudMode::Full,
             },
             mipmaps: !matches!(preset, Preset::VeryLow | Preset::Ds),
+            max_texture_size: match preset {
+                Preset::Ds => 32,
+                Preset::VeryLow | Preset::Low => 64,
+                _ => 0,
+            },
             // Off in every preset: it smooths the pixel art up close (left to taste).
             anisotropy: 1,
             vegetation: match preset {
@@ -353,6 +303,9 @@ impl GraphicsSettings {
         clamp(&mut self.brightness, BRIGHTNESS);
         clamp(&mut self.biome_blend, BIOME_BLEND);
         clamp(&mut self.item_distance, ITEM_DISTANCE);
+        if self.max_texture_size != 0 {
+            self.max_texture_size = self.max_texture_size.clamp(16, 4096);
+        }
         if !ANISOTROPY.contains(&self.anisotropy) {
             self.anisotropy = 1;
         }

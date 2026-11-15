@@ -34,4 +34,4 @@ TALL GRAS AN FERNZ CHOPPD WIFOUT SNIPPY SUMTIMEZ GIVE **GRAS STRINGZ**. 3 STRING
 
 ## 4 PACK MAKERZ
 
-FOLDRZ `tiers/` (`Tier(level, speed, durability, damage, enchantability, upgrade_slots)`) AN `armor_weights/` (`ArmorWeight(speed, stamina, mana)`); ITEM FIELDZ `tier`, `tool: Some(Tool(kinds: [...], level, speed, sweep))`, `weapon: Some(Weapon(damage, attack_speed))`, `armor: Some(Armor(protection, weight))`, `action: Some(Work)`; BLOK FIELD `worked: {"strata:hoe": Worked(into: "strata:farmland", open_above: true)}`.
+FOLDRZ `tiers/` (`Tier(level, speed, durability, damage, enchantability, upgrade_slots, armor_durability)`), `upgrade_slots/` (`UpgradeSlot(max_per_item)`) AN `armor_weights/` (`ArmorWeight(speed, stamina, mana)`); ITEM FIELDZ `tier`, `tool: Some(Tool(kinds: [...], level, speed, sweep))`, `weapon: Some(Weapon(damage, attack_speed))`, `armor: Some(Armor(protection, weight))`, `upgrade_slots`, `action: Some(Work)`; BLOK FIELD `worked: {"strata:hoe": Worked(into: "strata:farmland", open_above: true)}`.

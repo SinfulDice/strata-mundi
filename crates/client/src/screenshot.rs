@@ -125,11 +125,8 @@ pub fn render_image(
         Lighting::Flat => world.light_flat(),
     }
     let gpu = Gpu::new(Gpu::create_instance(), None)?;
-    let filtering = TextureFiltering {
-        mipmaps: view.graphics.mipmaps,
-        anisotropy: view.graphics.anisotropy.clamp(1, 16) as u16,
-    };
-    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures, filtering)?;
+    let filtering = TextureFiltering::for_settings(&view.graphics);
+    let mut renderer = Renderer::new(&gpu, OFFSCREEN_FORMAT, &content.textures, filtering);
     let ao = view.graphics.ambient_occlusion;
     renderer.ambient_occlusion = f32::from(u8::from(ao));
     renderer.vertical_distance = view.graphics.vertical_distance;

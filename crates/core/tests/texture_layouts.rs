@@ -83,13 +83,13 @@ fn extra_images_follow_every_first_image() {
 }
 
 /// Every desktop driver (Mesa for the DS and lavapipe, NVIDIA, AMD, Metal) allows 2 048
-/// layers; the Vulkan minimum of 256 only concerns phones (D079).
+/// layers; the base game keeps half of that for the packs added on top (D079).
 #[test]
-fn the_game_fits_the_texture_arrays_of_every_target() {
+fn the_game_leaves_room_in_the_texture_array() {
     let content = game();
     assert!(
-        content.textures.layer_count() <= 2048,
-        "{} layers; desktop drivers have 2 048",
+        content.textures.layer_count() <= 1024,
+        "{} layers; 1 024 at most for the base game",
         content.textures.layer_count()
     );
 }

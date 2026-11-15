@@ -1,4 +1,4 @@
-use super::GpuError;
+use crate::settings::GraphicsSettings;
 use strata_core::content::TextureLibrary;
 use strata_core::texture::{Layout, Rgba, RgbaImage};
 use wgpu::util::DeviceExt;
@@ -11,6 +11,8 @@ pub struct TextureFiltering {
     /// 1 = off. Above 1, sharper textures at grazing angles but smoothed pixels up close
     /// (the GPU requires linear filtering for it).
     pub anisotropy: u16,
+    /// Larger images are halved on loading until they fit (0: as the packs make them).
+    pub max_size: u32,
 }
 
 impl Default for TextureFiltering {
@@ -18,7 +20,34 @@ impl Default for TextureFiltering {
         Self {
             mipmaps: false,
             anisotropy: 1,
+            max_size: 0,
         }
+    }
+}
+
+impl TextureFiltering {
+    pub fn for_settings(graphics: &GraphicsSettings) -> Self {
+        Self {
+            mipmaps: graphics.mipmaps,
+            anisotropy: graphics.anisotropy.clamp(1, 16) as u16,
+            max_size: graphics.max_texture_size,
+        }
+    }
+
+    /// Side of the layers uploaded for images of side `resolution`.
+    pub fn fitted_size(&self, resolution: u32) -> u32 {
+        let mut size = resolution.max(1);
+        while self.max_size > 0 && size > self.max_size && size > 1 {
+            size /= 2;
+        }
+        size
+    }
+
+    /// GPU memory of `layers` square layers of side `resolution`, mipmaps included.
+    pub fn array_bytes(&self, layers: usize, resolution: u32) -> u64 {
+        let size = u64::from(self.fitted_size(resolution));
+        let base = size * size * 4 * layers as u64;
+        if self.mipmaps { base * 4 / 3 } else { base }
     }
 }
 
@@ -34,22 +63,32 @@ pub struct TextureArray {
 }
 
 impl TextureArray {
-    /// Layers all have the library resolution (`TextureLibrary` scales them on load).
+    /// Layers all have the library resolution (`TextureLibrary` scales them on load),
+    /// halved down to `filtering.max_size`. A card with fewer layers than the packs need
+    /// gets the first ones only: the shader clamps the others to the last one (wrong
+    /// pictures rather than no game).
     pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         library: &TextureLibrary,
         filtering: TextureFiltering,
-    ) -> Result<Self, GpuError> {
-        let layers: Vec<&RgbaImage> = library.layers().collect();
-        let max = device.limits().max_texture_array_layers;
-        if layers.len() > max as usize {
-            return Err(GpuError::TooManyTextures {
-                count: layers.len(),
+    ) -> Self {
+        let mut layers: Vec<&RgbaImage> = library.layers().collect();
+        let max = device.limits().max_texture_array_layers as usize;
+        if layers.len() > max {
+            tracing::warn!(
+                count = layers.len(),
                 max,
-            });
+                "more textures than the card supports"
+            );
+            layers.truncate(max);
         }
-        let (width, height) = layers.first().map_or((1, 1), |l| (l.width(), l.height()));
+        let first = layers.first().map_or(1, |l| l.width().min(l.height()));
+        let side = filtering.fitted_size(first);
+        let (width, height) = layers.first().map_or((1, 1), |l| {
+            let shrink = first / side;
+            ((l.width() / shrink).max(1), (l.height() / shrink).max(1))
+        });
         let levels = if filtering.mipmaps {
             width.min(height).max(1).ilog2() + 1
         } else {
@@ -71,6 +110,9 @@ impl TextureArray {
         });
         for (index, layer) in layers.iter().enumerate() {
             let mut image = (*layer).clone();
+            while image.width() > width {
+                image = half(&image);
+            }
             for level in 0..levels {
                 if level > 0 {
                     image = half(&image);
@@ -93,12 +135,12 @@ impl TextureArray {
             contents: bytemuck::cast_slice(&variant_table(library)),
             usage: wgpu::BufferUsages::STORAGE,
         });
-        Ok(Self {
+        Self {
             view,
             sampler,
             animations,
             variants,
-        })
+        }
     }
 }
 
@@ -277,6 +319,25 @@ mod tests {
         assert!(checked >= 3, "stone, grass, dirt and sand have variants");
     }
 
+    /// Whatever the packs, the console keeps its block textures small: 2 048 layers of
+    /// a 512-pixel pack fit in 16 MiB at the DS preset's 32-pixel cap.
+    #[test]
+    fn the_ds_texture_array_fits_its_memory_budget() {
+        use crate::settings::{GraphicsSettings, Preset};
+        const BUDGET: u64 = 16 * 1024 * 1024;
+        let ds = TextureFiltering::for_settings(&GraphicsSettings::for_preset(Preset::Ds));
+        assert_eq!((ds.fitted_size(512), ds.fitted_size(16)), (32, 16));
+        assert!(ds.array_bytes(2048, 512) <= BUDGET);
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs");
+        let packs = strata_core::pack::PackSet::discover(&dir, &mut Vec::new());
+        let (content, _) = strata_core::content::Content::load(&packs, &Default::default());
+        let library = &content.textures;
+        let base = ds.array_bytes(library.layer_count(), library.resolution);
+        assert!(base <= BUDGET / 8, "{base} bytes");
+        let ultra = TextureFiltering::for_settings(&GraphicsSettings::for_preset(Preset::Ultra));
+        assert_eq!(ultra.fitted_size(512), 512, "no cap on a PC");
+    }
+
     #[test]
     fn anisotropy_switches_to_linear_filtering() {
         let off = sampler_for(TextureFiltering::default());
@@ -284,6 +345,7 @@ mod tests {
         let on = sampler_for(TextureFiltering {
             mipmaps: true,
             anisotropy: 8,
+            max_size: 0,
         });
         assert_eq!(
             (on.mag_filter, on.anisotropy_clamp),

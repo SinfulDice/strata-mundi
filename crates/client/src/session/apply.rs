@@ -3,7 +3,7 @@
 
 use super::Session;
 use crate::mesher::MeshOptions;
-use crate::render::RenderOptions;
+use crate::render::{RenderOptions, TextureFiltering};
 use crate::settings::Settings;
 use crate::stage::Stage;
 use crate::world::requested_view_distance;
@@ -65,10 +65,11 @@ impl Session {
         self.renderer.vertical_distance = g.vertical_distance;
         self.renderer.ambient_occlusion = f32::from(u8::from(g.ambient_occlusion));
         self.renderer.options = RenderOptions::from_settings(&self.applied);
-        if (g.mipmaps, g.anisotropy) != (before.mipmaps, before.anisotropy) {
+        let filtering = TextureFiltering::for_settings(&g);
+        if filtering != TextureFiltering::for_settings(before) {
             let textures = &self.content.textures;
             self.renderer
-                .set_texture_filtering(&self.gpu, textures, g.mipmaps, g.anisotropy);
+                .set_texture_filtering(&self.gpu, textures, filtering);
         }
         if g.lighting != before.lighting {
             self.set_lighting(g.lighting);

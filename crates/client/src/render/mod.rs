@@ -96,8 +96,8 @@ impl Renderer {
         color_format: wgpu::TextureFormat,
         textures: &TextureLibrary,
         filtering: TextureFiltering,
-    ) -> Result<Self, GpuError> {
-        let array = texture_array(gpu, textures, filtering)?;
+    ) -> Self {
+        let array = TextureArray::new(&gpu.device, &gpu.queue, textures, filtering);
         let blocks = BlockPipeline::new(&gpu.device, color_format, &array);
         let models = ModelPipeline::new(
             &gpu.device,
@@ -123,7 +123,7 @@ impl Renderer {
             &blocks.camera_layout,
             &blocks.texture_layout,
         );
-        Ok(Self {
+        Self {
             overlays: Overlays::new(&gpu.device, color_format, &blocks),
             blocks,
             depth: DepthBuffer::new(&gpu.device, (1, 1)),
@@ -139,25 +139,18 @@ impl Renderer {
             clouds,
             models,
             particles,
-        })
+        }
     }
 
-    /// Rebuilds the block textures with new mipmap and anisotropy settings.
+    /// Rebuilds the block textures with new mipmap, anisotropy and size settings.
     pub fn set_texture_filtering(
         &mut self,
         gpu: &Gpu,
         textures: &TextureLibrary,
-        mipmaps: bool,
-        anisotropy: u32,
+        filtering: TextureFiltering,
     ) {
-        let filtering = TextureFiltering {
-            mipmaps,
-            anisotropy: anisotropy.clamp(1, 16) as u16,
-        };
-        match texture_array(gpu, textures, filtering) {
-            Ok(array) => self.blocks.set_textures(&gpu.device, &array),
-            Err(error) => tracing::error!(%error, "texture settings not applied"),
-        }
+        let array = TextureArray::new(&gpu.device, &gpu.queue, textures, filtering);
+        self.blocks.set_textures(&gpu.device, &array);
     }
 
     /// Replaces the meshes of a section (an empty mesh removes it).
@@ -382,11 +375,3 @@ impl Renderer {
 }
 
 const SECTION_CENTER: DVec3 = DVec3::splat(SECTION_SIZE as f64 / 2.0);
-
-fn texture_array(
-    gpu: &Gpu,
-    textures: &TextureLibrary,
-    filtering: TextureFiltering,
-) -> Result<TextureArray, GpuError> {
-    TextureArray::new(&gpu.device, &gpu.queue, textures, filtering)
-}

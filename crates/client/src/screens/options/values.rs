@@ -1,7 +1,7 @@
 //! Every setting of the options screen: how its value reads and how a step changes it.
 
 use super::super::menu::Shared;
-use super::ranges::range_slot;
+use super::ranges::{cycle, cycle_threads, range_slot};
 use crate::settings::{
     ANISOTROPY, BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, ITEM_DISTANCE, RENDER_DISTANCE,
     RENDER_SCALE, SENSITIVITY, VERTICAL_DISTANCE, VOLUME,
@@ -32,6 +32,7 @@ pub enum Setting {
     Stars,
     Clouds,
     Mipmaps,
+    MaxTextureSize,
     Anisotropy,
     Vegetation,
     Particles,
@@ -85,6 +86,7 @@ pub const GRAPHICS: &[Setting] = &[
     Setting::Stars,
     Setting::Clouds,
     Setting::Mipmaps,
+    Setting::MaxTextureSize,
     Setting::Anisotropy,
     Setting::Vegetation,
     Setting::Particles,
@@ -128,6 +130,7 @@ pub const GAME: &[Setting] = &[
 ];
 
 const FPS_LIMITS: [u32; 6] = [0, 30, 60, 120, 144, 240];
+const TEXTURE_SIZES: [u32; 6] = [0, 16, 32, 64, 128, 256];
 pub(super) const BACKUPS: (u32, u32) = (0, 10);
 const AUTOSAVE: [u32; 7] = [0, 1, 2, 5, 10, 15, 30];
 
@@ -206,6 +209,8 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
         Setting::Stars => (on_off(shared, g.stars), None),
         Setting::Clouds => (shared.tr(&format!("clouds-{}", g.clouds.id())), None),
         Setting::Mipmaps => (on_off(shared, g.mipmaps), None),
+        Setting::MaxTextureSize if g.max_texture_size == 0 => (shared.tr("option-unlimited"), None),
+        Setting::MaxTextureSize => (g.max_texture_size.to_string(), None),
         Setting::Anisotropy if g.anisotropy <= 1 => (shared.tr("ui-off"), None),
         Setting::Anisotropy => (format!("{}x", g.anisotropy), None),
         Setting::Vegetation => (
@@ -346,6 +351,9 @@ fn step_choice(setting: Setting, s: &mut Settings, step: i32) {
         Setting::Stars => g.stars = !g.stars,
         Setting::Clouds => g.clouds = cycle(&CloudMode::ALL, g.clouds, step),
         Setting::Mipmaps => g.mipmaps = !g.mipmaps,
+        Setting::MaxTextureSize => {
+            g.max_texture_size = cycle(&TEXTURE_SIZES, g.max_texture_size, step);
+        }
         Setting::Anisotropy => g.anisotropy = cycle(&ANISOTROPY, g.anisotropy, step),
         Setting::Vegetation => g.vegetation = cycle(&Vegetation::ALL, g.vegetation, step),
         Setting::Particles => g.particles = cycle(&ParticleMode::ALL, g.particles, step),
@@ -382,22 +390,6 @@ fn step_choice(setting: Setting, s: &mut Settings, step: i32) {
         // Ranges go through `range_slot`.
         _ => {}
     }
-}
-
-/// The next (or previous) value of `choices`, wrapping; an unknown value restarts at the first.
-fn cycle<T: Copy + PartialEq>(choices: &[T], current: T, step: i32) -> T {
-    let len = choices.len() as i32;
-    let index = choices
-        .iter()
-        .position(|c| *c == current)
-        .map_or(0, |i| i as i32);
-    choices[(index + step.signum()).rem_euclid(len) as usize]
-}
-
-/// Automatic, then 1 to the number of cores.
-fn cycle_threads(current: usize, cores: usize, step: i32) -> usize {
-    let choices: Vec<usize> = std::iter::once(AUTO_THREADS).chain(1..=cores).collect();
-    cycle(&choices, current, step)
 }
 
 #[cfg(test)]

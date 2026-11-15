@@ -24,10 +24,7 @@ impl Session {
             return Ok(false);
         }
         let graphics = &self.applied.graphics;
-        let filtering = TextureFiltering {
-            mipmaps: graphics.mipmaps,
-            anisotropy: graphics.anisotropy.clamp(1, 16) as u16,
-        };
+        let filtering = TextureFiltering::for_settings(graphics);
         let format = self.surface.format();
         let atlas = UiAtlas::build(&content, ui.font.font(1));
         let scope = self
@@ -38,11 +35,10 @@ impl Session {
         let post = PostProcess::new(&self.gpu, format);
         let ui_pipeline = UiPipeline::new(&self.gpu, format, &atlas.image);
         let gpu_error = pollster::block_on(scope.pop());
-        let mut renderer = match (renderer, gpu_error) {
-            (Ok(renderer), None) => renderer,
-            (Err(error), _) => return Ok(self.reload_failed(&error)),
-            (_, Some(error)) => return Ok(self.reload_failed(&error)),
-        };
+        if let Some(error) = gpu_error {
+            return Ok(self.reload_failed(&error));
+        }
+        let mut renderer = renderer;
         renderer.ambient_occlusion = f32::from(u8::from(graphics.ambient_occlusion));
         renderer.vertical_distance = graphics.vertical_distance;
         renderer.options = RenderOptions::from_settings(&self.applied);

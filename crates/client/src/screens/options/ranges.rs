@@ -1,6 +1,7 @@
 //! Settings that are a number between two bounds, moved by steps or set from a gauge.
 
 use super::values::{BACKUPS, Setting};
+use crate::settings::AUTO_THREADS;
 use crate::settings::{
     BIOME_BLEND, BRIGHTNESS, DEAD_ZONE, FOV, ITEM_DISTANCE, MAX_SCALE, RENDER_DISTANCE,
     RENDER_SCALE, SENSITIVITY, Settings, VERTICAL_DISTANCE, VOLUME,
@@ -54,4 +55,20 @@ pub fn range_slot(setting: Setting, s: &mut Settings) -> Option<RangeSlot<'_>> {
         bounds,
         unit,
     })
+}
+
+/// The next (or previous) value of `choices`, wrapping; an unknown value restarts at the first.
+pub(super) fn cycle<T: Copy + PartialEq>(choices: &[T], current: T, step: i32) -> T {
+    let len = choices.len() as i32;
+    let index = choices
+        .iter()
+        .position(|c| *c == current)
+        .map_or(0, |i| i as i32);
+    choices[(index + step.signum()).rem_euclid(len) as usize]
+}
+
+/// Automatic, then 1 to the number of cores.
+pub(super) fn cycle_threads(current: usize, cores: usize, step: i32) -> usize {
+    let choices: Vec<usize> = std::iter::once(AUTO_THREADS).chain(1..=cores).collect();
+    cycle(&choices, current, step)
 }

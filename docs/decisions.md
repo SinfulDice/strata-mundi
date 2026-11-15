@@ -633,7 +633,9 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 - **Tiers** (`tiers/<nom>.ron`, `Tier(level, speed, durability, damage, enchantability, upgrade_slots)`) : bois, pierre, fer, or, diamant. Ignium, Nihilium et Siderium n'auront qu'à ajouter un fichier (niveaux 4, 5, 6) et leurs objets. Valeurs de Minecraft, sauf l'**or** : niveau 2 (comme le fer) au lieu de 0, pour qu'un palier atteint après le fer serve, en restant très rapide (×12) et fragile (48 utilisations) ; il a plus d'emplacements d'amélioration (2).
 - **Résolution** : un objet nomme `tier` ; `tool: Some(Tool(kinds, level?, speed?, sweep))` est un `ToolSpec` dont les trous sont remplis par le tier (`Gear::resolve`) pour donner le `ToolDef` utilisé partout ; la durabilité vient du tier pour les outils et armes qui n'en donnent pas ; `weapon` reçoit les dégâts du tier. Raison : changer un tier change tous ses objets ; un objet peut toujours surcharger (multi-outil : 150 utilisations).
-- **Emplacements d'amélioration** : stockés sur l'objet (`ItemGear::upgrade_slots`, du tier) ; le jalon 4b (enclume, améliorations génériques) les remplira via `ItemStack::data`. Enchantabilité gardée pour plus tard.
+- **Emplacements d'amélioration** : une **liste typée** de familles (`upgrade_slots/<nom>.ron`, `UpgradeSlot(max_per_item)`) : « artisanal » (`strata:craft`) maintenant ; modules (v0.8), runes et pièces de bâton (v0.9) seront d'autres familles, sans changer le moteur. Le tier donne la liste (`upgrade_slots: ["strata:craft"]`), un objet peut donner la sienne (`upgrade_slots: Some([...])`, prioritaire : cuir et tissu en ont une, les uniques nommés en auront). Familles inconnues et dépassements signalés. Le jalon 4b (enclume) les remplira via `ItemStack::data`. Enchantabilité gardée pour plus tard.
+- **Durabilité des armures par tier** : `armor_durability` d'un tier × part de la pièce (11 / 16 / 15 / 13, Minecraft) quand l'objet n'en donne pas (plates) ; une armure sans durabilité ni tier qui la donne est une erreur de pack.
+- **Statistiques connues** : toutes les lignes de statistiques des infobulles passent par `Content::stats_known(item)`, vrai pour l'instant ; le savoir (jalon 13) répondra là.
 - **Épées** : `weapon: Some(Weapon(damage, attack_speed))` (4 + dégâts du tier, 1,6 coup/s), affichés et au wiki ; pas de composant outil (aucun bloc « toile » pour l'instant).
 
 ## D076 — Armures : protection, poids et fardeau (v0.3, jalon 4a)
@@ -655,9 +657,12 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - `DurabilityMode { Break, KeepBroken }` dans `NewWorld` et `world.ron` (`durability`, défaut `Break`), bouton « Objets usés » à la création ; gamerule au jalon 11.
 - `wear_slot` applique l'usure ; en `KeepBroken`, la pile reste à 0 (`is_broken`). Un objet cassé en main vaut une main nue côté serveur (`held_item`) et client (`selected`), ne protège plus, garde son poids ; il est voilé dans les cases. La barre d'usure apparaît aussi dans la barre rapide du HUD ; l'infobulle d'une pile donne « Utilisations : n / max ».
 
-## D079 — Limite de couches de texture : 2 048 (v0.3, jalon 4a)
+## D079 — Couches de texture : budget et repli (v0.3, jalon 4a)
 
-- Les ~70 nouveaux objets portent le jeu à 320 couches. Le test passe de 256 (minimum Vulkan, téléphones) à **2 048**, la limite de tous les pilotes de bureau (Mesa ANV pour la DS, lavapipe, RADV, NVIDIA, AMD, Metal). Le jeu signale déjà clairement une carte trop limitée (`GpuError::TooManyTextures`). Si une cible à 256 couches apparaît, les images des seuls objets plats iront dans un atlas séparé.
+- Les ~70 nouveaux objets portent le jeu de base à 320 couches. Le test de `core` garde le jeu de base sous **1 024** couches, la moitié des 2 048 de tous les pilotes de bureau (Mesa ANV pour la DS, lavapipe, RADV, NVIDIA, AMD, Metal) : l'autre moitié reste aux packs ajoutés.
+- **Repli non fatal** : une carte qui a moins de couches que les packs n'en demandent reçoit les premières seulement (avertissement dans le journal) ; WGSL ramène l'indice de couche dans l'intervalle, donc des images fausses plutôt qu'un jeu qui ne démarre pas. `GpuError::TooManyTextures` disparaît. Si une telle cible devient réelle, les images des seuls objets plats iront dans un atlas séparé.
+- **Réglage « Taille max des textures »** (`max_texture_size` : illimitée, 16, 32, 64, 128, 256) : les images plus grandes sont divisées par deux au chargement du tableau, jusqu'à tenir. Préréglages : DS 32, très bas et bas 64, les autres illimités. Changer le réglage reconstruit le tableau.
+- **Budget mémoire** : test client du préréglage DS : 2 048 couches d'un pack en 512 pixels tiennent dans 16 Mio, le jeu de base dans 2 Mio (`TextureFiltering::array_bytes`).
 
 ## D080 — Matériaux provisoires : fibres, tissu, cuir (v0.3, jalon 4a)
 

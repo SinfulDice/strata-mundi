@@ -5,6 +5,7 @@ mod controls;
 mod game;
 mod graphics;
 mod interface;
+mod preset;
 mod sound;
 
 pub use controls::{ControlSettings, DEAD_ZONE, SENSITIVITY};

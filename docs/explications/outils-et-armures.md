@@ -11,14 +11,17 @@ Le joueur avance en améliorant son équipement : une pioche en fer pour le diam
 Un fichier `tiers/<nom>.ron` donne les valeurs d'un matériau :
 
 ```ron
-Tier(level: 2, speed: 6.0, durability: 250, damage: 2.0, enchantability: 14, upgrade_slots: 1)
+Tier(level: 2, speed: 6.0, durability: 250, damage: 2.0, enchantability: 14,
+     upgrade_slots: ["strata:craft"], armor_durability: 15)
 ```
 
 - `level` : **niveau de minage** (0 bois, 1 pierre, 2 fer et or, 3 diamant ; 4, 5, 6 pour les tiers à venir). Un bloc qui exige `level: 2` refuse son butin à une pioche en pierre.
 - `speed` : vitesse de casse sur les blocs du bon type (une main vaut 1).
 - `durability` : utilisations des outils et des armes du tier.
 - `damage` : ajouté aux dégâts de base des armes (le combat arrive au jalon 10).
-- `upgrade_slots` et `enchantability` : prévus pour l'enclume (jalon 4b) et l'enchantement.
+- `upgrade_slots` : la liste des emplacements d'amélioration, un par entrée, chacun d'une **famille** déclarée dans `upgrade_slots/` (`strata:craft`, « artisanal », pour l'enclume du jalon 4b ; modules, runes et pièces de bâton viendront comme d'autres familles). Un objet peut donner sa propre liste, qui remplace celle du tier.
+- `armor_durability` : les pièces d'armure du tier qui ne donnent pas leur durabilité durent ce facteur × 11, 16, 15 ou 13 (tête, torse, jambes, pieds).
+- `enchantability` : pour l'enchantement, plus tard.
 
 Un objet nomme son tier et ne précise que ce qui change :
 

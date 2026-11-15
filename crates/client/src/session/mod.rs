@@ -70,12 +70,9 @@ impl Session {
         let gpu = Gpu::new(instance, Some(&surface))?;
         let surface = WindowSurface::new(&gpu, window, surface, config.settings.graphics.vsync);
         let graphics = &config.settings.graphics;
-        let filtering = TextureFiltering {
-            mipmaps: graphics.mipmaps,
-            anisotropy: graphics.anisotropy.clamp(1, 16) as u16,
-        };
+        let filtering = TextureFiltering::for_settings(graphics);
         let mut renderer =
-            Renderer::new(&gpu, surface.format(), &config.content.textures, filtering)?;
+            Renderer::new(&gpu, surface.format(), &config.content.textures, filtering);
         let applied = config.settings.clone();
         renderer.ambient_occlusion = f32::from(u8::from(applied.graphics.ambient_occlusion));
         renderer.vertical_distance = applied.graphics.vertical_distance;

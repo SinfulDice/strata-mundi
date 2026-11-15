@@ -34,4 +34,4 @@ Tall grass and ferns cut without shears sometimes leave a **plant fibre**. Three
 
 ## For pack makers
 
-Folders `tiers/` (`Tier(level, speed, durability, damage, enchantability, upgrade_slots)`) and `armor_weights/` (`ArmorWeight(speed, stamina, mana)`, shares per piece); item fields `tier: "strata:iron"`, `tool: Some(Tool(kinds: [...], level, speed, sweep))` (the tier fills what is missing), `weapon: Some(Weapon(damage, attack_speed))`, `armor: Some(Armor(protection, weight))`, `action: Some(Work)`; block field `worked: {"strata:hoe": Worked(into: "strata:farmland", open_above: true)}`.
+Folders `tiers/` (`Tier(level, speed, durability, damage, enchantability, upgrade_slots, armor_durability)`), `upgrade_slots/` (`UpgradeSlot(max_per_item)`) and `armor_weights/` (`ArmorWeight(speed, stamina, mana)`, shares per piece); item fields `tier: "strata:iron"`, `tool: Some(Tool(kinds: [...], level, speed, sweep))` (the tier fills what is missing), `weapon: Some(Weapon(damage, attack_speed))`, `armor: Some(Armor(protection, weight))`, `upgrade_slots`, `action: Some(Work)`; block field `worked: {"strata:hoe": Worked(into: "strata:farmland", open_above: true)}`.
