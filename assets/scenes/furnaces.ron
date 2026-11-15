@@ -1,0 +1,32 @@
+// A workshop (`--scene furnaces`): a row of furnaces, smokers and blast furnaces of every
+// tier facing the camera, some lit, a stonecutter, on polished stone before a wall of
+// stone bricks and cut sandstone.
+(
+    fills: [
+        (from: (-10, 0, -10), to: (10, 0, 6), block: "strata:stone"),
+        (from: (-10, 1, -10), to: (10, 1, 6), block: "strata:polished_stone"),
+        (from: (-10, 2, -7), to: (10, 6, -7), block: "strata:stone_bricks"),
+        (from: (-10, 6, -7), to: (10, 6, -7), block: "strata:cut_sandstone"),
+        (from: (-7, 2, -6), to: (-7, 2, -6), block: "strata:furnace__lit_south"),
+        (from: (-6, 2, -6), to: (-6, 2, -6), block: "strata:iron_furnace__lit_south"),
+        (from: (-5, 2, -6), to: (-5, 2, -6), block: "strata:gold_furnace__south"),
+        (from: (-4, 2, -6), to: (-4, 2, -6), block: "strata:diamond_furnace__lit_south"),
+        (from: (-2, 2, -6), to: (-2, 2, -6), block: "strata:smoker__lit_south"),
+        (from: (-1, 2, -6), to: (-1, 2, -6), block: "strata:iron_smoker__south"),
+        (from: (0, 2, -6), to: (0, 2, -6), block: "strata:gold_smoker__lit_south"),
+        (from: (1, 2, -6), to: (1, 2, -6), block: "strata:diamond_smoker__south"),
+        (from: (3, 2, -6), to: (3, 2, -6), block: "strata:blast_furnace__lit_south"),
+        (from: (4, 2, -6), to: (4, 2, -6), block: "strata:iron_blast_furnace__south"),
+        (from: (5, 2, -6), to: (5, 2, -6), block: "strata:gold_blast_furnace__lit_south"),
+        (from: (6, 2, -6), to: (6, 2, -6), block: "strata:diamond_blast_furnace__lit_south"),
+        (from: (-6, 3, -6), to: (-6, 3, -6), block: "strata:furnace__lit_east"),
+        (from: (5, 3, -6), to: (5, 3, -6), block: "strata:blast_furnace__west"),
+        (from: (8, 2, -5), to: (8, 2, -5), block: "strata:stonecutter"),
+    ],
+    entities: [
+        (kind: "strata:item", position: (-3.0, 2.0, -3.5), item: Some("strata:iron_furnace_kit")),
+        (kind: "strata:item", position: (2.2, 2.0, -3.2), yaw: 0.8, item: Some("strata:iron_ingot")),
+        (kind: "strata:item", position: (2.8, 2.0, -2.6), yaw: 1.9, item: Some("strata:gold_ingot")),
+        (kind: "strata:item", position: (-0.5, 2.0, -2.4), yaw: 2.4, item: Some("strata:charcoal")),
+    ],
+)
