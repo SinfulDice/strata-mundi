@@ -668,3 +668,33 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 
 - Hautes herbes et fougères sans cisailles : une chance sur quatre de **fibre végétale** (`loot_tables/grass_fiber.ron`). 3 fibres → 1 **tissu** (sans forme).
 - **Cuir provisoire** : 2 fibres + 1 boue → 1 cuir, recette marquée provisoire, à retirer en v0.4 quand les animaux donneront des peaux. Le tissu passera au métier à tisser au jalon 6.
+
+## D081 — Améliorations génériques en pack (v0.3, jalon 4b)
+
+- **Format** : `upgrades/<nom>.ron` `Upgrade(slot, applies_to: [Tool | Weapon | Armor], levels: [Level(effects, xp, material, count)], requires, excludes)`. Un niveau **remplace** le précédent (pas d'addition entre niveaux). Briques d'effet : `Damage(%)`, `MiningSpeed(%)`, `Durability(%)`, `Protection(points)`, `Lighten(%)`, `Area(l, h)` ; bornées au chargement (−90 % à +1 000 %, zone 9 au plus). Une amélioration n'occupe qu'un emplacement de sa famille, quel que soit son niveau. Matériau : un objet ou un tag, dans **la** case de matériau de l'enclume (un seul matériau par niveau, pour garder l'enclume à deux cases).
+- **Stockage** : `ItemStack::data`, clés `strata:upgrades` (liste `[Id, Int]`), `strata:repairs`, `strata:area`. Aucune migration : la sauvegarde existante des métadonnées suffit ; une amélioration inconnue (pack retiré) est ignorée au calcul.
+- **Calcul unique** : `upgrade::stack_stats` (base + tier résolus au chargement, puis améliorations) sert au temps de casse (serveur et client), à la protection et au poids portés, aux utilisations max (barre d'usure et infobulle) et aux zones du marteau. `MiningRules` prend désormais un `Option<&ToolDef>` (l'outil amélioré) au lieu d'un `ItemId`.
+- **Non-cumul** : pour chaque sorte de brique, seule la plus forte des améliorations installées compte (`Effect::same_kind`), comme les effets de potion (principe). Renfort et allègement s'excluent (choix de contenu : plus de métal contre moins de poids).
+- **Extensibilité** : modules (v0.8), runes et pièces de bâton (v0.9) seront d'autres familles `upgrade_slots/` et d'autres fichiers `upgrades/`, avec de nouvelles briques si besoin (une variante d'`Effect` et une ligne d'`apply`).
+
+## D082 — Enclume : améliorer et réparer (v0.3, jalon 4b)
+
+- **Station** `StationDef::Anvil` : grille de deux cases (`CraftGrid::anvil`), même mécanique que l'établi et le tailleur (cases au joueur, rendues à la fermeture ou si l'enclume disparaît, sauvegardées avec l'inventaire). Le choix (`InventoryRequest::ChooseUpgrade(Option<u16>)`, index dans `Upgrades::list`, trié par identifiant) s'efface quand l'objet posé change ; `None` = réparer. Le client calcule la liste avec les mêmes packs ; le serveur valide et calcule le résultat (`CraftingView::result`, `cost` = XP).
+- **Réparation** (`anvil.ron`) : une unité du matériau (`repair` du tier, ou de l'objet pour cuir et tissu) rend 25 % des utilisations (arrondi au-dessus), autant d'unités que nécessaire ; deux objets identiques : utilisations additionnées + 12 % d'un neuf, **le second sans amélioration** (pour ne jamais en détruire par mégarde), le premier garde les siennes. XP = 1 + nombre de réparations précédentes, 10 au plus. Un objet cassé gardé se répare.
+- **Renfort** : le gain d'utilisations max est ajouté tout de suite aux utilisations restantes.
+- **XP** : coûts dans les données et affichés ; `Game::can_pay_xp` (toujours vrai) et `Game::pay_xp` (rien) sont le point d'accroche du jalon 9.
+- **Usure de l'enclume** : non faite (option non retenue en v0.3) ; l'enclume ne s'use pas.
+- **Interface** : cases objet et matériau, liste des améliorations montrées par l'icône de leur matériau (infobulle : niveau, effets, coût, blocage), bouton « Réparer », résultat, note (prêt / matériau manquant / ne répare pas). Utilisable à la manette comme les autres grilles.
+
+## D083 — Marteau de mineur (v0.3, jalon 4b)
+
+- **Objets** : marteaux en pierre, fer, or, diamant ; outil de type pioche à 60 % de la vitesse du tier et deux fois ses utilisations, emplacements `["strata:area", + artisanaux du tier]` (famille `strata:area`, une par objet). Tête élargie (`upgrades/hammer_area.ron`) : 3×1, 5×1, 3×3, 3×5, 5×5, de plus en plus chère ; toutes les zones débloquées restent au choix (1×1 compris).
+- **Zone** : calculée par le serveur depuis la **face** visée, désormais dans `WorldAction::StartBreak { pos, face }`, et le lacet du joueur. Mur : largeur en travers, hauteur verticale, centrée sur le bloc visé ; sol ou plafond : largeur en travers du regard, « hauteur » devant (axe cardinal le plus proche). Fonction pure partagée `upgrade::swing_cells` (serveur, client, tests).
+- **Règles** : la zone ne s'applique que si le bloc visé est un bloc du type de l'outil qu'il récolte ; seuls ces blocs partent ; temps de casse = le plus long de la zone (bloc le plus dur, comme les mods connus) ; une utilisation par bloc, arrêt si le marteau casse ; butins regroupés en un tas par objet au bloc visé (comme la faucille). Un `Break` direct (bloc instantané, sans `StartBreak`) ne casse que ce bloc.
+- **Choix** : action « Zone du marteau » (R, clic du stick droit, remappable) → `InventoryRequest::ChooseArea(index)` ; l'index est rangé dans la pile (`strata:area`). Le clic du stick droit ne sert plus à s'accroupir (B le fait toujours). Le HUD affiche la zone au-dessus de la barre rapide ; le client prédit le temps et dessine le contour de la zone (boîte englobante) à la place de celui du bloc.
+
+## D084 — Infobulles et wiki des améliorations (v0.3, jalon 4b)
+
+- L'infobulle d'une pile améliorée ajoute une ligne par amélioration (« Aiguisage 2 : +20 % de dégâts… »), les valeurs obtenues (« Avec ses améliorations : … ») et la zone choisie d'un marteau ; « Utilisations : n / max » tient compte du renfort.
+- Wiki : page mécanique « Améliorations et enclume » avec le tableau généré depuis les packs ; page « Outils, armes et armures » (oubliée de la liste des mécaniques au jalon 4a) ajoutée ; page de l'enclume.
+- Le condensé épinglé du test de feu de forêt change (nouveau bloc, mêmes 863 changements).

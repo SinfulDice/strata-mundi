@@ -42,3 +42,7 @@ upgrade-cost-line = COSTZ: { $count } × { $material }, { $xp } XP
 upgrade-blocked-slot = NO MOAR ROOM 4 DIS
 upgrade-blocked-requires = NEEDZ FURST: { $name }
 upgrade-blocked-excludes = NO LIEK: { $name }
+upgrade-stats-line = WIF BETTR FINGZ: { $stats }
+upgrade-stat-damage = { $value } OUCH
+upgrade-stat-speed = FAST ×{ $value }
+upgrade-stat-protection = { $value } SAFE

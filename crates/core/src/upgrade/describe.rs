@@ -55,13 +55,18 @@ impl Content {
             .text_with(language, "upgrade-level-line", &args)
     }
 
-    /// The upgrades a stack holds, and the hammer area chosen.
+    /// The upgrades a stack holds, what its stats come to with them, and the hammer
+    /// area chosen.
     pub fn stack_upgrade_lines(&self, stack: &ItemStack, language: &str) -> Vec<String> {
-        let mut lines: Vec<String> = installed(stack)
+        let held = installed(stack);
+        let mut lines: Vec<String> = held
             .iter()
             .map(|(id, level)| self.upgrade_level_text(id, *level, language))
             .collect();
         let stats = stack_stats(stack, &self.items, &self.upgrades);
+        if !held.is_empty() {
+            lines.extend(self.upgraded_stats(&stats, language));
+        }
         if stats.areas.len() > 1 {
             let area = super::chosen_area(stack, &stats.areas);
             let args = [
@@ -74,6 +79,29 @@ impl Content {
             );
         }
         lines
+    }
+
+    /// « With its upgrades: 6.6 damage, speed ×6.6, 7 protection ».
+    fn upgraded_stats(&self, stats: &super::ItemStats, language: &str) -> Option<String> {
+        let tr = &self.translations;
+        let number = |value: f32| tr.short_decimal(language, f64::from(value));
+        let mut parts = Vec::new();
+        if let Some(weapon) = &stats.weapon {
+            let args = [("value", number(weapon.damage))];
+            parts.push(tr.text_with(language, "upgrade-stat-damage", &args));
+        }
+        if let Some(tool) = &stats.tool {
+            let args = [("value", number(tool.speed))];
+            parts.push(tr.text_with(language, "upgrade-stat-speed", &args));
+        }
+        if let Some(armor) = &stats.armor {
+            let args = [("value", armor.protection.to_string())];
+            parts.push(tr.text_with(language, "upgrade-stat-protection", &args));
+        }
+        (!parts.is_empty()).then(|| {
+            let args = [("stats", parts.join(", "))];
+            tr.text_with(language, "upgrade-stats-line", &args)
+        })
     }
 
     /// What the anvil offers: the level and its effects, its price, and why it is not

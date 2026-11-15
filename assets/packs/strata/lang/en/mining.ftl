@@ -42,3 +42,7 @@ upgrade-cost-line = Cost: { $count } × { $material }, { $xp } XP
 upgrade-blocked-slot = No free slot left for this upgrade
 upgrade-blocked-requires = Needs first: { $name }
 upgrade-blocked-excludes = Does not go with: { $name }
+upgrade-stats-line = With its upgrades: { $stats }
+upgrade-stat-damage = { $value } damage
+upgrade-stat-speed = speed ×{ $value }
+upgrade-stat-protection = { $value } protection

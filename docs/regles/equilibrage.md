@@ -157,6 +157,44 @@ Armures : protection par pièce (tête / torse / jambes / pieds), utilisations =
 
 Matériaux : fibre végétale (hautes herbes et fougères sans cisailles, 1 chance sur 4), tissu = 3 fibres, cuir provisoire = 2 fibres + 1 boue (jusqu'aux animaux, v0.4).
 
+## Améliorations, enclume et marteau de mineur (v0.3, `upgrades/`, `anvil.ron`)
+
+Valeurs de départ, à ajuster avec la crate `balance` (jalon 17). Coûts en XP affichés mais offerts jusqu'au jalon 9. Chaque niveau **remplace** le précédent ; un même effet ne se cumule pas entre améliorations (le plus fort compte).
+
+| Amélioration (famille) | Objets | Niveau 1 | Niveau 2 | Niveau 3 |
+|---|---|---|---|---|
+| Aiguisage (artisanal) | outils, armes | +10 % dégâts et vitesse de minage ; 2 lingots de cuivre, 2 XP | +20 % ; 2 lingots de fer, 4 XP | +30 % ; 1 diamant, 7 XP |
+| Renfort (artisanal) | outils, armes, armures | +20 % utilisations, +1 protection ; 2 lingots de fer, 2 XP | +40 %, +2 ; 4 lingots de fer, 4 XP | +60 %, +3 ; 2 diamants, 7 XP |
+| Allègement (artisanal) | armures | −25 % de poids ; 4 tissus, 2 XP | −50 % ; 2 lingots d'or, 4 XP | −75 % ; 2 diamants, 7 XP |
+
+Renfort et allègement s'excluent. Emplacements artisanaux : fer 1, or 2, diamant 2, cuir et tissu 1, bois et pierre 0.
+
+| Marteau de mineur | Tier | Vitesse | Utilisations | Recette |
+|---|---|---|---|---|
+| Pierre | pierre (niveau 1) | 2,4 | 262 | 5 pierres taillées + 2 bâtons |
+| Fer | fer (2) | 3,6 | 500 | 5 lingots de fer + 2 bâtons |
+| Or | or (2) | 7,2 | 96 | 5 lingots d'or + 2 bâtons |
+| Diamant | diamant (3) | 4,8 | 3 122 | 5 diamants + 2 bâtons |
+
+Vitesse = 60 % de la pioche du tier, utilisations = deux fois celles du tier. Emplacements : une tête (`strata:area`), plus les emplacements artisanaux du tier (fer 1, or et diamant 2 ; pierre 0).
+
+| Tête élargie | Zone | Coût |
+|---|---|---|
+| Niveau 1 | 3×1 | 4 lingots de fer, 3 XP |
+| Niveau 2 | 5×1 | 8 lingots de fer, 5 XP |
+| Niveau 3 | 3×3 | 8 lingots d'or, 8 XP |
+| Niveau 4 | 3×5 | 3 diamants, 12 XP |
+| Niveau 5 | 5×5 | 6 diamants, 18 XP |
+
+Temps de casse de la zone = celui du bloc le plus dur qu'elle emporte ; une utilisation par bloc cassé.
+
+| Réparation (`anvil.ron`) | Valeur |
+|---|---|
+| Une unité du matériau de l'objet (lingot du tier, planches, pierre taillée, cuir, tissu) | rend 25 % des utilisations (arrondi au-dessus), autant d'unités que nécessaire |
+| Deux objets identiques (le second sans amélioration) | utilisations additionnées + 12 % d'un neuf |
+| Coût en XP | 1 la première fois, +1 par réparation précédente de l'objet, 10 au plus |
+| Enclume | 7 lingots de fer ; ne s'use pas |
+
 ## Coffres et fours améliorables (v0.3)
 
 Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).

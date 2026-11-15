@@ -83,7 +83,7 @@ La **protection** totale (`worn_protection`) s'affiche dans l'inventaire ; elle 
 Chaque pile garde ses utilisations restantes (`ItemStack::durability`). Casser un bloc qui n'est pas instantané, labourer, sculpter, faucher usent l'outil d'une utilisation. L'option de monde **« Objets usés »** (`DurabilityMode`, dans `world.ron`) décide de la fin :
 
 - `Break` : l'objet disparaît à zéro (Minecraft) ;
-- `KeepBroken` : il reste à zéro (`is_broken`), grisé dans les cases ; en main, il vaut une main nue (`held_item` le saute), porté, il ne protège plus (mais pèse toujours). La réparation viendra avec l'enclume.
+- `KeepBroken` : il reste à zéro (`is_broken`), grisé dans les cases ; en main, il vaut une main nue (`held_item` le saute), porté, il ne protège plus (mais pèse toujours). La réparation se fait à l'enclume ([Améliorations](ameliorations.md)).
 
 La barre sous chaque case montre la part restante (aussi dans la barre rapide du HUD) ; l'infobulle donne « Utilisations : 245 / 250 ».
 

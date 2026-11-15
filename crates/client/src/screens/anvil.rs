@@ -72,7 +72,10 @@ impl SlotsModel<'_> {
             (true, Some(_)) => tr.text_with(self.language, "ui-anvil-upgrade", &[("xp", xp)]),
             (true, None) => tr.text_with(self.language, "ui-anvil-repair", &[("xp", xp)]),
             (false, Some(_)) => self.tr_key("ui-anvil-missing"),
-            (false, None) if self.anvil_cell(ANVIL_MATERIAL).is_some() => {
+            (false, None)
+                if self.anvil_cell(ANVIL_ITEM).is_some()
+                    && self.anvil_cell(ANVIL_MATERIAL).is_some() =>
+            {
                 self.tr_key("ui-anvil-no-repair")
             }
             (false, None) => self.tr_key("ui-anvil-help"),
