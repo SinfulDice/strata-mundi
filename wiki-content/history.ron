@@ -7,6 +7,7 @@
         (id: "0.2.1", date: "2026-11-13"),
     ],
     entries: {
+        "mechanics/furnaces": [(version: "0.3.0", change: Added)],
         "blocks/strata/furnace": [(version: "0.3.0", change: Added)],
         "blocks/strata/iron_furnace": [(version: "0.3.0", change: Added)],
         "blocks/strata/gold_furnace": [(version: "0.3.0", change: Added)],

@@ -3,12 +3,12 @@
 ## État
 
 - **Version en cours** : v0.3 — Survie. Détail : `docs/versions/v0.3.md`.
-- **Jalon en cours** : 3 — Craft
+- **Jalon en cours** : 4 — Outils, armes, armures
   - [x] J1 Objets et inventaire (piles, durabilité, métadonnées, 27+9+4+1, glisser-déposer, tri, verrouillage, dépôt rapide, recherche, objets lâchés, coffres, tonneaux)
   - [x] J2 Récolte (temps de casse, fissures, tables de butin, outil requis)
-  - [ ] J3 Craft (2×2, établi, recettes en pack, livre de recettes, fours/fumoir/haut fourneau, tailleur de pierre, fours améliorables)
+  - [x] J3 Craft (2×2, établi, recettes en pack, livre de recettes, fours/fumoir/haut fourneau, tailleur de pierre, fours améliorables)
     - [x] J3a grille/recettes/livre (recettes et tags en pack, 2×2 et établi 3×3 côté serveur, Maj-clic, restes, recettes apprises et expérimentation, option « recettes à découvrir », journal avec livre de recettes)
-    - [ ] J3b fours, tailleur, fours améliorables
+    - [x] J3b fours, tailleur, fours améliorables (combustibles, cuisson et taille en pack, façade orientée et allumée, fours actifs seulement, kits sur place, modules, écrans, sauvegarde)
   - [ ] J4 Outils, armes, armures (tiers, poids, outils spécialisés, marteau de mineur, durabilité, améliorations génériques, réparation)
   - [ ] J5 Accessoires et sets
   - [ ] J6 Stations de travail spécialisées

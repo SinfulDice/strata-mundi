@@ -87,6 +87,7 @@ wiki-mechanic-boats = FLOATEEZ
 wiki-mechanic-saving = SAEVIN
 wiki-mechanic-game-modes = GAEM MODEZ
 wiki-mechanic-inventory = MAH STUFFZ
+wiki-mechanic-furnaces = HOT BOXEZ AN ROCK CHOPPA
 wiki-mechanic-harvesting = BREAKIN STUFFZ
 wiki-unbreakable = NO BREAK. EVR.
 wiki-fact-item = HAZ ITEM

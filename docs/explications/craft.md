@@ -87,4 +87,4 @@ L'écran **Journal** (touche J ou bouton Select de la manette, ou bouton « Jour
 ## Pour aller plus loin
 
 - Décisions D069 à D071 dans `docs/decisions.md`.
-- [Inventaire, coffres et objets au sol](inventaire.md), [Récolte](recolte.md), [Packs](packs.md).
+- [Fours et tailleur de pierre](fours.md), [Inventaire, coffres et objets au sol](inventaire.md), [Récolte](recolte.md), [Packs](packs.md).

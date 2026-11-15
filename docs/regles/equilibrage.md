@@ -64,7 +64,35 @@ Coûts de Minecraft, pour qu'un joueur habitué ne soit pas dérouté. « Dépar
 | 4 boues | 4 terres + 1 seau d'eau (le seau revient vide) | 3×3, sans forme | non |
 | Bateau (par essence) | 5 planches de l'essence en U | 3×3 | non |
 
-Butin associé : la pierre donne de la pierre taillée, les minerais de charbon un charbon (pioche requise). Four (jalon 3b) et outils (jalon 4) rejoindront les recettes de départ.
+| Four | 8 pierres taillées en anneau | 3×3 | oui |
+| Fumoir | four + 4 bûches en croix | 3×3 | non |
+| Haut fourneau | four + 5 lingots de fer + 3 pierres polies | 3×3 | non |
+| Tailleur de pierre | 1 lingot de fer sur 3 pierres | 3×3 | non |
+| 4 briques de pierre / pierres polies / grès taillés | 4 pierres / briques / grès en carré | 2×2 | non |
+
+Butin associé : la pierre donne de la pierre taillée, les minerais de charbon un charbon, les minerais de diamant un diamant (pioche requise). Les outils (jalon 4) rejoindront les recettes de départ.
+
+## Cuisson et combustibles (v0.3, `cooking/`, `fuels/`)
+
+Valeurs de Minecraft, en ticks d'un four en pierre (20 ticks = 1 s ; une cuisson = 200 ticks).
+
+| Combustible | Durée | Cuissons (four en pierre) |
+|---|---|---|
+| Charbon, charbon de bois | 1 600 | 8 |
+| Seau de lave (rend le seau) | 20 000 | 100 |
+| Bateau | 1 200 | 6 |
+| Bûche, planche, établi, coffre, tonneau, bibliothèque | 300 | 1,5 |
+| Bâton | 100 | 0,5 |
+
+| Recette | Type | XP |
+|---|---|---|
+| Minerai de fer / cuivre → lingot | minerai | 0,7 |
+| Minerai d'or → lingot, minerai de diamant → diamant | minerai | 1 |
+| Minerai de charbon → charbon | minerai | 0,1 |
+| Sable → verre, pierre taillée → pierre | divers | 0,1 |
+| Bûche → charbon de bois | divers | 0,15 |
+
+Le four cuit tous les types, le haut fourneau les minerais, le fumoir la nourriture (aucune avant le jalon 8), ces deux-là deux fois plus vite (et le combustible brûle d'autant plus vite).
 
 ## Casse et outils (v0.3, champs `hardness` et `tool` des blocs)
 
@@ -99,6 +127,24 @@ Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
 | Diamant | 81 | 3 s | 16 | 3 |
 
 Un coffre double a deux fois les cases de son tier. Le kit passe d'un tier au suivant seulement (pas de saut) ; il coûte moins que la fabrication directe du tier visé.
+
+Fours (`furnace_tiers/`) : `cook_time` 100 / 80 / 50 / 30 %, `fuel_value` 100 / 125 / 150 / 200 % (d'où 8 / 10 / 12 / 16 cuissons par charbon). Fumoir et haut fourneau : mêmes tiers, deux fois plus rapides.
+
+| Fabrication | Coût |
+|---|---|
+| Tier fer / or direct | 8 lingots du métal autour du four du tier précédent |
+| Tier diamant direct | 4 diamants + 4 verres autour du four en or |
+| Kit fer | 5 lingots de fer + 1 pierre taillée |
+| Kit or | 5 lingots d'or + 1 lingot de fer |
+| Kit diamant | 3 diamants + 3 verres |
+
+| Module (non cumulable avec lui-même) | Temps d'une cuisson | Cuissons par combustible | Résultats |
+|---|---|---|---|
+| Vitesse (4 fer, 4 charbon, 1 or) | 75 % | 80 % | ×1 |
+| Économie (4 fer, 4 charbon, 1 seau de lave) | 100 % | 150 % | ×1 |
+| Double sortie (4 fer, 4 or, 1 diamant) | 125 % | 50 % | ×2 |
+
+Manque pour plus tard : les tiers Ignium, Nihilium et Siderium (v0.10-v0.11) n'ont ni objets ni fichiers de tier.
 
 ## Outils d'équilibrage (créés en v0.3, enrichis à chaque version)
 

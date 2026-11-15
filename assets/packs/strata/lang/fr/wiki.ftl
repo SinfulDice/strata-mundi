@@ -87,6 +87,7 @@ wiki-mechanic-boats = Bateaux
 wiki-mechanic-saving = Sauvegarde
 wiki-mechanic-game-modes = Modes de jeu
 wiki-mechanic-inventory = Inventaire
+wiki-mechanic-furnaces = Fours et tailleur de pierre
 wiki-mechanic-harvesting = Récolte
 wiki-unbreakable = incassable
 wiki-fact-item = Objet
