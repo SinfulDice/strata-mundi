@@ -41,6 +41,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 30. [Récolte](recolte.md) : temps de casse selon dureté et outil, casse vérifiée par le serveur, fissures, tables de butin.
 31. [Craft](craft.md) : recettes et tags en pack, grilles 2×2 et 3×3 décidées par le serveur, recettes apprises, livre de recettes.
 32. [Fours et tailleur de pierre](fours.md) : cuisson et combustibles en pack, façade orientée et allumée, fours actifs, fours améliorables sur place (kits, modules), tailleur de pierre.
+33. [Outils, armes et armures](outils-et-armures.md) : tiers et poids d'armure en pack, outils spécialisés (houe, burin, faucille, multi-usage), protection, ralentissement de l'armure lourde, durabilité selon l'option de monde.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

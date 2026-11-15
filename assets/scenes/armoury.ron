@@ -1,0 +1,36 @@
+// A smithy corner (`--scene armoury`): tools, weapons and armour pieces of every tier
+// lying on polished stone before carved stone bricks, with tilled farmland beside.
+(
+    fills: [
+        (from: (-10, 0, -10), to: (10, 0, 6), block: "strata:stone"),
+        (from: (-10, 1, -10), to: (10, 1, 6), block: "strata:polished_stone"),
+        (from: (5, 1, -4), to: (9, 1, 2), block: "strata:farmland"),
+        (from: (-10, 2, -7), to: (10, 5, -7), block: "strata:stone_bricks"),
+        (from: (-6, 2, -7), to: (-6, 5, -7), block: "strata:chiseled_stone_bricks"),
+        (from: (-2, 2, -7), to: (-2, 5, -7), block: "strata:patterned_stone_bricks"),
+        (from: (2, 2, -7), to: (2, 5, -7), block: "strata:chiseled_stone_bricks"),
+        (from: (-5, 3, -7), to: (1, 3, -7), block: "strata:patterned_stone_bricks"),
+        (from: (-8, 2, -6), to: (-8, 2, -6), block: "strata:crafting_table"),
+        (from: (-4, 2, -6), to: (-4, 2, -6), block: "strata:furnace__lit_south"),
+        (from: (6, 2, -5), to: (6, 2, -5), block: "strata:tall_grass"),
+        (from: (8, 2, -5), to: (8, 2, -5), block: "strata:poppy"),
+    ],
+    entities: [
+        (kind: "strata:item", position: (-4.5, 2.0, -3.6), yaw: 0.3, item: Some("strata:wooden_pickaxe")),
+        (kind: "strata:item", position: (-3.6, 2.0, -3.4), yaw: 0.6, item: Some("strata:stone_axe")),
+        (kind: "strata:item", position: (-2.7, 2.0, -3.6), yaw: 0.9, item: Some("strata:iron_shovel")),
+        (kind: "strata:item", position: (-1.8, 2.0, -3.4), yaw: 1.2, item: Some("strata:golden_hoe")),
+        (kind: "strata:item", position: (-0.9, 2.0, -3.6), yaw: 1.5, item: Some("strata:diamond_sword")),
+        (kind: "strata:item", position: (0.0, 2.0, -3.4), yaw: 1.8, item: Some("strata:multi_tool")),
+        (kind: "strata:item", position: (0.9, 2.0, -3.6), yaw: 2.1, item: Some("strata:sickle")),
+        (kind: "strata:item", position: (1.8, 2.0, -3.4), yaw: 2.4, item: Some("strata:chisel")),
+        (kind: "strata:item", position: (2.7, 2.0, -3.6), yaw: 2.7, item: Some("strata:shears")),
+        (kind: "strata:item", position: (-4.0, 2.0, -2.0), yaw: 0.2, item: Some("strata:leather_tunic")),
+        (kind: "strata:item", position: (-2.8, 2.0, -2.2), yaw: 0.5, item: Some("strata:iron_mail_shirt")),
+        (kind: "strata:item", position: (-1.6, 2.0, -2.0), yaw: 0.8, item: Some("strata:iron_plate_chestplate")),
+        (kind: "strata:item", position: (-0.4, 2.0, -2.2), yaw: 1.1, item: Some("strata:gold_plate_helmet")),
+        (kind: "strata:item", position: (0.8, 2.0, -2.0), yaw: 1.4, item: Some("strata:diamond_scale_leggings")),
+        (kind: "strata:item", position: (2.0, 2.0, -2.2), yaw: 1.7, item: Some("strata:diamond_plate_boots")),
+        (kind: "strata:item", position: (3.2, 2.0, -2.0), yaw: 2.0, item: Some("strata:cloth_hood")),
+    ],
+)

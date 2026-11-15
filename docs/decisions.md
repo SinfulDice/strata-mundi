@@ -628,3 +628,38 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Modules** (`module: Some(Furnace(cook_time, fuel_value, output))`, objets non empilables) : vitesse (75 % du temps, 80 % des cuissons par combustible), économie (150 % des cuissons), double sortie (×2 résultats, 125 % du temps, 50 % des cuissons). **Deux modules identiques ne s'additionnent pas** (refusés dans une seconde case, et ignorés au calcul), comme les effets de potion. Interprétation de « double sortie » : chaque cuisson donne deux résultats, au prix du combustible ; la sortie doit avoir la place pour les deux.
 - **Coûts** : fabrication directe = 8 lingots (ou 4 diamants + 4 verres) autour du modèle du tier précédent ; kit = 5 lingots + 1 (galets / lingot de fer) ou 3 diamants + 3 verres : moins cher, et sans perdre le four.
 - **Tests** : `core/cooking/tests.rs` (8 cuissons par charbon, tier plus rapide et plus économe, station rapide, rien ne brûle sans recette, sortie pleine, refroidissement, seau de lave, modules non cumulables et double sortie, Maj-clic, cases, types, tailleur), `server/game/furnace_tests.rs` (orientation, allumage, fin du feu, four inactif, kit sur place, vitesses par tier, four cassé = tout au sol, tailleur), `server/persistence_tests.rs` (four en cours sauvegardé et réveillé au chargement), `content/facing.rs`.
+
+## D075 — Tiers de matériau en pack et résolution des objets (v0.3, jalon 4a)
+
+- **Tiers** (`tiers/<nom>.ron`, `Tier(level, speed, durability, damage, enchantability, upgrade_slots)`) : bois, pierre, fer, or, diamant. Ignium, Nihilium et Siderium n'auront qu'à ajouter un fichier (niveaux 4, 5, 6) et leurs objets. Valeurs de Minecraft, sauf l'**or** : niveau 2 (comme le fer) au lieu de 0, pour qu'un palier atteint après le fer serve, en restant très rapide (×12) et fragile (48 utilisations) ; il a plus d'emplacements d'amélioration (2).
+- **Résolution** : un objet nomme `tier` ; `tool: Some(Tool(kinds, level?, speed?, sweep))` est un `ToolSpec` dont les trous sont remplis par le tier (`Gear::resolve`) pour donner le `ToolDef` utilisé partout ; la durabilité vient du tier pour les outils et armes qui n'en donnent pas ; `weapon` reçoit les dégâts du tier. Raison : changer un tier change tous ses objets ; un objet peut toujours surcharger (multi-outil : 150 utilisations).
+- **Emplacements d'amélioration** : stockés sur l'objet (`ItemGear::upgrade_slots`, du tier) ; le jalon 4b (enclume, améliorations génériques) les remplira via `ItemStack::data`. Enchantabilité gardée pour plus tard.
+- **Épées** : `weapon: Some(Weapon(damage, attack_speed))` (4 + dégâts du tier, 1,6 coup/s), affichés et au wiki ; pas de composant outil (aucun bloc « toile » pour l'instant).
+
+## D076 — Armures : protection, poids et fardeau (v0.3, jalon 4a)
+
+- `armor: Some(Armor(protection, weight))` sur les objets portés ; `armor_weights/` (léger, intermédiaire, lourd) donne par pièce des parts de vitesse, d'endurance et de mana. `worn_burden` additionne (plafond 90 %), `worn_protection` additionne la protection des pièces **non cassées**.
+- **Vitesse** : `MovementSettings::speed` (sérialisé, 1 par défaut) multiplie marche, course et accroupi, pas le vol. Le serveur le règle à chaque tick depuis l'inventaire ; le client le recalcule de sa copie d'inventaire avant de prédire. Raison : pas de message de plus, et la prédiction reste exacte (les deux utilisent la même fonction de `core`).
+- **Matériaux** : cuir et tissu (léger), mailles de fer et d'or, écailles de diamant (intermédiaire), plates de fer, d'or et de diamant (lourd). Les mailles demandent des anneaux (1 lingot → 2), les écailles des écailles de diamant (1 diamant → 2) : l'intermédiaire coûte la moitié de la lourde.
+- **Rendu porté** : pas de modèle de joueur en troisième personne pour l'instant ; l'armure ne se voit que dans l'inventaire (à reprendre avec le modèle du joueur).
+
+## D077 — Outils spécialisés : blocs travaillés et coupe en zone (v0.3, jalon 4a)
+
+- **`worked`** d'un bloc : `{type d'outil: Worked(into, open_above)}` ; un objet `action: Some(Work)` utilisé (clic droit) change le bloc visé, et s'use. Houe : terre et herbe → terre labourée (dessus à l'air libre). Burin : briques de pierre → sculptées → ouvragées → briques (cycle de trois). Générique : d'autres variantes ou outils s'ajoutent en pack.
+- **`sweep`** d'un outil : casser un bloc **instantané** dont l'outil est d'un de ses types casse aussi ses semblables à `sweep` blocs autour (±1 en hauteur), pour une utilisation. Les plantes ont maintenant `tool: faucille` (non requis). Survie seulement.
+- **Multi-outil** : un seul `ToolDef` à plusieurs types (déjà géré) ; au niveau du fer, 150 utilisations.
+- **Terre labourée** : bloc plein (pas de hauteur 15/16 ni de retour à la terre sans eau : avec les cultures en v0.5).
+
+## D078 — Durabilité selon l'option de monde (v0.3, jalon 4a)
+
+- `DurabilityMode { Break, KeepBroken }` dans `NewWorld` et `world.ron` (`durability`, défaut `Break`), bouton « Objets usés » à la création ; gamerule au jalon 11.
+- `wear_slot` applique l'usure ; en `KeepBroken`, la pile reste à 0 (`is_broken`). Un objet cassé en main vaut une main nue côté serveur (`held_item`) et client (`selected`), ne protège plus, garde son poids ; il est voilé dans les cases. La barre d'usure apparaît aussi dans la barre rapide du HUD ; l'infobulle d'une pile donne « Utilisations : n / max ».
+
+## D079 — Limite de couches de texture : 2 048 (v0.3, jalon 4a)
+
+- Les ~70 nouveaux objets portent le jeu à 320 couches. Le test passe de 256 (minimum Vulkan, téléphones) à **2 048**, la limite de tous les pilotes de bureau (Mesa ANV pour la DS, lavapipe, RADV, NVIDIA, AMD, Metal). Le jeu signale déjà clairement une carte trop limitée (`GpuError::TooManyTextures`). Si une cible à 256 couches apparaît, les images des seuls objets plats iront dans un atlas séparé.
+
+## D080 — Matériaux provisoires : fibres, tissu, cuir (v0.3, jalon 4a)
+
+- Hautes herbes et fougères sans cisailles : une chance sur quatre de **fibre végétale** (`loot_tables/grass_fiber.ron`). 3 fibres → 1 **tissu** (sans forme).
+- **Cuir provisoire** : 2 fibres + 1 boue → 1 cuir, recette marquée provisoire, à retirer en v0.4 quand les animaux donneront des peaux. Le tissu passera au métier à tisser au jalon 6.

@@ -70,7 +70,7 @@ Coûts de Minecraft, pour qu'un joueur habitué ne soit pas dérouté. « Dépar
 | Tailleur de pierre | 1 lingot de fer sur 3 pierres | 3×3 | non |
 | 4 briques de pierre / pierres polies / grès taillés | 4 pierres / briques / grès en carré | 2×2 | non |
 
-Butin associé : la pierre donne de la pierre taillée, les minerais de charbon un charbon, les minerais de diamant un diamant (pioche requise). Les outils (jalon 4) rejoindront les recettes de départ.
+Butin associé : la pierre donne de la pierre taillée, les minerais de charbon un charbon, les minerais de diamant un diamant (pioche requise). Les outils en bois et en pierre sont des recettes de départ (voir « Outils, armes et armures »).
 
 ## Cuisson et combustibles (v0.3, `cooking/`, `fuels/`)
 
@@ -98,7 +98,7 @@ L'expérience compte une fois par cuisson, même avec le module de double sortie
 
 Formule de Minecraft : un bloc cède après **dureté × 30 / vitesse** ticks (dureté × 1,5 s à mains nues) avec le bon outil ou quand aucun n'est requis, **dureté × 100** ticks sans l'outil requis (et alors sans butin). Dureté négative : incassable. Le serveur accepte une casse jusqu'à `max(2 ticks, 10 %)` en avance (latence).
 
-Niveaux de minage : 0 bois, 1 pierre, 2 fer, 3 diamant (Ignium, Nihilium, Siderium au-delà). Les vitesses des outils viendront au jalon 4 (référence Minecraft : main 1, bois 2, pierre 4, fer 6, diamant 8, or 12).
+Niveaux de minage : 0 bois, 1 pierre, 2 fer et or, 3 diamant (Ignium, Nihilium, Siderium au-delà). Vitesses : main 1, bois 2, pierre 4, fer 6, diamant 8, or 12 (table des tiers ci-dessous).
 
 | Blocs | Dureté | Outil | Requis (niveau) |
 |---|---|---|---|
@@ -114,6 +114,48 @@ Niveaux de minage : 0 bois, 1 pierre, 2 fer, 3 diamant (Ignium, Nihilium, Sideri
 | Feuilles, liane | 0,2 | cisailles | non (butin seulement aux cisailles) |
 | Plantes, fleurs, torche | 0 (instantané) | — | — |
 | Socle, liquides | incassable | — | — |
+
+## Outils, armes et armures (v0.3, `tiers/`, `armor_weights/`, `items/`)
+
+Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
+
+| Tier | Niveau | Vitesse | Utilisations | Dégâts ajoutés | Enchantabilité | Emplacements d'amélioration |
+|---|---|---|---|---|---|---|
+| Bois | 0 | 2 | 59 | 0 | 15 | 0 |
+| Pierre | 1 | 4 | 131 | 1 | 5 | 0 |
+| Fer | 2 | 6 | 250 | 2 | 14 | 1 |
+| Or | 2 | 12 | 48 | 1 | 22 | 2 |
+| Diamant | 3 | 8 | 1 561 | 3 | 10 | 2 |
+| Ignium, Nihilium, Siderium | 4, 5, 6 | à définir (v0.10-v0.11) | | | | |
+
+| Outil | Recette (M = matériau, S = bâton) | Particularité |
+|---|---|---|
+| Pioche, hache, pelle, houe, épée | formes de Minecraft ; bois (toute planche) et pierre (pierre taillée) connus au départ | épée : 4 + dégâts du tier, 1,6 coup/s |
+| Cisailles | 2 lingots de fer en diagonale | vitesse 5, 238 utilisations |
+| Faucille | 3 lingots de fer en crochet + 1 bâton | tier fer, coupe à 2 blocs autour (une utilisation) |
+| Burin | 1 lingot de fer sur 1 bâton | tier fer, 128 utilisations |
+| Outil multi-usage | 5 lingots de fer + 2 bâtons | pioche + hache + pelle au niveau du fer, 150 utilisations (au lieu de 250) |
+
+Armures : protection par pièce (tête / torse / jambes / pieds), utilisations = facteur × (11 / 16 / 15 / 13), recettes aux formes de Minecraft.
+
+| Ensemble | Poids | Protection | Total | Facteur | Matériau |
+|---|---|---|---|---|---|
+| Cuir | légère | 1 / 3 / 2 / 1 | 7 | 5 | cuir |
+| Tissu | légère | 1 / 2 / 2 / 1 | 6 | 4 | tissu |
+| Mailles de fer | intermédiaire | 2 / 5 / 4 / 1 | 12 | 13 | anneaux de fer (1 lingot → 2) |
+| Plates de fer | lourde | 2 / 6 / 5 / 2 | 15 | 15 | lingots de fer |
+| Mailles d'or | intermédiaire | 1 / 4 / 3 / 1 | 9 | 6 | anneaux d'or |
+| Plates d'or | lourde | 2 / 5 / 4 / 2 | 13 | 7 | lingots d'or |
+| Écailles de diamant | intermédiaire | 3 / 6 / 5 / 2 | 16 | 28 | écailles de diamant (1 diamant → 2) |
+| Plates de diamant | lourde | 3 / 8 / 6 / 3 | 20 | 33 | diamants |
+
+| Poids (par pièce) | Vitesse | Endurance | Mana |
+|---|---|---|---|
+| Légère | 0 | 0 | 0 |
+| Intermédiaire | 0 | 2,5 % | 2,5 % |
+| Lourde | 2,5 % (−10 % pour l'ensemble) | 5 % | 5 % |
+
+Matériaux : fibre végétale (hautes herbes et fougères sans cisailles, 1 chance sur 4), tissu = 3 fibres, cuir provisoire = 2 fibres + 1 boue (jusqu'aux animaux, v0.4).
 
 ## Coffres et fours améliorables (v0.3)
 
