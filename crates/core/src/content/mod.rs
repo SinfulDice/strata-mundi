@@ -15,6 +15,7 @@ mod keys;
 mod liquid;
 mod loot;
 mod particle;
+mod placement;
 mod png_file;
 mod registry;
 mod tags;

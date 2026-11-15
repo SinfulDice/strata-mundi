@@ -92,7 +92,7 @@ Valeurs de Minecraft, en ticks d'un four en pierre (20 ticks = 1 s ; une cuisson
 | Sable → verre, pierre taillée → pierre | divers | 0,1 |
 | Bûche → charbon de bois | divers | 0,15 |
 
-Le four cuit tous les types, le haut fourneau les minerais, le fumoir la nourriture (aucune avant le jalon 8), ces deux-là deux fois plus vite (et le combustible brûle d'autant plus vite).
+L'expérience compte une fois par cuisson, même avec le module de double sortie (sinon il doublerait aussi l'XP). Le four cuit tous les types, le haut fourneau les minerais, le fumoir la nourriture (aucune avant le jalon 8), ces deux-là deux fois plus vite (et le combustible brûle d'autant plus vite).
 
 ## Casse et outils (v0.3, champs `hardness` et `tool` des blocs)
 

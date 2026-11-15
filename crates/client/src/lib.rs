@@ -9,6 +9,7 @@ mod cinematic;
 mod crafting;
 mod debug_overlay;
 pub mod entities;
+mod furnace;
 mod gameplay;
 pub mod generation;
 pub mod input;

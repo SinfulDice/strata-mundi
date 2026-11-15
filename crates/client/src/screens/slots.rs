@@ -341,19 +341,20 @@ impl SlotsModel<'_> {
         }
     }
 
-    /// The open furnace's speed and economy, for a usual cooking and a piece of coal.
+    /// The open furnace's speed and economy, for a usual cooking and the reference fuel.
     fn furnace_info(&self) -> String {
         let Some(view) = self.container.and_then(|c| c.furnace) else {
             return String::new();
         };
-        let round = |value: f32| format!("{}", (value * 10.0).round() / 10.0);
-        self.content.translations.text_with(
+        let Some(per_coal) = view.per_coal else {
+            return String::new();
+        };
+        let tr = &self.content.translations;
+        let number = |value: f32| tr.short_decimal(self.language, f64::from(value));
+        tr.text_with(
             self.language,
             "ui-furnace-info",
-            &[
-                ("time", round(view.seconds)),
-                ("cooks", round(view.per_coal)),
-            ],
+            &[("time", number(view.seconds)), ("cooks", number(per_coal))],
         )
     }
 }

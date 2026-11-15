@@ -5,12 +5,11 @@ use crate::html::escape;
 use crate::recipes::{icon, ingredient};
 use crate::site::Ctx;
 use strata_core::content::{Block, ItemId};
-use strata_core::cooking::{CookingRecipe, FurnaceStats};
+use strata_core::cooking::{CookingRecipe, DEFAULT_COOK_TIME, FurnaceStats};
 use strata_core::id::Identifier;
 
-/// Ticks of a usual cooking and of a piece of coal.
-const USUAL: f64 = 200.0;
-const COAL: u32 = 1600;
+/// Ticks of a usual cooking.
+const USUAL: f64 = DEFAULT_COOK_TIME as f64;
 
 /// The « Cooking », « Stonecutter » and « Fuel » sections of the page of `item`.
 pub fn sections(ctx: &Ctx<'_>, from: &str, item: ItemId) -> String {
@@ -48,8 +47,8 @@ pub fn sections(ctx: &Ctx<'_>, from: &str, item: ItemId) -> String {
     }
     if let Some(ticks) = cooking.fuel(item) {
         let args = [
-            ("seconds", seconds(f64::from(ticks))),
-            ("cooks", round(f64::from(ticks) / USUAL)),
+            ("seconds", seconds(ctx, f64::from(ticks))),
+            ("cooks", round(ctx, f64::from(ticks) / USUAL)),
         ];
         html.push_str(&format!(
             "<h2>{}</h2><p>{}</p>",
@@ -63,7 +62,7 @@ pub fn sections(ctx: &Ctx<'_>, from: &str, item: ItemId) -> String {
 fn cooking_row(ctx: &Ctx<'_>, from: &str, recipe: &CookingRecipe) -> String {
     let stations = stations_cooking(ctx, &recipe.kind).join(", ");
     let args = [
-        ("seconds", seconds(f64::from(recipe.time))),
+        ("seconds", seconds(ctx, f64::from(recipe.time))),
         ("stations", stations),
     ];
     let note = escape(&ctx.tr_with("wiki-cooking-note", &args));
@@ -117,23 +116,26 @@ pub fn furnace_facts(ctx: &Ctx<'_>, block: &Block) -> Vec<(String, String)> {
     };
     let stats = FurnaceStats::new(furnace, tier, &[]);
     let usual = USUAL * stats.time_factor;
-    vec![
-        (ctx.tr("wiki-fact-cook-time"), seconds(usual)),
-        (
-            ctx.tr("wiki-fact-cooks-per-coal"),
-            round(f64::from(stats.burn_ticks(COAL)) / usual),
-        ),
-        (
-            ctx.tr("wiki-fact-upgrade-slots"),
-            tier.upgrade_slots.to_string(),
-        ),
-    ]
+    let mut rows = vec![(ctx.tr("wiki-fact-cook-time"), seconds(ctx, usual))];
+    if let Some(coal) = ctx.data.content.cooking.reference_fuel() {
+        let cooks = f64::from(stats.burn_ticks(coal)) / usual;
+        rows.push((ctx.tr("wiki-fact-cooks-per-coal"), round(ctx, cooks)));
+    }
+    rows.push((
+        ctx.tr("wiki-fact-upgrade-slots"),
+        tier.upgrade_slots.to_string(),
+    ));
+    rows
 }
 
-fn seconds(ticks: f64) -> String {
-    round(ticks / 20.0)
+fn seconds(ctx: &Ctx<'_>, ticks: f64) -> String {
+    round(ctx, ticks / 20.0)
 }
 
-fn round(value: f64) -> String {
-    format!("{}", (value * 10.0).round() / 10.0)
+fn round(ctx: &Ctx<'_>, value: f64) -> String {
+    let rounded = (value * 10.0).round() / 10.0;
+    ctx.data
+        .content
+        .translations
+        .short_decimal(ctx.lang, rounded)
 }

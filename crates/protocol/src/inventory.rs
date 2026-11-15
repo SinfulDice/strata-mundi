@@ -86,8 +86,8 @@ pub struct FurnaceView {
     pub cook_time: u32,
     /// Seconds a usual cooking (10 s in a stone furnace) takes here.
     pub seconds: f32,
-    /// Cookings a piece of coal gives here.
-    pub per_coal: f32,
+    /// Cookings the packs' reference fuel (coal) gives here.
+    pub per_coal: Option<f32>,
 }
 
 impl FurnaceView {
@@ -99,6 +99,24 @@ impl FurnaceView {
     /// Fraction of the cooking done, 0 to 1.
     pub fn arrow(&self) -> f32 {
         fraction(self.progress, self.cook_time)
+    }
+
+    /// The view one tick later if nothing but time changes: the fire burns down, the
+    /// cooking goes on (and starts again once done), or cools when the fire is out. The
+    /// server sends a view only when the furnace leaves this course; the client follows
+    /// it in between.
+    pub fn advanced(mut self) -> Self {
+        if self.burn_left == 0 {
+            self.progress = self.progress.saturating_sub(2);
+            return self;
+        }
+        self.burn_left -= 1;
+        self.progress = match self.cook_time {
+            0 => 0,
+            time if self.progress + 1 >= time => 0,
+            _ => self.progress + 1,
+        };
+        self
     }
 }
 

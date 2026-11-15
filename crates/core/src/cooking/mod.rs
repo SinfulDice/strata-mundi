@@ -8,8 +8,10 @@ mod load;
 mod slots;
 
 pub use cutting::{cut_choices, cut_result, take_cut};
-pub use defs::{CookingDef, CuttingDef, FuelDef, FurnaceDef, FurnaceTier, KitDef, ModuleDef};
-pub use furnace::{FurnaceState, FurnaceStats, Step, step};
+pub use defs::{
+    CookingDef, CuttingDef, DEFAULT_COOK_TIME, FuelDef, FurnaceDef, FurnaceTier, KitDef, ModuleDef,
+};
+pub use furnace::{Furnace, FurnaceState, FurnaceStats, Step, step};
 pub use slots::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE_OUTPUT, FurnaceSlots};
 
 pub(crate) use load::load_cooking;
@@ -49,6 +51,8 @@ pub struct Cooking {
     cuttings: Vec<CuttingRecipe>,
     cuts_by_item: HashMap<ItemId, Vec<usize>>,
     fuels: HashMap<ItemId, u32>,
+    /// Ticks of the fuel cookings are counted in (coal), if a pack names one.
+    reference_fuel: Option<u32>,
     tiers: BTreeMap<Identifier, FurnaceTier>,
 }
 
@@ -56,9 +60,10 @@ impl Cooking {
     pub fn new(
         recipes: Vec<CookingRecipe>,
         cuttings: Vec<CuttingRecipe>,
-        fuels: HashMap<ItemId, u32>,
+        fuels: (HashMap<ItemId, u32>, Option<u32>),
         tiers: BTreeMap<Identifier, FurnaceTier>,
     ) -> Self {
+        let (fuels, reference_fuel) = fuels;
         let by_item = index(recipes.iter().map(|r| &r.ingredient));
         let cuts_by_item = index(cuttings.iter().map(|r| &r.ingredient));
         Self {
@@ -67,6 +72,7 @@ impl Cooking {
             cuttings,
             cuts_by_item,
             fuels,
+            reference_fuel,
             tiers,
         }
     }
@@ -93,6 +99,11 @@ impl Cooking {
         self.fuels.iter().map(|(&item, &ticks)| (item, ticks))
     }
 
+    /// Ticks of the reference fuel (« cookings per coal »).
+    pub fn reference_fuel(&self) -> Option<u32> {
+        self.reference_fuel
+    }
+
     pub fn tier(&self, id: &Identifier) -> Option<&FurnaceTier> {
         self.tiers.get(id)
     }
@@ -101,12 +112,9 @@ impl Cooking {
         self.tiers.iter()
     }
 
-    /// What the stonecutter makes of `item`, in pack order.
-    pub fn cuts(&self, item: ItemId) -> Vec<&CuttingRecipe> {
-        self.cuts_by_item
-            .get(&item)
-            .map(|list| list.iter().filter_map(|&i| self.cuttings.get(i)).collect())
-            .unwrap_or_default()
+    /// Indexes in `cuttings` of what the stonecutter makes of `item`, in pack order.
+    pub fn cuts_of(&self, item: ItemId) -> &[usize] {
+        self.cuts_by_item.get(&item).map_or(&[], Vec::as_slice)
     }
 
     pub fn cuttings(&self) -> &[CuttingRecipe] {

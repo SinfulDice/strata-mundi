@@ -78,6 +78,10 @@ pub struct FuelDef {
     pub ingredient: IngredientDef,
     /// Ticks (coal: 1 600, eight cookings).
     pub burn_time: u32,
+    /// The fuel screens and the wiki count cookings in (« 8 cookings per coal »); the
+    /// first one marked wins.
+    #[serde(default)]
+    pub reference: bool,
 }
 
 /// `kit` of an item: used on a block of tier `from`, makes it the block of the same
@@ -90,7 +94,7 @@ pub struct KitDef {
 }
 
 /// `module` of an item: what it changes once in an upgrade slot.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
 pub enum ModuleDef {
     /// In a furnace: percents of the time of a cooking and of the cookings per fuel, and
     /// how many results each cooking gives (double output: 2).
@@ -112,6 +116,10 @@ fn one() -> u8 {
     1
 }
 
+/// Ticks of a cooking in a stone furnace when the recipe says nothing (10 s): also the
+/// « usual cooking » screens and the wiki give times for.
+pub const DEFAULT_COOK_TIME: u32 = 200;
+
 fn default_time() -> u32 {
-    200
+    DEFAULT_COOK_TIME
 }

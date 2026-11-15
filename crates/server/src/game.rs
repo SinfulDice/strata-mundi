@@ -20,7 +20,7 @@ use crate::loader::{Bounded, ColumnLoader};
 use crate::rules::BlockRules;
 use crate::systems::{boat_movement, player_movement, wake_boats};
 use glam::DVec3;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use strata_core::content::BlockId;
 use strata_core::coords::{BlockPos, WORLD_HEIGHT};
@@ -63,9 +63,12 @@ pub struct Game {
     discover_recipes: bool,
     /// Recipes learnt whose pack is gone, saved again as they were.
     pub unknown_recipes: Vec<strata_core::id::Identifier>,
-    /// Furnaces burning or cooling: only these are stepped each tick.
-    furnaces: HashSet<BlockPos>,
-    /// Fire and cooking of the open furnace, as last sent.
+    /// Furnaces burning or cooling: only these are stepped each tick, with their speed
+    /// (computed again when `None`).
+    furnaces: BTreeMap<BlockPos, Option<strata_core::cooking::FurnaceStats>>,
+    /// Active furnaces whose column unloaded, woken when it comes back.
+    waiting_furnaces: HashMap<strata_core::coords::ColumnPos, Vec<BlockPos>>,
+    /// Fire and cooking of the open furnace, as the client last knew them.
     furnace_view: Option<FurnaceView>,
 }
 
@@ -101,7 +104,8 @@ impl Game {
             craft_dirty: false,
             discover_recipes: true,
             unknown_recipes: Vec::new(),
-            furnaces: HashSet::new(),
+            furnaces: BTreeMap::new(),
+            waiting_furnaces: HashMap::new(),
             furnace_view: None,
         }
     }
@@ -212,6 +216,7 @@ impl Game {
         changes.extend(self.mining_tick(loader));
         changes.extend(self.furnaces_tick(loader));
         for pos in loader.take_arrived() {
+            self.wake_column_furnaces(pos);
             if let Some(column) = loader.column(pos) {
                 self.updates.wake_fires(column);
             }

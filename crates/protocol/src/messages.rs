@@ -375,7 +375,7 @@ mod tests {
                 progress: 7,
                 cook_time: 200,
                 seconds: 8.0,
-                per_coal: 10.0,
+                per_coal: Some(10.0),
             }),
             ServerMessage::Recipes {
                 known: vec![RecipeId(2)],

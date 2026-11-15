@@ -9,7 +9,8 @@ pub const WORLD_HEIGHT: i32 = SECTION_SIZE * SECTIONS_PER_COLUMN;
 pub const DEFAULT_WORLD_BORDER: i32 = 10_000_000;
 
 /// Absolute block position. `y` ranges over `0..WORLD_HEIGHT`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// Ordered by x, then y, then z.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct BlockPos {
     pub x: i32,
     pub y: i32,

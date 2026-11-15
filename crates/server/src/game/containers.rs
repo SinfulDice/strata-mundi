@@ -63,16 +63,18 @@ impl Game {
         let window = OpenWindow { block, halves };
         let contents = self.contents(&window);
         self.ecs.windows.insert(self.player, window);
+        if self.rules.furnace(block).is_some() {
+            self.wake_furnace(pos);
+        }
+        let furnace = self.furnace_view_at(block, pos);
+        self.furnace_view = furnace;
         self.messages
             .push(ServerMessage::ContainerOpened(Box::new(OpenedContainer {
                 block,
                 pos,
                 contents,
-                furnace: None,
+                furnace,
             })));
-        if self.rules.furnace(block).is_some() {
-            self.wake_furnace(pos);
-        }
         true
     }
 
@@ -102,6 +104,9 @@ impl Game {
             // Made empty the first time (a chest just placed or generated); the slots
             // cut off when the pack gave it fewer rows fall to the ground.
             let entity = self.block_entities.entry(half).or_default();
+            if self.rules.furnace(window.block).is_some() {
+                entity.furnace.get_or_insert_with(Default::default);
+            }
             let cut = entity.container.resize(size);
             contents
                 .slots
@@ -194,6 +199,8 @@ impl Game {
     /// fits falls where the container is).
     pub fn set_block_entities(&mut self, entities: BlockEntities) {
         self.block_entities = entities;
+        self.furnaces.clear();
+        self.waiting_furnaces.clear();
         let mut thrown = Vec::new();
         for (&pos, entity) in &mut self.block_entities {
             let left = entity.container.normalize(&self.rules);
@@ -208,15 +215,20 @@ impl Game {
             .filter(|(_, entity)| entity.furnace.is_some())
             .map(|(&pos, _)| pos)
             .collect();
-        self.furnaces.extend(furnaces);
+        for pos in furnaces {
+            self.wake_furnace(pos);
+        }
     }
 
-    /// A container block or a furnace that went away (broken, burnt) throws its contents
-    /// where it was.
+    /// A container block or a furnace that went away (broken, burnt, or replaced by a
+    /// block holding another kind of entity) throws its contents where it was.
     pub(super) fn settle_block_entities(&mut self, loader: &ColumnLoader, changes: &[BlockChange]) {
         for &(pos, block) in changes {
-            let gone = self.rules.entity_slots(block).is_none();
-            if gone && let Some(mut entity) = self.block_entities.remove(&pos) {
+            let kept = self.block_entities.get(&pos).is_some_and(|entity| {
+                self.rules.entity_slots(block).is_some()
+                    && entity.furnace.is_some() == self.rules.furnace(block).is_some()
+            });
+            if !kept && let Some(mut entity) = self.block_entities.remove(&pos) {
                 let centre = block_centre(pos);
                 for stack in entity.container.drain() {
                     self.spawn_drop(stack, centre, DVec3::ZERO);

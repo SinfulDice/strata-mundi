@@ -59,25 +59,32 @@ pub(crate) fn load_cooking(
     Cooking::new(recipes, cuttings, fuels(packs, names, errors), tiers)
 }
 
-/// Later files win for an item named twice (an item given its own time over its tag's).
-fn fuels(packs: &PackSet, names: &Names<'_>, errors: &mut Vec<PackError>) -> HashMap<ItemId, u32> {
+/// An item named alone wins over its tag (its own time over the tag's). Also the time of
+/// the reference fuel.
+fn fuels(
+    packs: &PackSet,
+    names: &Names<'_>,
+    errors: &mut Vec<PackError>,
+) -> (HashMap<ItemId, u32>, Option<u32>) {
     let mut fuels = HashMap::new();
-    let mut by_tag: Vec<(bool, Ingredient, u32)> = packs
-        .layered::<FuelDef>("fuels", errors)
-        .into_iter()
-        .filter_map(|(_, Sourced { value, source })| {
-            let burn = ticks(value.burn_time, &source, errors);
-            let ingredient = ingredient(value.ingredient, names, &source, errors)?;
-            Some((ingredient.tag.is_none(), ingredient, burn))
-        })
-        .collect();
+    let mut reference = None;
+    let mut by_tag: Vec<(bool, Ingredient, u32)> = Vec::new();
+    for (_, Sourced { value, source }) in packs.layered::<FuelDef>("fuels", errors) {
+        let burn = ticks(value.burn_time, &source, errors);
+        if value.reference {
+            reference = reference.or(Some(burn));
+        }
+        if let Some(ingredient) = ingredient(value.ingredient, names, &source, errors) {
+            by_tag.push((ingredient.tag.is_none(), ingredient, burn));
+        }
+    }
     by_tag.sort_by_key(|(single, _, _)| *single);
     for (_, ingredient, burn) in by_tag {
         for &item in ingredient.items() {
             fuels.insert(item, burn);
         }
     }
-    fuels
+    (fuels, reference)
 }
 
 fn ticks(ticks: u32, source: &Path, errors: &mut Vec<PackError>) -> u32 {

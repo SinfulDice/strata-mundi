@@ -284,3 +284,102 @@ fn the_stonecutter_cuts_the_variant_chosen() {
         "no grid recipe here"
     );
 }
+
+/// Changes at `SPOT` while waiting `ticks`.
+fn changes_at_spot(w: &mut World, ticks: u32) -> usize {
+    (0..ticks)
+        .flat_map(|_| w.game.tick(&mut w.loader))
+        .filter(|(pos, _)| *pos == SPOT)
+        .count()
+}
+
+#[test]
+fn the_fire_does_not_blink_between_two_coals() {
+    let mut w = survival();
+    open_furnace(&mut w, "strata:furnace");
+    put(&mut w, 0, "strata:iron_ore", 10);
+    put(&mut w, 1, "strata:coal", 2);
+    transfer(&mut w, 0);
+    transfer(&mut w, 1);
+    assert_eq!(changes_at_spot(&mut w, 3300), 2, "lit once, out once");
+    assert_eq!(slot_count(&w, FURNACE_OUTPUT), 10);
+}
+
+#[test]
+fn a_furnace_in_an_unloaded_column_waits_then_goes_on() {
+    use strata_core::chunk::Column;
+    use strata_core::coords::ColumnPos;
+    let mut w = survival();
+    let far = BlockPos::new(40, 64, 8);
+    let lit = w
+        .game
+        .rules
+        .facing(block(&w.content, "strata:furnace"))
+        .unwrap()
+        .lit(true);
+    let mut entity = BlockEntity {
+        container: strata_core::inventory::Container::new(3),
+        furnace: Some(strata_core::cooking::FurnaceState {
+            burn_left: 1000,
+            burn_total: 1600,
+            progress: 50,
+            experience: 0.0,
+        }),
+        ..BlockEntity::default()
+    };
+    entity.container.slots[FURNACE_INPUT] =
+        Some(ItemStack::new(item(&w, "strata:sand"), 2, &w.game.rules));
+    let mut entities = BlockEntities::default();
+    entities.insert(far, entity);
+    w.game.set_block_entities(entities);
+    wait(&mut w, 5);
+    assert!(
+        !w.game.furnace_is_active(far),
+        "set aside while its column is away"
+    );
+    let state = w.game.block_entities[&far].furnace.clone().unwrap();
+    assert_eq!((state.burn_left, state.progress), (1000, 50), "nothing ran");
+    let mut column = Column::empty(ColumnPos { x: 2, z: 0 });
+    column.set(8, 64, 8, lit);
+    w.loader.insert(column);
+    wait(&mut w, 2);
+    assert!(w.game.furnace_is_active(far), "woken with its column");
+    wait(&mut w, 400);
+    let glass = item(&w, "strata:glass");
+    let output = w.game.block_entities[&far]
+        .container
+        .get(FURNACE_OUTPUT)
+        .cloned();
+    assert_eq!(output.map(|s| (s.item, s.count)), Some((glass, 2)));
+}
+
+#[test]
+fn quick_deposit_and_sorting_leave_furnaces_alone() {
+    let mut w = survival();
+    open_furnace(&mut w, "strata:furnace");
+    put(&mut w, 0, "strata:sand", 4);
+    transfer(&mut w, 0);
+    put(&mut w, 9, "strata:sand", 6);
+    request(&mut w, InventoryRequest::QuickDeposit);
+    assert_eq!(
+        slot_count(&w, FURNACE_INPUT),
+        4,
+        "the open furnace is no chest"
+    );
+    put(&mut w, 2, "strata:coal", 3);
+    transfer(&mut w, 2);
+    let before = w.game.block_entities[&SPOT].container.clone();
+    request(
+        &mut w,
+        InventoryRequest::Sort {
+            area: strata_core::inventory::Area::Open,
+            order: strata_core::inventory::SortOrder::Type,
+            language: "en".into(),
+        },
+    );
+    assert_eq!(w.game.block_entities[&SPOT].container, before, "no sorting");
+    request(&mut w, InventoryRequest::Close);
+    request(&mut w, InventoryRequest::QuickDeposit);
+    assert_eq!(slot_count(&w, FURNACE_INPUT), 4, "nor a closed one");
+    assert_eq!(w.game.inventory().slots.count(item(&w, "strata:sand")), 6);
+}

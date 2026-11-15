@@ -96,7 +96,7 @@ fn cooking() -> Cooking {
         ),
     ]
     .into();
-    Cooking::new(recipes, cuttings, fuels, tiers)
+    Cooking::new(recipes, cuttings, (fuels, Some(1600)), tiers)
 }
 
 fn furnace(tier: &str, speed: u16) -> (FurnaceDef, FurnaceTier) {
@@ -127,12 +127,22 @@ fn count(slots: &Container, index: usize) -> u16 {
     slots.get(index).map_or(0, |s| s.count)
 }
 
+/// One tick of a furnace cooking every kind.
+fn tick(state: &mut FurnaceState, slots: &mut Container, stats: &FurnaceStats) -> Step {
+    let (cooking, rules) = (cooking(), items());
+    let furnace = Furnace {
+        stats,
+        kinds: &[],
+        cooking: &cooking,
+    };
+    step(state, slots, &furnace, &rules)
+}
+
 /// Steps until nothing burns or cools any more; returns the ticks run (the last idle one
 /// included).
 fn run(state: &mut FurnaceState, slots: &mut Container, stats: &FurnaceStats) -> u32 {
-    let (cooking, rules) = (cooking(), items());
     let mut ticks = 1;
-    while step(state, slots, stats, &cooking, &rules).active {
+    while tick(state, slots, stats).active {
         ticks += 1;
         assert!(ticks < 1_000_000, "the furnace never stops");
     }
@@ -181,16 +191,9 @@ fn a_faster_station_burns_its_fuel_as_much_faster() {
 
 #[test]
 fn nothing_burns_without_something_to_cook() {
-    let (cooking, rules) = (cooking(), items());
     let mut state = FurnaceState::default();
     let mut idle = slots(Some((DIRT, 5)), Some((COAL, 3)));
-    let done = step(
-        &mut state,
-        &mut idle,
-        &stats("stone", &[]),
-        &cooking,
-        &rules,
-    );
+    let done = tick(&mut state, &mut idle, &stats("stone", &[]));
     assert!(!done.active && !done.slots);
     assert_eq!(
         count(&idle, FURNACE_FUEL),
@@ -198,13 +201,7 @@ fn nothing_burns_without_something_to_cook() {
         "dirt does not cook: the coal stays"
     );
     let mut empty = slots(None, Some((COAL, 3)));
-    step(
-        &mut state,
-        &mut empty,
-        &stats("stone", &[]),
-        &cooking,
-        &rules,
-    );
+    tick(&mut state, &mut empty, &stats("stone", &[]));
     assert_eq!(count(&empty, FURNACE_FUEL), 3);
 }
 
@@ -227,7 +224,6 @@ fn a_full_output_stops_the_cooking() {
 
 #[test]
 fn a_cooking_cut_short_cools_down() {
-    let (cooking, rules) = (cooking(), items());
     let stats = stats("stone", &[]);
     let mut state = FurnaceState::default();
     let mut slots = slots(Some((ORE, 2)), Some((LOG, 1)));
@@ -244,7 +240,7 @@ fn a_cooking_cut_short_cools_down() {
         ..FurnaceState::default()
     };
     let mut cold = Container::new(4);
-    step(&mut warm, &mut cold, &stats, &cooking, &rules);
+    tick(&mut warm, &mut cold, &stats);
     assert_eq!(warm.progress, 8);
 }
 
@@ -252,14 +248,7 @@ fn a_cooking_cut_short_cools_down() {
 fn a_lava_bucket_leaves_its_bucket() {
     let mut state = FurnaceState::default();
     let mut slots = slots(Some((ORE, 1)), Some((LAVA, 1)));
-    let (cooking, rules) = (cooking(), items());
-    step(
-        &mut state,
-        &mut slots,
-        &stats("stone", &[]),
-        &cooking,
-        &rules,
-    );
+    tick(&mut state, &mut slots, &stats("stone", &[]));
     assert_eq!(slots.get(FURNACE_FUEL).map(|s| s.item), Some(BUCKET));
     assert!(state.is_lit());
 }
@@ -360,8 +349,8 @@ fn kinds_choose_the_recipes_of_a_station() {
         cooking.recipe_for(LOG, &[]).is_some(),
         "no kind: everything"
     );
-    assert_eq!(cooking.cuts(STONE).len(), 1);
-    assert!(cooking.cuts(ORE).is_empty());
+    assert_eq!(cooking.cuts_of(STONE).len(), 1);
+    assert!(cooking.cuts_of(ORE).is_empty());
 }
 
 #[test]
@@ -401,4 +390,29 @@ fn the_stonecutter_cuts_the_chosen_variant() {
         window.craft.as_ref().unwrap().slots.get(0).is_none(),
         "the stone is used up"
     );
+}
+
+#[test]
+fn the_fire_never_blinks_between_two_fuels() {
+    let mut state = FurnaceState::default();
+    let mut slots = slots(Some((ORE, 10)), Some((COAL, 2)));
+    let stats = stats("stone", &[]);
+    let mut lit = Vec::new();
+    while tick(&mut state, &mut slots, &stats).active {
+        lit.push(state.is_lit());
+    }
+    let changes = lit.windows(2).filter(|pair| pair[0] != pair[1]).count();
+    assert_eq!(changes, 0, "lit from the first tick to the last");
+    assert_eq!(count(&slots, FURNACE_OUTPUT), 10);
+    assert_eq!(count(&slots, FURNACE_FUEL), 0, "the second coal was lit");
+}
+
+#[test]
+fn a_double_output_gives_no_more_experience() {
+    let rules = items();
+    let double = rules.get(DOUBLE).unwrap().module.unwrap();
+    let mut state = FurnaceState::default();
+    let mut slots = slots(Some((ORE, 2)), Some((COAL, 1)));
+    run(&mut state, &mut slots, &stats("stone", &[double]));
+    assert!((state.experience - 1.0).abs() < 1e-4, "0.5 per cooking");
 }

@@ -34,7 +34,6 @@ impl FurnaceState {
 /// How fast a furnace cooks, from its station, its tier and its modules.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FurnaceStats {
-    pub kinds: Vec<Identifier>,
     /// A cooking takes the recipe's time times this.
     pub time_factor: f64,
     /// A fuel burns its time times this.
@@ -47,6 +46,7 @@ impl FurnaceStats {
     /// Modules alike count once (the same effect never adds up).
     pub fn new(furnace: &FurnaceDef, tier: &FurnaceTier, modules: &[ModuleDef]) -> Self {
         let mut modules = modules.to_vec();
+        modules.sort();
         modules.dedup();
         let percent = |value: u16| f64::from(value.max(1)) / 100.0;
         let mut time = percent(tier.cook_time) / percent(furnace.speed);
@@ -63,7 +63,6 @@ impl FurnaceStats {
             output = output.max(u16::from(more.max(1)));
         }
         Self {
-            kinds: furnace.kinds.clone(),
             time_factor: time,
             fuel_factor: time * value,
             output,
@@ -85,6 +84,53 @@ fn scaled(ticks: u32, factor: f64) -> u32 {
     ((f64::from(ticks) * factor).round() as u32).max(1)
 }
 
+/// One furnace's rules: its speed, the kinds of recipes it cooks, and the recipes.
+#[derive(Clone, Copy)]
+pub struct Furnace<'a> {
+    pub stats: &'a FurnaceStats,
+    pub kinds: &'a [Identifier],
+    pub cooking: &'a Cooking,
+}
+
+impl Furnace<'_> {
+    /// The recipe of what lies in the input, and its result, when the whole result fits
+    /// in the output.
+    fn work(
+        &self,
+        slots: &Container,
+        rules: &impl ItemRules,
+    ) -> Option<(&CookingRecipe, ItemStack)> {
+        let input = slots.get(FURNACE_INPUT)?;
+        let recipe = self.cooking.recipe_for(input.item, self.kinds)?;
+        let result = ItemStack::new(recipe.result, recipe.count * self.stats.output, rules);
+        fits(slots.get(FURNACE_OUTPUT), &result, rules).then_some((recipe, result))
+    }
+
+    /// Ticks the cooking under way takes (0: nothing can be cooked now).
+    pub fn cook_time(&self, slots: &Container, rules: &impl ItemRules) -> u32 {
+        self.work(slots, rules)
+            .map_or(0, |(recipe, _)| self.stats.cook_ticks(recipe))
+    }
+
+    /// Lights a new fuel when the fire is out and there is work.
+    fn refuel(
+        &self,
+        state: &mut FurnaceState,
+        slots: &mut Container,
+        rules: &impl ItemRules,
+    ) -> bool {
+        if state.burn_left > 0 || self.work(slots, rules).is_none() {
+            return false;
+        }
+        let Some(burn) = take_fuel(slots, self.cooking, rules) else {
+            return false;
+        };
+        state.burn_left = self.stats.burn_ticks(burn);
+        state.burn_total = state.burn_left;
+        true
+    }
+}
+
 /// What a tick changed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Step {
@@ -95,43 +141,30 @@ pub struct Step {
 }
 
 /// One tick: lights a fuel when there is something to cook and room for it, cooks while
-/// it burns; a cooking stopped by an empty fuel cools down twice as fast as it ran.
+/// it burns; a cooking stopped by an empty fuel cools down twice as fast as it ran. A
+/// fuel burnt out with work left is replaced in the same tick, so the fire never blinks.
 pub fn step(
     state: &mut FurnaceState,
     slots: &mut Container,
-    stats: &FurnaceStats,
-    cooking: &Cooking,
+    furnace: &Furnace<'_>,
     rules: &impl ItemRules,
 ) -> Step {
-    let recipe = slots
-        .get(FURNACE_INPUT)
-        .and_then(|input| cooking.recipe_for(input.item, &stats.kinds));
-    let result = recipe.map(|r| ItemStack::new(r.result, r.count * stats.output, rules));
-    let room = result
-        .as_ref()
-        .is_some_and(|result| fits(slots.get(FURNACE_OUTPUT), result, rules));
-    let mut changed = false;
-    if state.burn_left == 0
-        && room
-        && let Some(burn) = take_fuel(slots, cooking, rules)
-    {
-        state.burn_left = stats.burn_ticks(burn);
-        state.burn_total = state.burn_left;
-        changed = true;
-    }
+    let mut changed = furnace.refuel(state, slots, rules);
     if state.burn_left > 0 {
         state.burn_left -= 1;
-        match (room, recipe, result) {
-            (true, Some(recipe), Some(result)) => {
+        match furnace.work(slots, rules) {
+            Some((recipe, result)) => {
                 state.progress += 1;
-                if state.progress >= stats.cook_ticks(recipe) {
+                if state.progress >= furnace.stats.cook_ticks(recipe) {
                     state.progress = 0;
-                    cook(state, slots, recipe, result, stats);
+                    let experience = recipe.experience;
+                    cook(state, slots, result, experience);
                     changed = true;
                 }
             }
-            _ => state.progress = 0,
+            None => state.progress = 0,
         }
+        changed |= furnace.refuel(state, slots, rules);
     } else {
         state.progress = state.progress.saturating_sub(2);
     }
@@ -168,13 +201,9 @@ fn take_fuel(slots: &mut Container, cooking: &Cooking, rules: &impl ItemRules) -
     Some(burn)
 }
 
-fn cook(
-    state: &mut FurnaceState,
-    slots: &mut Container,
-    recipe: &CookingRecipe,
-    result: ItemStack,
-    stats: &FurnaceStats,
-) {
+/// One input becomes the result; the experience counts once per cooking, whatever the
+/// number of results (a double output gives no more experience).
+fn cook(state: &mut FurnaceState, slots: &mut Container, result: ItemStack, experience: f32) {
     if let Some(input) = slots.slots.get_mut(FURNACE_INPUT) {
         if let Some(stack) = input.as_mut() {
             stack.count -= 1;
@@ -187,6 +216,5 @@ fn cook(
             None => *output = Some(result),
         }
     }
-    let gained = recipe.experience * f32::from(stats.output);
-    state.experience = (state.experience + gained).min(MAX_EXPERIENCE);
+    state.experience = (state.experience + experience).min(MAX_EXPERIENCE);
 }

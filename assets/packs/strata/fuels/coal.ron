@@ -1,1 +1,1 @@
-Fuel(ingredient: Tag("strata:coals"), burn_time: 1600)
+Fuel(ingredient: Tag("strata:coals"), burn_time: 1600, reference: true)

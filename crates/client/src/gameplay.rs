@@ -61,6 +61,7 @@ pub struct Gameplay {
     pub container: Option<OpenedContainer>,
     /// A container just opened: its screen must come up.
     pub container_opened: bool,
+    furnace_clock: crate::furnace::FurnaceClock,
     pub crafting: ClientCrafting,
 }
 
@@ -90,6 +91,7 @@ impl Gameplay {
             border: DEFAULT_WORLD_BORDER,
             container: None,
             container_opened: false,
+            furnace_clock: Default::default(),
             crafting: ClientCrafting::default(),
         }
     }
@@ -161,6 +163,7 @@ impl Gameplay {
             ServerMessage::Furnace(view) => {
                 if let Some(open) = &mut self.container {
                     open.furnace = Some(view);
+                    self.furnace_clock.restart();
                 }
             }
             message @ (ServerMessage::Crafting(_)
@@ -210,6 +213,7 @@ impl Gameplay {
 
     /// Player-driven frame: look, move (fixed ticks), aim and build.
     pub fn update(&mut self, dt: f32, input: &InputState, connection: &ClientConnection) {
+        self.furnace_clock.follow(self.container.as_mut(), dt);
         if let Some(playing) = &mut self.cinematic {
             if !playing.advance(dt, &mut self.camera) {
                 self.stop_cinematic();

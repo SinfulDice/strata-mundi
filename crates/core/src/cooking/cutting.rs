@@ -14,11 +14,12 @@ pub fn cut_choices<'a>(cooking: &'a Cooking, grid: &CraftGrid) -> Vec<(u16, &'a 
         return Vec::new();
     };
     cooking
-        .cuttings()
+        .cuts_of(input.item)
         .iter()
-        .enumerate()
-        .filter(|(_, recipe)| recipe.ingredient.accepts(input.item))
-        .filter_map(|(index, recipe)| Some((u16::try_from(index).ok()?, recipe)))
+        .filter_map(|&index| {
+            let recipe = cooking.cuttings().get(index)?;
+            Some((u16::try_from(index).ok()?, recipe))
+        })
         .collect()
 }
 
