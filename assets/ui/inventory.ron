@@ -48,12 +48,12 @@ Screen(
                     SlotGrid(id: "furnace_fuel", anchor: TopLeft, at: (40, 60), columns: 1, rows: 1),
                     Gauge(id: "furnace_arrow", anchor: TopLeft, at: (66, 47), size: (26, 6)),
                     SlotGrid(id: "furnace_output", anchor: TopLeft, at: (98, 40), columns: 1, rows: 1),
-                    Label(id: "furnace_modules_label", anchor: TopLeft, at: (128, 16), text: "ui-furnace-modules", dim: true),
-                    SlotGrid(id: "furnace_modules", anchor: TopLeft, at: (128, 28), columns: 3, rows: 2),
+                    Label(id: "furnace_modules_label", anchor: TopLeft, at: (122, 16), text: "ui-furnace-modules", dim: true),
+                    SlotGrid(id: "furnace_modules", anchor: TopLeft, at: (126, 28), columns: 3, rows: 2),
                     Group(id: "furnace_no_modules", children: [
-                        Label(id: "furnace_no_modules_note", anchor: TopLeft, at: (128, 30), text: "ui-furnace-no-modules", dim: true, wrap: Some(60)),
+                        Label(id: "furnace_no_modules_note", anchor: TopLeft, at: (122, 30), text: "ui-furnace-no-modules", dim: true, wrap: Some(66)),
                     ]),
-                    Label(id: "furnace_info", anchor: TopLeft, at: (8, 90), text: "@furnace_info", wrap: Some(180)),
+                    Label(id: "furnace_info", anchor: TopLeft, at: (8, 92), text: "@furnace_info", wrap: Some(180)),
                     Label(id: "furnace_help", anchor: TopLeft, at: (8, 112), text: "ui-furnace-help", dim: true, wrap: Some(180)),
                 ]),
                 Group(id: "cutter_side", children: [

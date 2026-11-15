@@ -197,18 +197,8 @@ impl ScreenModel for SlotsModel<'_> {
             "station_title" => self
                 .crafting
                 .and_then(|c| c.view.station)
-                .map(|(block, _)| {
-                    let block = self.content.blocks.identifier(block);
-                    block.map_or_else(String::new, |b| self.tr(&b.translation_key("block")))
-                }),
-            "title" => self.container.map(|open| {
-                let block = self.content.blocks.identifier(open.block);
-                block.map_or_else(String::new, |b| {
-                    self.content
-                        .translations
-                        .text(self.language, &b.translation_key("block"))
-                })
-            }),
+                .map(|(block, _)| self.block_title(block)),
+            "title" => self.container.map(|open| self.block_title(open.block)),
             _ => None,
         }
     }
@@ -334,6 +324,12 @@ impl SlotsModel<'_> {
             self.inventory.request(InventoryRequest::ChooseCut(choice));
         }
         true
+    }
+
+    /// A block's name; a lit or turned variant is named like its family.
+    fn block_title(&self, block: strata_core::content::BlockId) -> String {
+        let id = self.content.block_name(block);
+        id.map_or_else(String::new, |id| self.tr(&id.translation_key("block")))
     }
 
     fn cutter_note(&self) -> String {
