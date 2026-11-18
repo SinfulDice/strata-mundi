@@ -2,7 +2,7 @@
 
 ## À quoi ça sert
 
-Sans classe ni arbre de compétences, le joueur se construit par son équipement. En plus de l'armure, il porte des **accessoires** (deux anneaux, une amulette, une ceinture, une cape), gagne des **bonus d'ensemble** en assortissant ses pièces, et certaines bottes ou ceintures lui donnent une **mobilité** nouvelle : double saut, esquive, escalade. Les accessoires se fabriquent au **joaillier**, premier établi à liste de recettes. Tout est décrit dans les packs.
+Sans classe ni arbre de compétences, le joueur se construit par son équipement. En plus de l'armure, il porte des **accessoires** (deux anneaux, une amulette, une ceinture, une cape), gagne des **bonus d'ensemble** en assortissant ses pièces, et certaines bottes ou ceintures lui donnent une **mobilité** nouvelle : double saut, esquive, escalade. Les accessoires se fabriquent au **joaillier**, premier établi à liste de recettes (la cape au métier à tisser, les bottes de mobilité à la forge depuis le jalon 6). Tout est décrit dans les packs.
 
 ## Comment ça marche
 
@@ -84,7 +84,7 @@ BenchRecipe(
 )
 ```
 
-L'écran liste tout ce que l'établi sait faire ; l'infobulle donne les ingrédients et dit s'il en manque. Choisir une recette envoie au serveur `ChooseCut`, qui pose les ingrédients de l'inventaire dans les quatre cases ; on prend le résultat comme au craft. La forge, la tannerie et le métier à tisser (jalon 6) seront d'autres établis du même genre.
+L'écran liste tout ce que l'établi sait faire ; l'infobulle donne les ingrédients et dit s'il en manque. Choisir une recette envoie au serveur `ChooseCut`, qui pose les ingrédients de l'inventaire dans les quatre cases ; on prend le résultat comme au craft. La forge, la tannerie et le métier à tisser sont d'autres établis du même genre : voir [Stations de travail](stations.md).
 
 ## Dans le code
 

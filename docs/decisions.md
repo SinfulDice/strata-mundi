@@ -744,3 +744,19 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - Serveur : un clic retient la dernière entrée reçue avant lui (`Queued::after_input`) et ne passe qu'une fois cette entrée appliquée ; le tick s'arrête juste après elle pour que le clic passe avant l'entrée suivante, comme chez le client. Sans entrée en attente, rien ne change (clic immédiat).
 - Client : chaque case prédite retient la dernière entrée envoyée avant le clic ; au rejeu, une entrée antérieure voit le bloc du serveur (`BlockPredictions::block_before`). Vaut pour la casse (créatif et survie) comme pour la pose (pilier sous soi).
 - Une petite correction (< 2 blocs) ne saute plus à l'écran : l'écart s'efface en ~0,1 s ; au-delà, c'est une téléportation, appliquée d'un coup.
+
+## D091 — Stations spécialisées : forge, tannerie, métier à tisser (v0.3, jalon 6)
+
+- **Une station par matériau** : la forge fait les anneaux et écailles, toutes les armures de métal et de diamant (mailles, plates, écailles) et les bottes de mobilité (l'« armurier » de D089) ; la tannerie le cuir et l'armure de cuir ; le métier à tisser le tissu, la laine, les vêtements de tissu et la cape de laine (quittent le joaillier, qui garde anneaux, amulette, ceintures). Leurs anciennes recettes de grille sont supprimées : aucune armure ne se fait plus à l'établi. Les outils et armes restent à l'établi (coûts de Minecraft), l'amélioration et la réparation à l'enclume, la fonte aux fours.
+- Mêmes établis génériques que le joaillier (`Bench`, `bench_recipes/`), mêmes quantités que les formes de Minecraft (casque 5, plastron 8, jambières 7, bottes 4).
+- **Charbon de la forge** : une pièce de métal (anneaux compris) prend un `Tag("strata:coals")` comme ingrédient ; pas de jauge de chaleur ni d'entité de bloc. Anneaux : 2 lingots + 1 charbon → 4 (au lieu de 1 → 2) pour que le charbon reste léger ; écailles de diamant : 1 diamant → 2, sans charbon (taille).
+- **Recettes des stations** à l'établi : forge (3 lingots de fer, four, 5 galets ; à apprendre), tannerie (4 bâtons, 1 boue, 3 planches) et métier à tisser (3 bâtons, 3 fibres, 3 planches) **connues au départ**, comme les premières armures.
+- Cuir (2 fibres + 1 boue) et laine (4 fibres) **restent provisoires** jusqu'aux animaux (v0.4), mais déjà à leur station : il suffira de changer les ingrédients pour des peaux.
+
+## D092 — Un écran par établi : dispositions et couleur en pack (v0.3, jalon 6)
+
+- `benches/<nom>.ron` : `Bench(layout, accent)` (`crafting::BenchStyle`, gardé dans `Benches::style`, `Plain` et couleurs du thème sans fichier ; catégorie ajoutée à `remove.ron`). `layout` est un `enum` fermé (`Plain`, `Jeweller`, `Forge`, `Tannery`, `Loom`) : une valeur inconnue est une erreur de pack, jamais un écran vide. Les dispositions sont des groupes `bench_layout_<nom>` de `assets/ui/inventory.ron` (format interne jusqu'à la v1.1) ; un test vérifie que chacune a cases, liste 5×3, résultat, boutons de défilement et aide.
+- Nouvel élément d'interface `Band` (bande biseautée de la couleur donnée par le modèle, `ScreenModel::color`) : bandeau de titre et surface de travail aux couleurs de l'établi.
+- Aide propre : traduction `bench-<espace>-<nom>` si elle existe, sinon `ui-bench-help` ; « Ingrédients manquants » quand le choix ne peut pas se faire.
+- **Liste qui défile** par rangées (5 × 3 visibles ; boutons « < » « > » et molette, comme l'enclume) : la forge a 29 recettes. Les indices restent ceux du serveur.
+- `SlotsModel::furnace_info` passe dans `station_lists.rs` (taille de `slots.rs`). Wiki : page mécanique « Stations de travail » (tableau de toutes les stations, icônes de ce que fait chaque établi), pages des trois blocs ; « Fabriqué à un atelier » remplace « Au joaillier ».

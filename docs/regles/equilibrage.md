@@ -68,6 +68,9 @@ Coûts de Minecraft, pour qu'un joueur habitué ne soit pas dérouté. « Dépar
 | Fumoir | four + 4 bûches en croix | 3×3 | non |
 | Haut fourneau | four + 5 lingots de fer + 3 pierres polies | 3×3 | non |
 | Tailleur de pierre | 1 lingot de fer sur 3 pierres | 3×3 | non |
+| Forge | 3 lingots de fer sur 1 four entouré de 5 galets | 3×3 | non |
+| Tannerie | 4 bâtons en cadre autour d'1 boue, sur 3 planches | 3×3 | oui |
+| Métier à tisser | 3 bâtons sur 3 fibres végétales sur 3 planches | 3×3 | oui |
 | 4 briques de pierre / pierres polies / grès taillés | 4 pierres / briques / grès en carré | 2×2 | non |
 
 Butin associé : la pierre donne de la pierre taillée, les minerais de charbon un charbon, les minerais de diamant un diamant (pioche requise). Les outils en bois et en pierre sont des recettes de départ (voir « Outils, armes et armures »).
@@ -136,7 +139,7 @@ Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
 | Burin | 1 lingot de fer sur 1 bâton | tier fer, 128 utilisations |
 | Outil multi-usage | 5 lingots de fer + 2 bâtons | pioche + hache + pelle au niveau du fer, 150 utilisations (au lieu de 250) |
 
-Armures : protection par pièce (tête / torse / jambes / pieds), utilisations = facteur × (11 / 16 / 15 / 13), recettes aux formes de Minecraft.
+Armures : protection par pièce (tête / torse / jambes / pieds), utilisations = facteur × (11 / 16 / 15 / 13), quantités de Minecraft (5 / 8 / 7 / 4 du matériau) à la station du matériau (voir « Stations de travail »).
 
 | Ensemble | Poids | Protection | Total | Facteur | Matériau |
 |---|---|---|---|---|---|
@@ -155,7 +158,7 @@ Armures : protection par pièce (tête / torse / jambes / pieds), utilisations =
 | Intermédiaire | 0 | 2,5 % | 2,5 % |
 | Lourde | 2,5 % (−10 % pour l'ensemble) | 5 % | 5 % |
 
-Matériaux : fibre végétale (hautes herbes et fougères sans cisailles, 1 chance sur 4), tissu = 3 fibres, cuir provisoire = 2 fibres + 1 boue (jusqu'aux animaux, v0.4).
+Matériaux : fibre végétale (hautes herbes et fougères sans cisailles, 1 chance sur 4), tissu = 3 fibres (métier à tisser), cuir provisoire = 2 fibres + 1 boue (tannerie, jusqu'aux peaux des animaux, v0.4), anneaux = 2 lingots + 1 charbon → 4, écailles de diamant = 1 diamant → 2 (forge).
 
 ## Améliorations, enclume et marteau de mineur (v0.3, `upgrades/`, `anvil.ron`)
 
@@ -199,17 +202,17 @@ Temps de casse de la zone = celui du bloc le plus dur qu'elle emporte ; une util
 
 Valeurs de départ, à ajuster avec la crate `balance` (jalon 17). Un même effet (même stat, même opération) ne se cumule pas : de toutes les pièces portées et des bonus d'ensemble atteints, seul le plus fort compte.
 
-| Objet (case) | Effet porté | Recette au joaillier |
+| Objet (case) | Effet porté | Recette (joaillier sauf mention) |
 |---|---|---|
 | Anneau de vitalité (anneau) | +4 vie max (appliqué au jalon 8) | 1 lingot d'or, 2 lingots de cuivre |
 | Amulette de respiration courte (amulette) | +5 s de souffle (jalon 8) | 2 lingots de cuivre, 1 lingot de fer, 1 tissu |
 | Ceinture à fioles (ceinture) | +3 emplacements de potion (potions à venir) | 3 cuirs, 1 lingot de fer |
-| Cape de laine (cape) | +4 isolation contre le froid (jalon 8) | 4 laines, 2 fibres végétales |
+| Cape de laine (cape) | +4 isolation contre le froid (jalon 8) | métier à tisser : 4 laines, 2 fibres végétales |
 | Ceinture de course (ceinture) | esquive | 2 cuirs, 1 lingot d'or, 1 lingot de cuivre |
-| Bottes de saut (pieds, légères, protection 1, 65 utilisations) | +1 saut en l'air | 1 paire de bottes en cuir, 2 lingots d'or |
-| Bottes à crampons (pieds, légères, protection 1, 65 utilisations) | escalade | 1 paire de bottes en cuir, 2 lingots de fer |
+| Bottes de saut (pieds, légères, protection 1, 65 utilisations) | +1 saut en l'air | forge : 1 paire de bottes en cuir, 2 lingots d'or, 1 charbon |
+| Bottes à crampons (pieds, légères, protection 1, 65 utilisations) | escalade | forge : 1 paire de bottes en cuir, 2 lingots de fer, 1 charbon |
 | Joaillier | — | à l'établi : 2 lingots de cuivre, 1 lingot de fer, 3 planches |
-| Laine (provisoire jusqu'aux moutons, v0.4) | — | 4 fibres végétales (grille) |
+| Laine (provisoire jusqu'aux moutons, v0.4) | — | métier à tisser : 4 fibres végétales |
 
 | Ensemble (4 pièces) | 2 pièces | 3 pièces | 4 pièces |
 |---|---|---|---|
@@ -229,6 +232,19 @@ Le bonus atteint remplace le précédent. Une pièce cassée (option « Objets u
 | Saut en l'air | 7,6 blocs/s vers le haut (saut au sol : 8,4), une nouvelle pression de Sauter ; rendu seulement en touchant le sol (pas en grimpant) ; 3 au plus (`max_air_jumps`, 0 à 5) |
 | Esquive | 14 blocs/s pendant 4 ticks (≈ 2,8 blocs), recharge 30 ticks (1,5 s) |
 | Escalade | 2,4 blocs/s en avançant contre un mur ; accroupi : on reste accroché |
+
+## Stations de travail (v0.3, `bench_recipes/`, `benches/`)
+
+Chaque matériau a sa station ; aucune armure ne se fait à l'établi. Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
+
+| Station | Recettes | Coût particulier |
+|---|---|---|
+| Forge (29) | anneaux de fer et d'or, écailles de diamant ; mailles de fer et d'or, plates de fer, d'or et de diamant, écailles de diamant (4 pièces chacune) ; bottes de saut et à crampons | 1 charbon (ou charbon de bois) par pièce de métal ; pas pour les écailles |
+| Tannerie (5) | cuir (provisoire : 2 fibres + 1 boue), casque, tunique, pantalon, bottes en cuir | — |
+| Métier à tisser (7) | tissu (3 fibres), laine (provisoire : 4 fibres), capuche, tunique, pantalon, chaussures en tissu, cape de laine | — |
+| Joaillier (4) | anneau de vitalité, amulette de respiration courte, ceinture à fioles, ceinture de course | — |
+
+Ce que le charbon ajoute : un ensemble de plates (24 lingots) brûle 4 charbons ; un ensemble de mailles (24 anneaux = 12 lingots) 6 charbons d'anneaux + 4 de pièces.
 
 ## Coffres et fours améliorables (v0.3)
 

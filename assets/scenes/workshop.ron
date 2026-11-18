@@ -1,0 +1,29 @@
+// A workshop (`--scene workshop`): every work station in a row against stone bricks,
+// from the crafting table to the anvil, with what each makes lying in front of it.
+(
+    fills: [
+        (from: (-10, 0, -10), to: (10, 0, 6), block: "strata:stone"),
+        (from: (-10, 1, -10), to: (10, 1, 6), block: "strata:oak_planks"),
+        (from: (-10, 2, -7), to: (10, 5, -7), block: "strata:stone_bricks"),
+        (from: (-7, 2, -6), to: (-7, 2, -6), block: "strata:crafting_table"),
+        (from: (-5, 2, -6), to: (-5, 2, -6), block: "strata:furnace__lit_south"),
+        (from: (-3, 2, -6), to: (-3, 2, -6), block: "strata:forge"),
+        (from: (-1, 2, -6), to: (-1, 2, -6), block: "strata:anvil"),
+        (from: (1, 2, -6), to: (1, 2, -6), block: "strata:tannery"),
+        (from: (3, 2, -6), to: (3, 2, -6), block: "strata:loom"),
+        (from: (5, 2, -6), to: (5, 2, -6), block: "strata:jeweller"),
+        (from: (7, 2, -6), to: (7, 2, -6), block: "strata:stonecutter"),
+    ],
+    entities: [
+        (kind: "strata:item", position: (-6.6, 2.0, -4.4), yaw: 0.3, item: Some("strata:iron_pickaxe")),
+        (kind: "strata:item", position: (-4.6, 2.0, -4.4), yaw: 0.6, item: Some("strata:iron_ingot")),
+        (kind: "strata:item", position: (-2.8, 2.0, -4.6), yaw: 0.9, item: Some("strata:iron_plate_chestplate")),
+        (kind: "strata:item", position: (-2.2, 2.0, -4.0), yaw: 1.2, item: Some("strata:iron_rings")),
+        (kind: "strata:item", position: (-0.6, 2.0, -4.4), yaw: 1.5, item: Some("strata:iron_sword")),
+        (kind: "strata:item", position: (1.4, 2.0, -4.4), yaw: 1.8, item: Some("strata:leather_tunic")),
+        (kind: "strata:item", position: (3.4, 2.0, -4.4), yaw: 2.1, item: Some("strata:wool_cloak")),
+        (kind: "strata:item", position: (4.0, 2.0, -3.8), yaw: 2.4, item: Some("strata:cloth")),
+        (kind: "strata:item", position: (5.4, 2.0, -4.4), yaw: 2.7, item: Some("strata:ring_of_vitality")),
+        (kind: "strata:item", position: (7.4, 2.0, -4.4), yaw: 3.0, item: Some("strata:stone_bricks")),
+    ],
+)

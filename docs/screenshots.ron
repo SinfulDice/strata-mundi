@@ -67,4 +67,5 @@
     (name: "cracks", scene: "mining", pos: (0.0, 6.6, 1.5), look: (0.0, -12.0), cracks: [(-2, 6, -4, 2), (-3, 5, -4, 9), (-1, 6, -3, 5), (1, 5, -3, 7), (3, 5, -3, 4)]),
     // Crafting table, cobblestone, a stick and coal on the floor (v0.3, milestone 3).
     (name: "craft", scene: "storage", pos: (3.5, 4.2, 1.5), look: (20.0, -25.0)),
+    (name: "workshop", scene: "workshop", pos: (0.0, 4.6, 1.5), look: (0.0, -22.0)),
 ]
