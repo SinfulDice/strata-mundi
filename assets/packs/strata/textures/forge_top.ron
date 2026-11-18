@@ -1,0 +1,33 @@
+// The forge's top: a bed of glowing coals in an iron rim.
+Sprite(
+    colors: {
+        'K': ("stone", 0),
+        'S': ("stone", 1),
+        'I': ("iron", 0),
+        'i': ("iron", 1),
+        'O': ("coal", 0),
+        'o': ("coal", 1),
+        'c': ("coal", 2),
+        'r': ("fire", 0),
+        'f': ("fire", 1),
+        'y': ("fire", 2),
+    },
+    rows: [
+        "KKKKKKKKKKKKKKKK",
+        "KSSSSSSSSSSSSSSK",
+        "KSiiiiiiiiiiiiSK",
+        "KSiIIIIIIIIIIiSK",
+        "KSiIOocOoOcoIiSK",
+        "KSiIorfoOcrrIiSK",
+        "KSiIcfyrofyfIiSK",
+        "KSiIOrfroryoIiSK",
+        "KSiIofyfcrfOIiSK",
+        "KSiIcrrOofyrIiSK",
+        "KSiIOocrrforIiSK",
+        "KSiIoOcOoOcOIiSK",
+        "KSiIIIIIIIIIIiSK",
+        "KSiiiiiiiiiiiiSK",
+        "KSSSSSSSSSSSSSSK",
+        "KKKKKKKKKKKKKKKK",
+    ],
+)

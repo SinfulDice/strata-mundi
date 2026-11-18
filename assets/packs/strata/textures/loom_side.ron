@@ -1,0 +1,32 @@
+// The loom's side: a warp of threads on a wooden frame, woven cloth at the bottom.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        't': ("wool", 1),
+        'T': ("wool", 3),
+        'c': ("cloth", 1),
+        'C': ("cloth", 2),
+        'k': ("cloth", 3),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "DLLLLLLLLLLLLLLD",
+        "DddddddddddddddD",
+        "DWDtDTDtDTDtDTWD",
+        "DWDtDTDtDTDtDTWD",
+        "DWdddddddddddWWD",
+        "DWDtDTDtDTDtDTWD",
+        "DWDtDTDtDTDtDTWD",
+        "DWCkCkCkCkCkCkWD",
+        "DWcCcCcCcCcCcCWD",
+        "DWCkCkCkCkCkCkWD",
+        "DWcCcCcCcCcCcCWD",
+        "DddddddddddddddD",
+        "DLLLLLLLLLLLLLLD",
+        "DWDDDDDDDDDDDDWD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

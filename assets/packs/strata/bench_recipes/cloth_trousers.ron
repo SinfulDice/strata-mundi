@@ -1,0 +1,7 @@
+BenchRecipe(
+    bench: "strata:loom",
+    ingredients: [
+        (Item("strata:cloth"), 7),
+    ],
+    result: Result(item: "strata:cloth_trousers"),
+)

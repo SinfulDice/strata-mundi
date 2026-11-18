@@ -97,3 +97,6 @@ block-strata-chiseled_stone_bricks = Chiseled Stone Bricks
 block-strata-patterned_stone_bricks = Patterned Stone Bricks
 block-strata-anvil = Anvil
 block-strata-jeweller = Jeweller
+block-strata-forge = Forge
+block-strata-tannery = Tannery
+block-strata-loom = Loom

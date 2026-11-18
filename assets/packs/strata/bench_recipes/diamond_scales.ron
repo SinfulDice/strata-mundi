@@ -1,0 +1,7 @@
+BenchRecipe(
+    bench: "strata:forge",
+    ingredients: [
+        (Item("strata:diamond"), 1),
+    ],
+    result: Result(item: "strata:diamond_scales", count: 2),
+)

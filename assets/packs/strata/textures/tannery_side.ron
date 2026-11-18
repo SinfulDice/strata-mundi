@@ -1,0 +1,33 @@
+// The tannery's side: a hide stretched on a wooden rack with cords.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'w': ("oak_wood", 0),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        'o': ("leather", 0),
+        'h': ("leather", 1),
+        'H': ("leather", 2),
+        'E': ("leather", 3),
+        'f': ("fiber", 1),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "DLLLLLLLLLLLLLLD",
+        "DWdddddddddddWWD",
+        "DWfDfDfDfDfDfWWD",
+        "DWhhhhhhhhhhhWWD",
+        "DWfHHHEHHHHHfWWD",
+        "DWhHEEHHHHHHhWWD",
+        "DWfHHHHHHEHHfWWD",
+        "DWhHHHHHHHHHhWWD",
+        "DWfHHHHHHHHHfWWD",
+        "DWhhhhooohhhhWWD",
+        "DWfDfDfDfDfDfWWD",
+        "DWdddddddddddWWD",
+        "DLLLLLLLLLLLLLLD",
+        "DwwwwwwwwwwwwwwD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

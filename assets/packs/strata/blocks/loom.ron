@@ -1,0 +1,9 @@
+// Cloth, wool, cloth armour and the wool cloak (bench_recipes/ of strata:loom).
+Block(
+    textures: TopBottomSides(top: "strata:loom_top", bottom: "strata:oak_planks", sides: "strata:loom_side"),
+    hardness: 2.5,
+    tool: Some(BlockTool(kind: "strata:axe", required: false)),
+    sound: Some("strata:wood"),
+    category: Some("strata:stations"),
+    station: Some(Bench("strata:loom")),
+)

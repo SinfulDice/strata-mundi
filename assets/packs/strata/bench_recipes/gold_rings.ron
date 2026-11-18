@@ -1,0 +1,8 @@
+BenchRecipe(
+    bench: "strata:forge",
+    ingredients: [
+        (Item("strata:gold_ingot"), 2),
+        (Tag("strata:coals"), 1),
+    ],
+    result: Result(item: "strata:gold_rings", count: 4),
+)

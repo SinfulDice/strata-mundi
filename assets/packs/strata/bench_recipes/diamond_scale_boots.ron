@@ -1,0 +1,8 @@
+BenchRecipe(
+    bench: "strata:forge",
+    ingredients: [
+        (Item("strata:diamond_scales"), 4),
+        (Tag("strata:coals"), 1),
+    ],
+    result: Result(item: "strata:diamond_scale_boots"),
+)

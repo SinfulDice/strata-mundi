@@ -1,8 +1,9 @@
-//! Work benches with a list of recipes (`bench_recipes/`): the jeweller now, the forge,
-//! the tannery and the loom later. Up to four ingredients, with counts, laid in any of
-//! the bench's cells; the recipe is chosen in a list (choosing one lays its ingredients
-//! from the inventory), the result taken like a crafting result.
+//! Work benches with a list of recipes (`bench_recipes/`): the forge, the tannery, the
+//! loom and the jeweller. Up to four ingredients, with counts, laid in any of the bench's
+//! cells; the recipe is chosen in a list (choosing one lays its ingredients from the
+//! inventory), the result taken like a crafting result.
 
+use super::bench_style::BenchStyle;
 use super::{into_cursor, into_inventory};
 use crate::content::ItemId;
 use crate::crafting::Ingredient;
@@ -10,6 +11,7 @@ use crate::id::Identifier;
 use crate::inventory::{
     Click, CraftGrid, HOTBAR, ItemRules, ItemStack, MAIN, PlayerInventory, Window, clear_empty,
 };
+use std::collections::BTreeMap;
 
 /// Cells of a bench (a 2×2 grid).
 pub const BENCH_SIDE: u8 = 2;
@@ -29,16 +31,40 @@ pub struct BenchRecipe {
     pub count: u16,
 }
 
-/// The bench recipes of the active packs, in identifier order (a choice's index).
+/// The bench recipes of the active packs, in identifier order (a choice's index), and
+/// how each bench's screen looks.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Benches {
     list: Vec<BenchRecipe>,
+    styles: BTreeMap<Identifier, BenchStyle>,
 }
 
 impl Benches {
     pub fn new(mut list: Vec<BenchRecipe>) -> Self {
         list.sort_by(|a, b| a.id.cmp(&b.id));
-        Self { list }
+        Self {
+            list,
+            styles: BTreeMap::new(),
+        }
+    }
+
+    pub fn with_styles(mut self, styles: BTreeMap<Identifier, BenchStyle>) -> Self {
+        self.styles = styles;
+        self
+    }
+
+    /// How the screen of `bench` looks (plain without a `benches/` file).
+    pub fn style(&self, bench: &Identifier) -> BenchStyle {
+        self.styles.get(bench).copied().unwrap_or_default()
+    }
+
+    /// Every bench that has recipes or a style, in identifier order.
+    pub fn benches(&self) -> Vec<&Identifier> {
+        let mut ids: Vec<&Identifier> = self.list.iter().map(|r| &r.bench).collect();
+        ids.extend(self.styles.keys());
+        ids.sort();
+        ids.dedup();
+        ids
     }
 
     pub fn list(&self) -> &[BenchRecipe] {

@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["III", "CFC", "CCC"],
+    key: {'I': Item("strata:iron_ingot"), 'F': Item("strata:furnace"), 'C': Item("strata:cobblestone")},
+    result: Result(item: "strata:forge"),
+)

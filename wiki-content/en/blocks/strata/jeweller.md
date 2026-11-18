@@ -1,6 +1,6 @@
 ## Description
 
-A wooden bench with full drawers, a velvet cushion and a loupe: this is where rings, amulets, belts, cloaks and special boots are made.
+A wooden bench with full drawers, a velvet cushion and a loupe: this is where rings, amulets and belts are made.
 
 ## Obtaining
 
@@ -16,7 +16,7 @@ Ingredients can also be laid by hand, in any cell. Closing the screen gives the 
 
 ## Tips
 
-Accessories are worn in their slots next to the armour (two rings, an amulet, a belt, a cloak); two like rings count only once.
+Accessories are worn in their slots next to the armour (two rings, an amulet, a belt, a cloak); two like rings count only once. The wool cloak is made at the loom, mobility boots at the forge.
 
 ## Finding out in game
 

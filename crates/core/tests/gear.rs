@@ -114,22 +114,23 @@ fn tool_recipes_follow_the_tiers_and_wood_and_stone_ones_are_known_at_start() {
 #[test]
 fn mail_and_plate_come_from_rings_and_ingots() {
     let content = game();
-    let chest = |metal| craft(&content, ["M.M", "MMM", "MMM"], &[('M', metal)]);
+    let chest = |name: &str| {
+        let key = item(&content, name);
+        let recipe = content.benches.list().iter().find(|r| r.result == key)?;
+        let (material, count) = recipe.ingredients.first()?;
+        let first = content.items.identifier(*material.items().first()?)?;
+        Some((first.to_string(), *count))
+    };
+    let made = |material: &str| Some((material.to_owned(), 8));
+    assert_eq!(chest("strata:iron_mail_shirt"), made("strata:iron_rings"));
     assert_eq!(
-        chest("strata:iron_rings").as_deref(),
-        Some("strata:iron_mail_shirt")
+        chest("strata:iron_plate_chestplate"),
+        made("strata:iron_ingot")
     );
+    assert_eq!(chest("strata:leather_tunic"), made("strata:leather"));
     assert_eq!(
-        chest("strata:iron_ingot").as_deref(),
-        Some("strata:iron_plate_chestplate")
-    );
-    assert_eq!(
-        chest("strata:leather").as_deref(),
-        Some("strata:leather_tunic")
-    );
-    assert_eq!(
-        chest("strata:diamond_scales").as_deref(),
-        Some("strata:diamond_scale_chestplate")
+        chest("strata:diamond_scale_chestplate"),
+        made("strata:diamond_scales")
     );
 }
 
@@ -152,7 +153,7 @@ fn every_tool_weapon_and_armour_piece_can_be_made() {
 }
 
 #[test]
-fn every_accessory_and_set_loads_and_the_jeweller_makes_the_accessories() {
+fn every_accessory_and_set_loads_and_a_bench_makes_the_accessories() {
     let content = game();
     let accessories: Vec<_> = content
         .items
@@ -164,11 +165,10 @@ fn every_accessory_and_set_loads_and_the_jeweller_makes_the_accessories() {
         })
         .collect();
     assert!(accessories.len() >= 5);
-    let jeweller: Identifier = "strata:jeweller".parse().unwrap();
     for (key, name, item) in accessories {
         assert!(!item.gear.worn.is_empty(), "{name} gives something");
-        let made = content.benches.of(&jeweller).any(|(_, r)| r.result == key);
-        assert!(made, "{name} at the jeweller");
+        let made = content.benches.list().iter().any(|r| r.result == key);
+        assert!(made, "{name} at a bench");
     }
     assert!(content.worn.sets.len() >= 8);
     for set in &content.worn.sets {

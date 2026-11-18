@@ -188,24 +188,25 @@ fn leaping_boots_and_the_runner_s_belt_give_their_abilities() {
     assert!(mobility.dash.is_some() && mobility.climb.is_none());
 }
 
-fn at_jeweller() -> World {
+fn at_bench(bench: &str) -> World {
     let mut w = survival();
-    assert!(
-        w.loader
-            .set_block(SPOT, block(&w.content, "strata:jeweller"))
-    );
+    assert!(w.loader.set_block(SPOT, block(&w.content, bench)));
     assert!(w.game.open_block(&w.loader, SPOT));
     w
+}
+
+fn at_jeweller() -> World {
+    at_bench("strata:jeweller")
 }
 
 fn recipe_index(w: &World, name: &str) -> u16 {
     let wanted = item(w, name);
     let benches = &w.game.rules.benches;
-    let jeweller = "strata:jeweller".parse().unwrap();
     benches
-        .of(&jeweller)
-        .find(|(_, recipe)| recipe.result == wanted)
-        .map(|(index, _)| index)
+        .list()
+        .iter()
+        .position(|recipe| recipe.result == wanted)
+        .and_then(|index| u16::try_from(index).ok())
         .unwrap()
 }
 
@@ -256,4 +257,32 @@ fn the_jeweller_refuses_what_it_lacks_and_recipes_of_other_benches() {
     );
     request(&mut w, InventoryRequest::ChooseCut(u16::MAX));
     assert_eq!(w.game.crafting_view().unwrap().chosen, Some(ring));
+}
+
+#[test]
+fn the_forge_burns_a_coal_for_a_plate_and_refuses_the_jeweller_s_recipes() {
+    let mut w = at_bench("strata:forge");
+    lay(&mut w, 9, "strata:iron_ingot", 10);
+    lay(&mut w, 10, "strata:charcoal", 2);
+    lay(&mut w, 11, "strata:gold_ingot", 3);
+    lay(&mut w, 12, "strata:copper_ingot", 2);
+    let ring = recipe_index(&w, "strata:ring_of_vitality");
+    request(&mut w, InventoryRequest::ChooseCut(ring));
+    assert_eq!(w.game.crafting_view().unwrap().chosen, None, "not here");
+    let plate = recipe_index(&w, "strata:iron_plate_chestplate");
+    request(&mut w, InventoryRequest::ChooseCut(plate));
+    let click = Click::Transfer;
+    request(
+        &mut w,
+        InventoryRequest::Click {
+            slot: RESULT,
+            click,
+        },
+    );
+    let inventory = w.game.inventory();
+    let count = |name: &str| inventory.slots.count(item(&w, name));
+    assert_eq!(count("strata:iron_plate_chestplate"), 1);
+    assert_eq!(count("strata:iron_ingot"), 2);
+    assert_eq!(count("strata:charcoal"), 1);
+    assert_eq!(count("strata:gold_ingot"), 3);
 }

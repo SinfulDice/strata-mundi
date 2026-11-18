@@ -157,5 +157,18 @@ fn draw_node(node: &Node, parent: Rect, d: &mut Draw<'_, '_>) {
         Node::Crosshair { .. } => items::crosshair(d, node, parent),
         Node::Log { .. } => list::log(d, node, parent),
         Node::Gauge { .. } => controls::gauge(d, node, parent),
+        Node::Band {
+            id,
+            anchor,
+            at,
+            size,
+        } => {
+            let rect = parent.place(*anchor, d.ctx.offset(id, *at), *size);
+            let theme = d.theme();
+            let (light, dark) = (theme.panel_light.0, theme.panel_dark.0);
+            let fill = d.model.color(id).unwrap_or(light);
+            d.painter.fill(rect, fill);
+            d.painter.bevel(rect, light, dark);
+        }
     }
 }

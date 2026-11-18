@@ -1,0 +1,10 @@
+// Ingots into rings, scales, armour and mobility boots; its recipes burn coal
+// (bench_recipes/ of strata:forge).
+Block(
+    textures: TopBottomSides(top: "strata:forge_top", bottom: "strata:cobblestone", sides: "strata:forge_side"),
+    hardness: 3.5,
+    tool: Some(BlockTool(kind: "strata:pickaxe", required: true)),
+    sound: Some("strata:stone"),
+    category: Some("strata:stations"),
+    station: Some(Bench("strata:forge")),
+)

@@ -1,0 +1,8 @@
+BenchRecipe(
+    bench: "strata:forge",
+    ingredients: [
+        (Item("strata:iron_ingot"), 4),
+        (Tag("strata:coals"), 1),
+    ],
+    result: Result(item: "strata:iron_plate_boots"),
+)

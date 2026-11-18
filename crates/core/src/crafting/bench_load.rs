@@ -1,6 +1,7 @@
-//! Bench recipes as written in `bench_recipes/<name>.ron`.
+//! Bench recipes as written in `bench_recipes/<name>.ron`, and the benches' looks.
 
 use super::bench::{BENCH_CELLS, BenchRecipe, Benches};
+use super::bench_style::load_styles;
 use super::{IngredientDef, Names, ResultDef, ingredient};
 use crate::id::Identifier;
 use crate::inventory::ItemRules;
@@ -27,7 +28,7 @@ pub(crate) fn load_benches(
         .into_iter()
         .filter_map(|(id, Sourced { value, source })| recipe(id, value, names, &source, errors))
         .collect();
-    Benches::new(list)
+    Benches::new(list).with_styles(load_styles(packs, errors))
 }
 
 fn recipe(

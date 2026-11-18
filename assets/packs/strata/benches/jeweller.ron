@@ -1,0 +1,2 @@
+// The jeweller's screen: the cells on a velvet cushion, the list beside them.
+Bench(layout: Jeweller, accent: "#5a3d6b")

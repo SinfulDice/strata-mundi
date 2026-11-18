@@ -1,5 +1,0 @@
-Shaped(
-    pattern: ["M M", "MMM", "MMM"],
-    key: {'M': Item("strata:leather")},
-    result: Result(item: "strata:leather_tunic"),
-)

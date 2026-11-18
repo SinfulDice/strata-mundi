@@ -30,7 +30,9 @@ Each use wears the tool; the bar under the slot shows what is left and the toolt
 
 ## Provisional materials
 
-Tall grass and ferns cut without shears sometimes leave a **plant fibre**. Three fibres make **cloth**; two fibres and a mud make, for now, **leather**, until animals come.
+Tall grass and ferns cut without shears sometimes leave a **plant fibre**. At the **loom**, three fibres make **cloth** (and four, for now, **wool**); at the **tannery**, two fibres and a mud make, for now, **leather**, until animal hides come.
+
+Each material has its station: leather pieces at the tannery, cloth ones at the loom, metal and diamond ones at the **forge** (see [Work stations](stations.html)).
 
 ## For pack makers
 

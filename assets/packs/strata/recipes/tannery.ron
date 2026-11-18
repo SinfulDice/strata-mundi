@@ -1,0 +1,6 @@
+Shaped(
+    pattern: ["S S", "SMS", "PPP"],
+    key: {'S': Item("strata:stick"), 'M': Item("strata:mud"), 'P': Tag("strata:planks")},
+    result: Result(item: "strata:tannery"),
+    starting: true,
+)

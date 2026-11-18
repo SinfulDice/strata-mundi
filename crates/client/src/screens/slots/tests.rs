@@ -36,7 +36,7 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
     let mut state = SlotsState {
         search: "zzz".into(),
         for_container: true,
-        upgrade_scroll: 0,
+        ..Default::default()
     };
     let mut effects = Vec::new();
     let mut model = SlotsModel {

@@ -1,6 +1,6 @@
 ## Les accessoires
 
-À côté de l'armure, l'inventaire a cinq cases fixes : **deux anneaux**, **une amulette**, **une ceinture** et **une cape**. Les bottes spéciales vont dans la case des bottes. Les accessoires se fabriquent au **joaillier** :
+À côté de l'armure, l'inventaire a cinq cases fixes : **deux anneaux**, **une amulette**, **une ceinture** et **une cape**. Les bottes spéciales vont dans la case des bottes. Les anneaux, l'amulette et les ceintures se fabriquent au **joaillier**, la cape au **métier à tisser** :
 
 - **Anneau de vitalité** : plus de vie (elle comptera dès que la vie existera).
 - **Amulette de respiration courte** : un peu plus longtemps sous l'eau (dès que la noyade existera).
@@ -21,4 +21,4 @@ Porter plusieurs pièces assorties d'un même matériau (cuir, tissu, mailles ou
 - **Ceinture de course** : une courte esquive dans la direction où vous allez, avec la touche « Esquive » (F, bas de la croix), puis un temps de recharge.
 - **Bottes à crampons** : avancer contre un mur fait grimper ; accroupi, on reste accroché.
 
-L'option de monde « Mobilité par l'équipement » les désactive toutes.
+Les bottes se forgent à la **forge**, la ceinture au joaillier. L'option de monde « Mobilité par l'équipement » les désactive toutes.

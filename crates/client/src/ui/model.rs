@@ -1,5 +1,6 @@
 use super::Rect;
 use strata_core::content::ItemId;
+use strata_core::texture::Rgba;
 
 /// What a screen shows and how it reacts. The layout comes from the screen's RON file;
 /// the model answers by widget id. Every method has a neutral default, so a model only
@@ -45,12 +46,15 @@ pub trait ScreenModel {
     fn log_lines(&self, _id: &str) -> Vec<LogLine> {
         Vec::new()
     }
-    /// Tooltip for an element (item names).
     /// How full a gauge is, 0 to 1.
     fn gauge(&self, _id: &str) -> Option<f32> {
         None
     }
-
+    /// The colour of a band.
+    fn color(&self, _id: &str) -> Option<Rgba> {
+        None
+    }
+    /// Tooltip for an element (item names).
     fn tooltip(&self, _id: &str, _index: usize) -> Option<String> {
         None
     }

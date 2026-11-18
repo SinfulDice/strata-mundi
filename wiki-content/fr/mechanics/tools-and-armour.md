@@ -30,7 +30,9 @@ Chaque utilisation use l'outil ; la barre sous la case montre ce qui reste et l'
 
 ## Matériaux provisoires
 
-Les hautes herbes et les fougères coupées sans cisailles laissent parfois une **fibre végétale**. Trois fibres font un **tissu** ; deux fibres et une boue font, pour l'instant, un **cuir**, en attendant les animaux.
+Les hautes herbes et les fougères coupées sans cisailles laissent parfois une **fibre végétale**. Au **métier à tisser**, trois fibres font un **tissu** (et quatre, pour l'instant, une **laine**) ; à la **tannerie**, deux fibres et une boue font, pour l'instant, un **cuir**, en attendant les peaux des animaux.
+
+Chaque matériau a sa station : les pièces de cuir à la tannerie, celles de tissu au métier à tisser, celles de métal et de diamant à la **forge** (voir [Stations de travail](stations.html)).
 
 ## Pour les créateurs de packs
 

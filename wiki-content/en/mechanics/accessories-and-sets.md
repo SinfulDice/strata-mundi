@@ -1,6 +1,6 @@
 ## Accessories
 
-Next to the armour, the inventory has five fixed slots: **two rings**, **an amulet**, **a belt** and **a cloak**. Special boots go in the boots slot. Accessories are made at the **jeweller**:
+Next to the armour, the inventory has five fixed slots: **two rings**, **an amulet**, **a belt** and **a cloak**. Special boots go in the boots slot. Rings, the amulet and belts are made at the **jeweller**, the cloak at the **loom**:
 
 - **Ring of Vitality**: more health (it will count once health exists).
 - **Amulet of Short Breath**: a little longer under water (once drowning exists).
@@ -21,4 +21,4 @@ Wearing several matching pieces of one material (leather, cloth, iron and gold m
 - **Runner's Belt**: a short dash where you are going, with the "Dash" key (F, D-pad down), then a cooldown.
 - **Crampon Boots**: walking into a wall climbs it; sneaking holds on.
 
-The world option "Movement from equipment" turns them all off.
+The boots are made at the **forge**, the belt at the jeweller. The world option "Movement from equipment" turns them all off.

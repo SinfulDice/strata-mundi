@@ -1,8 +1,0 @@
-Shapeless(
-    ingredients: [
-        Item("strata:plant_fiber"),
-        Item("strata:plant_fiber"),
-        Item("strata:plant_fiber"),
-    ],
-    result: Result(item: "strata:cloth"),
-)

@@ -1,0 +1,9 @@
+// Leather and leather armour (bench_recipes/ of strata:tannery).
+Block(
+    textures: TopBottomSides(top: "strata:tannery_top", bottom: "strata:oak_planks", sides: "strata:tannery_side"),
+    hardness: 2.5,
+    tool: Some(BlockTool(kind: "strata:axe", required: false)),
+    sound: Some("strata:wood"),
+    category: Some("strata:stations"),
+    station: Some(Bench("strata:tannery")),
+)

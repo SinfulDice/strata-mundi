@@ -1,0 +1,9 @@
+// Provisional (v0.3): leather will be tanned from hides of animals in v0.4.
+BenchRecipe(
+    bench: "strata:tannery",
+    ingredients: [
+        (Item("strata:plant_fiber"), 2),
+        (Item("strata:mud"), 1),
+    ],
+    result: Result(item: "strata:leather"),
+)

@@ -3,6 +3,7 @@
 
 mod bench;
 mod bench_load;
+mod bench_style;
 mod craft;
 mod matching;
 mod plan;
@@ -13,6 +14,7 @@ pub use bench::{
 };
 pub use bench_load::BenchRecipeDef;
 pub(crate) use bench_load::load_benches;
+pub use bench_style::{BenchLayout, BenchStyle};
 pub use craft::{Crafted, grid_recipe, grid_result, take_result};
 pub(crate) use craft::{into_cursor, into_inventory};
 pub use matching::{GridItems, Recipes};

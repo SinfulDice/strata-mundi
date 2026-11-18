@@ -1,8 +1,9 @@
 BenchRecipe(
-    bench: "strata:jeweller",
+    bench: "strata:forge",
     ingredients: [
         (Item("strata:leather_boots"), 1),
         (Item("strata:iron_ingot"), 2),
+        (Tag("strata:coals"), 1),
     ],
     result: Result(item: "strata:crampon_boots"),
 )

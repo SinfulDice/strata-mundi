@@ -1,0 +1,8 @@
+// Provisional until sheep come (v0.4), like leather.
+BenchRecipe(
+    bench: "strata:loom",
+    ingredients: [
+        (Item("strata:plant_fiber"), 4),
+    ],
+    result: Result(item: "strata:wool"),
+)

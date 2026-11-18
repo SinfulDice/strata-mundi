@@ -1,0 +1,31 @@
+// The loom's top: its beams, the warp between them and two spools of thread.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        't': ("wool", 1),
+        'T': ("wool", 3),
+        'f': ("fiber", 1),
+        'F': ("fiber", 2),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "DLLLLLLLLLLLLLLD",
+        "DddddddddddddddD",
+        "DWDtDTDtDTDtDTWD",
+        "DWDtDTDtDTDtDTWD",
+        "DWDtDTDtDTDtDTWD",
+        "DWDtDTDtDTDtDTWD",
+        "DWDtDTDtDTDtDTWD",
+        "DWDtDTDtDTDtDTWD",
+        "DddddddddddddddD",
+        "DLLLLLLLLLLLLLLD",
+        "DWWWWWWWWWWWWWWD",
+        "DWfFfWWWWWWTtTWD",
+        "DWFfFWWWWWWtTtWD",
+        "DddddddddddddddD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

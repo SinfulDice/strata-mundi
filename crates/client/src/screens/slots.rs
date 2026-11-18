@@ -13,6 +13,7 @@ use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE
 use strata_core::inventory::{
     ACCESSORIES, ARMOR, Area, Click, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
 };
+use strata_core::texture::Rgba;
 use strata_core::upgrade::max_durability;
 use strata_protocol::{InventoryRequest, OpenedContainer};
 
@@ -27,6 +28,8 @@ pub struct SlotsState {
     pub for_container: bool,
     /// Rows of the anvil's list scrolled past.
     pub upgrade_scroll: usize,
+    /// Rows of a bench's list scrolled past.
+    pub bench_scroll: usize,
 }
 
 pub struct SlotsModel<'a> {
@@ -182,7 +185,7 @@ impl SlotsModel<'_> {
         }
     }
 
-    fn station(&self) -> Option<StationDef> {
+    pub(super) fn station(&self) -> Option<StationDef> {
         let (block, _) = self.crafting?.view.station?;
         self.content.blocks.get(block)?.station.clone()
     }
@@ -292,6 +295,10 @@ impl ScreenModel for SlotsModel<'_> {
         }
     }
 
+    fn color(&self, id: &str) -> Option<Rgba> {
+        self.bench_color(id)
+    }
+
     fn tooltip(&self, id: &str, index: usize) -> Option<String> {
         if let Some(tooltip) = self.list_tooltip(id, index) {
             return tooltip;
@@ -301,6 +308,9 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn shown(&self, id: &str) -> bool {
+        if let Some(shown) = self.bench_group_shown(id) {
+            return shown;
+        }
         let open = self.container.is_some();
         let station = self.station();
         match id {
@@ -312,7 +322,6 @@ impl ScreenModel for SlotsModel<'_> {
             "table_side" => !open && matches!(station, Some(StationDef::Crafting(_))),
             "cutter_side" => !open && station == Some(StationDef::Stonecutter),
             "anvil_side" => !open && station == Some(StationDef::Anvil),
-            "bench_side" => !open && matches!(station, Some(StationDef::Bench(_))),
             "anvil_scroll" => self.upgrades_scroll(),
             "player_side" => !open && station.is_none(),
             "crafting" => self.crafting.is_some(),
@@ -334,6 +343,8 @@ impl ScreenModel for SlotsModel<'_> {
             "anvil_repair" => self.choose_repair(),
             "anvil_earlier" => self.scroll_upgrades(-1),
             "anvil_later" => self.scroll_upgrades(1),
+            "bench_earlier" => self.scroll_bench(-1),
+            "bench_later" => self.scroll_bench(1),
             "book" => self
                 .effects
                 .push(Effect::Push(Menu::Journal(JournalState::for_grid()))),
@@ -352,8 +363,10 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn scroll(&mut self, id: &str, rows: i32) {
-        if id == "anvil_choices" {
-            self.scroll_upgrades(rows);
+        match id {
+            "anvil_choices" => self.scroll_upgrades(rows),
+            "bench_choices" => self.scroll_bench(rows),
+            _ => {}
         }
     }
 
@@ -369,23 +382,6 @@ impl SlotsModel<'_> {
     fn block_title(&self, block: strata_core::content::BlockId) -> String {
         let id = self.content.block_name(block);
         id.map_or_else(String::new, |id| self.tr(&id.translation_key("block")))
-    }
-
-    /// The open furnace's speed and economy, for a usual cooking and the reference fuel.
-    fn furnace_info(&self) -> String {
-        let Some(view) = self.container.and_then(|c| c.furnace) else {
-            return String::new();
-        };
-        let Some(per_coal) = view.per_coal else {
-            return String::new();
-        };
-        let tr = &self.content.translations;
-        let number = |value: f32| tr.short_decimal(self.language, f64::from(value));
-        tr.text_with(
-            self.language,
-            "ui-furnace-info",
-            &[("time", number(view.seconds)), ("cooks", number(per_coal))],
-        )
     }
 }
 

@@ -97,3 +97,6 @@ block-strata-chiseled_stone_bricks = Briques de pierre sculptées
 block-strata-patterned_stone_bricks = Briques de pierre ouvragées
 block-strata-anvil = Enclume
 block-strata-jeweller = Joaillier
+block-strata-forge = Forge
+block-strata-tannery = Tannerie
+block-strata-loom = Métier à tisser

@@ -1,0 +1,2 @@
+// The loom's screen: the cells in a column like a warp, the list beside it.
+Bench(layout: Loom, accent: "#3d4f6b")

@@ -1,0 +1,2 @@
+// The tannery's screen: the cells in a row like hides on a rack, the list below.
+Bench(layout: Tannery, accent: "#5e4428")

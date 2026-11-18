@@ -1,5 +1,5 @@
 BenchRecipe(
-    bench: "strata:jeweller",
+    bench: "strata:loom",
     ingredients: [
         (Item("strata:wool"), 4),
         (Item("strata:plant_fiber"), 2),

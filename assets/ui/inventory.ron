@@ -1,8 +1,9 @@
 // Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; at a
 // stonecutter, its cell and the variants to choose; the accessories (two rings, an amulet, a
 // belt, a cloak) under the buttons, named by the tooltips of their empty slots; at an anvil, the item, the material,
-// the upgrades it can take (shown by their material) and the repair; at a bench (the
-// jeweller), its four cells, the list of what it makes and the result; with a container open, the container
+// the upgrades it can take (shown by their material) and the repair; at a bench (forge,
+// tannery, loom, jeweller), its four cells, the list of what it makes (scrolled by rows) and the
+// result, in the bench's own arrangement (`layout` of its `benches/` file) and colour (bands); with a container open, the container
 // (or the furnace: input, fuel and its flame, the arrow, output, upgrade slots) on top. The player's slots are always below. Slots
 // take clicks (the help below gives way to the crafting hint or the recipe learnt): left takes or puts, right halves or puts one, shift-click sends across
 // (on the result: crafts as many as fit), double-click gathers, middle click (L1) locks.
@@ -83,12 +84,81 @@ Screen(
                     Label(id: "anvil_note", anchor: TopLeft, at: (8, 74), text: "@anvil_note", wrap: Some(180)),
                 ]),
                 Group(id: "bench_side", children: [
-                    Label(id: "bench_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
-                    SlotGrid(id: "bench", anchor: TopLeft, at: (8, 24), columns: 2, rows: 2),
-                    ItemGrid(id: "bench_choices", anchor: TopLeft, at: (52, 16), columns: 4, rows: 3),
-                    Label(id: "bench_arrow", anchor: TopLeft, at: (138, 36), text: "ui-craft-arrow", dim: true),
-                    SlotGrid(id: "bench_result", anchor: TopLeft, at: (156, 30), columns: 1, rows: 1),
-                    Label(id: "bench_note", anchor: TopLeft, at: (8, 84), text: "@bench_note", dim: true, wrap: Some(180)),
+                    // Any other bench: cells, list, result in a row.
+                    Group(id: "bench_layout_plain", children: [
+                        Band(id: "bench_band_title", anchor: TopLeft, at: (4, 2), size: (188, 12)),
+                        Label(id: "bench_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                        Band(id: "bench_band_work", anchor: TopLeft, at: (4, 18), size: (48, 48)),
+                        SlotGrid(id: "bench", anchor: TopLeft, at: (8, 22), columns: 2, rows: 2),
+                        ItemGrid(id: "bench_choices", anchor: TopLeft, at: (56, 18), columns: 5, rows: 3),
+                        Label(id: "bench_arrow", anchor: TopLeft, at: (159, 40), text: "ui-craft-arrow", dim: true),
+                        SlotGrid(id: "bench_result", anchor: TopLeft, at: (168, 34), columns: 1, rows: 1),
+                        Group(id: "bench_scroll", children: [
+                            Button(id: "bench_earlier", anchor: TopLeft, at: (56, 80), size: (40, 12), text: "ui-bench-earlier"),
+                            Button(id: "bench_later", anchor: TopLeft, at: (100, 80), size: (40, 12), text: "ui-bench-later"),
+                        ]),
+                        Label(id: "bench_note", anchor: TopLeft, at: (8, 96), text: "@bench_note", dim: true, wrap: Some(180)),
+                    ]),
+                    // Jeweller: the cells and the result on velvet, the list beside them.
+                    Group(id: "bench_layout_jeweller", children: [
+                        Band(id: "bench_band_title", anchor: TopLeft, at: (4, 2), size: (188, 12)),
+                        Label(id: "bench_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                        Band(id: "bench_band_work", anchor: TopLeft, at: (4, 18), size: (48, 48)),
+                        SlotGrid(id: "bench", anchor: TopLeft, at: (8, 22), columns: 2, rows: 2),
+                        Band(id: "bench_band_result", anchor: TopLeft, at: (14, 70), size: (28, 28)),
+                        SlotGrid(id: "bench_result", anchor: TopLeft, at: (18, 74), columns: 1, rows: 1),
+                        ItemGrid(id: "bench_choices", anchor: TopLeft, at: (60, 18), columns: 5, rows: 3),
+                        Group(id: "bench_scroll", children: [
+                            Button(id: "bench_earlier", anchor: TopLeft, at: (60, 80), size: (40, 12), text: "ui-bench-earlier"),
+                            Button(id: "bench_later", anchor: TopLeft, at: (104, 80), size: (40, 12), text: "ui-bench-later"),
+                        ]),
+                        Label(id: "bench_note", anchor: TopLeft, at: (8, 104), text: "@bench_note", dim: true, wrap: Some(180)),
+                    ]),
+                    // Forge: the list on the left, the cells on the hearth, the result beside it.
+                    Group(id: "bench_layout_forge", children: [
+                        Band(id: "bench_band_title", anchor: TopLeft, at: (4, 2), size: (188, 12)),
+                        Label(id: "bench_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                        ItemGrid(id: "bench_choices", anchor: TopLeft, at: (8, 18), columns: 5, rows: 3),
+                        Group(id: "bench_scroll", children: [
+                            Button(id: "bench_earlier", anchor: TopLeft, at: (8, 80), size: (40, 12), text: "ui-bench-earlier"),
+                            Button(id: "bench_later", anchor: TopLeft, at: (52, 80), size: (40, 12), text: "ui-bench-later"),
+                        ]),
+                        Band(id: "bench_band_work", anchor: TopLeft, at: (112, 16), size: (80, 52)),
+                        SlotGrid(id: "bench", anchor: TopLeft, at: (116, 22), columns: 2, rows: 2),
+                        Label(id: "bench_arrow", anchor: TopLeft, at: (159, 36), text: "ui-craft-arrow", dim: true),
+                        SlotGrid(id: "bench_result", anchor: TopLeft, at: (168, 30), columns: 1, rows: 1),
+                        Label(id: "bench_note", anchor: TopLeft, at: (8, 96), text: "@bench_note", dim: true, wrap: Some(180)),
+                    ]),
+                    // Tannery: the cells in a row like hides on a rack, the result at its end, the list below.
+                    Group(id: "bench_layout_tannery", children: [
+                        Band(id: "bench_band_title", anchor: TopLeft, at: (4, 2), size: (188, 12)),
+                        Label(id: "bench_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                        Band(id: "bench_band_work", anchor: TopLeft, at: (4, 16), size: (88, 28)),
+                        SlotGrid(id: "bench", anchor: TopLeft, at: (8, 20), columns: 4, rows: 1),
+                        Label(id: "bench_arrow", anchor: TopLeft, at: (95, 26), text: "ui-craft-arrow", dim: true),
+                        SlotGrid(id: "bench_result", anchor: TopLeft, at: (106, 20), columns: 1, rows: 1),
+                        ItemGrid(id: "bench_choices", anchor: TopLeft, at: (8, 48), columns: 5, rows: 3),
+                        Group(id: "bench_scroll", children: [
+                            Button(id: "bench_earlier", anchor: TopLeft, at: (114, 48), size: (40, 12), text: "ui-bench-earlier"),
+                            Button(id: "bench_later", anchor: TopLeft, at: (114, 64), size: (40, 12), text: "ui-bench-later"),
+                        ]),
+                        Label(id: "bench_note", anchor: TopLeft, at: (8, 112), text: "@bench_note", dim: true, wrap: Some(180)),
+                    ]),
+                    // Loom: the cells in a column like a warp, the list and the result beside it.
+                    Group(id: "bench_layout_loom", children: [
+                        Band(id: "bench_band_title", anchor: TopLeft, at: (4, 2), size: (188, 12)),
+                        Label(id: "bench_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),
+                        Band(id: "bench_band_work", anchor: TopLeft, at: (4, 16), size: (28, 88)),
+                        SlotGrid(id: "bench", anchor: TopLeft, at: (8, 20), columns: 1, rows: 4),
+                        ItemGrid(id: "bench_choices", anchor: TopLeft, at: (36, 18), columns: 5, rows: 3),
+                        Label(id: "bench_arrow", anchor: TopLeft, at: (140, 40), text: "ui-craft-arrow", dim: true),
+                        SlotGrid(id: "bench_result", anchor: TopLeft, at: (150, 34), columns: 1, rows: 1),
+                        Group(id: "bench_scroll", children: [
+                            Button(id: "bench_earlier", anchor: TopLeft, at: (36, 80), size: (40, 12), text: "ui-bench-earlier"),
+                            Button(id: "bench_later", anchor: TopLeft, at: (80, 80), size: (40, 12), text: "ui-bench-later"),
+                        ]),
+                        Label(id: "bench_note", anchor: TopLeft, at: (36, 96), text: "@bench_note", dim: true, wrap: Some(152)),
+                    ]),
                 ]),
                 SlotGrid(id: "main", anchor: TopLeft, at: (8, 152), columns: 9, rows: 3),
                 SlotGrid(id: "hotbar", anchor: TopLeft, at: (8, 214), columns: 9, rows: 1),

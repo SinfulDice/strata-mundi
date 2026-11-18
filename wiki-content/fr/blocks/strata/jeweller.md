@@ -1,6 +1,6 @@
 ## Description
 
-Un établi de bois aux tiroirs garnis, avec un coussin de velours et une loupe : c'est là qu'on fabrique anneaux, amulettes, ceintures, capes et bottes spéciales.
+Un établi de bois aux tiroirs garnis, avec un coussin de velours et une loupe : c'est là qu'on fabrique anneaux, amulettes et ceintures.
 
 ## Obtention
 
@@ -16,7 +16,7 @@ On peut aussi poser les ingrédients à la main, dans n'importe quelle case. En 
 
 ## Conseils
 
-Les accessoires se portent dans leurs cases à côté de l'armure (deux anneaux, une amulette, une ceinture, une cape) ; deux anneaux identiques ne comptent qu'une fois.
+Les accessoires se portent dans leurs cases à côté de l'armure (deux anneaux, une amulette, une ceinture, une cape) ; deux anneaux identiques ne comptent qu'une fois. La cape de laine se fait au métier à tisser, les bottes de mobilité à la forge.
 
 ## Découverte en jeu
 

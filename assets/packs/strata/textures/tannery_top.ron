@@ -1,0 +1,33 @@
+// The tannery's top: a soaking tub with a folded hide on its board.
+Sprite(
+    colors: {
+        'D': ("oak_bark", 0),
+        'd': ("oak_bark", 1),
+        'W': ("oak_wood", 1),
+        'L': ("oak_wood", 2),
+        'm': ("mud", 0),
+        'M': ("mud", 1),
+        'o': ("leather", 0),
+        'h': ("leather", 1),
+        'H': ("leather", 2),
+        'E': ("leather", 3),
+    },
+    rows: [
+        "DDDDDDDDDDDDDDDD",
+        "DLLLLLLLLLLLLLLD",
+        "DLddddddWWWWWWLD",
+        "DLdmmmmdWhhhhWLD",
+        "DLdmMMmdWhHHhWLD",
+        "DLdmMMmdWhHEhWLD",
+        "DLdmmMmdWhHHhWLD",
+        "DLdmmmmdWhhhhWLD",
+        "DLddddddWooooWLD",
+        "DLWWWWWWWWWWWWLD",
+        "DLWhhhhhhhhhhWLD",
+        "DLWhHHHHHHEHhWLD",
+        "DLWooooooooooWLD",
+        "DLLLLLLLLLLLLLLD",
+        "DddddddddddddddD",
+        "DDDDDDDDDDDDDDDD",
+    ],
+)

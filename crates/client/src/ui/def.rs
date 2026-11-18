@@ -150,6 +150,14 @@ pub enum Node {
         #[serde(default)]
         vertical: bool,
     },
+    /// A bevelled strip of the model's colour (a station's title band and work surface),
+    /// the theme's light panel colour otherwise.
+    Band {
+        id: String,
+        anchor: Anchor,
+        at: (i32, i32),
+        size: (u32, u32),
+    },
     /// Lines of text, newest at the bottom (the console).
     Log {
         id: String,
@@ -182,6 +190,7 @@ impl Node {
             | Self::SlotGrid { at, .. }
             | Self::Crosshair { at, .. }
             | Self::Gauge { at, .. }
+            | Self::Band { at, .. }
             | Self::Log { at, .. } => Some(*at),
         }
     }
@@ -206,6 +215,7 @@ impl Node {
             | Self::SlotGrid { id, .. }
             | Self::Crosshair { id, .. }
             | Self::Gauge { id, .. }
+            | Self::Band { id, .. }
             | Self::Log { id, .. } => Some(id),
         }
     }

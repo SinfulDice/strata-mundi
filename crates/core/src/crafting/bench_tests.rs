@@ -73,3 +73,31 @@ fn can_lay_answers_like_fill_bench() {
     assert_eq!(cells.slots.get(0).map(|s| s.count), Some(3));
     assert_eq!(player.slots.count(DIRT), 0);
 }
+
+#[test]
+fn bench_styles_load_from_packs_and_a_bench_without_one_is_plain() {
+    use crate::crafting::{BenchLayout, bench_style::load_styles};
+    let dir = std::env::temp_dir().join(format!("strata-benches-{}", std::process::id()));
+    let root = dir.join("mine");
+    std::fs::create_dir_all(root.join("benches")).unwrap();
+    std::fs::write(root.join("pack.ron"), "(namespace: \"mine\")").unwrap();
+    let files = [
+        ("forge", "Bench(layout: Forge, accent: \"#7a3b1e\")"),
+        ("odd", "Bench(layout: Spinning)"),
+    ];
+    for (name, text) in files {
+        std::fs::write(root.join(format!("benches/{name}.ron")), text).unwrap();
+    }
+    let mut errors = Vec::new();
+    let packs = crate::pack::PackSet::discover(&dir, &mut errors);
+    let styles = load_styles(&packs, &mut errors);
+    assert_eq!(errors.len(), 1, "an unknown layout is an error: {errors:?}");
+    let benches = Benches::new(Vec::new()).with_styles(styles);
+    let forge = benches.style(&"mine:forge".parse().unwrap());
+    assert_eq!(forge.layout, BenchLayout::Forge);
+    assert_eq!(forge.accent.map(|c| c.0.0), Some([0x7a, 0x3b, 0x1e, 0xff]));
+    let other = benches.style(&"mine:other".parse().unwrap());
+    assert_eq!(other, BenchStyle::default());
+    assert_eq!(other.layout, BenchLayout::Plain);
+    std::fs::remove_dir_all(dir).unwrap();
+}

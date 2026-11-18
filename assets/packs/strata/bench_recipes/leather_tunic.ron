@@ -1,0 +1,7 @@
+BenchRecipe(
+    bench: "strata:tannery",
+    ingredients: [
+        (Item("strata:leather"), 8),
+    ],
+    result: Result(item: "strata:leather_tunic"),
+)

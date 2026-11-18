@@ -97,3 +97,6 @@ block-strata-chiseled_stone_bricks = FANCY ROCK BRIKZ
 block-strata-patterned_stone_bricks = SWIRLY ROCK BRIKZ
 block-strata-anvil = BONK BLOK
 block-strata-jeweller = SHINY MAEKR
+block-strata-forge = HOT BANGR
+block-strata-tannery = SKIN RACK
+block-strata-loom = STRING WEEVR

@@ -1,5 +1,6 @@
 //! The lists of the work stations in the inventory screen: the stonecutter's variants,
-//! the anvil's upgrades and the benches' recipes. Each takes clicks like slots, shows a choice and tooltips.
+//! the anvil's upgrades and the benches' recipes. Each takes clicks like slots, shows a
+//! choice and tooltips. Also the stonecutter's and the furnace's notes.
 
 use super::slots::SlotsModel;
 use crate::ui::SlotPress;
@@ -76,5 +77,22 @@ impl SlotsModel<'_> {
             "ui-stonecutter-help"
         };
         self.content.translations.text(self.language, key)
+    }
+
+    /// The open furnace's speed and economy, for a usual cooking and the reference fuel.
+    pub(super) fn furnace_info(&self) -> String {
+        let Some(view) = self.container.and_then(|c| c.furnace) else {
+            return String::new();
+        };
+        let Some(per_coal) = view.per_coal else {
+            return String::new();
+        };
+        let tr = &self.content.translations;
+        let number = |value: f32| tr.short_decimal(self.language, f64::from(value));
+        tr.text_with(
+            self.language,
+            "ui-furnace-info",
+            &[("time", number(view.seconds)), ("cooks", number(per_coal))],
+        )
     }
 }
