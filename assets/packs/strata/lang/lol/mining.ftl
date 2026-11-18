@@ -60,5 +60,5 @@ item-stat-strata-dash = ZOOMIES (OWN BUTTON)
 item-stat-strata-climb = WALL CLIMBIN (WALK IN WALL)
 gear-worn-line = WEARIN: { $effects }
 set-worn-line = { $set }: { $worn }/{ $total } BITZ ON
-set-bonus-line = · { $pieces } BITZ: { $effects }
-set-bonus-active = · { $pieces } BITZ: { $effects } (ON!!)
+set-bonus-line = - { $pieces } BITZ: { $effects }
+set-bonus-active = - { $pieces } BITZ: { $effects } (ON!!)

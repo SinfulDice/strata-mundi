@@ -1,11 +1,13 @@
 //! A bench's side of the inventory screen (the jeweller): its four cells, the list of
-//! what it makes (choosing lays the ingredients from the inventory), the result.
+//! what it makes (choosing lays the ingredients from the inventory), the result; and
+//! what goes in each empty accessory slot.
 
 use super::slots::SlotsModel;
 use crate::ui::SlotPress;
+use strata_core::content::EquipSlot;
 use strata_core::content::ItemId;
 use strata_core::crafting::BenchRecipe;
-use strata_core::inventory::{Click, HOTBAR, MAIN};
+use strata_core::inventory::{ACCESSORIES, Click, HOTBAR, MAIN, slot_equip};
 use strata_protocol::InventoryRequest;
 
 impl SlotsModel<'_> {
@@ -84,6 +86,21 @@ impl SlotsModel<'_> {
             self.inventory.request(InventoryRequest::ChooseCut(choice));
         }
         true
+    }
+
+    /// What goes in an empty accessory slot (« Ring »…).
+    pub(super) fn accessory_slot_tip(&self, index: usize) -> Option<String> {
+        let slot = ACCESSORIES.start + index;
+        if self.inventory.stack(slot).is_some() {
+            return None;
+        }
+        let key = match slot_equip(slot)? {
+            EquipSlot::Ring => "ui-inventory-ring",
+            EquipSlot::Amulet => "ui-inventory-amulet",
+            EquipSlot::Belt => "ui-inventory-belt",
+            _ => "ui-inventory-cloak",
+        };
+        Some(self.content.translations.text(self.language, key))
     }
 
     pub(super) fn bench_note(&self) -> String {

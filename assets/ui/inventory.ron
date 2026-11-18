@@ -1,6 +1,6 @@
 // Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; at a
 // stonecutter, its cell and the variants to choose; the accessories (two rings, an amulet, a
-// belt, a cloak) next to the armour; at an anvil, the item, the material,
+// belt, a cloak) under the buttons, named by the tooltips of their empty slots; at an anvil, the item, the material,
 // the upgrades it can take (shown by their material) and the repair; at a bench (the
 // jeweller), its four cells, the list of what it makes and the result; with a container open, the container
 // (or the furnace: input, fuel and its flame, the arrow, output, upgrade slots) on top. The player's slots are always below. Slots
@@ -19,7 +19,7 @@ Screen(
                     Label(id: "title", anchor: TopLeft, at: (8, 4), text: "ui-inventory-survival-title"),
                     SlotGrid(id: "armor", anchor: TopLeft, at: (8, 16), columns: 1, rows: 4),
                     SlotGrid(id: "offhand", anchor: TopLeft, at: (32, 76), columns: 1, rows: 1),
-                    Label(id: "offhand_label", anchor: TopLeft, at: (56, 82), text: "ui-inventory-offhand", dim: true),
+                    Label(id: "offhand_label", anchor: TopLeft, at: (8, 96), text: "ui-inventory-offhand", dim: true),
                     Label(id: "protection", anchor: TopLeft, at: (34, 62), text: "@protection"),
                     SlotGrid(id: "craft", anchor: TopLeft, at: (34, 20), columns: 2, rows: 2),
                     Label(id: "craft_arrow", anchor: TopLeft, at: (76, 36), text: "ui-craft-arrow", dim: true),
@@ -28,9 +28,8 @@ Screen(
                     Button(id: "sort_name", anchor: TopLeft, at: (112, 32), size: (76, 14), text: "ui-inventory-sort-name"),
                     Button(id: "deposit", anchor: TopLeft, at: (112, 48), size: (76, 14), text: "ui-inventory-deposit"),
                     Button(id: "book", anchor: TopLeft, at: (112, 64), size: (76, 14), text: "ui-inventory-journal"),
-                    SlotGrid(id: "accessories", anchor: TopLeft, at: (8, 98), columns: 5, rows: 1),
-                    Label(id: "accessories_label", anchor: TopLeft, at: (102, 104), text: "ui-inventory-accessories", dim: true),
-                    Label(id: "help", anchor: TopLeft, at: (8, 120), text: "@help", dim: true, wrap: Some(180)),
+                    SlotGrid(id: "accessories", anchor: TopLeft, at: (88, 80), columns: 5, rows: 1),
+                    Label(id: "help", anchor: TopLeft, at: (8, 106), text: "@help", dim: true, wrap: Some(180)),
                 ]),
                 Group(id: "table_side", children: [
                     Label(id: "station_title", anchor: TopLeft, at: (8, 4), text: "@station_title"),

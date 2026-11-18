@@ -39,6 +39,7 @@ impl SlotsModel<'_> {
             "anvil_choices" => Some(self.anvil_tooltip(index)),
             "bench_choices" => Some(self.bench_tooltip(index)),
             "anvil" => self.anvil_cell_tip(index).map(Some),
+            "accessories" => self.accessory_slot_tip(index).map(Some),
             _ => None,
         }
     }
