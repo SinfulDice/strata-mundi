@@ -29,3 +29,7 @@
   - [ ] J16 Construction et décoration (familles de blocs, ≥ 200 blocs)
   - [ ] J17 Outils d'équilibrage (crate `balance`)
   - [ ] J18 Clôture
+
+## Défauts signalés
+
+- [ ] **Minage sous les pieds** (signalé le 18/11/2026, toujours présent après la v0.2.1) : quand le joueur casse le bloc sur lequel il se tient, il a l'impression d'être téléporté sur le bloc du dessous au lieu de tomber. Pistes : gravité/chute non interpolée côté client, ou correction de position du serveur qui écrase la prédiction. À corriger avant de continuer le J5b.
