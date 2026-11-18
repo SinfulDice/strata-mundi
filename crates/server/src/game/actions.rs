@@ -1,7 +1,10 @@
 //! Clicks in the world: run at once when the rate limit allows, otherwise queued and run
-//! one per allowed tick, so no click is lost. Every click is answered with `ActionDone`,
-//! in the order of the clicks; a refused one first gets the actual state of the cells it
-//! aimed at (those the player sees), so the client can undo its prediction.
+//! one per allowed tick, so no click is lost. A click also waits for the inputs the
+//! client sent before it: the world changes at the same point of the movement on both
+//! sides, so breaking the block underfoot falls the same way. Every click is answered
+//! with `ActionDone`, in the order of the clicks; a refused one first gets the actual
+//! state of the cells it aimed at (those the player sees), so the client can undo its
+//! prediction.
 
 use super::{ACTION_TICKS, Game};
 use crate::ecs::Queued;
@@ -15,8 +18,9 @@ use strata_protocol::{ActionId, MAX_PENDING_ACTIONS, ServerMessage, WorldAction,
 const MAX_QUEUE: usize = 2 * MAX_PENDING_ACTIONS;
 
 impl Game {
-    /// Runs the click now if nothing waits and the rate limit allows, queues it otherwise.
-    /// The answer (`ActionDone`) goes with the game messages.
+    /// Runs the click now if nothing waits (no click, no input received before it) and
+    /// the rate limit allows, queues it otherwise. The answer (`ActionDone`) goes with the
+    /// game messages.
     pub fn request_action(
         &mut self,
         loader: &mut ColumnLoader,
@@ -27,18 +31,19 @@ impl Game {
         let Some(control) = self.ecs.controls.get_mut(self.player) else {
             return Vec::new();
         };
-        if ready && control.actions.is_empty() {
+        let after_input = control.pending.back().map(|&(sequence, _)| sequence);
+        if ready && control.actions.is_empty() && after_input.is_none() {
             return self.run_action(loader, id, action);
         }
         let queue = &mut control.actions;
-        let waiting = queue
-            .iter()
-            .filter(|q| matches!(q, Queued::Run(..)))
-            .count();
-        if waiting < MAX_PENDING_ACTIONS {
-            queue.push_back(Queued::Run(id, action));
-        } else if queue.len() < MAX_QUEUE {
-            queue.push_back(Queued::Refuse(id, action));
+        let waiting = queue.iter().filter(|q| !q.refused).count();
+        if queue.len() < MAX_QUEUE {
+            queue.push_back(Queued {
+                id,
+                action,
+                refused: waiting >= MAX_PENDING_ACTIONS,
+                after_input,
+            });
         } else {
             // Only a client ignoring `MAX_PENDING_ACTIONS` gets here: answered out of turn.
             self.answer(loader, id, action, &[]);
@@ -46,30 +51,28 @@ impl Game {
         Vec::new()
     }
 
-    /// Answers the waiting clicks in order: refusals at once (they take no turn), runs
-    /// while the rate limit allows.
+    /// Answers the waiting clicks in order, each once the inputs before it are applied:
+    /// refusals at once (they take no turn), runs while the rate limit allows.
     pub(super) fn run_queued_actions(&mut self, loader: &mut ColumnLoader) -> Vec<BlockChange> {
         let mut changes = Vec::new();
         loop {
             let ready = self.action_ready();
-            let Some(queue) = self
-                .ecs
-                .controls
-                .get_mut(self.player)
-                .map(|c| &mut c.actions)
-            else {
+            let Some(control) = self.ecs.controls.get_mut(self.player) else {
                 break;
             };
-            match queue.front().copied() {
-                Some(Queued::Refuse(id, action)) => {
-                    queue.pop_front();
-                    self.answer(loader, id, action, &[]);
-                }
-                Some(Queued::Run(id, action)) if ready || !rate_limited(action) => {
-                    queue.pop_front();
-                    changes.extend(self.run_action(loader, id, action));
-                }
-                _ => break,
+            let last_applied = control.last_sequence;
+            let Some(next) = control.actions.front().copied() else {
+                break;
+            };
+            let turn = next.refused || ready || !rate_limited(next.action);
+            if !turn || !next.inputs_done(last_applied) {
+                break;
+            }
+            control.actions.pop_front();
+            if next.refused {
+                self.answer(loader, next.id, next.action, &[]);
+            } else {
+                changes.extend(self.run_action(loader, next.id, next.action));
             }
         }
         changes

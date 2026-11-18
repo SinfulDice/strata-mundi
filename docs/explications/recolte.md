@@ -49,7 +49,7 @@ sequenceDiagram
 
 - Le client (`mining.rs`) compte le temps image par image tant que le bouton Attaquer est maintenu sur **la même case, le même bloc, le même objet en main**. Autre chose → il recommence (`StartBreak` sur le nouveau bloc) ; bouton lâché → `StopBreak`.
 - Le serveur (`game/mining.rs`) note le début et **casse lui-même** le bloc quand le temps est écoulé : c'est lui qui a le dernier mot. Le `Break` du client, quand il arrive un peu avant (petite **marge** pour les à-coups du réseau), permet seulement de casser sans attendre ; trop tôt, il est refusé sans remettre le compte à zéro. Le serveur arrête la casse si l'objet en main change, si le bloc disparaît, si le joueur s'éloigne ou passe en créatif. Côté client, ouvrir un menu ou une cinématique, ou quitter la fenêtre, arrête aussi la casse.
-- `StartBreak` et `StopBreak` passent par la même file que les autres clics (voir [Joueur et interaction](joueur-et-interaction.md)) pour garder l'ordre, mais n'attendent pas la limite de 10 actions par seconde : ils ne changent aucun bloc.
+- `StartBreak` et `StopBreak` passent par la même file que les autres clics (voir [Joueur et interaction](joueur-et-interaction.md)) pour garder l'ordre, mais n'attendent pas la limite de 10 actions par seconde : ils ne changent aucun bloc. Comme tout clic, ils attendent les entrées de mouvement envoyées avant eux : le compte du serveur part du même moment du mouvement que celui du client.
 
 ### Les fissures
 

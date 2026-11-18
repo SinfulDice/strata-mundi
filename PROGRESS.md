@@ -33,4 +33,4 @@
 
 ## Défauts signalés
 
-- [ ] **Minage sous les pieds** (signalé le 18/11/2026, toujours présent après la v0.2.1) : quand le joueur casse le bloc sur lequel il se tient, il a l'impression d'être téléporté sur le bloc du dessous au lieu de tomber. Pistes : gravité/chute non interpolée côté client, ou correction de position du serveur qui écrase la prédiction. À corriger avant de continuer le J5b.
+- [x] **Minage sous les pieds** (signalé le 18/11/2026, toujours présent après la v0.2.1) : quand le joueur casse le bloc sur lequel il se tient, il a l'impression d'être téléporté sur le bloc du dessous au lieu de tomber. Cause : le serveur cassait le bloc avant d'appliquer les entrées envoyées avant le clic, et le client rejouait ces entrées sur le monde prédit ; la correction vers le bas s'appliquait d'un coup. Correction (D090) : clics exécutés après les entrées qui les précèdent, rejeu sur le terrain d'avant le clic, petites corrections lissées. Tests `input_order_tests` (serveur, créatif et survie) et `player.rs`.

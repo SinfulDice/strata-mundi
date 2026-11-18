@@ -1,6 +1,8 @@
 //! The local player, predicted with the same physics as the server: the client moves at
 //! once, the server answers with the authoritative state, and inputs it has not applied
-//! yet are replayed on top of it. Rendering interpolates between the last two ticks.
+//! yet are replayed on top of it, each on the terrain the server had for it. Rendering
+//! interpolates between the last two ticks; a small correction fades out instead of
+//! jumping.
 
 use glam::DVec3;
 use std::collections::VecDeque;
@@ -10,6 +12,10 @@ use strata_core::physics::{Body, MoveInput, MovementSettings, TICK, Terrain, ste
 const DOUBLE_TAP_SECONDS: f64 = 0.3;
 /// Unacknowledged inputs kept for replay; beyond that the server is far behind anyway.
 const MAX_PENDING: usize = 64;
+/// Corrections shorter than this (blocks) fade out; longer ones are teleports.
+const SNAP_DISTANCE: f64 = 2.0;
+/// Time constant of the fading (seconds).
+const SMOOTHING_SECONDS: f64 = 0.1;
 
 pub struct LocalPlayer {
     pub body: Body,
@@ -26,6 +32,8 @@ pub struct LocalPlayer {
     dash_pending: bool,
     /// Sitting in a boat: the server moves the body, inputs only steer.
     pub riding: bool,
+    /// Drawn offset left by a small correction, fading to zero.
+    smoothing: DVec3,
 }
 
 impl LocalPlayer {
@@ -42,7 +50,13 @@ impl LocalPlayer {
             toggle_pending: false,
             dash_pending: false,
             riding: false,
+            smoothing: DVec3::ZERO,
         }
+    }
+
+    /// The sequence of the last input sent.
+    pub fn last_input(&self) -> u32 {
+        self.sequence
     }
 
     /// Runs the fixed ticks due after `dt` seconds; returns the inputs to send.
@@ -54,6 +68,7 @@ impl LocalPlayer {
     ) -> Vec<(u32, MoveInput)> {
         self.since_tick += dt.min(0.25);
         self.since_jump_press += dt;
+        self.smoothing *= (-dt / SMOOTHING_SECONDS).exp();
         if input.jump && !self.jump_was_held {
             let double_tap = self.since_jump_press < DOUBLE_TAP_SECONDS;
             self.toggle_pending |= double_tap;
@@ -80,8 +95,14 @@ impl LocalPlayer {
         sent
     }
 
-    /// Server state after input `sequence`: adopt it and replay the newer inputs.
-    pub fn reconcile(&mut self, sequence: u32, server: Body, terrain: &impl Terrain) {
+    /// Server state after input `sequence`: adopt it and replay the newer inputs, each on
+    /// `terrain_at(input)`.
+    pub fn reconcile<T: Terrain>(
+        &mut self,
+        sequence: u32,
+        server: Body,
+        terrain_at: impl Fn(u32) -> T,
+    ) {
         while self
             .pending
             .front()
@@ -90,15 +111,30 @@ impl LocalPlayer {
             self.pending.pop_front();
         }
         let mut body = server;
-        for (_, input) in self.pending.iter().filter(|_| !self.riding) {
-            step(&mut body, input, &self.movement, terrain);
-        }
-        if body.position.distance(self.body.position) > 1e-3 {
-            tracing::debug!(
-                error = body.position.distance(self.body.position),
-                "prediction corrected"
+        for (input_sequence, input) in self.pending.iter().filter(|_| !self.riding) {
+            step(
+                &mut body,
+                input,
+                &self.movement,
+                &terrain_at(*input_sequence),
             );
-            self.previous = body;
+        }
+        self.correct(body);
+    }
+
+    /// Takes the replayed body; a small gap is drawn away gradually, a large one at once.
+    fn correct(&mut self, body: Body) {
+        let shift = body.position - self.body.position;
+        let error = shift.length();
+        if error > 1e-3 {
+            tracing::debug!(error, "prediction corrected");
+            if error < SNAP_DISTANCE {
+                self.previous.position += shift;
+                self.smoothing -= shift;
+            } else {
+                self.previous = body;
+                self.smoothing = DVec3::ZERO;
+            }
         }
         self.body = body;
     }
@@ -106,7 +142,7 @@ impl LocalPlayer {
     /// Eye position between the last two ticks, for smooth rendering at any frame rate.
     pub fn eyes(&self) -> DVec3 {
         let alpha = (self.since_tick / TICK).clamp(0.0, 1.0);
-        self.previous.eyes().lerp(self.body.eyes(), alpha)
+        self.previous.eyes().lerp(self.body.eyes(), alpha) + self.smoothing
     }
 }
 
@@ -147,7 +183,7 @@ mod tests {
             step(&mut server, input, &settings(), &floor);
         }
         let predicted = client.body;
-        client.reconcile(sent[5].0, server, &floor);
+        client.reconcile(sent[5].0, server, |_| floor);
         assert!(client.body.position.distance(predicted.position) < 1e-9);
     }
 
@@ -157,8 +193,50 @@ mod tests {
         let sent = client.advance(0.2, forward(), &floor);
         let mut forced = Body::at(DVec3::new(100.0, 0.0, 0.0));
         forced.on_ground = true;
-        client.reconcile(sent.last().unwrap().0, forced, &floor);
+        client.reconcile(sent.last().unwrap().0, forced, |_| floor);
         assert_eq!(client.body.position, forced.position);
+    }
+
+    #[test]
+    fn replayed_inputs_see_the_block_before_the_click() {
+        let start = Body::at(DVec3::new(0.5, 0.0, 0.5));
+        let hole = |x: i32, y: i32, z: i32| y < 0 && (x, y, z) != (0, -1, 0);
+        let mut client = LocalPlayer::new(start, settings());
+        let before = client.advance(0.1, MoveInput::default(), &floor);
+        let click = client.last_input();
+        client.advance(0.1, MoveInput::default(), &hole);
+        let predicted = client.body;
+        assert!(predicted.position.y < 0.0, "falls into the hole");
+        let mut server = start;
+        step(&mut server, &before[0].1, &settings(), &floor);
+        let terrain_at = |input: u32| {
+            move |x, y, z| match input <= click {
+                true => floor(x, y, z),
+                false => hole(x, y, z),
+            }
+        };
+        client.reconcile(before[0].0, server, terrain_at);
+        assert!(client.body.position.distance(predicted.position) < 1e-9);
+    }
+
+    #[test]
+    fn small_corrections_fade_out_large_ones_snap() {
+        let mut client = LocalPlayer::new(Body::at(DVec3::ZERO), settings());
+        let sent = client.advance(0.05, MoveInput::default(), &floor);
+        let drawn = client.eyes();
+        let mut server = client.body;
+        server.position.x += 0.5;
+        client.reconcile(sent[0].0, server, |_| floor);
+        assert!(client.eyes().distance(drawn) < 1e-9, "no jump on screen");
+        client.advance(0.5, MoveInput::default(), &floor);
+        assert!(
+            client.eyes().distance(client.body.eyes()) < 0.01,
+            "faded out"
+        );
+        server = client.body;
+        server.position.x += 50.0;
+        client.reconcile(client.last_input(), server, |_| floor);
+        assert_eq!(client.eyes(), server.eyes(), "a teleport is not smoothed");
     }
 
     #[test]
@@ -168,7 +246,7 @@ mod tests {
         let sent = client.advance(0.2, forward(), &floor);
         assert_eq!(client.body.position, DVec3::ZERO, "inputs only steer");
         let seat = Body::at(DVec3::new(3.0, 1.0, 0.0));
-        client.reconcile(sent[0].0, seat, &floor);
+        client.reconcile(sent[0].0, seat, |_| floor);
         assert_eq!(
             client.body.position, seat.position,
             "no replay while riding"

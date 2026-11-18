@@ -16,7 +16,6 @@ use crate::render::Renderer;
 use crate::settings::ControlSettings;
 use crate::sky::DayClock;
 use crate::streaming::WorldView;
-use crate::world::ClientWorld;
 use glam::DVec3;
 use strata_core::cinematic::Cinematic;
 use strata_core::coords::{BlockPos, DEFAULT_WORLD_BORDER};
@@ -158,7 +157,7 @@ impl Gameplay {
     }
 
     fn advance_player(&mut self, dt: f32, input: MoveInput, connection: &ClientConnection) {
-        let terrain = terrain(&self.view.world, &self.info, self.border);
+        let terrain = terrain(&self.view, &self.info, self.border, None);
         if let Some(player) = &mut self.player {
             let worn = self.inventory.worn_stats(&self.info.content);
             let movement = &mut player.movement;
@@ -215,7 +214,8 @@ impl Gameplay {
             )
         });
         if let Some((pos, block)) = change.flatten() {
-            self.view.predict(id, pos, block);
+            let after_input = self.player.as_ref().map_or(0, LocalPlayer::last_input);
+            self.view.predict(id, pos, block, after_input);
         }
         connection.send(ClientMessage::Action { id, action });
     }
@@ -306,16 +306,25 @@ impl Gameplay {
 }
 
 /// The same solidity and liquid rules as the server (`solid_at`), on the client's copy
-/// of the world.
-fn terrain<'a>(world: &'a ClientWorld, info: &'a BlockInfo, border: i32) -> impl Terrain + 'a {
+/// of the world; with `before: Some(input)`, as the server had it when it applied that
+/// input (the cells predicted by later clicks keep the server's block).
+fn terrain<'a>(
+    view: &'a WorldView,
+    info: &'a BlockInfo,
+    border: i32,
+    before: Option<u32>,
+) -> impl Terrain + 'a {
+    let block = move |pos| {
+        before
+            .and_then(|input| view.predictions.block_before(pos, input))
+            .unwrap_or_else(|| view.world.block_at(pos))
+    };
     TerrainFns {
         solid: move |x, y, z| {
             solid_at(BlockPos::new(x, y, z), border, |pos| {
-                world
-                    .is_loaded(pos)
-                    .then(|| info.is_solid(world.block_at(pos)))
+                view.world.is_loaded(pos).then(|| info.is_solid(block(pos)))
             })
         },
-        liquid: move |x, y, z| info.liquid(world.block_at(BlockPos::new(x, y, z))),
+        liquid: move |x, y, z| info.liquid(block(BlockPos::new(x, y, z))),
     }
 }

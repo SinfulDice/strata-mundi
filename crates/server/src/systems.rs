@@ -17,8 +17,9 @@ const MOVE_EPSILON: f64 = 1e-4;
 pub const SLEEP_TICKS: u32 = 20;
 
 /// Applies each player's queued inputs with the shared physics, at the pace of the clock,
-/// and records the last input sequence applied. A riding player's inputs steer the boat
-/// instead; a new sneak press asks to get off, returned for the caller to settle.
+/// and records the last input sequence applied; a click waiting for the input just applied
+/// stops the tick's inputs there. A riding player's inputs steer the boat instead; a new
+/// sneak press asks to get off, returned for the caller to settle.
 pub fn player_movement(ecs: &mut Ecs, terrain: &impl Terrain) -> Vec<Entity> {
     let mut dismounts = Vec::new();
     for (entity, control) in ecs.controls.iter_mut() {
@@ -45,6 +46,14 @@ pub fn player_movement(ecs: &mut Ecs, terrain: &impl Terrain) -> Vec<Entity> {
             control.look = [input.yaw, input.pitch];
             control.input_budget -= 1;
             applied = true;
+            // The click sent after this input runs this tick, before the next input.
+            let click_waits = control
+                .actions
+                .front()
+                .is_some_and(|click| click.after_input == Some(sequence));
+            if click_waits {
+                break;
+            }
             if boat.is_some() && pressed_sneak {
                 dismounts.push(entity);
                 break;

@@ -17,6 +17,9 @@ struct Pending {
     action: ActionId,
     /// The cell as the server last said it was.
     server: BlockId,
+    /// The last input sent before the first click on the cell: replayed inputs up to
+    /// this one see the server's block, as the server did when it applied them.
+    after_input: u32,
 }
 
 #[derive(Default)]
@@ -40,12 +43,24 @@ impl BlockPredictions {
         waiting as usize <= MAX_PENDING_ACTIONS
     }
 
-    /// Click `action` shows a new block at `pos`, which the server says holds `server`.
-    pub fn predict(&mut self, action: ActionId, pos: BlockPos, server: BlockId) {
+    /// Click `action`, sent after input `after_input`, shows a new block at `pos`, which
+    /// the server says holds `server`.
+    pub fn predict(&mut self, action: ActionId, pos: BlockPos, server: BlockId, after_input: u32) {
         self.pending
             .entry(pos)
             .and_modify(|pending| pending.action = action)
-            .or_insert(Pending { action, server });
+            .or_insert(Pending {
+                action,
+                server,
+                after_input,
+            });
+    }
+
+    /// The block the server had at `pos` when it applied input `input`, if a click
+    /// predicted after that input changed the cell since.
+    pub fn block_before(&self, pos: BlockPos, input: u32) -> Option<BlockId> {
+        let pending = self.pending.get(&pos)?;
+        (input.wrapping_sub(pending.after_input) as i32 <= 0).then_some(pending.server)
     }
 
     /// The server changed `pos`: `true` to show it now, `false` when a prediction covers

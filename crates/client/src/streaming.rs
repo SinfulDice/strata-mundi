@@ -164,12 +164,12 @@ impl WorldView {
         }
     }
 
-    /// Click `action` should turn `pos` into `block`: shown now, with its particles and
-    /// sound, until the server answers.
-    pub fn predict(&mut self, action: ActionId, pos: BlockPos, block: BlockId) {
+    /// Click `action`, sent after input `after_input`, should turn `pos` into `block`:
+    /// shown now, with its particles and sound, until the server answers.
+    pub fn predict(&mut self, action: ActionId, pos: BlockPos, block: BlockId, after_input: u32) {
         let current = self.world.block_at(pos);
         if self.world.is_loaded(pos) && current != block {
-            self.predictions.predict(action, pos, current);
+            self.predictions.predict(action, pos, current, after_input);
             self.set_block(pos, block);
         }
     }

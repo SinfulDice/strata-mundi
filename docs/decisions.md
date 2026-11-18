@@ -736,3 +736,10 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - Les recettes d'établi sont toutes connues pour l'instant : le jalon 13 branchera le savoir (comme `stats_known`).
 - Les bottes de mobilité se font au joaillier en attendant l'armurier (jalon 6). La **laine** vient provisoirement de 4 fibres végétales, comme le cuir, jusqu'aux moutons (v0.4).
 
+
+## D090 — Clics ordonnés avec les entrées, rejeu sur le terrain d'avant le clic (v0.3, correctif)
+
+- Défaut : casser le bloc sous ses pieds « téléportait » le joueur un bloc plus bas. Le serveur cassait le bloc **à l'arrivée du clic**, alors que des entrées envoyées avant lui attendaient encore dans sa file : il faisait tomber le joueur plus tôt que le client. Le client, lui, rejouait ses entrées non confirmées **sur le monde prédit** (bloc déjà cassé), même celles d'avant le clic. Les deux écarts donnaient une correction vers le bas, appliquée d'un coup.
+- Serveur : un clic retient la dernière entrée reçue avant lui (`Queued::after_input`) et ne passe qu'une fois cette entrée appliquée ; le tick s'arrête juste après elle pour que le clic passe avant l'entrée suivante, comme chez le client. Sans entrée en attente, rien ne change (clic immédiat).
+- Client : chaque case prédite retient la dernière entrée envoyée avant le clic ; au rejeu, une entrée antérieure voit le bloc du serveur (`BlockPredictions::block_before`). Vaut pour la casse (créatif et survie) comme pour la pose (pilier sous soi).
+- Une petite correction (< 2 blocs) ne saute plus à l'écran : l'écart s'efface en ~0,1 s ; au-delà, c'est une téléportation, appliquée d'un coup.

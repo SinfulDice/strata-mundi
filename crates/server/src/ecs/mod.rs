@@ -126,11 +126,22 @@ pub struct Swing {
 
 /// A click waiting for its turn.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Queued {
-    /// Run when the rate limit allows.
-    Run(ActionId, WorldAction),
+pub struct Queued {
+    pub id: ActionId,
+    pub action: WorldAction,
     /// Too many clicks wait already: refused, but answered in its turn.
-    Refuse(ActionId, WorldAction),
+    pub refused: bool,
+    /// The last input received before the click: the client predicted the click after
+    /// that input, so the server runs it after that input too.
+    pub after_input: Option<u32>,
+}
+
+impl Queued {
+    /// Whether the inputs received before the click have all been applied.
+    pub fn inputs_done(&self, last_applied: u32) -> bool {
+        self.after_input
+            .is_none_or(|after| after.wrapping_sub(last_applied) as i32 <= 0)
+    }
 }
 
 impl PlayerControl {

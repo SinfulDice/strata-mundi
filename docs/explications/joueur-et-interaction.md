@@ -38,7 +38,8 @@ sequenceDiagram
 1. À chaque pas, le client lit les touches, fabrique une `MoveInput` (direction voulue, regard, saut, sprint…), **l'applique tout de suite** à son joueur et l'envoie numérotée au serveur.
 2. Le serveur range ces entrées et les applique **au rythme de son horloge** : une par tick en moyenne, avec une petite réserve de 3 pour rattraper un retard (un client ne peut donc pas aller plus vite en envoyant plus de messages). Un client qui n'envoie plus rien pendant une demi-seconde ne flotte pas : son joueur retombe. Le serveur renvoie le corps officiel et le numéro de la dernière entrée appliquée.
 3. Le client **repart du corps officiel** et rejoue les entrées que le serveur n'a pas encore vues. Si tout va bien, on retombe exactement au même endroit et rien ne bouge à l'écran ; si le serveur a corrigé (téléportation, triche), le client suit le serveur.
-4. L'affichage **interpole** entre les deux derniers pas : le mouvement est fluide à 30, 60 ou 144 images par seconde alors que la physique ne tourne qu'à 20.
+4. L'affichage **interpole** entre les deux derniers pas : le mouvement est fluide à 30, 60 ou 144 images par seconde alors que la physique ne tourne qu'à 20. Une petite correction (moins de 2 blocs) ne saute pas à l'écran : l'écart s'efface en un dixième de seconde ; une plus grande (téléportation) s'applique d'un coup.
+5. **Clics et mouvement dans le même ordre** : un clic (casser, poser) passe sur le serveur seulement après les entrées envoyées avant lui, et au rejeu, ces entrées-là voient encore le bloc d'avant le clic. Casser le bloc sous ses pieds fait donc tomber le joueur au même moment des deux côtés : une vraie chute, pas un saut d'un bloc (D090).
 
 ### Viser, casser, poser
 

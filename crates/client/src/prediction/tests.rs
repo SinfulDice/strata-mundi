@@ -77,7 +77,7 @@ fn view() -> WorldView {
 fn a_predicted_placement_shows_at_once_then_is_confirmed() {
     let mut view = view();
     let id = view.predictions.next_id();
-    view.predict(id, ABOVE, STONE);
+    view.predict(id, ABOVE, STONE, 0);
     assert_eq!(view.world.block_at(ABOVE), STONE, "before any answer");
     assert_eq!(view.block_changes, vec![(ABOVE, AIR, STONE)]);
     view.receive_block(ABOVE, STONE);
@@ -90,7 +90,7 @@ fn a_predicted_placement_shows_at_once_then_is_confirmed() {
 fn a_refused_click_is_undone_without_effects() {
     let mut view = view();
     let id = view.predictions.next_id();
-    view.predict(id, ABOVE, STONE);
+    view.predict(id, ABOVE, STONE, 0);
     view.receive_block(ABOVE, AIR);
     assert_eq!(view.world.block_at(ABOVE), STONE, "kept until the answer");
     view.acknowledge(id);
@@ -102,7 +102,7 @@ fn a_refused_click_is_undone_without_effects() {
 fn a_predicted_break_throws_its_particles_and_sound_once() {
     let mut view = view();
     let id = view.predictions.next_id();
-    view.predict(id, GROUND, AIR);
+    view.predict(id, GROUND, AIR, 0);
     assert_eq!(view.world.block_at(GROUND), AIR);
     let thrown = view.particles.len();
     assert!(thrown > 0);
@@ -116,9 +116,9 @@ fn a_predicted_break_throws_its_particles_and_sound_once() {
 fn a_newer_server_change_wins_and_the_prediction_never_comes_back() {
     let mut view = view();
     let place = view.predictions.next_id();
-    view.predict(place, ABOVE, STONE);
+    view.predict(place, ABOVE, STONE, 0);
     let broken = view.predictions.next_id();
-    view.predict(broken, ABOVE, AIR);
+    view.predict(broken, ABOVE, AIR, 0);
     view.receive_block(ABOVE, STONE);
     view.acknowledge(place);
     assert_eq!(
@@ -144,7 +144,7 @@ fn a_newer_server_change_wins_and_the_prediction_never_comes_back() {
 fn unpredicted_changes_show_at_once_with_their_effects() {
     let mut view = view();
     let id = view.predictions.next_id();
-    view.predict(id, ABOVE, STONE);
+    view.predict(id, ABOVE, STONE, 0);
     let beside = BlockPos::new(1, 1, 0);
     view.receive_block(beside, STONE);
     assert_eq!(view.world.block_at(beside), STONE);
@@ -160,7 +160,7 @@ fn past_the_server_queue_clicks_wait_for_the_answer_and_play_once() {
         .map(|&pos| {
             let id = view.predictions.next_id();
             if view.predictions.may_predict(id) {
-                view.predict(id, pos, STONE);
+                view.predict(id, pos, STONE, 0);
             }
             id
         })
@@ -191,10 +191,23 @@ fn past_the_server_queue_clicks_wait_for_the_answer_and_play_once() {
 fn a_reloaded_column_drops_its_predictions() {
     let mut predictions = BlockPredictions::default();
     let id = predictions.next_id();
-    predictions.predict(id, ABOVE, AIR);
+    predictions.predict(id, ABOVE, AIR, 0);
     predictions.forget_column(ColumnPos { x: 0, z: 0 });
     assert!(predictions.server_block(ABOVE, STONE));
     assert!(predictions.acknowledge(id).is_empty());
+}
+
+#[test]
+fn inputs_before_a_click_see_the_server_block() {
+    let mut predictions = BlockPredictions::default();
+    let id = predictions.next_id();
+    predictions.predict(id, GROUND, STONE, 7);
+    assert_eq!(predictions.block_before(GROUND, 6), Some(STONE));
+    assert_eq!(predictions.block_before(GROUND, 7), Some(STONE));
+    assert_eq!(predictions.block_before(GROUND, 8), None, "after the click");
+    assert_eq!(predictions.block_before(ABOVE, 6), None, "not predicted");
+    predictions.acknowledge(id);
+    assert_eq!(predictions.block_before(GROUND, 6), None, "settled");
 }
 
 struct Scene {

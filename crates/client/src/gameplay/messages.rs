@@ -44,9 +44,11 @@ impl Gameplay {
                 self.player = Some(LocalPlayer::new(*body, *movement));
             }
             ServerMessage::PlayerState { sequence, body } => {
-                let terrain = terrain(&self.view.world, &self.info, self.border);
+                let (view, info, border) = (&self.view, &self.info, self.border);
                 if let Some(player) = &mut self.player {
-                    player.reconcile(sequence, body, &terrain);
+                    player.reconcile(sequence, body, |input| {
+                        terrain(view, info, border, Some(input))
+                    });
                 }
             }
             ServerMessage::Column { column, biomes } => self.view.insert(*column, biomes),

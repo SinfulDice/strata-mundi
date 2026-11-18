@@ -364,3 +364,7 @@ mod hammer_tests;
 
 #[cfg(test)]
 mod equipment_tests;
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod input_order_tests;
