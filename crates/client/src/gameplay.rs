@@ -159,11 +159,11 @@ impl Gameplay {
     fn advance_player(&mut self, dt: f32, input: MoveInput, connection: &ClientConnection) {
         let terrain = terrain(&self.view, &self.info, self.border, None);
         if let Some(player) = &mut self.player {
-            let worn = self.inventory.worn_stats(&self.info.content);
+            let equipment = self.inventory.equipment(&self.info.content);
             let movement = &mut player.movement;
-            movement.speed = f64::from(worn.burden.speed_factor());
+            movement.speed = f64::from(equipment.stats.burden.speed_factor());
             movement.mobility = if movement.gear_mobility {
-                self.info.content.worn.mobility.mobility(&worn)
+                equipment.mobility
             } else {
                 Mobility::default()
             };

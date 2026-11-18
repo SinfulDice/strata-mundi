@@ -139,8 +139,8 @@ pub fn step(
     } else {
         wish * settings.speed.clamp(0.0, MAX_SPEED_FACTOR)
     };
-    abilities::begin(body);
     let walking = liquid.is_none() && !body.flying;
+    abilities::begin(body, walking);
     match liquid {
         Some(_) => swim::steer(body, wish, input.jump),
         None => steer(body, wish, input),

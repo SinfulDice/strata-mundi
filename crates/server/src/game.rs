@@ -79,6 +79,8 @@ pub struct Game {
     furnace_view: Option<FurnaceView>,
     /// Stats of the hand and the armour, upgrades counted.
     stats_cache: strata_core::upgrade::StatsCache,
+    /// What is worn, until a worn slot changes.
+    worn_cache: strata_core::worn::WornCache,
 }
 
 impl Game {
@@ -116,6 +118,7 @@ impl Game {
             furnaces: BTreeMap::new(),
             waiting_furnaces: HashMap::new(),
             stats_cache: Default::default(),
+            worn_cache: Default::default(),
             furnace_view: None,
         }
     }
@@ -364,6 +367,9 @@ mod hammer_tests;
 
 #[cfg(test)]
 mod equipment_tests;
+
+#[cfg(test)]
+mod mobility_tests;
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]

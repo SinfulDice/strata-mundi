@@ -5,7 +5,7 @@ use strata_core::inventory::{
     Area, Click, HOTBAR, ItemStack, PlayerInventory, SlotRef, SortOrder, worn_slots,
 };
 use strata_core::upgrade::{ItemStats, StatsCache, max_durability};
-use strata_core::worn::{WornStats, worn_stats};
+use strata_core::worn::{Equipment, WornCache, worn_stats};
 use strata_protocol::InventoryRequest;
 
 pub const SLOTS: usize = HOTBAR.end;
@@ -21,6 +21,8 @@ pub struct ClientInventory {
     outbox: Vec<InventoryRequest>,
     /// Stats of the hand and the armour, upgrades counted.
     stats: StatsCache,
+    /// What is worn, until a worn slot changes.
+    worn: WornCache,
 }
 
 impl ClientInventory {
@@ -70,10 +72,13 @@ impl ClientInventory {
 
     /// What the armour, accessories and sets worn come to, as the server computes it
     /// (protection shown in the inventory, speed and abilities predicted).
-    pub fn worn_stats(&self, content: &Content) -> WornStats {
-        let worn = worn_slots()
-            .filter_map(|slot| Some((self.stack(slot)?, self.slot_stats(slot, content)?)));
-        worn_stats(worn, &content.items, &content.worn)
+    pub fn equipment(&self, content: &Content) -> Arc<Equipment> {
+        let compute = || {
+            let worn = worn_slots()
+                .filter_map(|slot| Some((self.stack(slot)?, self.slot_stats(slot, content)?)));
+            worn_stats(worn, &content.items, &content.worn)
+        };
+        self.worn.get(&self.inventory, compute, &content.worn)
     }
 
     pub fn inventory(&self) -> &PlayerInventory {

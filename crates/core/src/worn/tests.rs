@@ -187,3 +187,48 @@ fn the_bonus_reached_is_the_largest_within_the_pieces() {
     assert_eq!(set.bonus(3), Some(0));
     assert_eq!(set.bonus(9), Some(1));
 }
+
+#[test]
+fn mobility_rules_are_bounded() {
+    let wild = MobilityRules {
+        air_jump_speed: f64::NAN,
+        max_air_jumps: 200,
+        dash_speed: 1e9,
+        dash_ticks: 0,
+        dash_cooldown: 0,
+        climb_speed: -3.0,
+    }
+    .clamped();
+    assert_eq!(wild.air_jump_speed, 0.5);
+    assert_eq!(wild.max_air_jumps, 5);
+    assert_eq!(wild.dash_speed, 20.0);
+    assert_eq!((wild.dash_ticks, wild.dash_cooldown), (1, 5));
+    assert_eq!(wild.climb_speed, 0.5);
+    let kit = kit();
+    let boots = stats(&kit, &wearing(&kit, &[kit.boots], &[]));
+    let none = MobilityRules {
+        max_air_jumps: 0,
+        ..MobilityRules::default()
+    };
+    assert_eq!(none.mobility(&boots).air_jumps, 0, "capped by the rules");
+}
+
+#[test]
+fn the_last_pack_with_mobility_rules_wins() {
+    let dir = std::env::temp_dir().join(format!("strata-mobility-{}", std::process::id()));
+    for (name, priority, speed) in [("first", 0, 3.0), ("second", 10, 9.0)] {
+        let root = dir.join(name);
+        std::fs::create_dir_all(&root).unwrap();
+        let manifest = format!("(namespace: \"{name}\", priority: {priority})");
+        std::fs::write(root.join("pack.ron"), manifest).unwrap();
+        let rules = format!("Mobility(dash_speed: {speed})");
+        std::fs::write(root.join("mobility.ron"), rules).unwrap();
+    }
+    let mut errors = Vec::new();
+    let packs = crate::pack::PackSet::discover(&dir, &mut errors);
+    let rules = super::load::mobility_rules(&packs, &mut errors);
+    assert!(errors.is_empty(), "{errors:?}");
+    assert_eq!(rules.dash_speed, 9.0);
+    assert_eq!(rules.climb_speed, MobilityRules::default().climb_speed);
+    std::fs::remove_dir_all(dir).unwrap();
+}

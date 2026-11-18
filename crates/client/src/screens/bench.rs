@@ -6,8 +6,8 @@ use super::slots::SlotsModel;
 use crate::ui::SlotPress;
 use strata_core::content::EquipSlot;
 use strata_core::content::ItemId;
-use strata_core::crafting::BenchRecipe;
-use strata_core::inventory::{ACCESSORIES, Click, HOTBAR, MAIN, slot_equip};
+use strata_core::crafting::{BENCH_SIDE, BenchRecipe, can_lay};
+use strata_core::inventory::{ACCESSORIES, Click, CraftGrid, slot_equip};
 use strata_protocol::InventoryRequest;
 
 impl SlotsModel<'_> {
@@ -55,27 +55,22 @@ impl SlotsModel<'_> {
         Some(text)
     }
 
-    /// The inventory and the cells together hold what one craft takes.
+    /// The cells hold what one craft takes, or choosing the recipe would lay it (the
+    /// server's own check).
     fn has_ingredients(&self, recipe: &BenchRecipe) -> bool {
-        let inventory = self.inventory.inventory();
-        let cells = self.crafting.map(|c| &c.view.grid);
-        let held = HOTBAR
-            .chain(MAIN)
-            .filter_map(|index| inventory.slots.get(index))
-            .chain(
-                cells
-                    .into_iter()
-                    .flat_map(|grid| grid.slots.iter().flatten()),
-            );
-        let stacks: Vec<_> = held.collect();
-        recipe.ingredients.iter().all(|(ingredient, count)| {
-            let total: u32 = stacks
-                .iter()
-                .filter(|stack| ingredient.accepts(stack.item))
-                .map(|stack| u32::from(stack.count))
-                .sum();
-            total >= u32::from(*count)
-        })
+        let Some(grid) = self.crafting.map(|c| &c.view.grid) else {
+            return false;
+        };
+        let grid = CraftGrid {
+            side: BENCH_SIDE,
+            slots: grid.clone(),
+        };
+        can_lay(
+            self.inventory.inventory(),
+            &grid,
+            recipe,
+            &self.content.items,
+        )
     }
 
     pub(super) fn choose_bench_recipe(&mut self, index: usize, press: SlotPress) -> bool {
@@ -98,7 +93,8 @@ impl SlotsModel<'_> {
             EquipSlot::Ring => "ui-inventory-ring",
             EquipSlot::Amulet => "ui-inventory-amulet",
             EquipSlot::Belt => "ui-inventory-belt",
-            _ => "ui-inventory-cloak",
+            EquipSlot::Cloak => "ui-inventory-cloak",
+            _ => return None,
         };
         Some(self.content.translations.text(self.language, key))
     }

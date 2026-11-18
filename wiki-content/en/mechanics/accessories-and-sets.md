@@ -18,7 +18,7 @@ Wearing several matching pieces of one material (leather, cloth, iron and gold m
 ## Movement from equipment
 
 - **Leaping Boots**: a second jump in the air (press Jump again).
-- **Runner's Belt**: a short dash where you are going, with the "Dash" key (F, left stick click), then a cooldown.
+- **Runner's Belt**: a short dash where you are going, with the "Dash" key (F, D-pad down), then a cooldown.
 - **Crampon Boots**: walking into a wall climbs it; sneaking holds on.
 
 The world option "Movement from equipment" turns them all off.

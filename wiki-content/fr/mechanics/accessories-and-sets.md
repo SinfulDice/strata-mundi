@@ -18,7 +18,7 @@ Porter plusieurs pièces assorties d'un même matériau (cuir, tissu, mailles ou
 ## La mobilité par l'équipement
 
 - **Bottes de saut** : un second saut en l'air (appuyez à nouveau sur Sauter).
-- **Ceinture de course** : une courte esquive dans la direction où vous allez, avec la touche « Esquive » (F, clic du stick gauche), puis un temps de recharge.
+- **Ceinture de course** : une courte esquive dans la direction où vous allez, avec la touche « Esquive » (F, bas de la croix), puis un temps de recharge.
 - **Bottes à crampons** : avancer contre un mur fait grimper ; accroupi, on reste accroché.
 
 L'option de monde « Mobilité par l'équipement » les désactive toutes.

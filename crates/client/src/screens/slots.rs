@@ -142,8 +142,8 @@ impl SlotsModel<'_> {
                 text.push_str(&self.tr("gear-broken-line"));
             }
         }
-        let worn = self.inventory.worn_stats(self.content);
-        let sets = self.content.set_lines(stack.item, &worn, self.language);
+        let equipment = self.inventory.equipment(self.content);
+        let sets = (self.content).set_lines(stack.item, &equipment.stats, self.language);
         for line in self
             .content
             .stack_upgrade_lines(stack, self.language)
@@ -224,7 +224,8 @@ impl ScreenModel for SlotsModel<'_> {
                     &[(
                         "points",
                         self.inventory
-                            .worn_stats(self.content)
+                            .equipment(self.content)
+                            .stats
                             .protection
                             .to_string(),
                     )],

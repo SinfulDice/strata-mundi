@@ -134,3 +134,57 @@ fn walking_into_a_wall_climbs_it_only_with_climbing() {
         "sneaking holds on"
     );
 }
+
+#[test]
+fn a_dash_without_movement_goes_where_the_body_looks() {
+    let settings = settings(dash());
+    for (yaw, along) in [
+        (0.0_f32, DVec3::NEG_Z),
+        (std::f32::consts::FRAC_PI_2, DVec3::X),
+    ] {
+        let mut body = Body::at(DVec3::new(0.5, 0.0, 10.5));
+        let input = MoveInput {
+            yaw,
+            ..input(false, false, true)
+        };
+        run(&mut body, input, &settings, 3);
+        let moved = body.position - DVec3::new(0.5, 0.0, 10.5);
+        assert!(moved.dot(along) > 1.0, "yaw {yaw}: {moved}");
+        assert!((moved - along * moved.dot(along)).length() < 1e-6);
+    }
+}
+
+#[test]
+fn climbing_does_not_give_the_air_jumps_back() {
+    let climbing = settings(Mobility {
+        air_jumps: 1,
+        air_jump_speed: 7.6,
+        climb: Some(2.4),
+        ..Mobility::default()
+    });
+    let mut body = Body::at(DVec3::new(0.5, 0.0, -1.5));
+    run(&mut body, input(false, false, false), &climbing, 2);
+    run(&mut body, input(true, false, false), &climbing, 1);
+    run(&mut body, input(false, false, false), &climbing, 4);
+    run(&mut body, input(true, false, false), &climbing, 1);
+    assert_eq!(body.abilities.air_jumps_used, 1);
+    run(&mut body, input(false, true, false), &climbing, 5);
+    assert!(!body.on_ground);
+    assert_eq!(
+        body.abilities.air_jumps_used, 1,
+        "only the ground gives them back"
+    );
+}
+
+#[test]
+fn swimming_or_flying_ends_a_dash() {
+    let mut body = Body::at(DVec3::new(0.5, 0.0, 10.5));
+    body.abilities.dash_left = 3;
+    body.flying = true;
+    let settings = MovementSettings {
+        can_fly: true,
+        ..settings(dash())
+    };
+    run(&mut body, input(false, false, false), &settings, 1);
+    assert_eq!(body.abilities.dash_left, 0);
+}

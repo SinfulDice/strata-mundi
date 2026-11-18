@@ -3,6 +3,7 @@
 // ticks (20 a second). The world option « Movement from equipment » turns them off.
 Mobility(
     air_jump_speed: 7.6,
+    max_air_jumps: 3,
     dash_speed: 14.0,
     dash_ticks: 4,
     dash_cooldown: 30,

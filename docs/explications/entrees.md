@@ -25,10 +25,11 @@ Contrôles par défaut (boutons de manette nommés comme sur la New 3DS, que le 
 
 | Action | Clavier (QWERTY / AZERTY) | Manette |
 |---|---|---|
-| Avancer, reculer, gauche, droite | W A S D / Z Q S D | stick gauche ou croix |
+| Avancer, reculer, gauche, droite | W A S D / Z Q S D | stick gauche ou croix (sauf bas : esquive) |
 | Sauter (double saut : voler) / monter en vol | Espace | B (bas) |
 | S'accroupir / descendre en vol | Maj gauche | clic stick droit ou A (droite) |
 | Sprint | Ctrl gauche | clic stick gauche |
+| Esquive (avec une ceinture de course) | F | croix bas |
 | Regarder | souris | stick droit |
 | Casser / poser | clic gauche / clic droit | ZR / ZL |
 | Prendre le bloc visé | clic molette | Y (gauche) |

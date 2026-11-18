@@ -38,8 +38,12 @@ pub struct AbilityState {
     pub dash_cooldown: u16,
 }
 
-/// Before steering: landing gives the air jumps back, the dash cools down.
-pub(super) fn begin(body: &mut Body) {
+/// Before steering: landing gives the air jumps back, the dash cools down; swimming or
+/// flying ends a dash.
+pub(super) fn begin(body: &mut Body, walking: bool) {
+    if !walking {
+        body.abilities.dash_left = 0;
+    }
     if body.on_ground {
         body.abilities.air_jumps_used = 0;
     }
@@ -81,7 +85,8 @@ fn start_dash(body: &mut Body, input: &MoveInput, dash: &Dash, wish: DVec2) {
     state.dash_cooldown = dash.cooldown;
 }
 
-/// After moving on dry land: walking into a wall climbs it (sneaking holds on).
+/// After moving on dry land: walking into a wall climbs it (sneaking holds on). The jumps
+/// in the air come back only on the ground.
 pub(super) fn climb(
     body: &mut Body,
     input: &MoveInput,
@@ -95,7 +100,6 @@ pub(super) fn climb(
     if input.wish[1] <= 0.0 || !against_wall(body, wish, solid) {
         return;
     }
-    body.abilities.air_jumps_used = 0;
     body.velocity.y = if input.sneak {
         0.0
     } else {

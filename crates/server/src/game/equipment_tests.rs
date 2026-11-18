@@ -76,7 +76,7 @@ fn accessories_go_to_their_own_slots_and_like_rings_count_once() {
         slot(&w, ACCESSORIES.end - 1),
         Some(item(&w, "strata:wool_cloak"))
     );
-    let worn = w.game.worn_stats();
+    let worn = w.game.equipment().stats.clone();
     assert_eq!(
         worn.get(WornStat::MaxHealth),
         4.0,
@@ -131,7 +131,7 @@ fn set_bonuses_grow_with_the_matching_pieces_worn() {
         .collect();
     for count in 1..=4 {
         wear(&mut w, &pieces[..count]);
-        let worn = w.game.worn_stats();
+        let worn = w.game.equipment().stats.clone();
         let bonus = [0, 0, 1, 2, 3][count];
         let sum: u16 = base[..count].iter().sum();
         assert_eq!(worn.protection, sum + bonus, "{count} pieces");

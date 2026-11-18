@@ -226,7 +226,7 @@ Le bonus atteint remplace le précédent. Une pièce cassée (option « Objets u
 
 | Mobilité (`mobility.ron`) | Valeur |
 |---|---|
-| Saut en l'air | 7,6 blocs/s vers le haut (saut au sol : 8,4), une nouvelle pression de Sauter ; rendu à l'atterrissage ou en grimpant |
+| Saut en l'air | 7,6 blocs/s vers le haut (saut au sol : 8,4), une nouvelle pression de Sauter ; rendu seulement en touchant le sol (pas en grimpant) ; 3 au plus (`max_air_jumps`, 0 à 5) |
 | Esquive | 14 blocs/s pendant 4 ticks (≈ 2,8 blocs), recharge 30 ticks (1,5 s) |
 | Escalade | 2,4 blocs/s en avançant contre un mur ; accroupi : on reste accroché |
 

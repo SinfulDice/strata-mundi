@@ -9,7 +9,7 @@ mod plan;
 mod recipe;
 
 pub use bench::{
-    BENCH_CELLS, BENCH_SIDE, BenchRecipe, Benches, bench_result, fill_bench, take_bench,
+    BENCH_CELLS, BENCH_SIDE, BenchRecipe, Benches, bench_result, can_lay, fill_bench, take_bench,
 };
 pub use bench_load::BenchRecipeDef;
 pub(crate) use bench_load::load_benches;
@@ -23,3 +23,7 @@ pub(crate) use recipe::{Names, ingredient, load_recipes};
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests;
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod bench_tests;

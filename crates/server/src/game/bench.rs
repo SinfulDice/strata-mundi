@@ -15,9 +15,10 @@ impl Game {
         let Some(recipe) = self.bench_recipe() else {
             return;
         };
-        self.with_window(loader, |window, rules| {
+        let (_, thrown) = self.with_window(loader, |window, rules| {
             take_bench(window, &recipe, click, rules)
         });
+        self.throw_all(thrown);
     }
 
     /// The recipe chosen, if the open bench makes it: its ingredients are laid from the
@@ -34,8 +35,10 @@ impl Game {
         else {
             return;
         };
-        window.cut = Some(choice);
-        self.craft_changed();
+        if window.cut != Some(choice) {
+            window.cut = Some(choice);
+            self.craft_changed();
+        }
         self.with_window(loader, |window, rules| fill_bench(window, recipe, rules));
     }
 

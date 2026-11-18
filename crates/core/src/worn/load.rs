@@ -77,7 +77,7 @@ fn gear_set(
 }
 
 /// The last pack that has `mobility.ron` wins.
-fn mobility_rules(packs: &PackSet, errors: &mut Vec<PackError>) -> MobilityRules {
+pub(super) fn mobility_rules(packs: &PackSet, errors: &mut Vec<PackError>) -> MobilityRules {
     let mut rules = MobilityRules::default();
     for pack in packs.packs() {
         let path = pack.root.join("mobility.ron");

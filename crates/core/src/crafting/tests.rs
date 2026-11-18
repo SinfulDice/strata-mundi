@@ -3,23 +3,23 @@ use crate::content::{Item, ItemId, ItemKind, Registry, TextureId};
 use crate::id::Identifier;
 use crate::inventory::{Click, CraftGrid, ItemStack, PlayerInventory, Window};
 
-const LOG: ItemId = ItemId(0);
-const OAK: ItemId = ItemId(1);
-const BIRCH: ItemId = ItemId(2);
-const STICK: ItemId = ItemId(3);
-const TABLE: ItemId = ItemId(4);
-const WATER: ItemId = ItemId(5);
-const BUCKET: ItemId = ItemId(6);
-const DIRT: ItemId = ItemId(7);
-const MUD: ItemId = ItemId(8);
-const COAL: ItemId = ItemId(9);
-const TORCH: ItemId = ItemId(10);
+pub(super) const LOG: ItemId = ItemId(0);
+pub(super) const OAK: ItemId = ItemId(1);
+pub(super) const BIRCH: ItemId = ItemId(2);
+pub(super) const STICK: ItemId = ItemId(3);
+pub(super) const TABLE: ItemId = ItemId(4);
+pub(super) const WATER: ItemId = ItemId(5);
+pub(super) const BUCKET: ItemId = ItemId(6);
+pub(super) const DIRT: ItemId = ItemId(7);
+pub(super) const MUD: ItemId = ItemId(8);
+pub(super) const COAL: ItemId = ItemId(9);
+pub(super) const TORCH: ItemId = ItemId(10);
 
-fn id(name: &str) -> Identifier {
+pub(super) fn id(name: &str) -> Identifier {
     Identifier::new("test", name).unwrap()
 }
 
-fn items() -> Registry<ItemId, Item> {
+pub(super) fn items() -> Registry<ItemId, Item> {
     let mut items = Registry::default();
     let names = [
         "log", "oak", "birch", "stick", "table", "water", "bucket", "dirt", "mud", "coal", "torch",

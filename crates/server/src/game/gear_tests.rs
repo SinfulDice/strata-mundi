@@ -250,7 +250,7 @@ fn heavy_armour_slows_the_player_light_armour_does_not() {
     ];
     assert!((wear(&mut w, &plate) - 0.9).abs() < 1e-6);
     assert_eq!(
-        w.game.worn_stats().protection,
+        w.game.equipment().stats.clone().protection,
         15 + 3,
         "four plates: set bonus"
     );
