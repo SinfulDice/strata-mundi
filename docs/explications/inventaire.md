@@ -2,7 +2,7 @@
 
 ## À quoi ça sert
 
-En survie, chaque objet du joueur a une place : 27 cases de sac, la barre rapide, 4 cases d'armure et la main secondaire. Les objets s'empilent, s'usent, portent des informations en plus (améliorations, enchantements plus tard) ; ils se rangent dans des coffres et des tonneaux, tombent au sol et se ramassent. Tout cela doit rester juste même en multijoueur : c'est le **serveur** qui décide.
+En survie, chaque objet du joueur a une place : 27 cases de sac, la barre rapide, 4 cases d'armure, la main secondaire et 5 cases d'accessoires. Les objets s'empilent, s'usent, portent des informations en plus (améliorations, enchantements plus tard) ; ils se rangent dans des coffres et des tonneaux, tombent au sol et se ramassent. Tout cela doit rester juste même en multijoueur : c'est le **serveur** qui décide.
 
 ## Comment ça marche
 
@@ -12,7 +12,7 @@ Une `ItemStack` dit **quel objet**, **combien**, **combien d'usages il reste** (
 
 ### L'inventaire et les clics
 
-L'inventaire du joueur est une liste de 41 cases : 0-8 la barre, 9-35 le sac, 36-39 l'armure, 40 la main secondaire. Quand un écran est ouvert, le joueur peut aussi « tenir » une pile sous le pointeur.
+L'inventaire du joueur est une liste de 46 cases : 0-8 la barre, 9-35 le sac, 36-39 l'armure, 40 la main secondaire, 41-45 les accessoires ([Accessoires et ensembles](accessoires-et-sets.md)). Quand un écran est ouvert, le joueur peut aussi « tenir » une pile sous le pointeur.
 
 Toutes les règles des clics sont des **fonctions pures** dans `core` (sans réseau ni écran), testées une par une :
 

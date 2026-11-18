@@ -195,6 +195,41 @@ Temps de casse de la zone = celui du bloc le plus dur qu'elle emporte ; une util
 | Coût en XP | 1 la première fois, +1 par réparation précédente de l'objet, 10 au plus |
 | Enclume | 7 lingots de fer ; ne s'use pas |
 
+## Accessoires, ensembles et mobilité (v0.3, `items/`, `sets/`, `bench_recipes/`, `mobility.ron`)
+
+Valeurs de départ, à ajuster avec la crate `balance` (jalon 17). Un même effet (même stat, même opération) ne se cumule pas : de toutes les pièces portées et des bonus d'ensemble atteints, seul le plus fort compte.
+
+| Objet (case) | Effet porté | Recette au joaillier |
+|---|---|---|
+| Anneau de vitalité (anneau) | +4 vie max (appliqué au jalon 8) | 1 lingot d'or, 2 lingots de cuivre |
+| Amulette de respiration courte (amulette) | +5 s de souffle (jalon 8) | 2 lingots de cuivre, 1 lingot de fer, 1 tissu |
+| Ceinture à fioles (ceinture) | +3 emplacements de potion (potions à venir) | 3 cuirs, 1 lingot de fer |
+| Cape de laine (cape) | +4 isolation contre le froid (jalon 8) | 4 laines, 2 fibres végétales |
+| Ceinture de course (ceinture) | esquive | 2 cuirs, 1 lingot d'or, 1 lingot de cuivre |
+| Bottes de saut (pieds, légères, protection 1, 65 utilisations) | +1 saut en l'air | 1 paire de bottes en cuir, 2 lingots d'or |
+| Bottes à crampons (pieds, légères, protection 1, 65 utilisations) | escalade | 1 paire de bottes en cuir, 2 lingots de fer |
+| Joaillier | — | à l'établi : 2 lingots de cuivre, 1 lingot de fer, 3 planches |
+| Laine (provisoire jusqu'aux moutons, v0.4) | — | 4 fibres végétales (grille) |
+
+| Ensemble (4 pièces) | 2 pièces | 3 pièces | 4 pièces |
+|---|---|---|---|
+| Cuir | +1 protection | — | +2 protection, +1 isolation |
+| Tissu | +1 isolation | — | +3 isolation |
+| Mailles de fer | +1 protection | — | +2 protection, −20 % de poids |
+| Plates de fer | +1 protection | — | +3 protection |
+| Mailles d'or | +1 protection | — | +2 protection, +2 vie max |
+| Plates d'or | +1 protection | — | +2 protection, +2 vie max |
+| Écailles de diamant | +1 protection | +2 protection | +3 protection, −20 % de poids |
+| Plates de diamant | +1 protection | +2 protection | +4 protection |
+
+Le bonus atteint remplace le précédent. Une pièce cassée (option « Objets usés ») ne compte pas.
+
+| Mobilité (`mobility.ron`) | Valeur |
+|---|---|
+| Saut en l'air | 7,6 blocs/s vers le haut (saut au sol : 8,4), une nouvelle pression de Sauter ; rendu à l'atterrissage ou en grimpant |
+| Esquive | 14 blocs/s pendant 4 ticks (≈ 2,8 blocs), recharge 30 ticks (1,5 s) |
+| Escalade | 2,4 blocs/s en avançant contre un mur ; accroupi : on reste accroché |
+
 ## Coffres et fours améliorables (v0.3)
 
 Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).

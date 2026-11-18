@@ -1,6 +1,6 @@
 ## Principe
 
-En survie, chaque objet a sa place : **27 cases** de sac, la **barre rapide** de 9 cases (celle du bas de l'écran), **4 cases d'armure** et la **main secondaire**. Les objets s'empilent (64 pour la plupart des blocs, 1 pour les outils et les bateaux) ; un outil qui s'use montre une barre de durabilité. Le serveur décide de tout : un clic envoie une intention, la réponse met l'inventaire à jour.
+En survie, chaque objet a sa place : **27 cases** de sac, la **barre rapide** de 9 cases (celle du bas de l'écran), **4 cases d'armure**, la **main secondaire** et **5 cases d'accessoires** (deux anneaux, une amulette, une ceinture, une cape). Les objets s'empilent (64 pour la plupart des blocs, 1 pour les outils et les bateaux) ; un outil qui s'use montre une barre de durabilité. Le serveur décide de tout : un clic envoie une intention, la réponse met l'inventaire à jour.
 
 ## Ouvrir et manipuler
 

@@ -1,6 +1,6 @@
 ## Principle
 
-In survival, every item has its place: **27 bag slots**, the 9-slot **hotbar** (the one at the bottom of the screen), **4 armour slots** and the **off hand**. Items stack (64 for most blocks, 1 for tools and boats); a tool that wears shows a durability bar. The server decides everything: a click sends an intent, the answer updates the inventory.
+In survival, every item has its place: **27 bag slots**, the 9-slot **hotbar** (the one at the bottom of the screen), **4 armour slots**, the **off hand** and **5 accessory slots** (two rings, an amulet, a belt, a cloak). Items stack (64 for most blocks, 1 for tools and boats); a tool that wears shows a durability bar. The server decides everything: a click sends an intent, the answer updates the inventory.
 
 ## Opening and handling
 

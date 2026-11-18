@@ -707,3 +707,32 @@ Une entrée courte par décision : contexte, choix, alternatives écartées. Les
 - **Cache des statistiques** (`upgrade::StatsCache`) : statistiques de la main et des pièces portées, refaites seulement quand l'objet ou ses métadonnées changent (l'usure n'y touche pas), côté serveur (poids à chaque tick, outil en main) et client (protection, prédiction, marteau). `max_durability` ne regarde que les briques d'utilisations (et rien sans métadonnées). Le contour du marteau calcule ses coins sans lister les cases (`area_bounds`).
 - **Écran** : liste des améliorations défilante par rangées (molette, boutons « < » « > » quand elle déborde) ; aide courte, détail dans l'infobulle des cases vides ; infobulles d'améliorations limitées aux briques qui s'appliquent à l'objet, et aux objets dont les statistiques sont connues (`stats_known`). Code des listes de stations dans `screens/station_lists.rs`.
 - **Convergence avec les modules de four** : `ModuleDef` (jalon 3b) reste à part pour l'instant (des pourcentages de temps, de combustible et de sortie d'un **bloc**, rangés dans des cases de l'entité de bloc). Avant le jalon 7 (améliorations des coffres et du sac partagées), les modules deviendront des améliorations de la famille du bloc avec des briques `Stat` sur des stats de station (`strata:cook_time`, `strata:fuel_value`, `strata:output`) : même non-cumul, mêmes textes ; seul le support (pile d'objet ou entité de bloc) diffère. À faire au début du jalon 7.
+
+## D086 — Emplacements d'accessoires (v0.3, jalon 5)
+
+- L'inventaire du joueur passe de 41 à **46 cases** : `ACCESSORIES = 41..46` (deux anneaux, une amulette, une ceinture, une cape, ordre de `EquipSlot::ACCESSORIES`). `EquipSlot` gagne `Ring`, `Amulet`, `Belt`, `Cloak` ; `EquipSlot::ARMOR` remplace `ALL`. Les bottes spéciales restent `Feet`.
+- **Migration** : une sauvegarde à 41 cases est complétée par `PlayerInventory::normalize` (cases vides) ; `sanitize` sort d'une case d'accessoire ce qui n'y va pas. Pas de numéro de version de format nécessaire.
+- Écran : rangée de cinq cases sous les boutons (le panneau doit rester ≤ 240 unités de haut pour l'échelle 3 en 720p) ; la case vide dit ce qu'elle attend dans son infobulle ; l'étiquette « Main secondaire » passe sous la case. Maj-clic envoie une pièce dans la première case portée libre qui l'accepte.
+
+## D087 — Un seul calcul de ce qui est porté, non-cumul, ensembles (v0.3, jalon 5)
+
+- `worn::worn_stats(pièces, objets, règles)` : protection et poids des pièces (améliorations comprises, via le cache `StatsCache` côté serveur et client), puis **briques** portées : `worn` de chaque objet, statistiques « extra » de ses améliorations (lues comme des ajouts), bonus d'ensemble atteints. `gear::worn_protection` et `worn_burden` disparaissent.
+- **Non-cumul** : `upgrade::strongest_bricks` garde une brique par sorte (même stat, même opération), la plus forte, quelle que soit sa source : deux anneaux identiques comptent une fois, deux pièces qui donnent la même stat ne s'additionnent pas. Une pièce cassée ne donne ni protection, ni briques, ni pièce d'ensemble (son poids compte toujours).
+- **Ensembles** (`sets/<nom>.ron`) : liste de pièces (chaque objet différent compte une fois), bonus par nombre de pièces ; le plus grand atteint compte seul (il répète ce qu'il garde des précédents), comme les niveaux d'amélioration. Huit ensembles artisanaux par matériau et poids. Les ensembles de boss viendront dans les mêmes fichiers.
+- Nouvelles stats (`item_stats/`) : `max_health`, `breath`, `insulation` (lues au jalon 8), `potion_slots` (potions), `air_jumps`, `dash`, `climb` (mobilité). Elles attendent dans `WornStats::values` ; `WornStat` nomme celles que le moteur lit.
+- Infobulle : ligne « Porté : … », puis pour chaque ensemble « x/4 pièces portées » et ses bonus, l'actif marqué. Wiki : lignes « Porté » et « Ensembles » de l'infoboîte, page mécanique « Accessoires, sets et mobilité » avec le tableau des ensembles et de la mobilité.
+
+## D088 — Mobilité par l'équipement (v0.3, jalon 5)
+
+- Dans la physique partagée (`physics::abilities`) : `MovementSettings::mobility` (calculée à chaque tick par le serveur depuis `worn_stats`, et par le client depuis sa copie de l'inventaire avec les mêmes packs) ; l'état (sauts en l'air utilisés, saut tenu, esquive en cours, recharge) vit dans `Body::abilities`, renvoyé par le serveur dans `PlayerState`, donc la prédiction rejoue juste.
+- **Double saut** : nouvelle pression de Sauter en l'air ; rendu à l'atterrissage. **Esquive** : `MoveInput::dash` (une pression, gardée jusqu'au tick suivant comme le double appui du vol), vitesse fixe pendant quelques ticks dans la direction voulue (devant soi à l'arrêt), puis recharge. **Escalade** : avancer contre un mur fait monter, accroupi on reste accroché. Ni dans l'eau ni en vol.
+- Valeurs dans `mobility.ron` (racine du pack, le dernier gagne). Option de monde « Mobilité par l'équipement » (`WorldMeta::gear_mobility`, vrai par défaut, transmise au client dans `MovementSettings::gear_mobility`).
+- Touche « Esquive » (F ; clic du stick gauche, partagé avec Sprinter : appuyer esquive, tenir sprinte, comme une roulade façon Dark Souls), remappable. `Welcome` met `body` et `movement` en `Box` (taille du message).
+
+## D089 — Le joaillier, premier établi générique (v0.3, jalon 5)
+
+- `StationDef::Bench(id)` (plus `Copy`) : quatre cases, une liste de recettes `bench_recipes/<nom>.ron` (`BenchRecipe(bench, ingredients: [(Item(..), n)…], result)`), dans l'ordre des identifiants. Choisir une recette (`InventoryRequest::ChooseCut`, partagé avec le tailleur de pierre) pose ses ingrédients depuis l'inventaire (`fill_bench`, rien ne change s'il manque quelque chose) ; on peut aussi les poser à la main dans n'importe quelle case ; le choix reste quand les cases changent. Le résultat se prend comme au craft (Maj-clic : autant que possible).
+- Le jalon 6 fera forge, tannerie et métier à tisser avec le même établi (un bloc, un identifiant, des recettes) ; il pourra donner un nombre de cases par établi.
+- Les recettes d'établi sont toutes connues pour l'instant : le jalon 13 branchera le savoir (comme `stats_known`).
+- Les bottes de mobilité se font au joaillier en attendant l'armurier (jalon 6). La **laine** vient provisoirement de 4 fibres végétales, comme le cuir, jusqu'aux moutons (v0.4).
+

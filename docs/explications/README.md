@@ -43,6 +43,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 32. [Fours et tailleur de pierre](fours.md) : cuisson et combustibles en pack, façade orientée et allumée, fours actifs, fours améliorables sur place (kits, modules), tailleur de pierre.
 33. [Outils, armes et armures](outils-et-armures.md) : tiers et poids d'armure en pack, outils spécialisés (houe, burin, faucille, multi-usage), protection, ralentissement de l'armure lourde, durabilité selon l'option de monde.
 34. [Améliorations, enclume et marteau de mineur](ameliorations.md) : améliorations en pack par briques d'effets, calcul unique des statistiques, non-cumul, enclume (améliorer, réparer), marteau à zone.
+35. [Accessoires, ensembles, mobilité et joaillier](accessoires-et-sets.md) : cinq cases d'accessoires, calcul unique de ce qui est porté, non-cumul, bonus d'ensemble en pack, double saut, esquive, escalade, établi à liste de recettes.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 
