@@ -27,7 +27,11 @@ pub use theme::Theme;
 pub use widgets::{UiContext, draw_screen};
 
 use crate::settings::FontChoice;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use strata_core::crafting::Benches;
+
+/// Group id of a bench's arrangement in the inventory screen: `bench_layout_<layout>`.
+pub const BENCH_LAYOUT_PREFIX: &str = "bench_layout_";
 use strata_core::font::FontSource;
 use strata_core::pack::{PackError, PackSet, read_ron};
 
@@ -128,6 +132,20 @@ impl UiAssets {
             font: font?,
             readable_font,
         })
+    }
+
+    /// A bench whose layout has no group `bench_layout_<layout>` in the inventory screen
+    /// gets the plain one, and a pack error.
+    pub fn check_bench_layouts(&self, benches: &mut Benches, errors: &mut Vec<PackError>) {
+        let screen = &self.screens.slots;
+        let exists = |layout: &str| screen.has_group(&format!("{BENCH_LAYOUT_PREFIX}{layout}"));
+        for (bench, layout) in benches.drop_layouts(exists) {
+            let path = PathBuf::from(format!("benches/{}.ron", bench.name()));
+            let message = format!(
+                "bench `{bench}`: the inventory screen has no layout `{layout}`, the plain one is used"
+            );
+            errors.push(PackError::invalid(&path, message));
+        }
     }
 
     pub fn translation_keys(&self) -> Vec<String> {

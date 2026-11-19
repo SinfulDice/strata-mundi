@@ -74,30 +74,66 @@ fn can_lay_answers_like_fill_bench() {
     assert_eq!(player.slots.count(DIRT), 0);
 }
 
-#[test]
-fn bench_styles_load_from_packs_and_a_bench_without_one_is_plain() {
-    use crate::crafting::{BenchLayout, bench_style::load_styles};
-    let dir = std::env::temp_dir().join(format!("strata-benches-{}", std::process::id()));
-    let root = dir.join("mine");
-    std::fs::create_dir_all(root.join("benches")).unwrap();
-    std::fs::write(root.join("pack.ron"), "(namespace: \"mine\")").unwrap();
-    let files = [
-        ("forge", "Bench(layout: Forge, accent: \"#7a3b1e\")"),
-        ("odd", "Bench(layout: Spinning)"),
-    ];
-    for (name, text) in files {
-        std::fs::write(root.join(format!("benches/{name}.ron")), text).unwrap();
+fn write_pack(dir: &std::path::Path, name: &str, priority: i32, files: &[(&str, &str)]) {
+    let root = dir.join(name);
+    std::fs::create_dir_all(root.join("benches/base")).unwrap();
+    let manifest = format!("(namespace: \"{name}\", priority: {priority})");
+    std::fs::write(root.join("pack.ron"), manifest).unwrap();
+    for (path, text) in files {
+        std::fs::write(root.join(path), text).unwrap();
     }
+}
+
+#[test]
+fn bench_styles_load_layer_and_name_a_bench_of_a_block() {
+    use crate::crafting::bench_style::load_styles;
+    let dir = std::env::temp_dir().join(format!("strata-benches-{}", std::process::id()));
+    let base = [
+        (
+            "benches/forge.ron",
+            "Bench(layout: \"forge\", accent: \"#7a3b1e\")",
+        ),
+        ("benches/loom.ron", "Bench(layout: \"loom\")"),
+        ("benches/odd.ron", "Bench()"),
+    ];
+    write_pack(&dir, "base", 0, &base);
+    let over = [
+        ("benches/base/forge.ron", "Bench(accent: \"#102030\")"),
+        ("remove.ron", "{ \"benches\": [\"base:loom\"] }"),
+    ];
+    write_pack(&dir, "over", 10, &over);
     let mut errors = Vec::new();
     let packs = crate::pack::PackSet::discover(&dir, &mut errors);
-    let styles = load_styles(&packs, &mut errors);
-    assert_eq!(errors.len(), 1, "an unknown layout is an error: {errors:?}");
-    let benches = Benches::new(Vec::new()).with_styles(styles);
-    let forge = benches.style(&"mine:forge".parse().unwrap());
-    assert_eq!(forge.layout, BenchLayout::Forge);
-    assert_eq!(forge.accent.map(|c| c.0.0), Some([0x7a, 0x3b, 0x1e, 0xff]));
-    let other = benches.style(&"mine:other".parse().unwrap());
-    assert_eq!(other, BenchStyle::default());
-    assert_eq!(other.layout, BenchLayout::Plain);
+    assert!(errors.is_empty(), "{errors:?}");
+    let stations: std::collections::BTreeSet<crate::id::Identifier> = ["base:forge", "base:loom"]
+        .map(|s| s.parse().unwrap())
+        .into();
+    let styles = load_styles(&packs, &stations, &mut errors);
+    assert_eq!(errors.len(), 1, "no block opens base:odd: {errors:?}");
+    let mut benches = Benches::new(Vec::new()).with_styles(styles);
+    let forge = benches.style(&"base:forge".parse().unwrap()).clone();
+    assert_eq!(
+        forge.layout_name(),
+        "plain",
+        "the later pack replaces the file"
+    );
+    assert_eq!(forge.accent.map(|c| c.0.0), Some([0x10, 0x20, 0x30, 0xff]));
+    let loom = benches.style(&"base:loom".parse().unwrap());
+    assert_eq!(*loom, BenchStyle::PLAIN, "removed by remove.ron");
+    std::fs::remove_dir_all(&dir).unwrap();
+    write_pack(&dir, "base", 0, &base[..1]);
+    let packs = crate::pack::PackSet::discover(&dir, &mut errors);
+    benches = Benches::new(Vec::new()).with_styles(load_styles(&packs, &stations, &mut errors));
+    let dropped = benches.drop_layouts(|layout| layout == "forge");
+    assert!(dropped.is_empty());
+    let dropped = benches.drop_layouts(|layout| layout == "plain");
+    assert_eq!(
+        dropped,
+        [("base:forge".parse().unwrap(), "forge".to_owned())]
+    );
+    assert_eq!(
+        benches.style(&"base:forge".parse().unwrap()).layout_name(),
+        "plain"
+    );
     std::fs::remove_dir_all(dir).unwrap();
 }

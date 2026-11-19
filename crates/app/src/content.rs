@@ -27,11 +27,14 @@ pub fn load(args: &Args, dimension: &DimensionId, enabled: &[String]) -> anyhow:
     let packs = PackSet::discover(&assets.join("packs"), &mut errors);
     let names: Vec<String> = enabled.iter().chain(&args.resource_pack).cloned().collect();
     let resource_packs = PackSet::named(&args.resource_packs_dir, &names, &mut errors);
-    let (content, more) = Content::load(&packs, &resource_packs);
+    let (mut content, more) = Content::load(&packs, &resource_packs);
     errors.extend(more);
     let worldgen = WorldgenContent::load(&packs, &content.blocks, &dimension.0, &mut errors);
     let presentation = PackSet::joined(&packs, &resource_packs);
     let ui = UiAssets::load(&assets.join("ui"), &presentation, &mut errors);
+    if let Some(ui) = &ui {
+        ui.check_bench_layouts(&mut content.benches, &mut errors);
+    }
     report(&errors);
     let ui = ui.context("interface files are missing or broken")?;
     let worldgen = worldgen.with_context(|| format!("dimension `{dimension}` is not usable"))?;

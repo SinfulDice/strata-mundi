@@ -230,12 +230,25 @@ impl ScreenDef {
             .and_then(Node::at)
     }
 
+    /// Whether a `Group` named `id` is anywhere in the screen.
+    pub fn has_group(&self, id: &str) -> bool {
+        has_group(&self.root, id)
+    }
+
     /// Translation keys of every fixed text, for the missing-translation test.
     pub fn translation_keys(&self) -> Vec<String> {
         let mut keys = Vec::new();
         collect_keys(&self.root, &mut keys);
         keys
     }
+}
+
+fn has_group(nodes: &[Node], wanted: &str) -> bool {
+    nodes.iter().any(|node| match node {
+        Node::Group { id, .. } if id == wanted => true,
+        Node::Panel { children, .. } | Node::Group { children, .. } => has_group(children, wanted),
+        _ => false,
+    })
 }
 
 fn collect_keys(nodes: &[Node], keys: &mut Vec<String>) {

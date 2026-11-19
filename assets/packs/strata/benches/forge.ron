@@ -1,2 +1,2 @@
 // The forge's screen: the list on the left, the cells on an ember-coloured hearth.
-Bench(layout: Forge, accent: "#7a3b1e")
+Bench(layout: "forge", accent: "#7a3b1e")

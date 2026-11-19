@@ -7,6 +7,7 @@ use crate::id::Identifier;
 use crate::inventory::ItemRules;
 use crate::pack::{PackError, PackSet, Sourced};
 use serde::Deserialize;
+use std::collections::BTreeSet;
 use std::path::Path;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -18,9 +19,11 @@ pub struct BenchRecipeDef {
     pub result: ResultDef,
 }
 
+/// `stations`: the benches blocks open (`station: Some(Bench(..))`).
 pub(crate) fn load_benches(
     packs: &PackSet,
     names: &Names<'_>,
+    stations: &BTreeSet<Identifier>,
     errors: &mut Vec<PackError>,
 ) -> Benches {
     let list = packs
@@ -28,7 +31,7 @@ pub(crate) fn load_benches(
         .into_iter()
         .filter_map(|(id, Sourced { value, source })| recipe(id, value, names, &source, errors))
         .collect();
-    Benches::new(list).with_styles(load_styles(packs, errors))
+    Benches::new(list).with_styles(load_styles(packs, stations, errors))
 }
 
 fn recipe(

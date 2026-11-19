@@ -4,7 +4,7 @@
 
 use std::path::Path;
 use strata_core::content::{Content, ItemId, StationDef};
-use strata_core::crafting::{BENCH_SIDE, BenchLayout, BenchRecipe, fill_bench, take_bench};
+use strata_core::crafting::{BENCH_SIDE, BenchRecipe, fill_bench, take_bench};
 use strata_core::id::Identifier;
 use strata_core::inventory::{Click, CraftGrid, ItemStack, PlayerInventory, Window};
 use strata_core::lang::LANGUAGES;
@@ -35,11 +35,11 @@ fn made_at(content: &Content, name: &str) -> Option<String> {
     Some(recipe.bench.to_string())
 }
 
-const STATIONS: [(&str, BenchLayout); 4] = [
-    ("strata:forge", BenchLayout::Forge),
-    ("strata:tannery", BenchLayout::Tannery),
-    ("strata:loom", BenchLayout::Loom),
-    ("strata:jeweller", BenchLayout::Jeweller),
+const STATIONS: [(&str, &str); 4] = [
+    ("strata:forge", "forge"),
+    ("strata:tannery", "tannery"),
+    ("strata:loom", "loom"),
+    ("strata:jeweller", "jeweller"),
 ];
 
 #[test]
@@ -51,7 +51,7 @@ fn each_station_is_a_block_made_at_the_crafting_table_with_its_screen_and_help()
         let station = content.blocks.get(block).unwrap().station.clone();
         assert_eq!(station, Some(StationDef::Bench(bench.clone())), "{name}");
         let style = content.benches.style(&bench);
-        assert_eq!(style.layout, layout, "{name}");
+        assert_eq!(style.layout_name(), layout, "{name}");
         assert!(style.accent.is_some(), "{name} has its colour");
         assert!(
             content.benches.of(&bench).count() >= 4,
@@ -76,9 +76,11 @@ fn each_station_is_a_block_made_at_the_crafting_table_with_its_screen_and_help()
         !starting.contains(&"strata:forge".to_owned()),
         "it needs iron"
     );
-    let benches: Vec<String> = (content.benches.benches().into_iter())
-        .map(ToString::to_string)
+    let mut benches: Vec<String> = (content.benches.list().iter())
+        .map(|recipe| recipe.bench.to_string())
         .collect();
+    benches.sort();
+    benches.dedup();
     assert_eq!(
         benches,
         [

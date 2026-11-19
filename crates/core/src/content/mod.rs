@@ -113,6 +113,16 @@ pub struct Content {
     pub tooltips: describe::TooltipCache,
 }
 
+/// The benches blocks open.
+fn bench_stations(blocks: &Registry<BlockId, Block>) -> std::collections::BTreeSet<Identifier> {
+    (blocks.iter())
+        .filter_map(|(_, _, block)| match &block.station {
+            Some(StationDef::Bench(bench)) => Some(bench.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
 /// Identifier of the empty block, always `BlockId::AIR`.
 pub fn air_id() -> Identifier {
     Identifier::builtin("strata", "air")
@@ -150,7 +160,7 @@ impl Content {
             tags: &tags,
         };
         let recipes = Recipes::new(crafting::load_recipes(packs, &names, &mut errors));
-        let benches = crafting::load_benches(packs, &names, &mut errors);
+        let benches = crafting::load_benches(packs, &names, &bench_stations(&blocks), &mut errors);
         let cooking = cooking::load_cooking(packs, &names, &blocks, &mut errors);
         let upgrades = load_upgrades(packs, &names, &gear.slot_families, &mut errors);
         bound_worn_effects(&mut items, &upgrades.stats, &mut errors);

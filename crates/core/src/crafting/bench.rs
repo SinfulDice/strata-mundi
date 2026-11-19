@@ -54,17 +54,20 @@ impl Benches {
     }
 
     /// How the screen of `bench` looks (plain without a `benches/` file).
-    pub fn style(&self, bench: &Identifier) -> BenchStyle {
-        self.styles.get(bench).copied().unwrap_or_default()
+    pub fn style(&self, bench: &Identifier) -> &BenchStyle {
+        self.styles.get(bench).unwrap_or(&BenchStyle::PLAIN)
     }
 
-    /// Every bench that has recipes or a style, in identifier order.
-    pub fn benches(&self) -> Vec<&Identifier> {
-        let mut ids: Vec<&Identifier> = self.list.iter().map(|r| &r.bench).collect();
-        ids.extend(self.styles.keys());
-        ids.sort();
-        ids.dedup();
-        ids
+    /// Forgets every layout `exists` refuses (the plain one is used instead); returns
+    /// each bench and the layout it lost.
+    pub fn drop_layouts(&mut self, exists: impl Fn(&str) -> bool) -> Vec<(Identifier, String)> {
+        let mut dropped = Vec::new();
+        for (bench, style) in &mut self.styles {
+            if let Some(layout) = style.layout.take_if(|layout| !exists(layout)) {
+                dropped.push((bench.clone(), layout));
+            }
+        }
+        dropped
     }
 
     pub fn list(&self) -> &[BenchRecipe] {

@@ -2,26 +2,26 @@
 //! Each bench's screen: its own arrangement and colour, its help, its list scrolled by
 //! rows, and the arrangements the inventory screen file must hold.
 
-use super::{BENCH_COLUMNS, BENCH_ROWS, LAYOUT_PREFIX};
+use super::{BENCH_COLUMNS, BENCH_ROWS};
 use crate::crafting::ClientCrafting;
 use crate::inventory::ClientInventory;
 use crate::screens::slots::{SlotsModel, SlotsState};
-use crate::ui::{Node, ScreenModel, SlotPress, UiAssets};
+use crate::ui::{BENCH_LAYOUT_PREFIX, Node, ScreenModel, SlotPress, UiAssets};
 use std::path::Path;
 use strata_core::content::Content;
 use strata_core::coords::BlockPos;
-use strata_core::crafting::BenchLayout;
 use strata_core::id::Identifier;
 use strata_core::inventory::{Click, Container, ItemStack};
 use strata_core::pack::PackSet;
 use strata_protocol::InventoryRequest;
 
-const BENCHES: [(&str, BenchLayout); 4] = [
-    ("strata:forge", BenchLayout::Forge),
-    ("strata:tannery", BenchLayout::Tannery),
-    ("strata:loom", BenchLayout::Loom),
-    ("strata:jeweller", BenchLayout::Jeweller),
+const BENCHES: [(&str, &str); 4] = [
+    ("strata:forge", "forge"),
+    ("strata:tannery", "tannery"),
+    ("strata:loom", "loom"),
+    ("strata:jeweller", "jeweller"),
 ];
+const LAYOUTS: [&str; 5] = ["plain", "forge", "tannery", "loom", "jeweller"];
 
 fn assets() -> (Content, UiAssets) {
     let assets = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
@@ -77,8 +77,8 @@ fn each_bench_shows_its_own_arrangement_colour_and_help() {
         with_model(&content, &crafting, &mut state, &mut inventory, |model| {
             assert!(model.shown("bench_side"), "{bench}");
             assert!(!model.shown("player_side") && !model.shown("table_side"));
-            for other in BenchLayout::ALL {
-                let group = format!("{LAYOUT_PREFIX}{}", other.name());
+            for other in LAYOUTS {
+                let group = format!("{BENCH_LAYOUT_PREFIX}{other}");
                 assert_eq!(model.shown(&group), other == layout, "{bench}: {group}");
             }
             let id: Identifier = bench.parse().unwrap();
@@ -159,8 +159,19 @@ fn ids(nodes: &[Node], out: &mut Vec<String>) {
 fn every_arrangement_has_cells_list_result_and_scroll_buttons() {
     let (_, ui) = assets();
     let side = find(&ui.screens.slots.root, "bench_side").unwrap();
-    for layout in BenchLayout::ALL {
-        let group = format!("{LAYOUT_PREFIX}{}", layout.name());
+    let (content, _) = assets();
+    let declared = (content.benches.list().iter()).map(|recipe| {
+        content
+            .benches
+            .style(&recipe.bench)
+            .layout_name()
+            .to_owned()
+    });
+    let mut layouts: Vec<String> = declared.chain(LAYOUTS.map(str::to_owned)).collect();
+    layouts.sort();
+    layouts.dedup();
+    for layout in layouts {
+        let group = format!("{BENCH_LAYOUT_PREFIX}{layout}");
         let nodes = find(side, &group).unwrap_or_else(|| panic!("{group}"));
         let mut found = Vec::new();
         ids(nodes, &mut found);
@@ -190,4 +201,20 @@ fn every_arrangement_has_cells_list_result_and_scroll_buttons() {
         });
         assert_eq!(cells, Some(4), "{group}");
     }
+}
+
+#[test]
+fn a_layout_the_screen_lacks_falls_back_to_the_plain_one_with_an_error() {
+    let (mut content, ui) = assets();
+    let mut errors = Vec::new();
+    ui.check_bench_layouts(&mut content.benches, &mut errors);
+    assert!(
+        errors.is_empty(),
+        "the base pack's layouts exist: {errors:?}"
+    );
+    let forge: Identifier = "strata:forge".parse().unwrap();
+    let mut broken = content.benches.clone();
+    let lost = broken.drop_layouts(|layout| layout != "forge");
+    assert_eq!(lost, [(forge.clone(), "forge".to_owned())]);
+    assert_eq!(broken.style(&forge).layout_name(), "plain");
 }

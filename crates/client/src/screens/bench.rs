@@ -4,6 +4,7 @@
 //! in each empty accessory slot.
 
 use super::slots::SlotsModel;
+use crate::ui::BENCH_LAYOUT_PREFIX;
 use crate::ui::SlotPress;
 use strata_core::content::{EquipSlot, ItemId, StationDef};
 use strata_core::crafting::{BENCH_SIDE, BenchRecipe, BenchStyle, can_lay};
@@ -15,8 +16,6 @@ use strata_protocol::InventoryRequest;
 /// The list shows this many recipes a row, and this many rows, in every arrangement.
 pub(super) const BENCH_COLUMNS: usize = 5;
 pub(super) const BENCH_ROWS: usize = 3;
-/// Group id of an arrangement: `bench_layout_<name>`.
-pub(super) const LAYOUT_PREFIX: &str = "bench_layout_";
 
 impl SlotsModel<'_> {
     /// The open bench, if a bench is open.
@@ -27,7 +26,7 @@ impl SlotsModel<'_> {
         }
     }
 
-    fn bench_style(&self) -> Option<BenchStyle> {
+    fn bench_style(&self) -> Option<&BenchStyle> {
         Some(self.content.benches.style(&self.bench()?))
     }
 
@@ -81,8 +80,8 @@ impl SlotsModel<'_> {
 
     /// Whether a bench group is drawn: its side, its own arrangement, the scroll buttons.
     pub(super) fn bench_group_shown(&self, id: &str) -> Option<bool> {
-        if let Some(layout) = id.strip_prefix(LAYOUT_PREFIX) {
-            let open = self.bench_style().map(|style| style.layout.name());
+        if let Some(layout) = id.strip_prefix(BENCH_LAYOUT_PREFIX) {
+            let open = self.bench_style().map(BenchStyle::layout_name);
             return Some(open == Some(layout));
         }
         match id {
