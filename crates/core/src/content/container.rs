@@ -2,13 +2,18 @@ use crate::pack::PackError;
 use serde::Deserialize;
 
 /// Slots of a container block, in rows of nine.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename = "Container", deny_unknown_fields)]
 pub struct ContainerDef {
+    /// 1 to 6; an upgradable container has its tier's rows instead.
+    #[serde(default)]
     pub rows: u8,
     /// Two of them side by side open as one (double chest).
     #[serde(default)]
     pub joins: bool,
+    /// Its family and storage tier: rows, upgrade slots, kits.
+    #[serde(default)]
+    pub upgradable: Option<crate::storage::Upgradable>,
 }
 
 impl ContainerDef {

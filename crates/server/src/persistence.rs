@@ -172,11 +172,13 @@ impl Persistence {
             .into_iter()
             .map(|saved| {
                 let [x, y, z] = saved.pos;
-                let entity = BlockEntity {
+                let mut entity = BlockEntity {
                     container: crate::save::load_slots(&saved.slots, items),
+                    upgrades: crate::save::load_slots(&saved.upgrades, items),
                     data: saved.data,
                     furnace: saved.furnace,
                 };
+                migrate_furnace_modules(&mut entity);
                 (BlockPos::new(x, y, z), entity)
             })
             .collect()
@@ -266,11 +268,15 @@ impl Persistence {
             .block_entities
             .iter()
             .filter(|(_, entity)| {
-                !entity.container.is_empty() || !entity.data.is_empty() || entity.furnace.is_some()
+                !entity.container.is_empty()
+                    || !entity.upgrades.is_empty()
+                    || !entity.data.is_empty()
+                    || entity.furnace.is_some()
             })
             .map(|(pos, entity)| SavedBlockEntity {
                 pos: [pos.x, pos.y, pos.z],
                 slots: crate::save::save_slots(&entity.container.slots, items),
+                upgrades: crate::save::save_slots(&entity.upgrades.slots, items),
                 data: entity.data.clone(),
                 furnace: entity.furnace.clone(),
             })
@@ -341,5 +347,21 @@ fn is_small_png(bytes: &[u8]) -> bool {
 mod tests;
 
 #[cfg(test)]
+#[path = "persistence_storage_tests.rs"]
+mod storage_tests;
+
+#[cfg(test)]
 #[path = "persistence_gear_tests.rs"]
 mod gear_tests;
+
+/// A furnace saved before upgrade slots had their own place kept its modules after its
+/// input, fuel and output: they move to its upgrade slots.
+fn migrate_furnace_modules(entity: &mut BlockEntity) {
+    let modules = strata_core::cooking::FURNACE_MODULES;
+    if entity.furnace.is_some()
+        && entity.upgrades.slots.is_empty()
+        && entity.container.len() > modules
+    {
+        entity.upgrades.slots = entity.container.slots.split_off(modules);
+    }
+}

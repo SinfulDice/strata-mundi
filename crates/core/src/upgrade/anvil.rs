@@ -67,6 +67,9 @@ pub fn choices<'a>(
             let now = held.iter().find(|(id, _)| *id == upgrade.id).map(|h| h.1);
             let level = now.unwrap_or(0).saturating_add(1);
             let cost = upgrade.levels.get(usize::from(level) - 1)?;
+            if cost.material.items().is_empty() {
+                return None;
+            }
             Some(Choice {
                 index: u16::try_from(index).ok()?,
                 upgrade,

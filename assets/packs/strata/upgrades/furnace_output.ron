@@ -1,0 +1,6 @@
+// Double output module: two results per cooking, a quarter slower, half the cookings per fuel.
+Upgrade(
+    slot: "strata:furnace",
+    applies_to: ["strata:furnaces"],
+    levels: [Level(effects: [Stat(stat: "strata:output", op: Add, value: 1.0), Stat(stat: "strata:cook_time", op: Percent, value: 25.0), Stat(stat: "strata:fuel_value", op: Percent, value: -50.0)])],
+)

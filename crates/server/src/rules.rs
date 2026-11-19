@@ -4,11 +4,12 @@ use strata_core::content::{
     BlockId, ContainerDef, Content, EntityType, EntityTypeId, EquipSlot, Facing, FurnaceDef, Item,
     ItemAction, ItemId, ItemKind, Registry, StationDef,
 };
-use strata_core::cooking::Cooking;
+use strata_core::cooking::{Cooking, KitDef, KitTarget};
 use strata_core::crafting::{Benches, Recipes};
 use strata_core::id::Identifier;
 use strata_core::inventory::ItemRules;
 use strata_core::physics::LiquidCell;
+use strata_core::storage::{SlotLayout, Storage};
 use strata_core::updates::UpdateRules;
 use strata_core::upgrade::Upgrades;
 use strata_core::worn::Worn;
@@ -22,6 +23,7 @@ pub struct BlockRules {
     breakable: Vec<bool>,
     replaceable: Vec<bool>,
     containers: Vec<Option<ContainerDef>>,
+    layouts: Vec<Option<SlotLayout>>,
     stations: Vec<Option<StationDef>>,
     facings: Vec<Option<Facing>>,
     furnaces: Vec<Option<FurnaceDef>>,
@@ -43,6 +45,8 @@ pub struct BlockRules {
     pub worn: Arc<Worn>,
     /// Recipes of the benches (jeweller…).
     pub benches: Arc<Benches>,
+    /// Chest and barrel tiers, compression recipes.
+    pub storage: Arc<Storage>,
 }
 
 impl BlockRules {
@@ -80,7 +84,12 @@ impl BlockRules {
             containers: content
                 .blocks
                 .iter()
-                .map(|(_, _, block)| block.container)
+                .map(|(_, _, block)| block.container.clone())
+                .collect(),
+            layouts: content
+                .blocks
+                .iter()
+                .map(|(id, _, _)| content.slot_layout(id))
                 .collect(),
             stations: content
                 .blocks
@@ -98,6 +107,7 @@ impl BlockRules {
             upgrades: Arc::new(content.upgrades.clone()),
             worn: Arc::new(content.worn.clone()),
             benches: Arc::new(content.benches.clone()),
+            storage: Arc::new(content.storage.clone()),
             updates: Arc::new(UpdateRules::new(content)),
             mining: Arc::new(MiningRules::new(content)),
         }
@@ -118,8 +128,8 @@ impl BlockRules {
     }
 
     /// Creative mode: any block that has an item can be placed.
-    pub fn container(&self, block: BlockId) -> Option<ContainerDef> {
-        self.containers.get(usize::from(block.0)).copied().flatten()
+    pub fn container(&self, block: BlockId) -> Option<&ContainerDef> {
+        self.containers.get(usize::from(block.0))?.as_ref()
     }
 
     /// The work station a block opens (crafting table).
@@ -136,27 +146,33 @@ impl BlockRules {
         self.furnaces.get(usize::from(block.0))?.as_ref()
     }
 
-    /// Slots of the block entity of `block`: a container's, or a furnace's three and
-    /// its tier's upgrade slots.
-    pub fn entity_slots(&self, block: BlockId) -> Option<usize> {
-        if let Some(container) = self.container(block) {
-            return Some(container.slots());
+    /// The slots of the block entity of `block`: its own, then its upgrade slots.
+    pub fn layout(&self, block: BlockId) -> Option<&SlotLayout> {
+        self.layouts.get(usize::from(block.0))?.as_ref()
+    }
+
+    /// What `kit` makes of `block`: the block of the same family one tier up, with the
+    /// same front and light; `None` if the kit does not fit it.
+    pub fn upgraded_by(&self, block: BlockId, kit: &KitDef) -> Option<BlockId> {
+        match kit.on {
+            KitTarget::Furnace => {
+                (self.furnace(block)?.tier == kit.from).then_some(())?;
+                self.furnace_of_tier(block, &kit.to)
+            }
+            KitTarget::Storage => {
+                let from = self.container(block)?.upgradable.as_ref()?;
+                (from.tier == kit.from).then_some(())?;
+                let index = self.containers.iter().position(|other| {
+                    let up = other.as_ref().and_then(|o| o.upgradable.as_ref());
+                    up.is_some_and(|up| up.family == from.family && up.tier == kit.to)
+                })?;
+                Some(BlockId(u16::try_from(index).ok()?))
+            }
         }
-        let furnace = self.furnace(block)?;
-        let tier = self
-            .cooking
-            .tier(&furnace.tier)
-            .copied()
-            .unwrap_or_default();
-        Some(strata_core::cooking::FURNACE_MODULES + usize::from(tier.upgrade_slots))
     }
 
     /// The block of the same furnace family and of `tier`, with the same front and light.
-    pub fn furnace_of_tier(
-        &self,
-        block: BlockId,
-        tier: &strata_core::id::Identifier,
-    ) -> Option<BlockId> {
+    fn furnace_of_tier(&self, block: BlockId, tier: &Identifier) -> Option<BlockId> {
         let family = &self.furnace(block)?.family;
         let facing = self.facing(block);
         let index = self.furnaces.iter().position(|other| {

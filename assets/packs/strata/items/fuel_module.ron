@@ -1,2 +1,2 @@
-// Furnace module: Half again as many cookings per fuel.
-Item(texture: "strata:fuel_module", category: Some("strata:stations"), module: Some(Furnace(fuel_value: 150)))
+// Furnace module (upgrades/furnace_*.ron): Half again as many cookings per fuel.
+Item(texture: "strata:fuel_module", category: Some("strata:stations"), upgrade: Some("strata:furnace_economy"))

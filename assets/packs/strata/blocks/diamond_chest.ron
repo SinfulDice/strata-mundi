@@ -1,0 +1,9 @@
+// A diamond-bound chest: 108 slots and 4 upgrade slots (storage_tiers/diamond.ron); two side by side open as one. A kit raises its tier in place.
+Block(
+    textures: TopBottomSides(top: "strata:diamond_chest_top", bottom: "strata:diamond_chest_top", sides: "strata:diamond_chest_side"),
+    hardness: 4.0,
+    tool: Some(BlockTool(kind: "strata:axe")),
+    sound: Some("strata:wood"),
+    category: Some("strata:storage"),
+    container: Some(Container(joins: true, upgradable: Some(Upgradable(family: "strata:chest", tier: "strata:diamond")))),
+)

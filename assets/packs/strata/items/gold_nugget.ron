@@ -1,0 +1,2 @@
+// Nine make an gold ingot (at the grid, or in a storage with a compression upgrade).
+Item(texture: "strata:gold_nugget", category: Some("strata:materials"))

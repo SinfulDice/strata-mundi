@@ -1,0 +1,2 @@
+// The wooden barrel's frame and latch in gold: the metal border shows its tier.
+Recolor(base: "strata:barrel_side", swap: {"oak_bark": "gold", "iron": "gold"})

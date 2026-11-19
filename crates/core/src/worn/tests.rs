@@ -43,7 +43,7 @@ fn piece(equip: EquipSlot, worn: Vec<Effect>, protection: u16) -> Item {
         tool: None,
         remainder: None,
         kit: None,
-        module: None,
+        upgrade: None,
         gear: ItemGear {
             armor,
             worn,

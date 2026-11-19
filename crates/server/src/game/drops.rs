@@ -255,7 +255,7 @@ impl Game {
         }
     }
 
-    fn remove_drop(&mut self, entity: Entity) {
+    pub(super) fn remove_drop(&mut self, entity: Entity) {
         self.ecs.despawn(entity);
         self.messages
             .push(ServerMessage::EntityRemoved(NetEntity(entity.to_bits())));

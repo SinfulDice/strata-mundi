@@ -342,7 +342,11 @@ fn quick_deposit_moves_only_known_unlocked_items() {
     player.toggle_lock(11);
     let mut chest = Container::new(3);
     chest.slots[0] = Some(stack(DIRT, 1));
-    assert_eq!(deposit_matching(&mut player, &mut chest, &Rules), 30);
+    let range = 0..chest.len();
+    assert_eq!(
+        deposit_matching(&mut player, &mut chest, range, &|_| true, &Rules),
+        30
+    );
     assert_eq!(chest.count(DIRT), 31);
     assert_eq!(player.slots.count(DIRT), 14, "hotbar and locked slots stay");
     assert_eq!(player.slots.count(PEARL), 5, "the chest holds no pearl");

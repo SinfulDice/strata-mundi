@@ -4,6 +4,7 @@ use super::Cooking;
 use crate::content::{Item, ItemId, Registry};
 use crate::id::Identifier;
 use crate::inventory::{Container, ItemStack, SlotPolicy};
+use crate::upgrade::{SlotOwner, Upgrades};
 
 pub const FURNACE_INPUT: usize = 0;
 pub const FURNACE_FUEL: usize = 1;
@@ -14,20 +15,24 @@ pub const FURNACE_MODULES: usize = 3;
 pub struct FurnaceSlots<'a> {
     pub cooking: &'a Cooking,
     pub items: &'a Registry<ItemId, Item>,
+    pub upgrades: &'a Upgrades,
     pub kinds: &'a [Identifier],
+    /// The family of its upgrade slots and the furnace's item.
+    pub owner: SlotOwner<'a>,
 }
 
 impl FurnaceSlots<'_> {
     fn is_module(&self, item: ItemId) -> bool {
-        self.items.get(item).is_some_and(|i| i.module.is_some())
+        self.items.get(item).is_some_and(|i| i.upgrade.is_some())
     }
 
-    /// A module slot takes a module not already in another slot.
+    /// An upgrade slot takes an upgrade that suits the furnace and is not already in
+    /// another slot.
     fn module_fits(&self, slots: &Container, index: usize, stack: &ItemStack) -> bool {
-        self.is_module(stack.item)
-            && !(FURNACE_MODULES..slots.len())
-                .filter(|&other| other != index)
-                .any(|other| slots.get(other).is_some_and(|s| s.item == stack.item))
+        let others = (FURNACE_MODULES..slots.len())
+            .filter(|&other| other != index)
+            .filter_map(|other| slots.get(other));
+        (self.upgrades).fits_slot(self.items, self.owner, others, stack)
     }
 }
 

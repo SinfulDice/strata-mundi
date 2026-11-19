@@ -1,0 +1,56 @@
+# Rangement : améliorations de four et de stockage, tiers de coffres et de tonneaux.
+item-stat-strata-cook_time = de temps de cuisson
+item-stat-strata-fuel_value = de cuissons par combustible
+item-stat-strata-output = résultat par cuisson
+tag-strata-furnaces = fours
+upgrade-slot-strata-furnace = module de four
+upgrade-strata-furnace_speed = Module de vitesse
+upgrade-strata-furnace_economy = Module d'économie
+upgrade-strata-furnace_output = Module de double sortie
+block-strata-iron_chest = Coffre cerclé de fer
+block-strata-gold_chest = Coffre cerclé d'or
+block-strata-diamond_chest = Coffre cerclé de diamant
+block-strata-iron_barrel = Tonneau cerclé de fer
+block-strata-gold_barrel = Tonneau cerclé d'or
+block-strata-diamond_barrel = Tonneau cerclé de diamant
+block-strata-iron_block = Bloc de fer
+block-strata-gold_block = Bloc d'or
+block-strata-copper_block = Bloc de cuivre
+block-strata-diamond_block = Bloc de diamant
+item-strata-iron_nugget = Pépite de fer
+item-strata-gold_nugget = Pépite d'or
+item-strata-copper_nugget = Pépite de cuivre
+item-strata-iron_storage_kit = Kit de rangement en fer
+item-strata-gold_storage_kit = Kit de rangement en or
+item-strata-diamond_storage_kit = Kit de rangement en diamant
+item-strata-sorting_upgrade = Amélioration de tri
+item-strata-filter_upgrade = Amélioration de filtre
+item-strata-compression_upgrade = Amélioration de compression
+item-strata-void_upgrade = Amélioration de destruction
+item-strata-magnet_upgrade = Amélioration d'aimant
+tag-strata-storages = coffres et tonneaux
+upgrade-slot-strata-storage = amélioration de rangement
+upgrade-strata-sorting = Tri automatique
+upgrade-strata-filter = Filtre
+upgrade-strata-compression = Compression
+upgrade-strata-void = Destruction
+upgrade-strata-magnet = Aimant
+upgrade-effect-sort = se trie seul à la fermeture
+upgrade-effect-filter = n'accepte que ce que le filtre laisse passer
+upgrade-effect-compress = presse pépites en lingots, lingots en blocs
+upgrade-effect-void = détruit ce que le filtre désigne
+upgrade-effect-magnet = attire les objets à { $radius } blocs
+feedback-kit-furnace-wrong-tier = Ce kit ne va pas sur ce four : un kit passe d'un tier au suivant, sans en sauter.
+feedback-kit-furnace-needs-two = Il faut un kit par bloc.
+feedback-kit-furnace-done = Four amélioré, son contenu est intact.
+feedback-kit-storage-wrong-tier = Ce kit ne va pas sur ce rangement : un kit passe d'un tier au suivant, sans en sauter.
+feedback-kit-storage-needs-two = Un coffre double monte d'un coup : il faut deux kits en main.
+feedback-kit-storage-done = Rangement amélioré, son contenu est intact.
+ui-storage-rows = Rangées { $first }-{ $last } sur { $total }
+ui-storage-filter-mode = { $mode ->
+        [deny] Refuse la liste
+       *[allow] Accepte la liste
+    }
+ui-storage-filter-next = Filtre suivant
+ui-storage-filter-help = Objet tenu sur une case : l'ajoute. Main vide : vide la case.
+ui-storage-filter-cell = Case de filtre : posez-y l'objet tenu.

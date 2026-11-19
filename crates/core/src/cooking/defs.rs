@@ -23,7 +23,7 @@ pub struct FurnaceDef {
 }
 
 /// `furnace_tiers/<name>.ron`: how much better a tier is than the stone furnace.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename = "FurnaceTier", deny_unknown_fields)]
 pub struct FurnaceTier {
     /// Percent of a recipe's time one cooking takes.
@@ -32,19 +32,10 @@ pub struct FurnaceTier {
     /// Percent of the cookings one fuel gives.
     #[serde(default = "hundred")]
     pub fuel_value: u16,
-    /// Slots for modules.
+    /// Upgrade slots (modules), of this family (`upgrade_slots/`).
     #[serde(default)]
     pub upgrade_slots: u8,
-}
-
-impl Default for FurnaceTier {
-    fn default() -> Self {
-        Self {
-            cook_time: 100,
-            fuel_value: 100,
-            upgrade_slots: 0,
-        }
-    }
+    pub upgrade_family: Identifier,
 }
 
 /// `cooking/<name>.ron`: one item cooked into another.
@@ -89,31 +80,23 @@ pub struct FuelDef {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename = "Kit", deny_unknown_fields)]
 pub struct KitDef {
+    /// Which blocks it works on, and so which tiers `from` and `to` name.
+    #[serde(default)]
+    pub on: KitTarget,
     pub from: Identifier,
     pub to: Identifier,
 }
 
-/// `module` of an item: what it changes once in an upgrade slot.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
-pub enum ModuleDef {
-    /// In a furnace: percents of the time of a cooking and of the cookings per fuel, and
-    /// how many results each cooking gives (double output: 2).
-    Furnace {
-        #[serde(default = "hundred")]
-        cook_time: u16,
-        #[serde(default = "hundred")]
-        fuel_value: u16,
-        #[serde(default = "one")]
-        output: u8,
-    },
+/// Furnaces (`furnace_tiers/`) or chests and barrels (`storage_tiers/`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+pub enum KitTarget {
+    #[default]
+    Furnace,
+    Storage,
 }
 
 fn hundred() -> u16 {
     100
-}
-
-fn one() -> u8 {
-    1
 }
 
 /// Ticks of a cooking in a stone furnace when the recipe says nothing (10 s): also the

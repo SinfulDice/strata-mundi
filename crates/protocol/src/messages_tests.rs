@@ -139,8 +139,13 @@ fn inventory_messages_survive_serialization() {
             block: BlockId(9),
             pos: BlockPos::new(1, 2, 3),
             contents: contents.clone(),
+            upgrades_at: 54,
             furnace: Some(FurnaceView::default()),
         })),
+        ServerMessage::ContainerUpgraded {
+            block: BlockId(10),
+            upgrades_at: 108,
+        },
         ServerMessage::ContainerContents(Box::new(contents)),
         ServerMessage::ContainerClosed,
         ServerMessage::Crafting(Box::new(CraftingView {

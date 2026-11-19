@@ -31,8 +31,10 @@ pub struct LevelDef {
     /// Experience paid at the anvil (free until experience exists, milestone 9).
     #[serde(default)]
     pub xp: u32,
-    /// Laid in the anvil's second cell, `count` of them.
-    pub material: IngredientDef,
+    /// Laid in the anvil's second cell, `count` of them; none for an upgrade that is an
+    /// item put in a block's slot (it is never offered at the anvil).
+    #[serde(default)]
+    pub material: Option<IngredientDef>,
     #[serde(default = "one")]
     pub count: u16,
 }
@@ -61,8 +63,19 @@ pub enum StatOp {
     Percent,
 }
 
-/// One brick of what an upgrade does. Two upgrades giving the same brick (same stat and
-/// operation) do not add up: the strongest counts.
+impl StatOp {
+    /// `value` changed by `by`; a percentage never goes below zero.
+    pub fn apply(self, value: f32, by: f32) -> f32 {
+        match self {
+            Self::Add => value + by,
+            Self::Percent => value * (1.0 + by / 100.0).max(0.0),
+        }
+    }
+}
+
+/// One brick of what an upgrade does. Two upgrades giving the same brick (same stat,
+/// operation and direction: a gain and a cost are two bricks) do not add up: the
+/// strongest counts.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum Effect {
     /// Changes a named stat.
@@ -73,17 +86,33 @@ pub enum Effect {
     },
     /// Unlocks breaking this area at once (a miner's hammer), width × height.
     Area(u8, u8),
+    /// Storage: sorted by type each time it closes or takes something in on its own.
+    Sort,
+    /// Storage: what shift clicks, quick deposits and magnets put in follows the filter
+    /// set on the upgrade (allowed or refused items).
+    Filter,
+    /// Storage: nine of an item become one of the next (nuggets, ingots, blocks:
+    /// `compression/`).
+    Compress,
+    /// Storage: what enters it and matches the filter set on the upgrade is destroyed.
+    Void,
+    /// Storage: draws the items lying within `radius` blocks, every `period` ticks.
+    Magnet { radius: f32, period: u16 },
 }
 
 impl Effect {
     /// Bricks of the same kind do not add up.
     pub fn same_kind(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Stat { stat, op, .. }, Self::Stat { stat: s, op: o, .. }) => {
-                stat == s && op == o
-            }
-            (Self::Area(..), Self::Area(..)) => true,
-            _ => false,
+            (
+                Self::Stat { stat, op, value },
+                Self::Stat {
+                    stat: s,
+                    op: o,
+                    value: v,
+                },
+            ) => stat == s && op == o && (*value < 0.0) == (*v < 0.0),
+            _ => std::mem::discriminant(self) == std::mem::discriminant(other),
         }
     }
 
@@ -92,6 +121,8 @@ impl Effect {
         match self {
             Self::Stat { value, .. } => value.abs(),
             Self::Area(w, h) => f32::from(*w) * f32::from(*h),
+            Self::Magnet { radius, .. } => *radius,
+            Self::Sort | Self::Filter | Self::Compress | Self::Void => 1.0,
         }
     }
 }

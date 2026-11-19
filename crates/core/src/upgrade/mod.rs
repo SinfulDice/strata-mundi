@@ -1,7 +1,8 @@
-//! Item upgrades (`upgrades/`): bricks of effects put in an item's typed slots at the
-//! anvil, kept in the stack's data, and the single computation of what an item does
-//! (base, then tier, then upgrades). Crafted upgrades come first; machine modules, runes
-//! and staff parts are other slot families and other upgrades, with the same engine.
+//! Upgrades (`upgrades/`): bricks of effects put in an item's typed slots at the anvil
+//! (kept in the stack's data), or items put in a block's upgrade slots (furnaces,
+//! storage), and the single computation of what they do (base, then tier, then
+//! upgrades). Machine modules, runes and staff parts are other slot families and other
+//! upgrades, with the same engine.
 
 mod anvil;
 mod area;
@@ -10,6 +11,7 @@ mod defs;
 mod describe;
 mod installed;
 mod load;
+mod slotted;
 mod stats;
 
 pub use anvil::{
@@ -19,6 +21,7 @@ pub use area::{area_bounds, area_cells, fits_area, swing_cells, swing_ticks};
 pub use cache::StatsCache;
 pub use defs::{AnvilRules, AreaSize, Effect, ItemStatDef, LevelDef, StatOp, UpgradeDef};
 pub use installed::{chosen_area, installed, repairs, with_area, with_upgrade};
+pub use slotted::SlotOwner;
 pub use stats::{ItemStats, applies, max_durability, stack_stats, stack_tool, strongest_bricks};
 
 use crate::content::ItemId;

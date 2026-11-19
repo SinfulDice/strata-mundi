@@ -4,7 +4,7 @@ use super::mining_tests::add_pickaxe;
 use super::tests::{World, block, hold, mine, place, wait, world_with};
 use super::*;
 use strata_core::content::{Face, ItemId};
-use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE_OUTPUT};
+use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_OUTPUT};
 use strata_core::inventory::{Click, ItemStack, SlotRef};
 use strata_protocol::InventoryRequest;
 
@@ -145,15 +145,8 @@ fn a_kit_upgrades_a_furnace_in_place_keeping_everything() {
     assert!(facing.lit && facing.front == front, "same front, still lit");
     let after = &w.game.block_entities[&SPOT];
     assert_eq!(after.furnace, before.furnace, "the cooking goes on");
-    assert_eq!(
-        after.container.len(),
-        FURNACE_MODULES + 1,
-        "one upgrade slot"
-    );
-    assert_eq!(
-        after.container.slots[..FURNACE_MODULES],
-        before.container.slots[..]
-    );
+    assert_eq!(after.upgrades.len(), 1, "one upgrade slot");
+    assert_eq!(after.container, before.container);
     assert!(
         w.game.inventory().selected_stack().is_none(),
         "the kit is used"
@@ -164,9 +157,10 @@ fn a_kit_upgrades_a_furnace_in_place_keeping_everything() {
     );
     put(&mut w, 2, "strata:speed_module", 1);
     transfer(&mut w, 2);
+    let upgrades = &w.game.block_entities[&SPOT].upgrades;
     assert_eq!(
-        slot_count(&w, FURNACE_MODULES),
-        1,
+        upgrades.get(0).map(|s| s.count),
+        Some(1),
         "the module goes in its slot"
     );
 }

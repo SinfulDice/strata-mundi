@@ -1,2 +1,2 @@
-// Furnace module: A quarter faster; each fuel cooks a little less.
-Item(texture: "strata:speed_module", category: Some("strata:stations"), module: Some(Furnace(cook_time: 75, fuel_value: 80)))
+// Furnace module (upgrades/furnace_*.ron): A quarter faster; each fuel cooks a little less.
+Item(texture: "strata:speed_module", category: Some("strata:stations"), upgrade: Some("strata:furnace_speed"))

@@ -42,24 +42,32 @@ pub fn sort<K: Ord>(
     left
 }
 
-/// Moves the unlocked main-slot stacks of items that `chest` already holds into it.
-/// Returns how many items moved.
+/// Moves the unlocked main-slot stacks of items that `chest` already holds into it, in
+/// the slots of `range`, those `allowed`. Returns how many items moved.
 pub fn deposit_matching(
     player: &mut PlayerInventory,
     chest: &mut Container,
+    range: Range<usize>,
+    allowed: &dyn Fn(ItemId) -> bool,
     rules: &impl ItemRules,
 ) -> u32 {
     let mut moved = 0;
+    let holds = |chest: &Container, item: ItemId| {
+        range
+            .clone()
+            .any(|i| chest.get(i).is_some_and(|stack| stack.item == item))
+    };
     for index in MAIN {
         if player.is_locked(index) {
             continue;
         }
         let slot = &mut player.slots.slots[index];
-        let Some(stack) = slot.take_if(|stack| chest.contains(stack.item)) else {
+        let Some(stack) = slot.take_if(|stack| allowed(stack.item) && holds(chest, stack.item))
+        else {
             continue;
         };
         let count = stack.count;
-        *slot = chest.insert_anywhere(stack, rules);
+        *slot = chest.insert(stack, range.clone(), rules);
         moved += u32::from(count - slot.as_ref().map_or(0, |left| left.count));
     }
     moved

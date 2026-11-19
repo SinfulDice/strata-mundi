@@ -1,0 +1,27 @@
+// A wooden board in an iron frame, its sign in the middle: the magnet upgrade.
+Sprite(
+    colors: {
+        'I': ("iron", 1),
+        'w': ("oak_wood", 1),
+        'W': ("oak_wood", 0),
+        'S': ("poppy", 2),
+    },
+    rows: [
+        "................",
+        ".IIIIIIIIIIIIII.",
+        ".IwWwwwwWwwwwWI.",
+        ".IWwwwwWwwwwWwI.",
+        ".IwwwwWwwwwWwwI.",
+        ".IwwwSSwwSSwwwI.",
+        ".IwwWSSwwSSwwwI.",
+        ".IwWwSSwwSSwwWI.",
+        ".IWwwSSwwSSwWwI.",
+        ".IwwwwSSSSwWwwI.",
+        ".IwwwwwSSwwwwwI.",
+        ".IwwWwwwwWwwwwI.",
+        ".IwWwwwwWwwwwWI.",
+        ".IWwwwwWwwwwWwI.",
+        ".IIIIIIIIIIIIII.",
+        "................",
+    ],
+)

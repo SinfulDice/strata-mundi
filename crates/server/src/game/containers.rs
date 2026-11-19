@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use strata_core::content::{BlockId, Face};
 use strata_core::cooking::FurnaceState;
 use strata_core::coords::BlockPos;
-use strata_core::inventory::{Container, ItemData, deposit_matching};
+use strata_core::inventory::{Container, ItemData, ItemStack, deposit_matching};
 use strata_core::updates::BlockChange;
 use strata_protocol::{OpenedContainer, ServerMessage};
 
@@ -20,7 +20,10 @@ const DEPOSIT_REACH: f64 = 8.0;
 /// What a block with data of its own holds, apart from the block itself.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct BlockEntity {
+    /// Its own slots (a chest's grid, a furnace's input, fuel and output).
     pub container: Container,
+    /// Its upgrade slots (as many as its tier gives).
+    pub upgrades: Container,
     /// Room for later machines, saved with the contents.
     pub data: ItemData,
     /// Fire and cooking, for a furnace.
@@ -47,7 +50,7 @@ impl Game {
         if let Some(station) = self.rules.station(block) {
             return self.open_station(loader, pos, block, station);
         }
-        let holds = self.rules.entity_slots(block).is_some();
+        let holds = self.rules.layout(block).is_some();
         if !holds || !self.in_reach(pos) || !self.take_action() {
             return false;
         }
@@ -60,8 +63,9 @@ impl Game {
             None => vec![pos],
         };
         self.close_container();
+        let upgrades_at = self.upgrades_at(block, halves.len());
         let window = OpenWindow { block, halves };
-        let contents = self.contents(&window);
+        let contents = self.window_contents(&window);
         self.ecs.windows.insert(self.player, window);
         if self.rules.furnace(block).is_some() {
             self.wake_furnace(pos);
@@ -73,9 +77,16 @@ impl Game {
                 block,
                 pos,
                 contents,
+                upgrades_at,
                 furnace,
             })));
         true
+    }
+
+    /// Index of the first upgrade slot in the window of `halves` blocks of `block`.
+    pub(super) fn upgrades_at(&self, block: BlockId, halves: usize) -> u16 {
+        let storage = self.rules.layout(block).map_or(0, |l| l.storage);
+        u16::try_from(storage * halves).unwrap_or(u16::MAX)
     }
 
     /// The other half of a double chest: the first joining neighbour of the same block
@@ -97,24 +108,31 @@ impl Game {
             .find(|&next| loader.block(next) == Some(block))
     }
 
-    fn contents(&mut self, window: &OpenWindow) -> Container {
-        let size = self.rules.entity_slots(window.block).unwrap_or(0);
+    /// What the window shows: the storage of each half end to end, then the upgrade
+    /// slots of each half.
+    pub(super) fn window_contents(&mut self, window: &OpenWindow) -> Container {
+        let layout = self.rules.layout(window.block).cloned();
+        let (storage, upgrades) = layout.map_or((0, 0), |l| (l.storage, l.upgrades));
         let mut contents = Container::default();
+        let mut slots_of_upgrades = Vec::new();
         for &half in &window.halves {
             // Made empty the first time (a chest just placed or generated); the slots
-            // cut off when the pack gave it fewer rows fall to the ground.
+            // cut off when the pack gave it fewer fall to the ground.
             let entity = self.block_entities.entry(half).or_default();
             if self.rules.furnace(window.block).is_some() {
                 entity.furnace.get_or_insert_with(Default::default);
             }
-            let cut = entity.container.resize(size);
+            let mut cut = entity.container.resize(storage);
+            cut.extend(entity.upgrades.resize(upgrades));
             contents
                 .slots
                 .extend(entity.container.slots.iter().cloned());
+            slots_of_upgrades.extend(entity.upgrades.slots.iter().cloned());
             for stack in cut {
                 self.spawn_drop(stack, block_centre(half), DVec3::ZERO);
             }
         }
+        contents.slots.extend(slots_of_upgrades);
         contents
     }
 
@@ -132,17 +150,28 @@ impl Game {
             self.close_container();
             return None;
         }
-        let contents = self.contents(&window);
+        let contents = self.window_contents(&window);
         Some((window, contents))
     }
 
     /// Puts the clicked contents back into their halves and tells the client.
     pub(super) fn put_back_open_container(&mut self, (window, contents): (OpenWindow, Container)) {
-        let mut slots = contents.slots.clone().into_iter();
+        let storage: usize = window
+            .halves
+            .iter()
+            .filter_map(|half| self.block_entities.get(half))
+            .map(|entity| entity.container.len())
+            .sum();
+        let (mut own, mut upgrades) = {
+            let mut slots = contents.slots.clone();
+            let upgrades = slots.split_off(storage.min(slots.len()));
+            (slots.into_iter(), upgrades.into_iter())
+        };
         for half in &window.halves {
             if let Some(entity) = self.block_entities.get_mut(half) {
-                let size = entity.container.len();
-                entity.container.slots = slots.by_ref().take(size).collect();
+                let (size, ups) = (entity.container.len(), entity.upgrades.len());
+                entity.container.slots = own.by_ref().take(size).collect();
+                entity.upgrades.slots = upgrades.by_ref().take(ups).collect();
             }
             if self.rules.furnace(window.block).is_some() {
                 self.wake_furnace(*half);
@@ -154,13 +183,15 @@ impl Game {
 
     /// Forgets the open container (the screen closed, or the chest went away).
     pub(super) fn close_container(&mut self) {
-        if self.ecs.windows.remove(self.player).is_some() {
+        if let Some(window) = self.ecs.windows.remove(self.player) {
             self.messages.push(ServerMessage::ContainerClosed);
+            self.storage_closed(&window.halves, window.block);
         }
     }
 
     /// Unlocked main-slot stacks go into the chests around that already hold such items
-    /// (the open one first, through the window, so its screen follows).
+    /// and whose filter lets them in (the open one first, through the window, so its
+    /// screen follows).
     pub(super) fn quick_deposit(&mut self, loader: &ColumnLoader) {
         let open: Vec<BlockPos> = self
             .ecs
@@ -168,30 +199,34 @@ impl Game {
             .get(self.player)
             .map(|window| window.halves.clone())
             .unwrap_or_default();
-        let mut near: Vec<BlockPos> = self
+        let mut near: Vec<(BlockPos, BlockId)> = self
             .block_entities
             .keys()
             .copied()
             .filter(|pos| !open.contains(pos) && self.within(*pos, DEPOSIT_REACH))
-            .filter(|&pos| {
-                loader
-                    .block(pos)
-                    .is_some_and(|b| self.rules.container(b).is_some())
-            })
+            .filter_map(|pos| Some((pos, loader.block(pos)?)))
+            .filter(|&(_, block)| self.rules.container(block).is_some())
             .collect();
-        near.sort_by_key(|&pos| (pos.x, pos.y, pos.z));
+        near.sort_by_key(|&(pos, _)| (pos.x, pos.y, pos.z));
         self.with_window(loader, |window, rules| {
-            if let (Some(open), None) = (window.open.as_deref_mut(), window.policy) {
-                deposit_matching(window.player, open, rules);
-            }
+            let Some(open) = window.open.as_deref_mut() else {
+                return;
+            };
+            let (range, policy) = match window.policy {
+                None => (0..open.len(), None),
+                Some(policy) => match policy.storage() {
+                    Some(range) => (range, Some(policy)),
+                    None => return,
+                },
+            };
+            let allowed = |item| {
+                let stack = ItemStack::new(item, 1, rules);
+                policy.is_none_or(|p| p.lets_in(&stack))
+            };
+            deposit_matching(window.player, open, range, &allowed, rules);
         });
-        let Some(player) = self.ecs.inventories.get_mut(self.player) else {
-            return;
-        };
-        for pos in near {
-            if let Some(entity) = self.block_entities.get_mut(&pos) {
-                deposit_matching(player, &mut entity.container, &self.rules);
-            }
+        for (pos, block) in near {
+            self.deposit_into(pos, block);
         }
     }
 
@@ -203,7 +238,8 @@ impl Game {
         self.waiting_furnaces.clear();
         let mut thrown = Vec::new();
         for (&pos, entity) in &mut self.block_entities {
-            let left = entity.container.normalize(&self.rules);
+            let mut left = entity.container.normalize(&self.rules);
+            left.extend(entity.upgrades.normalize(&self.rules));
             thrown.extend(left.into_iter().map(|stack| (pos, stack)));
         }
         for (pos, stack) in thrown {
@@ -218,6 +254,7 @@ impl Game {
         for pos in furnaces {
             self.wake_furnace(pos);
         }
+        self.find_magnets();
     }
 
     /// A container block or a furnace that went away (broken, burnt, or replaced by a
@@ -225,12 +262,15 @@ impl Game {
     pub(super) fn settle_block_entities(&mut self, loader: &ColumnLoader, changes: &[BlockChange]) {
         for &(pos, block) in changes {
             let kept = self.block_entities.get(&pos).is_some_and(|entity| {
-                self.rules.entity_slots(block).is_some()
+                self.rules.layout(block).is_some()
                     && entity.furnace.is_some() == self.rules.furnace(block).is_some()
             });
             if !kept && let Some(mut entity) = self.block_entities.remove(&pos) {
+                self.magnets.at.remove(&pos);
                 let centre = block_centre(pos);
-                for stack in entity.container.drain() {
+                let mut stacks = entity.container.drain();
+                stacks.extend(entity.upgrades.drain());
+                for stack in stacks {
                     self.spawn_drop(stack, centre, DVec3::ZERO);
                 }
             }

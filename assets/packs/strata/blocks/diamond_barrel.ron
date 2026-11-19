@@ -1,0 +1,9 @@
+// A diamond-bound barrel: 108 slots and 4 upgrade slots (storage_tiers/diamond.ron), never joined with its neighbours.
+Block(
+    textures: Column(end: "strata:diamond_barrel_top", side: "strata:diamond_barrel_side"),
+    hardness: 4.0,
+    tool: Some(BlockTool(kind: "strata:axe")),
+    sound: Some("strata:wood"),
+    category: Some("strata:storage"),
+    container: Some(Container(upgradable: Some(Upgradable(family: "strata:barrel", tier: "strata:diamond")))),
+)

@@ -195,6 +195,12 @@ pub enum ServerMessage {
     ContainerOpened(Box<OpenedContainer>),
     /// What the open container holds now.
     ContainerContents(Box<Container>),
+    /// The open container went up a tier (a kit): its block and where its upgrade
+    /// slots start now.
+    ContainerUpgraded {
+        block: BlockId,
+        upgrades_at: u16,
+    },
     /// The container is gone or out of reach: the screen closes.
     ContainerClosed,
     /// The open furnace's fire and cooking changed.

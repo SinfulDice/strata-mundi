@@ -1,0 +1,11 @@
+// Chests and barrels of every tier: what storage upgrades suit.
+Tag(items: [
+    "strata:chest",
+    "strata:barrel",
+    "strata:iron_chest",
+    "strata:iron_barrel",
+    "strata:gold_chest",
+    "strata:gold_barrel",
+    "strata:diamond_chest",
+    "strata:diamond_barrel",
+])

@@ -108,7 +108,8 @@ pub(super) fn load_blocks(
             tint: value.tint,
             particles: block_particles,
             container: value.container.filter(|c| {
-                let valid = (1..=ContainerDef::MAX_ROWS).contains(&c.rows);
+                let valid =
+                    c.upgradable.is_some() || (1..=ContainerDef::MAX_ROWS).contains(&c.rows);
                 if !valid {
                     errors.push(PackError::invalid(&source, "container: 1 to 6 rows"));
                 }

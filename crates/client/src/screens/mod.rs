@@ -19,6 +19,7 @@ mod pointer;
 mod slot_input;
 mod slots;
 mod station_lists;
+mod storage_panel;
 mod system;
 mod title;
 mod worlds;

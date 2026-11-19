@@ -1,0 +1,56 @@
+# STASH: HOT BOX AN STASH UPGRAYDZ, CHESTIES AN BARRULZ BY TIER.
+item-stat-strata-cook_time = COOKIN TIEM
+item-stat-strata-fuel_value = COOKINZ PER BURNY
+item-stat-strata-output = NOMS PER COOKIN
+tag-strata-furnaces = HOT BOXEZ
+upgrade-slot-strata-furnace = HOT BOX BITZ
+upgrade-strata-furnace_speed = ZOOM BIT
+upgrade-strata-furnace_economy = CHEEP BIT
+upgrade-strata-furnace_output = DUBBL NOMS BIT
+block-strata-iron_chest = SHINY TREZUR BOX
+block-strata-gold_chest = BLINGY TREZUR BOX
+block-strata-diamond_chest = SPARKLY TREZUR BOX
+block-strata-iron_barrel = SHINY BARRUL
+block-strata-gold_barrel = BLINGY BARRUL
+block-strata-diamond_barrel = SPARKLY BARRUL
+block-strata-iron_block = BIG IRUN
+block-strata-gold_block = BIG BLING
+block-strata-copper_block = BIG COPPUR
+block-strata-diamond_block = BIG SPARKLE
+item-strata-iron_nugget = LIL IRUN
+item-strata-gold_nugget = LIL BLING
+item-strata-copper_nugget = LIL COPPUR
+item-strata-iron_storage_kit = IRUN BOX KIT
+item-strata-gold_storage_kit = BLING BOX KIT
+item-strata-diamond_storage_kit = SPARKLE BOX KIT
+item-strata-sorting_upgrade = TIDY BIT
+item-strata-filter_upgrade = PICKY BIT
+item-strata-compression_upgrade = SQUISH BIT
+item-strata-void_upgrade = NOM NOM VOID BIT
+item-strata-magnet_upgrade = GIMME BIT
+tag-strata-storages = BOXEZ AN BARRULZ
+upgrade-slot-strata-storage = STASH BIT
+upgrade-strata-sorting = TIDY
+upgrade-strata-filter = PICKY
+upgrade-strata-compression = SQUISH
+upgrade-strata-void = NOM VOID
+upgrade-strata-magnet = GIMME
+upgrade-effect-sort = TIDIES ITSELF WEN CLOZED
+upgrade-effect-filter = ONLY TAKEZ WUT PICKY LIST SAYZ
+upgrade-effect-compress = SQUISHES LIL BITZ IN2 BARZ, BARZ IN2 BLOKZ
+upgrade-effect-void = NOMS WUT LIST SAYZ
+upgrade-effect-magnet = GRABZ STUFF { $radius } BLOKZ AWAI
+feedback-kit-furnace-wrong-tier = DIS KIT NO FITZ: KIT GOEZ ONE TIER UP, NO SKIPPIN.
+feedback-kit-furnace-needs-two = WAN KIT PER BLOK PLZ.
+feedback-kit-furnace-done = HOT BOX UPGRAYDED!! STUFF STILL INSIDE.
+feedback-kit-storage-wrong-tier = DIS KIT NO FITZ DIS BOX: ONE TIER UP, NO SKIPPIN.
+feedback-kit-storage-needs-two = DUBBL BOX GOEZ UP 2GETHER: HOLD 2 KITZ.
+feedback-kit-storage-done = BOX UPGRAYDED!! STUFF STILL INSIDE.
+ui-storage-rows = ROWZ { $first }-{ $last } OF { $total }
+ui-storage-filter-mode = { $mode ->
+        [deny] NO WANTS DIS LIST
+       *[allow] ONLY WANTS DIS LIST
+    }
+ui-storage-filter-next = NEXT PICKY
+ui-storage-filter-help = HOLD STUFF ON BOX: ADDZ IT. NO STUFF: CLEERZ IT.
+ui-storage-filter-cell = PICKY BOX: PUT HELD STUFF HERE.

@@ -1,0 +1,2 @@
+// A riveted plate of copper.
+Recolor(base: "strata:iron_block", swap: {"iron": "copper_ore"})

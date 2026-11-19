@@ -1,0 +1,2 @@
+// Sorting upgrade (upgrades/sorting.ron), put in an upgrade slot of a chest or barrel.
+Item(texture: "strata:sorting_upgrade", category: Some("strata:storage"), upgrade: Some("strata:sorting"))

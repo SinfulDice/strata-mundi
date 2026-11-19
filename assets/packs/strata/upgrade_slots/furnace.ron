@@ -1,0 +1,3 @@
+// Slots of a furnace, smoker or blast furnace (as many as its tier has): modules, items
+// put in them, not applied at the anvil.
+UpgradeSlot()

@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["NNN", "NNN", "NNN"],
+    key: {'N': Item("strata:gold_nugget")},
+    result: Result(item: "strata:gold_ingot"),
+)

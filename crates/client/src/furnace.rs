@@ -44,6 +44,7 @@ mod tests {
             block: BlockId(1),
             pos: BlockPos::new(0, 0, 0),
             contents: Container::new(3),
+            upgrades_at: 3,
             furnace: Some(FurnaceView {
                 burn_left: 100,
                 burn_total: 100,

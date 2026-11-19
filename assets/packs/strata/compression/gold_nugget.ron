@@ -1,0 +1,2 @@
+// Nine gold nuggets pressed into an ingot.
+Compression(from: "strata:gold_nugget", to: "strata:gold_ingot")

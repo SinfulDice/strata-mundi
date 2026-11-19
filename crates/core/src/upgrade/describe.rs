@@ -38,6 +38,14 @@ impl Content {
                 let args = [("width", width.to_string()), ("height", height.to_string())];
                 tr.text_with(language, "upgrade-effect-area", &args)
             }
+            Effect::Magnet { radius, .. } => {
+                let args = [("radius", tr.short_decimal(language, f64::from(*radius)))];
+                tr.text_with(language, "upgrade-effect-magnet", &args)
+            }
+            Effect::Sort => tr.text(language, "upgrade-effect-sort"),
+            Effect::Filter => tr.text(language, "upgrade-effect-filter"),
+            Effect::Compress => tr.text(language, "upgrade-effect-compress"),
+            Effect::Void => tr.text(language, "upgrade-effect-void"),
         }
     }
 

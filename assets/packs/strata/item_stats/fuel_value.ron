@@ -1,0 +1,3 @@
+// Percent of the cookings one fuel gives in a furnace (from 100, before its tier). Bounds
+// of the values furnace modules give it.
+ItemStat(min: -90.0, max: 1000.0)

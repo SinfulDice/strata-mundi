@@ -1,0 +1,6 @@
+// Speed module: a quarter faster; each fuel cooks a little less (80 %).
+Upgrade(
+    slot: "strata:furnace",
+    applies_to: ["strata:furnaces"],
+    levels: [Level(effects: [Stat(stat: "strata:cook_time", op: Percent, value: -25.0), Stat(stat: "strata:fuel_value", op: Percent, value: -20.0)])],
+)

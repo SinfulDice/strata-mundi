@@ -1,0 +1,6 @@
+// Destruction upgrade: what enters and matches its filter is destroyed (an empty filter destroys nothing).
+Upgrade(
+    slot: "strata:storage",
+    applies_to: ["strata:storages"],
+    levels: [Level(effects: [Void])],
+)

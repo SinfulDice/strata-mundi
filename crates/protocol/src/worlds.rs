@@ -36,6 +36,8 @@ pub struct NewWorld {
     pub durability: DurabilityMode,
     /// Equipment may give movement abilities.
     pub gear_mobility: bool,
+    /// Magnet upgrades of chests and barrels draw the items lying around.
+    pub storage_magnets: bool,
     /// World type, sliders of the generation.
     pub generation: WorldgenSettings,
 }

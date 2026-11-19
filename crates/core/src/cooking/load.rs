@@ -1,7 +1,7 @@
 //! Reading `furnace_tiers/`, `cooking/`, `stonecutting/` and `fuels/`, with every unknown
 //! name reported with its file.
 
-use super::defs::{CookingDef, CuttingDef, FuelDef, FurnaceTier};
+use super::defs::{CookingDef, CuttingDef, FuelDef, FurnaceTier, KitTarget};
 use super::{Cooking, CookingRecipe, CuttingRecipe};
 use crate::content::{Block, BlockId, Item, ItemId, Registry};
 use crate::crafting::{Ingredient, Names, ResultDef, ingredient};
@@ -139,7 +139,7 @@ fn check_tiers(
         }
     }
     for (_, id, item) in items.iter() {
-        let Some(kit) = &item.kit else {
+        let Some(kit) = item.kit.as_ref().filter(|kit| kit.on == KitTarget::Furnace) else {
             continue;
         };
         for tier in [&kit.from, &kit.to] {

@@ -4,7 +4,7 @@
 use super::defs::{AreaSize, Effect, StatOp};
 use super::installed::installed;
 use super::{Upgrade, Upgrades};
-use crate::content::{Item, ItemId, Registry, ToolDef};
+use crate::content::{Item, ItemId, ItemKind, Registry, ToolDef};
 use crate::gear::{Armor, WeaponDef};
 use crate::id::Identifier;
 use crate::inventory::ItemStack;
@@ -55,6 +55,7 @@ pub fn applies(effect: &Effect, item: &Item) -> bool {
     let stat = match effect {
         Effect::Area(..) => return item.tool.is_some(),
         Effect::Stat { stat, .. } => stat,
+        _ => return matches!(item.kind, ItemKind::Block(_)),
     };
     match engine_stat(stat) {
         Some(EngineStat::Damage) => item.gear.weapon.is_some(),
@@ -179,7 +180,7 @@ fn areas(held: &[(&Upgrade, u8)]) -> Vec<AreaSize> {
         .flat_map(|level| level.effects.iter())
         .filter_map(|effect| match *effect {
             Effect::Area(width, height) => Some(AreaSize { width, height }),
-            Effect::Stat { .. } => None,
+            _ => None,
         })
         .collect();
     if areas.is_empty() {
@@ -192,10 +193,7 @@ fn areas(held: &[(&Upgrade, u8)]) -> Vec<AreaSize> {
 }
 
 fn change(value: f32, op: StatOp, by: f32) -> f32 {
-    match op {
-        StatOp::Add => value + by,
-        StatOp::Percent => value * (1.0 + by / 100.0).max(0.0),
-    }
+    op.apply(value, by)
 }
 
 fn apply(stats: &mut ItemStats, effect: &Effect) {

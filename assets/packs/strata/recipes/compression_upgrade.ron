@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["PIP", "IXI", "PIP"],
+    key: {'P': Tag("strata:planks"), 'I': Item("strata:iron_ingot"), 'X': Item("strata:gold_ingot")},
+    result: Result(item: "strata:compression_upgrade"),
+)

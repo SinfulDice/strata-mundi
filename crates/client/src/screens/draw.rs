@@ -159,17 +159,31 @@ impl Screens {
     }
 }
 
-/// Where the panel named `window` of a screen lies.
+/// Where the panel named `window` of a screen lies, with the panels beside it
+/// (`window_…`, in groups): clicking there is not clicking outside.
 fn window_rect(def: &ScreenDef, screen: Rect) -> Option<Rect> {
-    def.root.iter().find_map(|node| match node {
+    fn panels<'a>(nodes: &'a [Node], found: &mut Vec<&'a Node>) {
+        for node in nodes {
+            match node {
+                Node::Panel { id, .. } if id.starts_with("window") => found.push(node),
+                Node::Group { children, .. } => panels(children, found),
+                _ => {}
+            }
+        }
+    }
+    let mut found = Vec::new();
+    panels(&def.root, &mut found);
+    let rects = found.into_iter().filter_map(|node| match node {
         Node::Panel {
-            id,
-            anchor,
-            at,
-            size,
-            ..
-        } if id == "window" => Some(screen.place(*anchor, *at, *size)),
+            anchor, at, size, ..
+        } => Some(screen.place(*anchor, *at, *size)),
         _ => None,
+    });
+    rects.reduce(|a, b| {
+        let (x, y) = (a.x.min(b.x), a.y.min(b.y));
+        let right = (a.x + a.w as i32).max(b.x + b.w as i32);
+        let bottom = (a.y + a.h as i32).max(b.y + b.h as i32);
+        Rect::new(x, y, (right - x) as u32, (bottom - y) as u32)
     })
 }
 

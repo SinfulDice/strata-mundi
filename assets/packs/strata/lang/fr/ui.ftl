@@ -54,7 +54,11 @@ ui-new-world-durability = Objets usés : { $keep ->
         [on] gardés jusqu'à réparation
        *[off] se cassent
     }
-ui-new-world-gear-mobility = Mobilité par l'équipement : { $allowed ->
+ui-new-world-gear-mobility = Mobilité: { $allowed ->
+        [on] oui
+       *[off] non
+    }
+ui-new-world-magnets = Aimants : { $allowed ->
         [on] oui
        *[off] non
     }

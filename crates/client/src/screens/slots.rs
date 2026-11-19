@@ -9,7 +9,7 @@ use crate::crafting::ClientCrafting;
 use crate::inventory::{ClientInventory, wear_share};
 use crate::ui::{ScreenModel, SlotMark, SlotPress};
 use strata_core::content::{Content, ItemId, StationDef};
-use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE_OUTPUT};
+use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_OUTPUT};
 use strata_core::inventory::{
     ACCESSORIES, ARMOR, Area, Click, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef, SortOrder,
 };
@@ -30,6 +30,10 @@ pub struct SlotsState {
     pub upgrade_scroll: usize,
     /// Rows of a bench's list scrolled past.
     pub bench_scroll: usize,
+    /// Rows of a large chest scrolled past.
+    pub chest_scroll: usize,
+    /// Which of the open storage's filtering upgrades the filter panel shows.
+    pub filter_choice: usize,
 }
 
 pub struct SlotsModel<'a> {
@@ -42,7 +46,8 @@ pub struct SlotsModel<'a> {
     pub language: &'a str,
 }
 
-/// Where the slots of a grid are: the area and its first index.
+/// Where the slots of a grid are: the area and its slots (the open container's grids
+/// are placed by `storage_grid`).
 fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
     Some(match id {
         "hotbar" => (Area::Player, HOTBAR),
@@ -50,10 +55,6 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
         "armor" => (Area::Player, ARMOR),
         "offhand" => (Area::Player, OFFHAND..OFFHAND + 1),
         "accessories" => (Area::Player, ACCESSORIES),
-        "chest" | "furnace_modules" => {
-            let start = if id == "chest" { 0 } else { FURNACE_MODULES };
-            (Area::Open, start..usize::from(u16::MAX))
-        }
         "furnace_input" => (Area::Open, FURNACE_INPUT..FURNACE_INPUT + 1),
         "furnace_fuel" => (Area::Open, FURNACE_FUEL..FURNACE_FUEL + 1),
         "furnace_output" => (Area::Open, FURNACE_OUTPUT..FURNACE_OUTPUT + 1),
@@ -66,9 +67,13 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
 }
 
 impl SlotsModel<'_> {
+    fn grid(&self, id: &str) -> Option<(Area, std::ops::Range<usize>)> {
+        self.storage_grid(id).or_else(|| grid(id))
+    }
+
     /// The slot behind element `index` of grid `id`.
     pub fn slot(&self, id: &str, index: usize) -> Option<SlotRef> {
-        let (area, range) = grid(id)?;
+        let (area, range) = self.grid(id)?;
         let slot = range.start + index;
         let exists = range.contains(&slot)
             && match area {
@@ -82,7 +87,7 @@ impl SlotsModel<'_> {
         })
     }
 
-    fn stack(&self, slot: SlotRef) -> Option<&ItemStack> {
+    pub(super) fn stack(&self, slot: SlotRef) -> Option<&ItemStack> {
         let index = usize::from(slot.index);
         match slot.area {
             Area::Player => self.inventory.stack(index),
@@ -93,7 +98,7 @@ impl SlotsModel<'_> {
     }
 
     fn stacks(&self, id: &str) -> Vec<Option<&ItemStack>> {
-        let Some((area, range)) = grid(id) else {
+        let Some((area, range)) = self.grid(id) else {
             return Vec::new();
         };
         let end = match area {
@@ -239,6 +244,7 @@ impl ScreenModel for SlotsModel<'_> {
             "cutter_note" => Some(self.cutter_note()),
             "anvil_note" => Some(self.anvil_note()),
             "bench_note" => Some(self.bench_note()),
+            "chest_rows" | "filter_title" | "filter_mode" => self.storage_text(id),
             "help" => Some(
                 Some(self.craft_note())
                     .filter(|note| !note.is_empty())
@@ -264,7 +270,7 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn marks(&self, id: &str) -> Vec<SlotMark> {
-        let Some((area, range)) = grid(id) else {
+        let Some((area, range)) = self.grid(id) else {
             return Vec::new();
         };
         self.stacks(id)
@@ -308,7 +314,10 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn shown(&self, id: &str) -> bool {
-        if let Some(shown) = self.bench_group_shown(id) {
+        if let Some(shown) = self
+            .bench_group_shown(id)
+            .or_else(|| self.storage_shown(id))
+        {
             return shown;
         }
         let open = self.container.is_some();
@@ -318,7 +327,7 @@ impl ScreenModel for SlotsModel<'_> {
             "furnace_side" => open && self.furnace(),
             "furnace_no_modules" => self
                 .container
-                .is_some_and(|c| c.contents.len() <= FURNACE_MODULES),
+                .is_some_and(|c| c.contents.len() <= usize::from(c.upgrades_at)),
             "table_side" => !open && matches!(station, Some(StationDef::Crafting(_))),
             "cutter_side" => !open && station == Some(StationDef::Stonecutter),
             "anvil_side" => !open && station == Some(StationDef::Anvil),
@@ -345,6 +354,10 @@ impl ScreenModel for SlotsModel<'_> {
             "anvil_later" => self.scroll_upgrades(1),
             "bench_earlier" => self.scroll_bench(-1),
             "bench_later" => self.scroll_bench(1),
+            "chest_earlier" => self.scroll_chest(-1),
+            "chest_later" => self.scroll_chest(1),
+            "filter_next" => self.next_filter(),
+            "filter_mode" => self.toggle_filter_mode(),
             "book" => self
                 .effects
                 .push(Effect::Push(Menu::Journal(JournalState::for_grid()))),
@@ -366,6 +379,7 @@ impl ScreenModel for SlotsModel<'_> {
         match id {
             "anvil_choices" => self.scroll_upgrades(rows),
             "bench_choices" => self.scroll_bench(rows),
+            "chest" => self.scroll_chest(rows),
             _ => {}
         }
     }

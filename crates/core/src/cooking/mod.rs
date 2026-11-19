@@ -1,5 +1,5 @@
 //! Furnaces and the stonecutter: fuels, cooking recipes by kind, furnace tiers, kits and
-//! modules, all from the packs. Pure logic, stepped by the server every tick.
+//! the stats of furnace upgrades, all from the packs. Pure logic, stepped by the server every tick.
 
 mod cutting;
 mod defs;
@@ -9,7 +9,7 @@ mod slots;
 
 pub use cutting::{cut_choices, cut_result, take_cut};
 pub use defs::{
-    CookingDef, CuttingDef, DEFAULT_COOK_TIME, FuelDef, FurnaceDef, FurnaceTier, KitDef, ModuleDef,
+    CookingDef, CuttingDef, DEFAULT_COOK_TIME, FuelDef, FurnaceDef, FurnaceTier, KitDef, KitTarget,
 };
 pub use furnace::{Furnace, FurnaceState, FurnaceStats, Step, step};
 pub use slots::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_MODULES, FURNACE_OUTPUT, FurnaceSlots};

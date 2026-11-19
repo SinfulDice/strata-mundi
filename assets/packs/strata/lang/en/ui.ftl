@@ -54,7 +54,11 @@ ui-new-world-durability = Worn-out items: { $keep ->
         [on] kept until repaired
        *[off] break
     }
-ui-new-world-gear-mobility = Movement from equipment: { $allowed ->
+ui-new-world-gear-mobility = Gear moves: { $allowed ->
+        [on] on
+       *[off] off
+    }
+ui-new-world-magnets = Magnets: { $allowed ->
         [on] on
        *[off] off
     }

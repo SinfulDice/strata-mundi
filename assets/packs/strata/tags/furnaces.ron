@@ -1,0 +1,15 @@
+// Furnaces, smokers and blast furnaces of every tier: what furnace modules suit.
+Tag(items: [
+    "strata:furnace",
+    "strata:smoker",
+    "strata:blast_furnace",
+    "strata:iron_furnace",
+    "strata:iron_smoker",
+    "strata:iron_blast_furnace",
+    "strata:gold_furnace",
+    "strata:gold_smoker",
+    "strata:gold_blast_furnace",
+    "strata:diamond_furnace",
+    "strata:diamond_smoker",
+    "strata:diamond_blast_furnace",
+])

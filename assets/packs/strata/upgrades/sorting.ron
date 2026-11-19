@@ -1,0 +1,6 @@
+// Sorting upgrade: the storage sorts itself by type when its screen closes and when it takes items in on its own.
+Upgrade(
+    slot: "strata:storage",
+    applies_to: ["strata:storages"],
+    levels: [Level(effects: [Sort])],
+)

@@ -12,8 +12,10 @@ mod equipment;
 mod furnaces;
 mod hammer;
 mod inventory;
+mod kits;
 mod mining;
 mod placing;
+mod storage;
 mod terrain;
 mod work;
 
@@ -81,6 +83,8 @@ pub struct Game {
     stats_cache: strata_core::upgrade::StatsCache,
     /// What is worn, until a worn slot changes.
     worn_cache: strata_core::worn::WornCache,
+    /// Chests and barrels with a magnet upgrade.
+    magnets: storage::Magnets,
 }
 
 impl Game {
@@ -120,6 +124,7 @@ impl Game {
             stats_cache: Default::default(),
             worn_cache: Default::default(),
             furnace_view: None,
+            magnets: Default::default(),
         }
     }
 
@@ -226,6 +231,7 @@ impl Game {
         let moved = boat_movement(&mut self.ecs, &self.rules, &terrain);
         self.report_moves(&moved);
         self.drops_tick(loader);
+        self.magnets_tick(loader);
         let mut changes = self.run_queued_actions(loader);
         changes.extend(self.mining_tick(loader));
         changes.extend(self.furnaces_tick(loader));
@@ -374,3 +380,6 @@ mod mobility_tests;
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod input_order_tests;
+
+#[cfg(test)]
+mod storage_tests;

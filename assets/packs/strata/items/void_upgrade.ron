@@ -1,0 +1,2 @@
+// Destruction upgrade (upgrades/void.ron), put in an upgrade slot of a chest or barrel.
+Item(texture: "strata:void_upgrade", category: Some("strata:storage"), upgrade: Some("strata:void"))

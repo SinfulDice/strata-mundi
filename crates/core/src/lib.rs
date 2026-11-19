@@ -22,6 +22,7 @@ pub mod physics;
 pub mod raycast;
 pub mod rng;
 pub mod sky;
+pub mod storage;
 pub mod texture;
 pub mod updates;
 pub mod upgrade;

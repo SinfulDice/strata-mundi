@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["III", "IPI"],
+    key: {'I': Item("strata:iron_ingot"), 'P': Tag("strata:planks")},
+    result: Result(item: "strata:iron_storage_kit"),
+)

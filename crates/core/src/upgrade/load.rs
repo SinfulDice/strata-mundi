@@ -13,6 +13,8 @@ use std::path::Path;
 const MAX_LEVELS: usize = 8;
 /// Widest hammer area a side.
 pub const MAX_AREA: u8 = 9;
+/// Farthest a storage magnet draws from, in blocks.
+const MAX_MAGNET: f32 = 16.0;
 
 pub(crate) fn load_upgrades(
     packs: &PackSet,
@@ -36,6 +38,7 @@ pub(crate) fn load_upgrades(
         .filter_map(|(id, Sourced { value, source })| upgrade(id, value, &known, &source, errors))
         .collect();
     check_links(&list, errors);
+    check_items(names, &list, errors);
     let repairs = names
         .items
         .iter()
@@ -84,7 +87,10 @@ fn upgrade(
                     .filter_map(|e| bounded(e, known.stats, source, errors))
                     .collect(),
                 xp: level.xp,
-                material: ingredient(level.material, known.names, source, errors)?,
+                material: match level.material {
+                    Some(def) => ingredient(def, known.names, source, errors)?,
+                    None => Ingredient::new(Vec::new(), None),
+                },
                 count: level.count.clamp(1, 64),
             })
         })
@@ -136,6 +142,15 @@ pub(crate) fn bounded(
             Some(Effect::Stat { stat, op, value })
         }
         Effect::Area(w, h) => Some(Effect::Area(w.clamp(1, MAX_AREA), h.clamp(1, MAX_AREA))),
+        Effect::Magnet { radius, period } => Some(Effect::Magnet {
+            radius: if radius.is_finite() {
+                radius.clamp(1.0, MAX_MAGNET)
+            } else {
+                1.0
+            },
+            period: period.max(1),
+        }),
+        other => Some(other),
     }
 }
 
@@ -147,6 +162,23 @@ pub(super) fn check_links(list: &[Upgrade], errors: &mut Vec<PackError>) {
             let source = Path::new("upgrades").join(format!("{}", upgrade.id));
             let message = format!("unknown upgrade `{other}` in requires or excludes");
             errors.push(PackError::invalid(&source, message));
+        }
+    }
+}
+
+/// Items that are upgrades must name upgrades that exist.
+fn check_items(names: &Names<'_>, list: &[Upgrade], errors: &mut Vec<PackError>) {
+    for (_, id, item) in names.items.iter() {
+        let unknown = item
+            .upgrade
+            .as_ref()
+            .filter(|u| !list.iter().any(|l| l.id == **u));
+        if let Some(upgrade) = unknown {
+            let source = Path::new("items").join(format!("{id}"));
+            errors.push(PackError::invalid(
+                &source,
+                format!("unknown upgrade `{upgrade}`"),
+            ));
         }
     }
 }

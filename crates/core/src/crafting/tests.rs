@@ -35,7 +35,7 @@ pub(super) fn items() -> Registry<ItemId, Item> {
             tool: None,
             remainder: (name == "water").then_some(BUCKET),
             kit: None,
-            module: None,
+            upgrade: None,
             gear: Default::default(),
         };
         items.insert(id(name), item);

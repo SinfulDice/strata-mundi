@@ -1,2 +1,2 @@
-// Furnace module: Twice the results, slower and for twice the fuel.
-Item(texture: "strata:output_module", category: Some("strata:stations"), module: Some(Furnace(cook_time: 125, fuel_value: 50, output: 2)))
+// Furnace module (upgrades/furnace_*.ron): Twice the results, slower and for twice the fuel.
+Item(texture: "strata:output_module", category: Some("strata:stations"), upgrade: Some("strata:furnace_output"))

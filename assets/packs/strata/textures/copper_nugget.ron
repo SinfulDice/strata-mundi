@@ -1,0 +1,2 @@
+// A small lump of copper: nine make an ingot.
+Recolor(base: "strata:iron_nugget", swap: {"iron": "copper_ore"})

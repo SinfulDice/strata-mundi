@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["GDG", "DGD"],
+    key: {'G': Item("strata:glass"), 'D': Item("strata:diamond")},
+    result: Result(item: "strata:diamond_storage_kit"),
+)

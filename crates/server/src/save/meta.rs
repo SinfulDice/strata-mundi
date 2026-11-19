@@ -52,6 +52,9 @@ pub struct WorldMeta {
     /// World option: equipment may give movement abilities (double jump, dash, climbing).
     #[serde(default = "yes")]
     pub gear_mobility: bool,
+    /// World option: magnet upgrades of chests and barrels draw the items lying around.
+    #[serde(default = "yes")]
+    pub storage_magnets: bool,
     /// World type and generation settings; older worlds are of the pack's normal type.
     #[serde(default)]
     pub generation: WorldgenSettings,

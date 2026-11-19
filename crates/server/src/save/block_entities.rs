@@ -22,6 +22,9 @@ pub struct BlockEntitiesData {
 pub struct SavedBlockEntity {
     pub pos: [i32; 3],
     pub slots: Vec<Option<SavedStack>>,
+    /// Upgrade slots (v0.3 milestone 7); before, a furnace's followed its own slots.
+    #[serde(default)]
+    pub upgrades: Vec<Option<SavedStack>>,
     #[serde(default)]
     pub data: ItemData,
     /// Fire and cooking of a furnace.

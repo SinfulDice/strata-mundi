@@ -1,0 +1,2 @@
+// Results of one cooking in a furnace (from 1). Bounds of the values furnace modules give it.
+ItemStat(min: 0.0, max: 3.0)

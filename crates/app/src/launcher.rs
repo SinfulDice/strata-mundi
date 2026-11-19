@@ -63,6 +63,7 @@ impl GameLauncher {
             discover_recipes: true,
             durability: Default::default(),
             gear_mobility: true,
+            storage_magnets: true,
             generation: self.args.world_code.clone().unwrap_or_default(),
         };
         self.start(meta, None)

@@ -1,0 +1,2 @@
+// Nine make an copper ingot (at the grid, or in a storage with a compression upgrade).
+Item(texture: "strata:copper_nugget", category: Some("strata:materials"))

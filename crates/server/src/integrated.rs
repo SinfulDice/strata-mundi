@@ -78,6 +78,7 @@ impl IntegratedServer {
         game.set_recipe_discovery(meta.discover_recipes);
         game.durability = meta.durability;
         game.set_gear_mobility(meta.gear_mobility);
+        game.set_storage_magnets(meta.storage_magnets);
         game.set_known_recipes(start.recipes);
         game.set_inventory(start.inventory);
         game.unknown_recipes = game.adopt_moved_recipes(start.unknown_recipes);

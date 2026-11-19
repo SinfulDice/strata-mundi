@@ -1,0 +1,27 @@
+// A wooden board in an iron frame, its sign in the middle: the sorting upgrade.
+Sprite(
+    colors: {
+        'I': ("iron", 1),
+        'w': ("oak_wood", 1),
+        'W': ("oak_wood", 0),
+        'S': ("copper_ore", 2),
+    },
+    rows: [
+        "................",
+        ".IIIIIIIIIIIIII.",
+        ".IwWwwwwWwwwwWI.",
+        ".IWwwwwWwwwwWwI.",
+        ".IwwwwWwwwwWwwI.",
+        ".IwwwwwwwwwwwwI.",
+        ".IwwWwSSSSwwwwI.",
+        ".IwWwwwwwwwwwWI.",
+        ".IWwwwSSSwwwWwI.",
+        ".IwwwwwwwwwWwwI.",
+        ".IwwwwSSwwwwwwI.",
+        ".IwwWwwwwWwwwwI.",
+        ".IwWwwwwWwwwwWI.",
+        ".IWwwwwWwwwwWwI.",
+        ".IIIIIIIIIIIIII.",
+        "................",
+    ],
+)

@@ -1,18 +1,13 @@
 //! Furnaces: only those burning or cooling are stepped each tick, so idle ones cost
 //! nothing; one whose column unloads waits, and is woken when the column comes back. The
-//! lit look follows the fire, and a kit upgrades a furnace in place.
+//! lit look follows the fire.
 
 use super::Game;
-use super::containers::block_centre;
 use crate::loader::ColumnLoader;
-use glam::DVec3;
 use strata_core::content::BlockId;
-use strata_core::cooking::{
-    DEFAULT_COOK_TIME, FURNACE_MODULES, Furnace, FurnaceState, FurnaceStats, ModuleDef, step,
-};
+use strata_core::cooking::{DEFAULT_COOK_TIME, Furnace, FurnaceState, FurnaceStats, step};
 use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::updates::BlockChange;
-use strata_protocol::commands::Feedback;
 use strata_protocol::{FurnaceView, ServerMessage};
 
 impl Game {
@@ -98,16 +93,22 @@ impl Game {
         Some(done.active)
     }
 
-    /// Station, tier and the modules in the upgrade slots of the furnace at `pos`.
+    /// Station, tier and the upgrades in the upgrade slots of the furnace at `pos`.
     fn furnace_stats(&self, block: BlockId, pos: BlockPos) -> Option<FurnaceStats> {
         let furnace = self.rules.furnace(block)?;
-        let tier = self.rules.cooking.tier(&furnace.tier).copied()?;
-        let slots = &self.block_entities.get(&pos)?.container;
-        let modules: Vec<ModuleDef> = (FURNACE_MODULES..slots.len())
-            .filter_map(|index| slots.get(index))
-            .filter_map(|stack| self.rules.items().get(stack.item)?.module)
-            .collect();
-        Some(FurnaceStats::new(furnace, &tier, &modules))
+        let tier = self.rules.cooking.tier(&furnace.tier)?;
+        let slots = self
+            .block_entities
+            .get(&pos)?
+            .upgrades
+            .slots
+            .iter()
+            .flatten();
+        let effects = self
+            .rules
+            .upgrades
+            .slotted_effects(self.rules.items(), slots);
+        Some(FurnaceStats::new(furnace, tier, &effects))
     }
 
     fn light_furnace(
@@ -128,7 +129,7 @@ impl Game {
     }
 
     /// The open screen keeps showing a furnace whose block changed (lit, upgraded).
-    fn follow_open_block(&mut self, pos: BlockPos, block: BlockId) {
+    pub(super) fn follow_open_block(&mut self, pos: BlockPos, block: BlockId) {
         if let Some(window) = self.ecs.windows.get_mut(self.player)
             && window.halves == [pos]
         {
@@ -137,7 +138,7 @@ impl Game {
     }
 
     /// Where the furnace the player has open stands.
-    fn open_furnace(&self) -> Option<BlockPos> {
+    pub(super) fn open_furnace(&self) -> Option<BlockPos> {
         let window = self.ecs.windows.get(self.player)?;
         self.rules.furnace(window.block)?;
         window.halves.first().copied()
@@ -183,62 +184,5 @@ impl Game {
             seconds: (usual / 20.0) as f32,
             per_coal: self.rules.cooking.reference_fuel().map(per_fuel),
         })
-    }
-
-    /// Right click on a block: a kit in hand upgrades the furnace it is used on;
-    /// otherwise the block opens (container, station, furnace).
-    pub(super) fn use_block(
-        &mut self,
-        loader: &mut ColumnLoader,
-        pos: BlockPos,
-    ) -> Vec<BlockChange> {
-        if let Some(changes) = self.upgrade_with_kit(loader, pos) {
-            return changes;
-        }
-        self.open_block(loader, pos);
-        Vec::new()
-    }
-
-    /// `None` when the hand holds no kit or the block is no furnace.
-    fn upgrade_with_kit(
-        &mut self,
-        loader: &mut ColumnLoader,
-        pos: BlockPos,
-    ) -> Option<Vec<BlockChange>> {
-        let item = self.held_item()?;
-        let kit = self.rules.items().get(item)?.kit.clone()?;
-        let block = loader.block(pos)?;
-        let tier = self.rules.furnace(block)?.tier.clone();
-        let mut changes = Vec::new();
-        if !self.in_reach(pos) || !self.take_action() {
-            return Some(changes);
-        }
-        let upgraded = (tier == kit.from)
-            .then(|| self.rules.furnace_of_tier(block, &kit.to))
-            .flatten();
-        let Some((upgraded, size)) = upgraded.and_then(|b| Some((b, self.rules.entity_slots(b)?)))
-        else {
-            let refused = Feedback::error("feedback-kit-wrong-tier", &[]);
-            self.messages.push(ServerMessage::Feedback(refused));
-            return Some(changes);
-        };
-        let entity = self.block_entities.entry(pos).or_default();
-        entity.furnace.get_or_insert_with(FurnaceState::default);
-        let cut = entity.container.resize(size);
-        let contents = entity.container.clone();
-        for stack in cut {
-            self.spawn_drop(stack, block_centre(pos), DVec3::ZERO);
-        }
-        self.follow_open_block(pos, upgraded);
-        self.set_block(loader, pos, upgraded, &mut changes);
-        self.consume_held();
-        self.wake_furnace(pos);
-        if self.open_furnace() == Some(pos) {
-            self.messages
-                .push(ServerMessage::ContainerContents(Box::new(contents)));
-        }
-        let done = Feedback::ok("feedback-kit-done", &[]);
-        self.messages.push(ServerMessage::Feedback(done));
-        Some(changes)
     }
 }

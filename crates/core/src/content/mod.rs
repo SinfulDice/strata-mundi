@@ -71,6 +71,7 @@ use crate::lang::Translations;
 use crate::pack::{PackError, PackSet};
 use crate::physics::LiquidCell;
 use crate::sky::{self, DayCycle, Sky};
+use crate::storage::{Storage, load_storage};
 use crate::upgrade::{Upgrades, load_upgrades};
 use crate::worn::{Worn, bound_worn_effects, load_worn};
 use block_load::{BlockRefs, Presented, load_blocks};
@@ -107,6 +108,8 @@ pub struct Content {
     pub upgrades: Upgrades,
     /// Sets and the movement abilities equipment gives.
     pub worn: Worn,
+    /// Chest and barrel tiers, compression recipes.
+    pub storage: Storage,
     /// Recipes of the benches (jeweller…).
     pub benches: Benches,
     /// Item tooltips by language, see `item_tooltip`.
@@ -163,6 +166,8 @@ impl Content {
         let benches = crafting::load_benches(packs, &names, &bench_stations(&blocks), &mut errors);
         let cooking = cooking::load_cooking(packs, &names, &blocks, &mut errors);
         let upgrades = load_upgrades(packs, &names, &gear.slot_families, &mut errors);
+        let storage_context = (&cooking, &gear.slot_families);
+        let storage = load_storage(packs, &items, &mut blocks, storage_context, &mut errors);
         bound_worn_effects(&mut items, &upgrades.stats, &mut errors);
         let worn = load_worn(packs, &items, &upgrades.stats, &mut errors);
         loot::check_loot_names(&refs.loot, &loot_tables, &mut errors);
@@ -192,6 +197,7 @@ impl Content {
             gear,
             upgrades,
             worn,
+            storage,
             benches,
             tooltips: Default::default(),
         };

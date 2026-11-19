@@ -1,0 +1,9 @@
+// A iron-bound barrel: 54 slots and 2 upgrade slots (storage_tiers/iron.ron), never joined with its neighbours.
+Block(
+    textures: Column(end: "strata:iron_barrel_top", side: "strata:iron_barrel_side"),
+    hardness: 3.0,
+    tool: Some(BlockTool(kind: "strata:axe")),
+    sound: Some("strata:wood"),
+    category: Some("strata:storage"),
+    container: Some(Container(upgradable: Some(Upgradable(family: "strata:barrel", tier: "strata:iron")))),
+)

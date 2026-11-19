@@ -1,0 +1,2 @@
+// The wooden barrel's frame and latch in diamond: the metal border shows its tier.
+Recolor(base: "strata:barrel_side", swap: {"oak_bark": "diamond", "iron": "diamond"})

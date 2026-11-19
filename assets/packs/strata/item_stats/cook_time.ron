@@ -1,0 +1,3 @@
+// Percent of a recipe's time a furnace takes for one cooking (100 in a stone furnace,
+// before its tier). Bounds of the values furnace modules give it.
+ItemStat(min: -90.0, max: 500.0)

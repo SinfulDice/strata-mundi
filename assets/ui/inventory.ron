@@ -4,7 +4,8 @@
 // the upgrades it can take (shown by their material) and the repair; at a bench (forge,
 // tannery, loom, jeweller), its four cells, the list of what it makes (scrolled by rows) and the
 // result, in the bench's own arrangement (`layout` of its `benches/` file) and colour (bands); with a container open, the container
-// (or the furnace: input, fuel and its flame, the arrow, output, upgrade slots) on top. The player's slots are always below. Slots
+// (or the furnace: input, fuel and its flame, the arrow, output, upgrade slots) on top, a tall chest scrolled by
+// rows, its upgrade slots and filter in a panel beside the window. The player's slots are always below. Slots
 // take clicks (the help below gives way to the crafting hint or the recipe learnt): left takes or puts, right halves or puts one, shift-click sends across
 // (on the result: crafts as many as fit), double-click gathers, middle click (L1) locks.
 Screen(
@@ -46,6 +47,11 @@ Screen(
                     Button(id: "sort_chest", anchor: TopLeft, at: (104, 13), size: (40, 14), text: "ui-inventory-sort"),
                     Button(id: "deposit", anchor: TopLeft, at: (148, 13), size: (40, 14), text: "ui-inventory-deposit"),
                     SlotGrid(id: "chest", anchor: TopLeft, at: (8, 30), columns: 9, rows: 6),
+                    Group(id: "chest_scroll", children: [
+                        Button(id: "chest_earlier", anchor: TopLeft, at: (8, 139), size: (40, 12), text: "ui-bench-earlier"),
+                        Button(id: "chest_later", anchor: TopLeft, at: (52, 139), size: (40, 12), text: "ui-bench-later"),
+                        Label(id: "chest_rows", anchor: TopLeft, at: (98, 141), text: "@chest_rows", dim: true),
+                    ]),
                 ]),
                 Group(id: "furnace_side", children: [
                     Label(id: "furnace_title", anchor: TopLeft, at: (8, 4), text: "@title"),
@@ -164,5 +170,29 @@ Screen(
                 SlotGrid(id: "hotbar", anchor: TopLeft, at: (8, 214), columns: 9, rows: 1),
             ],
         ),
+        // A chest's or a barrel's upgrades beside the window, and the filter of the filter
+        // or destruction upgrade chosen: the carried item goes in a cell (A), an empty hand
+        // empties it.
+        Group(id: "storage_side", children: [
+            Panel(
+                id: "window_upgrades",
+                anchor: Center,
+                at: (148, -21),
+                size: (92, 196),
+                children: [
+                    Label(id: "upgrades_label", anchor: TopLeft, at: (8, 4), text: "ui-furnace-modules"),
+                    SlotGrid(id: "chest_upgrades", anchor: TopLeft, at: (10, 16), columns: 4, rows: 2),
+                    Group(id: "storage_filter", children: [
+                        Label(id: "filter_title", anchor: TopLeft, at: (8, 58), text: "@filter_title", wrap: Some(76)),
+                        Group(id: "filter_choices", children: [
+                            Button(id: "filter_next", anchor: TopLeft, at: (8, 70), size: (76, 12), text: "ui-storage-filter-next"),
+                        ]),
+                        ItemGrid(id: "chest_filter", anchor: TopLeft, at: (19, 86), columns: 3, rows: 3),
+                        Button(id: "filter_mode", anchor: TopLeft, at: (8, 144), size: (76, 14), text: "@filter_mode"),
+                        Label(id: "filter_help", anchor: TopLeft, at: (8, 162), text: "ui-storage-filter-help", dim: true, wrap: Some(76)),
+                    ]),
+                ],
+            ),
+        ]),
     ],
 )

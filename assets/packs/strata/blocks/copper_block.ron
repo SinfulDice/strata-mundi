@@ -1,0 +1,8 @@
+// Nine copper ingots in a block, to store them or to build with.
+Block(
+    textures: All("strata:copper_block"),
+    hardness: 5.0,
+    tool: Some(BlockTool(kind: "strata:pickaxe", level: 1, required: true)),
+    sound: Some("strata:metal"),
+    category: Some("strata:building"),
+)

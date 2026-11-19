@@ -14,6 +14,7 @@ impl SlotsModel<'_> {
             "cut_choices" => Some(self.cuts().map(|(_, stack)| Some(stack.item)).collect()),
             "anvil_choices" => Some(self.anvil_icons()),
             "bench_choices" => Some(self.bench_icons()),
+            "chest_filter" => Some(self.filter_cells()),
             _ => None,
         }
     }
@@ -39,6 +40,7 @@ impl SlotsModel<'_> {
             }
             "anvil_choices" => Some(self.anvil_tooltip(index)),
             "bench_choices" => Some(self.bench_tooltip(index)),
+            "chest_filter" => Some(self.filter_cell_tip(index)),
             "anvil" => self.anvil_cell_tip(index).map(Some),
             "accessories" => self.accessory_slot_tip(index).map(Some),
             _ => None,
@@ -50,6 +52,7 @@ impl SlotsModel<'_> {
             "cut_choices" => Some(self.choose_cut(index, press)),
             "anvil_choices" => Some(self.choose_upgrade(index, press)),
             "bench_choices" => Some(self.choose_bench_recipe(index, press)),
+            "chest_filter" => Some(self.set_filter_cell(index, press)),
             _ => None,
         }
     }

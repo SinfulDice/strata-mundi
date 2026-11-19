@@ -30,6 +30,7 @@ fn a_saved_player_comes_back_as_left() {
         fire_destroy: true,
         discover_recipes: true,
         gear_mobility: true,
+        storage_magnets: true,
         durability: Default::default(),
         generation: Default::default(),
     };
@@ -91,6 +92,7 @@ fn boats_and_the_seat_come_back_and_old_worlds_have_none() {
         fire_destroy: true,
         discover_recipes: true,
         gear_mobility: true,
+        storage_magnets: true,
         durability: Default::default(),
         generation: Default::default(),
     };
@@ -142,6 +144,7 @@ pub(super) fn new_world(name: &str) -> (std::path::PathBuf, save::WorldFolder, W
         fire_destroy: true,
         discover_recipes: true,
         gear_mobility: true,
+        storage_magnets: true,
         durability: Default::default(),
         generation: Default::default(),
     };
@@ -217,7 +220,7 @@ fn a_furnace_in_the_middle_of_a_cooking_is_saved_and_goes_on() {
     let mut game = Game::new(rules.clone(), 5_000, body, GameMode::Survival);
     let item = |name: &str| content.items.key(&name.parse().unwrap()).unwrap();
     let mut furnace = BlockEntity {
-        container: strata_core::inventory::Container::new(4),
+        container: strata_core::inventory::Container::new(3),
         furnace: Some(strata_core::cooking::FurnaceState {
             burn_left: 900,
             burn_total: 1600,
@@ -228,7 +231,8 @@ fn a_furnace_in_the_middle_of_a_cooking_is_saved_and_goes_on() {
     };
     furnace.container.slots[0] = Some(ItemStack::new(item("strata:iron_ore"), 5, &content.items));
     furnace.container.slots[2] = Some(ItemStack::new(item("strata:iron_ingot"), 2, &content.items));
-    furnace.container.slots[3] = Some(ItemStack::new(
+    furnace.upgrades = strata_core::inventory::Container::new(1);
+    furnace.upgrades.slots[0] = Some(ItemStack::new(
         item("strata:speed_module"),
         1,
         &content.items,

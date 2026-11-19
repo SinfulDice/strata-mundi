@@ -1,6 +1,7 @@
 use super::*;
 use crate::content::{Item, ItemKind, Registry, TextureId};
 use crate::inventory::{Click, Container, ItemStack, PlayerInventory, SlotPolicy, SlotRef, Window};
+use crate::upgrade::{Effect, SlotOwner, StatOp, Upgrade, UpgradeLevel, Upgrades};
 
 const ORE: ItemId = ItemId(0);
 const INGOT: ItemId = ItemId(1);
@@ -26,19 +27,7 @@ fn items() -> Registry<ItemId, Item> {
     ];
     let mut items = Registry::default();
     for name in names {
-        let module = match name {
-            "speed" => Some(ModuleDef::Furnace {
-                cook_time: 50,
-                fuel_value: 100,
-                output: 1,
-            }),
-            "double" => Some(ModuleDef::Furnace {
-                cook_time: 100,
-                fuel_value: 100,
-                output: 2,
-            }),
-            _ => None,
-        };
+        let module = matches!(name, "speed" | "double").then(|| id(name));
         let item = Item {
             max_stack: if name == "lava" || module.is_some() {
                 1
@@ -53,12 +42,49 @@ fn items() -> Registry<ItemId, Item> {
             tool: None,
             remainder: (name == "lava").then_some(BUCKET),
             kit: None,
-            module,
+            upgrade: module,
             gear: Default::default(),
         };
         items.insert(id(name), item);
     }
     items
+}
+
+fn stat(name: &'static str, op: StatOp, value: f32) -> Effect {
+    let stat = Identifier::builtin("strata", name);
+    Effect::Stat { stat, op, value }
+}
+
+/// Speed: half the time; double: two results.
+fn upgrades() -> Upgrades {
+    let upgrade = |name: &str, effects: Vec<Effect>| Upgrade {
+        id: id(name),
+        slot: id("furnace"),
+        applies_to: None,
+        levels: vec![UpgradeLevel {
+            effects,
+            xp: 0,
+            material: Ingredient::new(Vec::new(), None),
+            count: 1,
+        }],
+        requires: Vec::new(),
+        excludes: Vec::new(),
+    };
+    let list = vec![
+        upgrade("speed", vec![stat("cook_time", StatOp::Percent, -50.0)]),
+        upgrade("double", vec![stat("output", StatOp::Add, 1.0)]),
+    ];
+    Upgrades::new(list, Default::default(), Default::default())
+}
+
+/// What these modules do together in a furnace.
+fn modules(items: &[ItemId]) -> Vec<Effect> {
+    let rules = self::items();
+    let stacks: Vec<ItemStack> = items
+        .iter()
+        .map(|&i| ItemStack::new(i, 1, &rules))
+        .collect();
+    upgrades().slotted_effects(&rules, stacks.iter())
 }
 
 fn recipe(name: &str, input: ItemId, result: ItemId, kind: &str) -> CookingRecipe {
@@ -86,13 +112,22 @@ fn cooking() -> Cooking {
     }];
     let fuels = [(COAL, 1600), (LAVA, 20_000), (LOG, 300)].into();
     let tiers = [
-        (id("stone"), FurnaceTier::default()),
+        (
+            id("stone"),
+            FurnaceTier {
+                cook_time: 100,
+                fuel_value: 100,
+                upgrade_slots: 0,
+                upgrade_family: id("furnace"),
+            },
+        ),
         (
             id("iron"),
             FurnaceTier {
                 cook_time: 80,
                 fuel_value: 125,
                 upgrade_slots: 1,
+                upgrade_family: id("furnace"),
             },
         ),
     ]
@@ -107,13 +142,13 @@ fn furnace(tier: &str, speed: u16) -> (FurnaceDef, FurnaceTier) {
         kinds: Vec::new(),
         speed,
     };
-    let tier = *cooking().tier(&id(tier)).unwrap();
+    let tier = cooking().tier(&id(tier)).unwrap().clone();
     (def, tier)
 }
 
-fn stats(tier: &str, modules: &[ModuleDef]) -> FurnaceStats {
+fn stats(tier: &str, effects: &[Effect]) -> FurnaceStats {
     let (def, tier) = furnace(tier, 100);
-    FurnaceStats::new(&def, &tier, modules)
+    FurnaceStats::new(&def, &tier, effects)
 }
 
 fn slots(input: Option<(ItemId, u16)>, fuel: Option<(ItemId, u16)>) -> Container {
@@ -257,16 +292,15 @@ fn a_lava_bucket_leaves_its_bucket() {
 #[test]
 fn modules_speed_up_and_double_the_output_once_each() {
     let rules = items();
-    let module = |item: ItemId| rules.get(item).unwrap().module.unwrap();
-    let speed = stats("stone", &[module(SPEED)]);
+    let speed = stats("stone", &modules(&[SPEED]));
     let ore = recipe("ingot", ORE, INGOT, "ore");
     assert_eq!(speed.cook_ticks(&ore), 100);
     assert_eq!(
-        stats("stone", &[module(SPEED), module(SPEED)]).cook_ticks(&ore),
+        stats("stone", &modules(&[SPEED, SPEED])).cook_ticks(&ore),
         100,
         "the same module does not add up"
     );
-    let double = stats("stone", &[module(DOUBLE)]);
+    let double = stats("stone", &modules(&[DOUBLE]));
     let mut state = FurnaceState::default();
     let mut slots = slots(Some((ORE, 2)), Some((COAL, 1)));
     run(&mut state, &mut slots, &double);
@@ -288,10 +322,17 @@ fn modules_speed_up_and_double_the_output_once_each() {
 #[test]
 fn shift_clicks_go_to_the_right_furnace_slot() {
     let (cooking, rules) = (cooking(), items());
+    let upgrades = upgrades();
+    let family = id("furnace");
     let policy = FurnaceSlots {
         cooking: &cooking,
         items: &rules,
+        upgrades: &upgrades,
         kinds: &[],
+        owner: SlotOwner {
+            family: &family,
+            item: None,
+        },
     };
     let mut player = PlayerInventory::default();
     for (slot, item, n) in [(0, ORE, 10), (1, COAL, 5), (2, SPEED, 1), (3, DIRT, 7)] {
@@ -317,10 +358,17 @@ fn shift_clicks_go_to_the_right_furnace_slot() {
 #[test]
 fn furnace_slots_refuse_what_does_not_belong() {
     let (cooking, rules) = (cooking(), items());
+    let upgrades = upgrades();
+    let family = id("furnace");
     let policy = FurnaceSlots {
         cooking: &cooking,
         items: &rules,
+        upgrades: &upgrades,
         kinds: &[],
+        owner: SlotOwner {
+            family: &family,
+            item: None,
+        },
     };
     let slots = Container::new(5);
     let stack = |item| ItemStack::new(item, 1, &rules);
@@ -410,10 +458,8 @@ fn the_fire_never_blinks_between_two_fuels() {
 
 #[test]
 fn a_double_output_gives_no_more_experience() {
-    let rules = items();
-    let double = rules.get(DOUBLE).unwrap().module.unwrap();
     let mut state = FurnaceState::default();
     let mut slots = slots(Some((ORE, 2)), Some((COAL, 1)));
-    run(&mut state, &mut slots, &stats("stone", &[double]));
+    run(&mut state, &mut slots, &stats("stone", &modules(&[DOUBLE])));
     assert!((state.experience - 1.0).abs() < 1e-4, "0.5 per cooking");
 }

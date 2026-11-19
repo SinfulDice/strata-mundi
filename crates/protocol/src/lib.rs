@@ -27,4 +27,4 @@ pub fn in_view_disc(dx: i32, dz: i32, view_distance: u32) -> bool {
 }
 
 /// Bumped whenever a message changes in an incompatible way.
-pub const PROTOCOL_VERSION: u32 = 11;
+pub const PROTOCOL_VERSION: u32 = 12;

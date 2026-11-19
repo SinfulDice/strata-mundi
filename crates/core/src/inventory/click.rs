@@ -73,6 +73,14 @@ pub trait SlotPolicy {
     fn accepts(&self, slots: &Container, index: usize, stack: &ItemStack) -> bool;
     /// The slots a shift click fills with `stack`, in order (none: it stays).
     fn route(&self, slots: &Container, stack: &ItemStack) -> Vec<usize>;
+    /// The plain storage slots, sorted and filled by quick deposits (none: not storage).
+    fn storage(&self) -> Option<std::ops::Range<usize>> {
+        None
+    }
+    /// Whether a quick deposit may put `stack` in the storage.
+    fn lets_in(&self, _stack: &ItemStack) -> bool {
+        true
+    }
 }
 
 /// The player's inventory, the container they opened and their crafting grid, if any.

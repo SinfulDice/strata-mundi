@@ -1,0 +1,3 @@
+// Slots of a chest or a barrel (as many as its tier has), shared with the backpack to come:
+// storage upgrades are items put in them.
+UpgradeSlot()

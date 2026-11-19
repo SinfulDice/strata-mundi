@@ -2,7 +2,7 @@
 //! (`strata_core::inventory`) and sends the new state back.
 
 use serde::{Deserialize, Serialize};
-use strata_core::content::{BlockId, RecipeId};
+use strata_core::content::{BlockId, ItemId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{Area, Click, Container, ItemStack, SlotRef, SortOrder};
 
@@ -49,6 +49,14 @@ pub enum InventoryRequest {
     ChooseUpgrade(Option<u16>),
     /// The hammer in hand breaks this area of those it unlocked (smallest first).
     ChooseArea(u8),
+    /// The filter of the upgrade in slot `slot` of the open container lists `item` in
+    /// cell `cell` (or nothing); without a cell, it switches between allowing and
+    /// refusing what it lists.
+    SetFilter {
+        slot: u16,
+        cell: Option<u8>,
+        item: Option<ItemId>,
+    },
 }
 
 /// A container the player opened, as the screen shows it.
@@ -57,8 +65,10 @@ pub struct OpenedContainer {
     /// The block clicked (its name is the screen's title).
     pub block: BlockId,
     pub pos: BlockPos,
-    /// Both halves of a double chest, in order.
+    /// Both halves of a double chest, in order, then the upgrade slots of each half.
     pub contents: Container,
+    /// Index in `contents` of the first upgrade slot.
+    pub upgrades_at: u16,
     /// A furnace's fire and cooking (`ServerMessage::Furnace` keeps it up to date).
     pub furnace: Option<FurnaceView>,
 }

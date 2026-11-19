@@ -1,0 +1,2 @@
+// A iron plate on a wooden board marked with an arrow: a storage kit.
+Recolor(base: "strata:iron_furnace_kit", swap: {"stone": "oak_wood"})

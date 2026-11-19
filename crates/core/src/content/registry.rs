@@ -78,6 +78,14 @@ impl<K: RegistryId, T> Registry<K, T> {
             .enumerate()
             .map(|(index, (id, value))| (K::from_index(index as u16), id, value))
     }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (K, &Identifier, &mut T)> {
+        self.identifiers
+            .iter()
+            .zip(&mut self.values)
+            .enumerate()
+            .map(|(index, (id, value))| (K::from_index(index as u16), id, value))
+    }
 }
 
 macro_rules! registry_id {

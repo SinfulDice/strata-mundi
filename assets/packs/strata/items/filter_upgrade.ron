@@ -1,0 +1,2 @@
+// Filter upgrade (upgrades/filter.ron), put in an upgrade slot of a chest or barrel.
+Item(texture: "strata:filter_upgrade", category: Some("strata:storage"), upgrade: Some("strata:filter"))

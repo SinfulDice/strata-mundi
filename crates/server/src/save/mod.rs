@@ -221,6 +221,7 @@ pub fn create(
         discover_recipes: new.discover_recipes,
         durability: new.durability,
         gear_mobility: new.gear_mobility,
+        storage_magnets: new.storage_magnets,
         generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;
@@ -308,6 +309,7 @@ mod tests {
             discover_recipes: true,
             durability: Default::default(),
             gear_mobility: true,
+            storage_magnets: true,
             generation: Default::default(),
         }
     }

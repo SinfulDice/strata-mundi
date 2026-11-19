@@ -1,0 +1,4 @@
+Shapeless(
+    ingredients: [Item("strata:iron_block")],
+    result: Result(item: "strata:iron_ingot", count: 9),
+)

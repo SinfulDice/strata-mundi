@@ -31,6 +31,7 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
         block: strata_core::content::BlockId(1),
         pos: BlockPos::new(0, 0, 0),
         contents: chest,
+        upgrades_at: 27,
         furnace: None,
     };
     let mut state = SlotsState {

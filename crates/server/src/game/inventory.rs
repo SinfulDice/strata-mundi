@@ -2,6 +2,7 @@
 //! Every change is sent back once per batch of messages (`take_messages`).
 
 use super::Game;
+use super::OpenWindow;
 use crate::loader::ColumnLoader;
 use crate::rules::BlockRules;
 use strata_core::content::ItemId;
@@ -10,6 +11,8 @@ use strata_core::inventory::{
     Area, CraftGrid, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotPolicy, SlotRef,
     SortOrder, Window, clear_empty, sort, wear_slot,
 };
+use strata_core::storage::{ItemFilter, StorageSlots};
+use strata_core::upgrade::SlotOwner;
 use strata_protocol::{InventoryRequest, ServerMessage};
 
 impl Game {
@@ -78,6 +81,9 @@ impl Game {
             InventoryRequest::ChooseCut(choice) => self.choose_cut(loader, choice),
             InventoryRequest::ChooseUpgrade(choice) => self.choose_upgrade(choice),
             InventoryRequest::ChooseArea(index) => self.choose_area(index),
+            InventoryRequest::SetFilter { slot, cell, item } => {
+                self.set_filter(loader, slot, cell, item);
+            }
             InventoryRequest::Click { slot, click } => {
                 let thrown =
                     self.with_window(loader, |window, rules| window.click(slot, click, rules));
@@ -136,17 +142,17 @@ impl Game {
                 ),
                 SortOrder::Name => (name(item).to_lowercase(), item.0),
             };
-            let storage = window.policy.is_none();
-            match (area, window.open.as_deref_mut()) {
-                (Area::Player, _) => {
+            let storage = match window.policy {
+                None => window.open.as_deref().map(|open| 0..open.len()),
+                Some(policy) => policy.storage(),
+            };
+            match (area, window.open.as_deref_mut(), storage) {
+                (Area::Player, _, _) => {
                     let locked = window.player.locked.clone();
                     sort(&mut window.player.slots, MAIN, &locked, rules, key)
                 }
-                (Area::Open, Some(open)) if storage => {
-                    let range = 0..open.len();
-                    sort(open, range, &[], rules, key)
-                }
-                (Area::Open | Area::Craft | Area::CraftResult, _) => Vec::new(),
+                (Area::Open, Some(open), Some(range)) => sort(open, range, &[], rules, key),
+                (Area::Open | Area::Craft | Area::CraftResult, _, _) => Vec::new(),
             }
         });
         self.throw_all(left);
@@ -248,28 +254,29 @@ impl Game {
         }
         let mut open = self.take_open_container(loader);
         self.check_station(loader);
+        let upkeep = open
+            .as_ref()
+            .map(|(window, _)| self.upkeep_of(&window.halves));
         let mut craft = self.ecs.crafts.remove(self.player);
         let before = craft.as_ref().map(|window| window.grid.clone());
         let Some(player) = self.ecs.inventories.get_mut(self.player) else {
             return T::default();
         };
-        let furnace = open
+        let policy = open
             .as_ref()
-            .and_then(|(window, _)| self.rules.furnace(window.block));
-        let policy = furnace.map(|furnace| FurnaceSlots {
-            cooking: &self.rules.cooking,
-            items: self.rules.items(),
-            kinds: &furnace.kinds,
-        });
+            .and_then(|(window, _)| policy(&self.rules, window, upkeep.and_then(|u| u.filter)));
         let mut window = Window {
             player,
             open: open.as_mut().map(|(_, container)| container),
             craft: craft.as_mut().map(|window| &mut window.grid),
-            policy: policy.as_ref().map(|p| p as &dyn SlotPolicy),
+            policy: policy.as_ref().map(OpenPolicy::as_dyn),
         };
         let result = change(&mut window, &self.rules);
+        drop(policy);
         if let Some(open) = open {
+            let (halves, block) = (open.0.halves.clone(), open.0.block);
             self.put_back_open_container(open);
+            self.open_storage_changed(&halves, block);
         }
         if let Some(mut craft) = craft {
             if let Some(before) = before.filter(|before| *before != craft.grid) {
@@ -312,4 +319,50 @@ impl Game {
         }
         std::mem::take(&mut self.messages)
     }
+}
+
+/// The rules of the open container's slots: a furnace's, or a storage's with upgrade
+/// slots; none for plain storage.
+enum OpenPolicy<'a> {
+    Furnace(FurnaceSlots<'a>),
+    Storage(StorageSlots<'a>),
+}
+
+impl OpenPolicy<'_> {
+    fn as_dyn(&self) -> &dyn SlotPolicy {
+        match self {
+            Self::Furnace(policy) => policy,
+            Self::Storage(policy) => policy,
+        }
+    }
+}
+
+fn policy<'a>(
+    rules: &'a BlockRules,
+    window: &OpenWindow,
+    filter: Option<ItemFilter>,
+) -> Option<OpenPolicy<'a>> {
+    let layout = rules.layout(window.block)?;
+    let owner = SlotOwner {
+        family: layout.family.as_ref()?,
+        item: rules.block_item(window.block),
+    };
+    if let Some(furnace) = rules.furnace(window.block) {
+        return Some(OpenPolicy::Furnace(FurnaceSlots {
+            cooking: &rules.cooking,
+            items: rules.items(),
+            upgrades: &rules.upgrades,
+            kinds: &furnace.kinds,
+            owner,
+        }));
+    }
+    (layout.upgrades > 0).then(|| {
+        OpenPolicy::Storage(StorageSlots {
+            items: rules.items(),
+            upgrades: &rules.upgrades,
+            owner,
+            storage: layout.storage * window.halves.len(),
+            filter,
+        })
+    })
 }

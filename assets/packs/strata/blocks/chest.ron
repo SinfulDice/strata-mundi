@@ -1,9 +1,9 @@
-// Twenty-seven slots; two chests side by side open as one of fifty-four.
+// A chest: 27 slots and 1 upgrade slot (storage_tiers/wood.ron); two side by side open as one. A kit raises its tier in place.
 Block(
     textures: TopBottomSides(top: "strata:chest_top", bottom: "strata:chest_top", sides: "strata:chest_side"),
     hardness: 2.5,
     tool: Some(BlockTool(kind: "strata:axe")),
     sound: Some("strata:wood"),
     category: Some("strata:storage"),
-    container: Some(Container(rows: 3, joins: true)),
+    container: Some(Container(joins: true, upgradable: Some(Upgradable(family: "strata:chest", tier: "strata:wood")))),
 )

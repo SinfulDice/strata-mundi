@@ -1,0 +1,9 @@
+// A gold-bound chest: 81 slots and 3 upgrade slots (storage_tiers/gold.ron); two side by side open as one. A kit raises its tier in place.
+Block(
+    textures: TopBottomSides(top: "strata:gold_chest_top", bottom: "strata:gold_chest_top", sides: "strata:gold_chest_side"),
+    hardness: 3.5,
+    tool: Some(BlockTool(kind: "strata:axe")),
+    sound: Some("strata:wood"),
+    category: Some("strata:storage"),
+    container: Some(Container(joins: true, upgradable: Some(Upgradable(family: "strata:chest", tier: "strata:gold")))),
+)

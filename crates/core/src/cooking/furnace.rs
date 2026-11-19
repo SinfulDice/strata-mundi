@@ -1,10 +1,11 @@
 //! One furnace: what it burns, what it cooks, and one tick of both.
 
-use super::defs::{FurnaceDef, FurnaceTier, ModuleDef};
+use super::defs::{FurnaceDef, FurnaceTier};
 use super::slots::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_OUTPUT};
 use super::{Cooking, CookingRecipe};
 use crate::id::Identifier;
 use crate::inventory::{Container, ItemRules, ItemStack, clear_empty};
+use crate::upgrade::Effect;
 use serde::{Deserialize, Serialize};
 
 /// Experience a furnace keeps at most until it is taken (milestone 9).
@@ -31,7 +32,7 @@ impl FurnaceState {
     }
 }
 
-/// How fast a furnace cooks, from its station, its tier and its modules.
+/// How fast a furnace cooks, from its station, its tier and its upgrades.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FurnaceStats {
     /// A cooking takes the recipe's time times this.
@@ -42,30 +43,36 @@ pub struct FurnaceStats {
     pub output: u16,
 }
 
+/// The stats furnace upgrades change: percent of a cooking's time, percent of the
+/// cookings per fuel (both from 100), results per cooking (from 1).
+const COOK_TIME: &str = "cook_time";
+const FUEL_VALUE: &str = "fuel_value";
+const OUTPUT: &str = "output";
+
 impl FurnaceStats {
-    /// Modules alike count once (the same effect never adds up).
-    pub fn new(furnace: &FurnaceDef, tier: &FurnaceTier, modules: &[ModuleDef]) -> Self {
-        let mut modules = modules.to_vec();
-        modules.sort();
-        modules.dedup();
+    /// `effects`: the bricks of its upgrades, each kind once (`slotted_effects`).
+    pub fn new(furnace: &FurnaceDef, tier: &FurnaceTier, effects: &[Effect]) -> Self {
         let percent = |value: u16| f64::from(value.max(1)) / 100.0;
-        let mut time = percent(tier.cook_time) / percent(furnace.speed);
-        let mut value = percent(tier.fuel_value);
-        let mut output = 1;
-        for module in modules {
-            let ModuleDef::Furnace {
-                cook_time,
-                fuel_value,
-                output: more,
-            } = module;
-            time *= percent(cook_time);
-            value *= percent(fuel_value);
-            output = output.max(u16::from(more.max(1)));
+        let mut stats = [(COOK_TIME, 100.0), (FUEL_VALUE, 100.0), (OUTPUT, 1.0)];
+        for effect in effects {
+            let Effect::Stat { stat, op, value } = effect else {
+                continue;
+            };
+            let named = stats
+                .iter_mut()
+                .find(|(name, _)| stat.namespace() == "strata" && stat.name() == *name);
+            if let Some((_, current)) = named {
+                *current = op.apply(*current, *value);
+            }
         }
+        let [(_, time), (_, value), (_, output)] = stats;
+        let time =
+            percent(tier.cook_time) / percent(furnace.speed) * f64::from(time.max(1.0)) / 100.0;
+        let value = percent(tier.fuel_value) * f64::from(value.max(1.0)) / 100.0;
         Self {
             time_factor: time,
             fuel_factor: time * value,
-            output,
+            output: output.round().clamp(1.0, 64.0) as u16,
         }
     }
 

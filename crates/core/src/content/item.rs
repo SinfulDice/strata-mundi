@@ -1,6 +1,6 @@
 use super::registry::{BlockId, EntityTypeId, ItemId, Registry, TextureId};
 use super::{Block, EntityType, FluidLevel, TextureLibrary, ToolDef};
-use crate::cooking::{KitDef, ModuleDef};
+use crate::cooking::KitDef;
 use crate::gear::{ArmorDef, Gear, GearFields, ItemGear, ToolSpec, WeaponDef};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced};
@@ -48,9 +48,10 @@ pub struct ItemDef {
     /// Used on a block of a tier, makes it the next tier in place (furnace kits).
     #[serde(default)]
     pub kit: Option<KitDef>,
-    /// Goes in an upgrade slot (furnace modules); such an item never stacks.
+    /// The upgrade (`upgrades/`) it is once put in a block's upgrade slot (furnace
+    /// modules, storage upgrades); such an item never stacks.
     #[serde(default)]
-    pub module: Option<ModuleDef>,
+    pub upgrade: Option<Identifier>,
     /// What it gives while worn (with `equip`), in the bricks of upgrades.
     #[serde(default)]
     pub worn: Vec<crate::upgrade::Effect>,
@@ -115,7 +116,8 @@ pub struct Item {
     /// What stays in the crafting grid after a recipe uses it.
     pub remainder: Option<ItemId>,
     pub kit: Option<KitDef>,
-    pub module: Option<ModuleDef>,
+    /// The upgrade it is in a block's upgrade slot.
+    pub upgrade: Option<Identifier>,
     /// Tier, weapon and armour stats.
     pub gear: ItemGear,
 }
@@ -166,7 +168,7 @@ pub(super) fn load_items(
                 tool: None,
                 remainder: None,
                 kit: None,
-                module: None,
+                upgrade: None,
                 gear: ItemGear::default(),
             },
         );
@@ -199,7 +201,7 @@ pub(super) fn load_items(
             errors,
         );
         let durable = resolved.durability;
-        let single = durable.is_some() || value.module.is_some();
+        let single = durable.is_some() || value.upgrade.is_some();
         let item = Item {
             max_stack: if single { 1 } else { value.max_stack.max(1) },
             category: value.category,
@@ -210,7 +212,7 @@ pub(super) fn load_items(
             tool: resolved.tool,
             remainder: None,
             kit: value.kit,
-            module: value.module,
+            upgrade: value.upgrade,
             gear: resolved.gear,
         };
         match items.insert(id.clone(), item) {

@@ -1,0 +1,2 @@
+// Nine make an iron ingot (at the grid, or in a storage with a compression upgrade).
+Item(texture: "strata:iron_nugget", category: Some("strata:materials"))

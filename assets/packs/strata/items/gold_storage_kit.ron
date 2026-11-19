@@ -1,0 +1,2 @@
+// Used on a iron chest or barrel (both halves of a double chest: one kit each): makes it gold, keeping its contents and upgrades.
+Item(texture: "strata:gold_storage_kit", max_stack: 16, category: Some("strata:storage"), kit: Some(Kit(on: Storage, from: "strata:iron", to: "strata:gold")))

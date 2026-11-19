@@ -1,0 +1,27 @@
+// A riveted plate of iron, lit from the top left.
+Sprite(
+    colors: {
+        'a': ("iron", 0),
+        'b': ("iron", 1),
+        'c': ("iron", 2),
+        'd': ("iron", 3),
+    },
+    rows: [
+        "aaaaaaaaaaaaaaaa",
+        "adddddddddddddda",
+        "adccccccccccccba",
+        "adcdccccccccdcba",
+        "adccccccccccccba",
+        "adccccccccccccba",
+        "adccccccccccccba",
+        "adccccccccccccba",
+        "adccccccccccccba",
+        "adccccccccccccba",
+        "adccccccccccccba",
+        "adccccccccccccba",
+        "adcdccccccccdcba",
+        "adccccccccccccba",
+        "adbbbbbbbbbbbbba",
+        "aaaaaaaaaaaaaaaa",
+    ],
+)

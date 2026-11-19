@@ -1,0 +1,56 @@
+# Storage: furnace and storage upgrades, chest and barrel tiers.
+item-stat-strata-cook_time = cooking time
+item-stat-strata-fuel_value = cookings per fuel
+item-stat-strata-output = result per cooking
+tag-strata-furnaces = furnaces
+upgrade-slot-strata-furnace = furnace module
+upgrade-strata-furnace_speed = Speed module
+upgrade-strata-furnace_economy = Economy module
+upgrade-strata-furnace_output = Double output module
+block-strata-iron_chest = Iron-Bound Chest
+block-strata-gold_chest = Gold-Bound Chest
+block-strata-diamond_chest = Diamond-Bound Chest
+block-strata-iron_barrel = Iron-Bound Barrel
+block-strata-gold_barrel = Gold-Bound Barrel
+block-strata-diamond_barrel = Diamond-Bound Barrel
+block-strata-iron_block = Block of Iron
+block-strata-gold_block = Block of Gold
+block-strata-copper_block = Block of Copper
+block-strata-diamond_block = Block of Diamond
+item-strata-iron_nugget = Iron Nugget
+item-strata-gold_nugget = Gold Nugget
+item-strata-copper_nugget = Copper Nugget
+item-strata-iron_storage_kit = Iron Storage Kit
+item-strata-gold_storage_kit = Gold Storage Kit
+item-strata-diamond_storage_kit = Diamond Storage Kit
+item-strata-sorting_upgrade = Sorting Upgrade
+item-strata-filter_upgrade = Filter Upgrade
+item-strata-compression_upgrade = Compression Upgrade
+item-strata-void_upgrade = Destruction Upgrade
+item-strata-magnet_upgrade = Magnet Upgrade
+tag-strata-storages = chests and barrels
+upgrade-slot-strata-storage = storage upgrade
+upgrade-strata-sorting = Auto-sorting
+upgrade-strata-filter = Filter
+upgrade-strata-compression = Compression
+upgrade-strata-void = Destruction
+upgrade-strata-magnet = Magnet
+upgrade-effect-sort = sorts itself when closed
+upgrade-effect-filter = takes only what the filter lets through
+upgrade-effect-compress = presses nuggets into ingots, ingots into blocks
+upgrade-effect-void = destroys what the filter selects
+upgrade-effect-magnet = draws items within { $radius } blocks
+feedback-kit-furnace-wrong-tier = This kit does not fit this furnace: a kit goes from one tier to the next, without skipping.
+feedback-kit-furnace-needs-two = One kit per block is needed.
+feedback-kit-furnace-done = Furnace upgraded, its contents kept.
+feedback-kit-storage-wrong-tier = This kit does not fit this storage: a kit goes from one tier to the next, without skipping.
+feedback-kit-storage-needs-two = A double chest goes up at once: hold two kits.
+feedback-kit-storage-done = Storage upgraded, its contents kept.
+ui-storage-rows = Rows { $first }-{ $last } of { $total }
+ui-storage-filter-mode = { $mode ->
+        [deny] Refuses the list
+       *[allow] Allows the list
+    }
+ui-storage-filter-next = Next filter
+ui-storage-filter-help = Held item on a cell: adds it. Empty hand: clears it.
+ui-storage-filter-cell = Filter cell: put the held item here.

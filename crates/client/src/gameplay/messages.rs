@@ -70,6 +70,12 @@ impl Gameplay {
                     open.contents = *contents;
                 }
             }
+            ServerMessage::ContainerUpgraded { block, upgrades_at } => {
+                if let Some(open) = &mut self.container {
+                    open.block = block;
+                    open.upgrades_at = upgrades_at;
+                }
+            }
             ServerMessage::ContainerClosed => self.container = None,
             ServerMessage::Furnace(view) => {
                 if let Some(open) = &mut self.container {
