@@ -286,3 +286,24 @@ fn the_forge_burns_a_coal_for_a_plate_and_refuses_the_jeweller_s_recipes() {
     assert_eq!(count("strata:charcoal"), 1);
     assert_eq!(count("strata:gold_ingot"), 3);
 }
+
+#[test]
+fn an_old_world_that_knew_moved_armour_recipes_gets_a_forge_once() {
+    let mut w = survival();
+    let names = [
+        "strata:iron_plate_chestplate",
+        "strata:iron_rings",
+        "mod:gone",
+    ];
+    let unknown = names.map(|name| name.parse().unwrap()).to_vec();
+    let left = w.game.adopt_moved_recipes(unknown);
+    assert_eq!(left, ["mod:gone".parse().unwrap()], "kept for its pack");
+    let forge = item(&w, "strata:forge");
+    assert_eq!(
+        w.game.inventory().slots.count(forge),
+        1,
+        "one forge for both"
+    );
+    let recipe = w.game.rules.recipes.making(forge).next().unwrap().0;
+    assert!(w.game.known_recipes().contains(&recipe));
+}

@@ -6,6 +6,7 @@ use strata_core::content::{
 };
 use strata_core::cooking::Cooking;
 use strata_core::crafting::{Benches, Recipes};
+use strata_core::id::Identifier;
 use strata_core::inventory::ItemRules;
 use strata_core::physics::LiquidCell;
 use strata_core::updates::UpdateRules;
@@ -205,6 +206,13 @@ impl BlockRules {
             .iter()
             .find(|(_, _, item)| item.action == Some(action))
             .map(|(id, _, _)| id)
+    }
+
+    /// The item of the block that opens `bench`.
+    pub fn bench_item(&self, bench: &Identifier) -> Option<ItemId> {
+        let opens = |station: &Option<StationDef>| matches!(station, Some(StationDef::Bench(b)) if b == bench);
+        let index = self.stations.iter().position(opens)?;
+        self.block_items.get(index).copied().flatten()
     }
 
     pub fn block_item(&self, block: BlockId) -> Option<ItemId> {

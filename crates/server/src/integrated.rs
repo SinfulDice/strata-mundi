@@ -79,8 +79,8 @@ impl IntegratedServer {
         game.durability = meta.durability;
         game.set_gear_mobility(meta.gear_mobility);
         game.set_known_recipes(start.recipes);
-        game.unknown_recipes = start.unknown_recipes;
         game.set_inventory(start.inventory);
+        game.unknown_recipes = game.adopt_moved_recipes(start.unknown_recipes);
         game.give_back(start.grid);
         game.set_look(start.look);
         game.set_fluid_settings(meta.fluids);
