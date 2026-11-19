@@ -5,7 +5,7 @@ EVRY STUFF GETZ WERKD AT ITS **WERKIN BLOK**: PUT IT DOWN, RITE CLIK 2 OPEN.
 - **CRAFTIN TABUL**: 3×3 SQUAREZ (TOOLZ, POKEYZ, BLOKZ, WERKIN BLOKZ).
 - **HOT BOXEZ**: COOKIN AN MELTIN ROCKZ IN2 BARZ, WIF FUEL.
 - **ROCK CHOPPR**: ROCK SHAPEZ, 1 BY 1.
-- **HOT BANGR**: BARZ BECOM CLINKY LOOPZ, PLAETZ AN JUMPY BOOTZ; EVRY METUL PIECE EATZ 1 COAL. SHINY GETZ CUT IN SKALEZ.
+- **HOT BANGR**: 4 ROCKZ + 1 COAL = 5 BARZ, NAO; BARZ BECOM CLINKY LOOPZ, PLAETZ AN JUMPY BOOTZ; EVRY METUL PIECE EATZ 1 COAL. SHINY GETZ CUT IN SKALEZ.
 - **SKIN RACK**: LETHR AN LETHR CLOVEZ.
 - **STRING WEEVR**: CLOFF, FLUFF, CLOFF CLOVEZ AN FLOOF CAPE.
 - **SHINY MAEKR**: LOOPZ, NECK SHINYZ AN BELTZ.
@@ -17,4 +17,4 @@ HOT BANGR, SKIN RACK, STRING WEEVR AN SHINY MAEKR WERK SAEM: A **LIST**, **4 SPO
 
 ## 4 PACK MAKERZ
 
-BLOK `station: Some(Bench("mypack:bench"))`, RECIPEZ `bench_recipes/<name>.ron` AN MAYBE `benches/<name>.ron`: `Bench(layout: Forge, accent: "#7a3b1e")` (`Plain`, `Jeweller`, `Forge`, `Tannery`, `Loom`). HALP IZ TRANSLAYSHUN `bench-<namespace>-<name>`.
+BLOK `station: Some(Bench("mypack:bench"))`, RECIPEZ `bench_recipes/<name>.ron` AN MAYBE `benches/<name>.ron`: `Bench(layout: "forge", accent: "#7a3b1e")` (`plain`, `jeweller`, `forge`, `tannery`, `loom`). HALP IZ TRANSLAYSHUN `bench-<namespace>-<name>`.

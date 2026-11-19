@@ -12,7 +12,7 @@ Right click to open it. On the left, the list of everything the forge can make (
 
 ## Behaviour
 
-Each metal piece **burns one coal** (or charcoal), counted as an ingredient. Diamond scales are cut without fire. Closing the screen gives the items laid back.
+It also smelts ore: **4 ores and 1 coal give 5 ingots**, at once (a quarter more than the furnace, but more coal, and by hand). Each metal piece **burns one coal** (or charcoal), counted as an ingredient. Diamond scales are cut without fire. Closing the screen gives the items laid back.
 
 ## Tips
 

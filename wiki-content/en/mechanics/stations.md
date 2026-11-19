@@ -5,7 +5,7 @@ Each material is worked at its **work station**: a block you place, then open wi
 - **Crafting table**: the 3×3 crafting grid (tools, weapons, blocks, stations).
 - **Furnaces** (furnace, smoker, blast furnace): cooking and smelting ores into ingots, with fuel.
 - **Stonecutter**: stone variants, one by one.
-- **Forge**: ingots become mail rings, armour plates and mobility boots; each metal piece burns one coal. Diamonds are cut into scales there.
+- **Forge**: 4 ores and 1 coal make 5 ingots there, at once; ingots become mail rings, armour plates and mobility boots; each metal piece burns one coal. Diamonds are cut into scales there.
 - **Tannery**: leather and leather armour.
 - **Loom**: cloth, wool, cloth clothing and the wool cloak.
 - **Jeweller**: rings, amulets and belts.
@@ -17,4 +17,4 @@ The forge, the tannery, the loom and the jeweller work the same way: a **list** 
 
 ## For pack makers
 
-A block `station: Some(Bench("mypack:bench"))`, recipes `bench_recipes/<name>.ron` (`BenchRecipe(bench, ingredients: [(Item(..), n)…], result)`, one to four kinds of ingredients) and, if wanted, the look of its screen in `benches/<name>.ron`: `Bench(layout: Forge, accent: "#7a3b1e")` (arrangements: `Plain`, `Jeweller`, `Forge`, `Tannery`, `Loom`). The screen's help is the translation `bench-<namespace>-<name>`.
+A block `station: Some(Bench("mypack:bench"))`, recipes `bench_recipes/<name>.ron` (`BenchRecipe(bench, ingredients: [(Item(..), n)…], result)`, one to four kinds of ingredients) and, if wanted, the look of its screen in `benches/<name>.ron`: `Bench(layout: "forge", accent: "#7a3b1e")` (the layout names a group `bench_layout_<name>` of the inventory screen: `plain`, `jeweller`, `forge`, `tannery`, `loom`; an unknown one gives `plain` and an error). The screen's help is the translation `bench-<namespace>-<name>`.

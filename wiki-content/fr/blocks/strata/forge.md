@@ -12,7 +12,7 @@ Clic droit pour l'ouvrir. À gauche, la liste de tout ce que la forge sait faire
 
 ## Comportement
 
-Chaque pièce de métal **brûle un charbon** (ou un charbon de bois), compté comme un ingrédient. Les écailles de diamant se taillent sans feu. En fermant l'écran, les objets posés reviennent dans l'inventaire.
+Elle fond aussi le minerai : **4 minerais et 1 charbon donnent 5 lingots**, tout de suite (un quart de plus qu'au four, mais plus de charbon, et à la main). Chaque pièce de métal **brûle un charbon** (ou un charbon de bois), compté comme un ingrédient. Les écailles de diamant se taillent sans feu. En fermant l'écran, les objets posés reviennent dans l'inventaire.
 
 ## Conseils
 

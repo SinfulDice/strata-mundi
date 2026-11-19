@@ -94,7 +94,7 @@ L'écran liste tout ce que l'établi sait faire ; l'infobulle donne les ingrédi
 | Ensembles, calcul, textes, `mobility.ron` | `crates/core/src/worn/` |
 | Non-cumul des briques | `strongest_bricks` dans `crates/core/src/upgrade/stats.rs` |
 | Double saut, esquive, escalade | `crates/core/src/physics/abilities.rs` |
-| Établis à liste (joaillier) | `crates/core/src/crafting/bench.rs`, `bench_load.rs`, `crates/server/src/game/bench.rs`, `crates/client/src/screens/bench.rs` |
+| Établis à liste (joaillier, forge, tannerie, métier à tisser : voir [Stations de travail](stations.md)) | `crates/core/src/crafting/bench.rs`, `bench_load.rs`, `bench_style.rs`, `crates/server/src/game/bench.rs`, `crates/client/src/screens/bench.rs` |
 | Équipement côté serveur | `crates/server/src/game/equipment.rs` |
 | Prédiction côté client | `advance_player` dans `crates/client/src/gameplay.rs`, `LocalPlayer` |
 | Wiki | `crates/wikigen/src/worn.rs` |

@@ -89,7 +89,7 @@ La barre sous chaque case montre la part restante (aussi dans la barre rapide du
 
 ### Les matériaux provisoires
 
-Les hautes herbes et les fougères coupées sans cisailles donnent parfois une **fibre végétale** (une chance sur quatre). Trois fibres font un **tissu**. Le **cuir** n'a pas encore d'animal : en attendant la v0.4, une recette provisoire (deux fibres et une boue) le fabrique.
+Les hautes herbes et les fougères coupées sans cisailles donnent parfois une **fibre végétale** (une chance sur quatre). Trois fibres font un **tissu**, au métier à tisser. Le **cuir** n'a pas encore d'animal : en attendant la v0.4, une recette provisoire de la tannerie (deux fibres et une boue) le fabrique. Les armures se font à la station de leur matériau (forge, tannerie, métier à tisser) : voir [Stations de travail](stations.md).
 
 ### Le rendu
 

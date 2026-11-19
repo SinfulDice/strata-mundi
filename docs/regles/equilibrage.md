@@ -239,7 +239,7 @@ Chaque matériau a sa station ; aucune armure ne se fait à l'établi. Valeurs d
 
 | Station | Recettes | Coût particulier |
 |---|---|---|
-| Forge (29) | anneaux de fer et d'or, écailles de diamant ; mailles de fer et d'or, plates de fer, d'or et de diamant, écailles de diamant (4 pièces chacune) ; bottes de saut et à crampons | 1 charbon (ou charbon de bois) par pièce de métal ; pas pour les écailles |
+| Forge (32) | lingots de fer, d'or et de cuivre (4 minerais + 1 charbon → 5, instantané ; le four : 1 → 1 en 10 s, 8 par charbon) ; anneaux de fer et d'or, écailles de diamant ; mailles de fer et d'or, plates de fer, d'or et de diamant, écailles de diamant (4 pièces chacune) ; bottes de saut et à crampons | 1 charbon (ou charbon de bois) par pièce de métal ; pas pour les écailles |
 | Tannerie (5) | cuir (provisoire : 2 fibres + 1 boue), casque, tunique, pantalon, bottes en cuir | — |
 | Métier à tisser (7) | tissu (3 fibres), laine (provisoire : 4 fibres), capuche, tunique, pantalon, chaussures en tissu, cape de laine | — |
 | Joaillier (4) | anneau de vitalité, amulette de respiration courte, ceinture à fioles, ceinture de course | — |
