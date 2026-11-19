@@ -81,24 +81,24 @@ fn install(w: &mut World, pos: BlockPos, name: &str) -> u16 {
 #[test]
 fn a_kit_raises_a_double_chest_in_place_keeping_everything() {
     let mut w = survival();
-    chest(&mut w, "strata:chest", &[A, B]);
+    chest(&mut w, "strata:iron_chest", &[A, B]);
     assert!(w.game.open_block(&w.loader, A));
     assert_eq!(
         opened(&mut w),
-        (54, 56),
-        "two halves of 27, one upgrade slot each"
+        (90, 92),
+        "two halves of 45, one upgrade slot each"
     );
     put(&mut w, 0, "strata:stone", 40);
     click(&mut w, SlotRef::player(0), Click::Transfer);
     put(&mut w, 1, "strata:magnet_upgrade", 1);
     click(&mut w, SlotRef::player(1), Click::Transfer);
-    let kit = item(&w, "strata:iron_storage_kit");
+    let kit = item(&w, "strata:gold_storage_kit");
     hold(&mut w, Some(kit));
     w.game.use_block(&mut w.loader, A);
-    let iron = block(&w.content, "strata:iron_chest");
+    let gold = block(&w.content, "strata:gold_chest");
     assert_eq!(
         w.loader.block(A),
-        Some(block(&w.content, "strata:chest")),
+        Some(block(&w.content, "strata:iron_chest")),
         "one kit, two blocks"
     );
     w.game.with_inventory(|inventory, rules| {
@@ -109,7 +109,7 @@ fn a_kit_raises_a_double_chest_in_place_keeping_everything() {
     assert_eq!(changes.len(), 2, "both halves go up together");
     assert_eq!(
         [w.loader.block(A), w.loader.block(B)],
-        [Some(iron), Some(iron)]
+        [Some(gold), Some(gold)]
     );
     assert_eq!(
         w.game.partner(&w.loader, A),
@@ -126,7 +126,7 @@ fn a_kit_raises_a_double_chest_in_place_keeping_everything() {
         "contents kept"
     );
     let entity = &w.game.block_entities[&A];
-    assert_eq!((entity.container.len(), entity.upgrades.len()), (54, 2));
+    assert_eq!((entity.container.len(), entity.upgrades.len()), (63, 2));
     let magnet = item(&w, "strata:magnet_upgrade");
     assert!(
         entity
@@ -140,7 +140,7 @@ fn a_kit_raises_a_double_chest_in_place_keeping_everything() {
         ServerMessage::ContainerUpgraded { upgrades_at, .. } => Some(upgrades_at),
         _ => None,
     });
-    assert_eq!(upgraded, Some(108), "the open screen follows");
+    assert_eq!(upgraded, Some(126), "the open screen follows");
 }
 
 #[test]
@@ -160,7 +160,7 @@ fn upgrades_go_in_their_slots_once_and_only_on_storage() {
     chest(&mut w, "strata:gold_barrel", &[A]);
     assert!(w.game.open_block(&w.loader, A));
     let (upgrades_at, len) = opened(&mut w);
-    assert_eq!((upgrades_at, len), (81, 84));
+    assert_eq!((upgrades_at, len), (63, 65));
     for (slot, name) in [(0, "strata:sorting_upgrade"), (1, "strata:sorting_upgrade")] {
         put(&mut w, slot, name, 1);
         click(&mut w, SlotRef::player(slot), Click::Transfer);
@@ -201,7 +201,7 @@ fn upgrades_go_in_their_slots_once_and_only_on_storage() {
 #[test]
 fn a_sorting_storage_sorts_itself_when_closed() {
     let mut w = survival();
-    chest(&mut w, "strata:chest", &[A]);
+    chest(&mut w, "strata:iron_chest", &[A]);
     install(&mut w, A, "strata:sorting_upgrade");
     put(&mut w, 0, "strata:dirt", 5);
     click(&mut w, SlotRef::player(0), Click::Primary);
@@ -226,7 +226,7 @@ fn a_sorting_storage_sorts_itself_when_closed() {
 #[test]
 fn a_filter_lets_in_only_what_it_allows() {
     let mut w = survival();
-    chest(&mut w, "strata:chest", &[A]);
+    chest(&mut w, "strata:iron_chest", &[A]);
     let slot = install(&mut w, A, "strata:filter_upgrade");
     let stone = item(&w, "strata:stone");
     request(
@@ -265,7 +265,7 @@ fn a_filter_lets_in_only_what_it_allows() {
 #[test]
 fn compression_presses_nuggets_into_ingots_and_ingots_into_blocks() {
     let mut w = survival();
-    chest(&mut w, "strata:chest", &[A]);
+    chest(&mut w, "strata:iron_chest", &[A]);
     install(&mut w, A, "strata:compression_upgrade");
     put(&mut w, 0, "strata:iron_nugget", 64);
     click(&mut w, SlotRef::player(0), Click::Transfer);
@@ -283,7 +283,7 @@ fn compression_presses_nuggets_into_ingots_and_ingots_into_blocks() {
 #[test]
 fn destruction_takes_only_what_its_filter_names() {
     let mut w = survival();
-    chest(&mut w, "strata:chest", &[A]);
+    chest(&mut w, "strata:iron_chest", &[A]);
     let slot = install(&mut w, A, "strata:void_upgrade");
     put(&mut w, 0, "strata:dirt", 10);
     click(&mut w, SlotRef::player(0), Click::Transfer);
@@ -310,7 +310,7 @@ fn destruction_takes_only_what_its_filter_names() {
 #[test]
 fn a_magnet_draws_the_items_around_unless_the_world_says_no() {
     let mut w = survival();
-    chest(&mut w, "strata:chest", &[A]);
+    chest(&mut w, "strata:iron_chest", &[A]);
     install(&mut w, A, "strata:magnet_upgrade");
     request(&mut w, InventoryRequest::Close);
     let stack = |w: &World, name, n| ItemStack::new(item(w, name), n, &w.game.rules);
@@ -333,7 +333,7 @@ fn a_magnet_draws_the_items_around_unless_the_world_says_no() {
 #[test]
 fn breaking_an_upgraded_chest_drops_its_upgrades_too() {
     let mut w = survival();
-    chest(&mut w, "strata:chest", &[A]);
+    chest(&mut w, "strata:iron_chest", &[A]);
     install(&mut w, A, "strata:magnet_upgrade");
     put(&mut w, 0, "strata:dirt", 9);
     click(&mut w, SlotRef::player(0), Click::Transfer);

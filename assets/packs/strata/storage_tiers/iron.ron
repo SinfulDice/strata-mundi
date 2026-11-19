@@ -1,2 +1,2 @@
 // Rows of nine slots and upgrade slots of a iron chest or barrel.
-StorageTier(rows: 6, upgrade_slots: 2, upgrade_family: "strata:storage")
+StorageTier(rows: 5, upgrade_slots: 1, upgrade_family: "strata:storage")

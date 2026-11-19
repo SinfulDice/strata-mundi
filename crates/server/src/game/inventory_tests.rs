@@ -243,9 +243,9 @@ fn chests_open_join_in_pairs_and_drop_their_contents() {
     let opened = opened.unwrap();
     assert_eq!(
         opened.upgrades_at, 54,
-        "both halves, then their upgrade slots"
+        "both halves; a wooden chest has no upgrade slot"
     );
-    assert_eq!(opened.contents.len(), 54 + 2);
+    assert_eq!(opened.contents.len(), 54);
     put(&mut w, 0, "strata:stone", 30);
     click(&mut w, SlotRef::player(0), Click::Primary);
     click(&mut w, SlotRef::open(40), Click::Primary);

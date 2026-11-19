@@ -82,6 +82,25 @@ impl Content {
             .text_with(language, "upgrade-level-line", &args)
     }
 
+    /// What an item that is an upgrade does once in a block's slot: « Furnace module:
+    /// −25 % cooking time, −20 % cookings per fuel ».
+    pub fn upgrade_item_line(&self, upgrade: &Identifier, language: &str) -> Option<String> {
+        let upgrade = self.upgrades.get(upgrade)?;
+        let level = upgrade.levels.first()?;
+        let effects: Vec<String> = (level.effects.iter())
+            .map(|effect| self.effect_text(effect, language))
+            .collect();
+        let tr = &self.translations;
+        let args = [
+            (
+                "slot",
+                tr.text(language, &upgrade.slot.translation_key("upgrade-slot")),
+            ),
+            ("effects", effects.join(", ")),
+        ];
+        Some(tr.text_with(language, "upgrade-item-line", &args))
+    }
+
     /// The upgrades a stack holds, what its stats come to with them, and the hammer
     /// area chosen.
     pub fn stack_upgrade_lines(&self, stack: &ItemStack, language: &str) -> Vec<String> {

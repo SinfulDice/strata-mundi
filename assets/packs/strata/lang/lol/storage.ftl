@@ -46,11 +46,14 @@ feedback-kit-furnace-done = HOT BOX UPGRAYDED!! STUFF STILL INSIDE.
 feedback-kit-storage-wrong-tier = DIS KIT NO FITZ DIS BOX: ONE TIER UP, NO SKIPPIN.
 feedback-kit-storage-needs-two = DUBBL BOX GOEZ UP 2GETHER: HOLD 2 KITZ.
 feedback-kit-storage-done = BOX UPGRAYDED!! STUFF STILL INSIDE.
-ui-storage-rows = ROWZ { $first }-{ $last } OF { $total }
+ui-storage-rows = { $first }-{ $last } OF { $total }
 ui-storage-filter-mode = { $mode ->
         [deny] NO WANTS DIS LIST
        *[allow] ONLY WANTS DIS LIST
     }
 ui-storage-filter-next = NEXT PICKY
-ui-storage-filter-help = HOLD STUFF ON BOX: ADDZ IT. NO STUFF: CLEERZ IT.
+ui-storage-filter-help = HELD STUFF: ADDZ. NO STUFF: REMOOVZ.
 ui-storage-filter-cell = PICKY BOX: PUT HELD STUFF HERE.
+upgrade-item-line = IN DA SPOT ({ $slot }): { $effects }
+ui-storage-up = UP
+ui-storage-down = DOWN

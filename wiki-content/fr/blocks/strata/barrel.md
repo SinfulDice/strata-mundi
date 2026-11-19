@@ -16,7 +16,7 @@ Son contenu est enregistré avec le monde ; cassé, il le laisse tomber. Il peut
 
 ## Conseils
 
-Alignez des tonneaux pour une cave bien rangée : chacun garde son contenu, et la recherche de l'écran retrouve vite un objet.
+Un **kit de rangement en fer** le fait passer au tier fer sur place, sans le vider : plus de cases et une case d'amélioration (voir la page Rangement). Alignez des tonneaux pour une cave bien rangée : chacun garde son contenu, et la recherche de l'écran retrouve vite un objet.
 
 ## Découverte en jeu
 

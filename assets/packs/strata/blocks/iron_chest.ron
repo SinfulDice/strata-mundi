@@ -1,4 +1,4 @@
-// A iron-bound chest: 54 slots and 2 upgrade slots (storage_tiers/iron.ron); two side by side open as one. A kit raises its tier in place.
+// A iron-bound chest: 45 slots and 1 upgrade slot (storage_tiers/iron.ron); two side by side open as one. A kit raises its tier in place.
 Block(
     textures: TopBottomSides(top: "strata:iron_chest_top", bottom: "strata:iron_chest_top", sides: "strata:iron_chest_side"),
     hardness: 3.0,

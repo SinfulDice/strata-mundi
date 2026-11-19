@@ -1,4 +1,4 @@
-// A barrel: 27 slots and 1 upgrade slot (storage_tiers/wood.ron), never joined with its neighbours.
+// A barrel: 27 slots and no upgrade slots (storage_tiers/wood.ron), never joined with its neighbours.
 Block(
     textures: Column(end: "strata:barrel_top", side: "strata:barrel_side"),
     hardness: 2.5,

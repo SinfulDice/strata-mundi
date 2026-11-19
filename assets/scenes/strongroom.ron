@@ -1,0 +1,41 @@
+// A strongroom (`--scene strongroom`): chests in front and barrels behind, one per tier from
+// wood to diamond, a double chest of each tier on the left, metal blocks, nuggets and
+// storage upgrades on the floor.
+(
+    fills: [
+        (from: (-10, 0, -10), to: (10, 0, 6), block: "strata:stone"),
+        (from: (-10, 1, -10), to: (10, 1, 6), block: "strata:oak_planks"),
+        (from: (-10, 2, -8), to: (10, 5, -8), block: "strata:stone_bricks"),
+        (from: (-9, 2, -6), to: (-8, 2, -6), block: "strata:chest"),
+        (from: (-9, 2, -4), to: (-8, 2, -4), block: "strata:iron_chest"),
+        (from: (-9, 2, -2), to: (-8, 2, -2), block: "strata:gold_chest"),
+        (from: (-9, 2, 0), to: (-8, 2, 0), block: "strata:diamond_chest"),
+        (from: (-5, 2, -5), to: (-5, 2, -5), block: "strata:chest"),
+        (from: (-3, 2, -5), to: (-3, 2, -5), block: "strata:iron_chest"),
+        (from: (-1, 2, -5), to: (-1, 2, -5), block: "strata:gold_chest"),
+        (from: (1, 2, -5), to: (1, 2, -5), block: "strata:diamond_chest"),
+        (from: (-5, 2, -7), to: (-5, 3, -7), block: "strata:barrel"),
+        (from: (-3, 2, -7), to: (-3, 3, -7), block: "strata:iron_barrel"),
+        (from: (-1, 2, -7), to: (-1, 3, -7), block: "strata:gold_barrel"),
+        (from: (1, 2, -7), to: (1, 3, -7), block: "strata:diamond_barrel"),
+        (from: (4, 2, -7), to: (4, 2, -7), block: "strata:iron_block"),
+        (from: (5, 2, -7), to: (5, 2, -7), block: "strata:copper_block"),
+        (from: (6, 2, -7), to: (6, 2, -7), block: "strata:gold_block"),
+        (from: (7, 2, -7), to: (7, 2, -7), block: "strata:diamond_block"),
+        (from: (-7, 3, -7), to: (-7, 3, -7), block: "strata:lantern"),
+        (from: (3, 3, -7), to: (3, 3, -7), block: "strata:lantern"),
+    ],
+    entities: [
+        (kind: "strata:item", position: (-4.4, 2.0, -3.0), yaw: 0.3, item: Some("strata:iron_storage_kit")),
+        (kind: "strata:item", position: (-2.4, 2.0, -3.0), yaw: 0.6, item: Some("strata:gold_storage_kit")),
+        (kind: "strata:item", position: (-0.4, 2.0, -3.0), yaw: 0.9, item: Some("strata:diamond_storage_kit")),
+        (kind: "strata:item", position: (1.6, 2.0, -3.0), yaw: 1.2, item: Some("strata:magnet_upgrade")),
+        (kind: "strata:item", position: (3.0, 2.0, -3.4), yaw: 1.5, item: Some("strata:sorting_upgrade")),
+        (kind: "strata:item", position: (4.2, 2.0, -3.0), yaw: 1.8, item: Some("strata:filter_upgrade")),
+        (kind: "strata:item", position: (5.4, 2.0, -3.4), yaw: 2.1, item: Some("strata:compression_upgrade")),
+        (kind: "strata:item", position: (6.6, 2.0, -3.0), yaw: 2.4, item: Some("strata:void_upgrade")),
+        (kind: "strata:item", position: (4.6, 2.0, -5.0), yaw: 2.7, item: Some("strata:iron_nugget")),
+        (kind: "strata:item", position: (5.6, 2.0, -5.2), yaw: 3.0, item: Some("strata:gold_nugget")),
+        (kind: "strata:item", position: (6.6, 2.0, -5.0), yaw: 0.4, item: Some("strata:copper_nugget")),
+    ],
+)

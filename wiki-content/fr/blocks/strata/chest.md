@@ -16,7 +16,7 @@ Son contenu est enregistré avec le monde. Cassé, il laisse tomber tout ce qu'i
 
 ## Conseils
 
-Un coffre par famille d'objets (pierres, bois, minerais) et le bouton « Ranger » fait le tri pour vous en un clic.
+Un **kit de rangement en fer** le fait passer au tier fer sur place, sans le vider : plus de cases et une case d'amélioration (voir la page Rangement). Un coffre par famille d'objets (pierres, bois, minerais) et le bouton « Ranger » fait le tri pour vous en un clic.
 
 ## Découverte en jeu
 

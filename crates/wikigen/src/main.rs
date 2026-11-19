@@ -16,6 +16,7 @@ mod reference;
 mod search;
 mod site;
 mod stations;
+mod storage;
 mod texts;
 mod upgrades;
 mod worn;

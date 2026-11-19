@@ -1,4 +1,4 @@
-// A gold-bound barrel: 81 slots and 3 upgrade slots (storage_tiers/gold.ron), never joined with its neighbours.
+// A gold-bound barrel: 63 slots and 2 upgrade slots (storage_tiers/gold.ron), never joined with its neighbours.
 Block(
     textures: Column(end: "strata:gold_barrel_top", side: "strata:gold_barrel_side"),
     hardness: 3.5,

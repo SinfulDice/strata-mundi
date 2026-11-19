@@ -72,15 +72,15 @@ fn an_upgraded_chest_comes_back_with_its_upgrades_and_filter() {
     let mut game = Game::new(rules.clone(), 5_000, body, GameMode::Survival);
     let item = |name: &str| content.items.key(&name.parse().unwrap()).unwrap();
     let mut chest = BlockEntity {
-        container: Container::new(108),
-        upgrades: Container::new(4),
+        container: Container::new(81),
+        upgrades: Container::new(3),
         ..BlockEntity::default()
     };
-    chest.container.slots[107] = Some(ItemStack::new(item("strata:diamond"), 12, &content.items));
+    chest.container.slots[80] = Some(ItemStack::new(item("strata:diamond"), 12, &content.items));
     let mut filter = ItemStack::new(item("strata:filter_upgrade"), 1, &content.items);
     set_filter_cell(&mut filter, 2, Some(item("strata:diamond")), &content.items);
     chest.upgrades.slots[1] = Some(filter);
-    chest.upgrades.slots[3] = Some(ItemStack::new(
+    chest.upgrades.slots[2] = Some(ItemStack::new(
         item("strata:magnet_upgrade"),
         1,
         &content.items,

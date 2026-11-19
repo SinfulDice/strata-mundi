@@ -1,2 +1,2 @@
 // Rows of nine slots and upgrade slots of a diamond chest or barrel.
-StorageTier(rows: 12, upgrade_slots: 4, upgrade_family: "strata:storage")
+StorageTier(rows: 9, upgrade_slots: 3, upgrade_family: "strata:storage")

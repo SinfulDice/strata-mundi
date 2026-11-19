@@ -46,7 +46,10 @@ impl SlotsModel<'_> {
         let chest = self.container.is_some() && self.content_furnace().is_none();
         Some(match id {
             "chest_scroll" => chest && self.storage_rows() > CHEST_ROWS,
-            "storage_side" => chest && !self.upgrade_slots().is_empty(),
+            "storage_upgrades" => chest && !self.upgrade_slots().is_empty(),
+            "storage_side" => {
+                chest && (!self.upgrade_slots().is_empty() || self.storage_rows() > CHEST_ROWS)
+            }
             "storage_filter" => chest && !self.filtering_slots().is_empty(),
             "filter_choices" => self.filtering_slots().len() > 1,
             _ => return None,

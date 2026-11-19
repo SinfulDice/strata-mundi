@@ -1,6 +1,6 @@
 ## Description
 
-A diamond-bound barrel: 108 slots (12 rows of nine) and 4 upgrade slots. Its diamond border tells its tier at a glance.
+A diamond-bound barrel: 81 slots (9 rows of nine) and 3 upgrade slots. Its diamond border tells its tier at a glance.
 
 ## How to get it
 
@@ -8,7 +8,7 @@ In creative: Storage tab of the inventory. In survival: eight diamonds and glass
 
 ## Uses
 
-Right click opens it; the screen scrolls its rows (buttons under the grid, mouse wheel). Its upgrades (sorting, filter, compression, destruction, magnet) go in the panel on the right. Like every barrel, it never joins its neighbours.
+Right click opens it; the screen scrolls its rows (buttons of the right panel, mouse wheel). Its upgrades (sorting, filter, compression, destruction, magnet) go in the panel on the right. Like every barrel, it never joins its neighbours.
 
 ## Behaviour
 

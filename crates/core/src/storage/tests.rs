@@ -31,10 +31,10 @@ fn layout(content: &Content, block: &str) -> (usize, usize) {
 #[test]
 fn tiers_give_rows_and_upgrade_slots() {
     let content = content();
-    assert_eq!(layout(&content, "strata:chest"), (27, 1));
-    assert_eq!(layout(&content, "strata:iron_barrel"), (54, 2));
-    assert_eq!(layout(&content, "strata:gold_chest"), (81, 3));
-    assert_eq!(layout(&content, "strata:diamond_chest"), (108, 4));
+    assert_eq!(layout(&content, "strata:chest"), (27, 0));
+    assert_eq!(layout(&content, "strata:iron_barrel"), (45, 1));
+    assert_eq!(layout(&content, "strata:gold_chest"), (63, 2));
+    assert_eq!(layout(&content, "strata:diamond_chest"), (81, 3));
     assert_eq!(layout(&content, "strata:furnace"), (3, 0));
     assert_eq!(layout(&content, "strata:diamond_furnace"), (3, 3));
 }
@@ -144,7 +144,7 @@ fn upgrade_slots_take_storage_upgrades_once_and_shift_clicks_follow_the_filter()
     let family = "strata:storage".parse().unwrap();
     let chest = content
         .blocks
-        .key(&"strata:chest".parse().unwrap())
+        .key(&"strata:iron_chest".parse().unwrap())
         .unwrap();
     let chest_item = content.items.iter().find_map(|(key, _, i)| {
         matches!(i.kind, crate::content::ItemKind::Block(b) if b == chest).then_some(key)

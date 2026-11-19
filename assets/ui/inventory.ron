@@ -47,11 +47,6 @@ Screen(
                     Button(id: "sort_chest", anchor: TopLeft, at: (104, 13), size: (40, 14), text: "ui-inventory-sort"),
                     Button(id: "deposit", anchor: TopLeft, at: (148, 13), size: (40, 14), text: "ui-inventory-deposit"),
                     SlotGrid(id: "chest", anchor: TopLeft, at: (8, 30), columns: 9, rows: 6),
-                    Group(id: "chest_scroll", children: [
-                        Button(id: "chest_earlier", anchor: TopLeft, at: (8, 139), size: (40, 12), text: "ui-bench-earlier"),
-                        Button(id: "chest_later", anchor: TopLeft, at: (52, 139), size: (40, 12), text: "ui-bench-later"),
-                        Label(id: "chest_rows", anchor: TopLeft, at: (98, 141), text: "@chest_rows", dim: true),
-                    ]),
                 ]),
                 Group(id: "furnace_side", children: [
                     Label(id: "furnace_title", anchor: TopLeft, at: (8, 4), text: "@title"),
@@ -177,19 +172,27 @@ Screen(
             Panel(
                 id: "window_upgrades",
                 anchor: Center,
-                at: (148, -21),
-                size: (92, 196),
+                at: (148, 0),
+                size: (92, 238),
                 children: [
-                    Label(id: "upgrades_label", anchor: TopLeft, at: (8, 4), text: "ui-furnace-modules"),
-                    SlotGrid(id: "chest_upgrades", anchor: TopLeft, at: (10, 16), columns: 4, rows: 2),
+                    Group(id: "storage_upgrades", children: [
+                        Label(id: "upgrades_label", anchor: TopLeft, at: (8, 4), text: "ui-furnace-modules"),
+                        SlotGrid(id: "chest_upgrades", anchor: TopLeft, at: (10, 16), columns: 4, rows: 2),
+                    ]),
                     Group(id: "storage_filter", children: [
                         Label(id: "filter_title", anchor: TopLeft, at: (8, 58), text: "@filter_title", wrap: Some(76)),
                         Group(id: "filter_choices", children: [
                             Button(id: "filter_next", anchor: TopLeft, at: (8, 70), size: (76, 12), text: "ui-storage-filter-next"),
                         ]),
-                        ItemGrid(id: "chest_filter", anchor: TopLeft, at: (19, 86), columns: 3, rows: 3),
+                        SlotGrid(id: "chest_filter", anchor: TopLeft, at: (16, 86), columns: 3, rows: 3),
                         Button(id: "filter_mode", anchor: TopLeft, at: (8, 144), size: (76, 14), text: "@filter_mode"),
                         Label(id: "filter_help", anchor: TopLeft, at: (8, 162), text: "ui-storage-filter-help", dim: true, wrap: Some(76)),
+                    ]),
+                    // A storage taller than the screen scrolls by rows (or with the wheel over it).
+                    Group(id: "chest_scroll", children: [
+                        Label(id: "chest_rows", anchor: TopLeft, at: (8, 208), text: "@chest_rows", dim: true),
+                        Button(id: "chest_earlier", anchor: TopLeft, at: (8, 220), size: (36, 12), text: "ui-storage-up"),
+                        Button(id: "chest_later", anchor: TopLeft, at: (48, 220), size: (36, 12), text: "ui-storage-down"),
                     ]),
                 ],
             ),

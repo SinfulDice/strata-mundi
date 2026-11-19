@@ -68,4 +68,6 @@
     // Crafting table, cobblestone, a stick and coal on the floor (v0.3, milestone 3).
     (name: "craft", scene: "storage", pos: (3.5, 4.2, 1.5), look: (20.0, -25.0)),
     (name: "workshop", scene: "workshop", pos: (0.0, 4.6, 1.5), look: (0.0, -22.0)),
+    // Chests, double chests and barrels of every tier, metal blocks, kits and upgrades (v0.3, milestone 7).
+    (name: "strongroom", scene: "strongroom", pos: (-1.5, 6.5, 6.5), look: (0.0, -30.0)),
 ]

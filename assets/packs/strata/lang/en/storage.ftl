@@ -46,11 +46,14 @@ feedback-kit-furnace-done = Furnace upgraded, its contents kept.
 feedback-kit-storage-wrong-tier = This kit does not fit this storage: a kit goes from one tier to the next, without skipping.
 feedback-kit-storage-needs-two = A double chest goes up at once: hold two kits.
 feedback-kit-storage-done = Storage upgraded, its contents kept.
-ui-storage-rows = Rows { $first }-{ $last } of { $total }
+ui-storage-rows = { $first }-{ $last } of { $total }
 ui-storage-filter-mode = { $mode ->
         [deny] Refuses the list
        *[allow] Allows the list
     }
 ui-storage-filter-next = Next filter
-ui-storage-filter-help = Held item on a cell: adds it. Empty hand: clears it.
+ui-storage-filter-help = Held item: added. Empty hand: removed.
 ui-storage-filter-cell = Filter cell: put the held item here.
+upgrade-item-line = Installed ({ $slot }): { $effects }
+ui-storage-up = Up
+ui-storage-down = Down

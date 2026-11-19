@@ -46,11 +46,14 @@ feedback-kit-furnace-done = Four amélioré, son contenu est intact.
 feedback-kit-storage-wrong-tier = Ce kit ne va pas sur ce rangement : un kit passe d'un tier au suivant, sans en sauter.
 feedback-kit-storage-needs-two = Un coffre double monte d'un coup : il faut deux kits en main.
 feedback-kit-storage-done = Rangement amélioré, son contenu est intact.
-ui-storage-rows = Rangées { $first }-{ $last } sur { $total }
+ui-storage-rows = { $first }-{ $last } sur { $total }
 ui-storage-filter-mode = { $mode ->
         [deny] Refuse la liste
        *[allow] Accepte la liste
     }
 ui-storage-filter-next = Filtre suivant
-ui-storage-filter-help = Objet tenu sur une case : l'ajoute. Main vide : vide la case.
+ui-storage-filter-help = Objet tenu : ajouté. Main vide : retiré.
 ui-storage-filter-cell = Case de filtre : posez-y l'objet tenu.
+upgrade-item-line = Posé ({ $slot }) : { $effects }
+ui-storage-up = Haut
+ui-storage-down = Bas

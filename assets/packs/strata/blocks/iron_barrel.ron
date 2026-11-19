@@ -1,4 +1,4 @@
-// A iron-bound barrel: 54 slots and 2 upgrade slots (storage_tiers/iron.ron), never joined with its neighbours.
+// A iron-bound barrel: 45 slots and 1 upgrade slot (storage_tiers/iron.ron), never joined with its neighbours.
 Block(
     textures: Column(end: "strata:iron_barrel_top", side: "strata:iron_barrel_side"),
     hardness: 3.0,

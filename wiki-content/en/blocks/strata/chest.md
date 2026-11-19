@@ -16,7 +16,7 @@ Its contents are saved with the world. Broken, it drops everything inside. In a 
 
 ## Tips
 
-One chest per family of items (stones, wood, ores) and the "Stash" button sorts for you in one click.
+An **iron storage kit** raises it to the iron tier in place, without emptying it: more slots and an upgrade slot (see the Storage page). One chest per family of items (stones, wood, ores) and the "Stash" button sorts for you in one click.
 
 ## Discovery in game
 

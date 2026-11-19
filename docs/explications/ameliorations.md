@@ -8,7 +8,7 @@ Sans classe ni arbre de compétences, le joueur progresse par son équipement. L
 
 ### Les emplacements et leurs familles
 
-Chaque objet a une liste d'**emplacements typés** (jalon 4a) : `upgrade_slots: ["strata:area", "strata:craft"]`. Une famille (`upgrade_slots/<nom>.ron`) dit seulement combien d'emplacements d'elle un objet peut avoir. Les familles existantes : `strata:craft` (artisanal) et `strata:area` (tête du marteau). Les modules mécaniques (v0.8), les runes et les pièces de bâton (v0.9) seront d'autres familles : le moteur ne change pas.
+Chaque objet a une liste d'**emplacements typés** (jalon 4a) : `upgrade_slots: ["strata:area", "strata:craft"]`. Une famille (`upgrade_slots/<nom>.ron`) dit seulement combien d'emplacements d'elle un objet peut avoir. Les familles existantes : `strata:craft` (artisanal) et `strata:area` (tête du marteau). Les modules mécaniques (v0.8), les runes et les pièces de bâton (v0.9) seront d'autres familles : le moteur ne change pas. Depuis le jalon 7, les modules de four et les améliorations de coffre (familles `strata:furnace` et `strata:storage`) passent par ce même moteur, mais ce sont des **objets posés dans les cases d'un bloc** au lieu d'un enchantement rangé dans la pile : voir [Rangement](rangement.md).
 
 ### Une amélioration en pack
 

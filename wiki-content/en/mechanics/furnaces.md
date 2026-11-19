@@ -16,4 +16,4 @@ Lay a block in its cell, choose a variant in the list (stone bricks, polished st
 
 ## For pack makers
 
-Folders `cooking/` (`Cooking(ingredient, result, time, experience, kind)`), `fuels/` (`Fuel(ingredient, burn_time)`), `stonecutting/` (`Cutting(ingredient, result)`), `furnace_tiers/` (`FurnaceTier(cook_time, fuel_value, upgrade_slots)`); block fields `furnace: Some(Furnace(family, tier, kinds, speed))` and `placement: Facing(lit: Some(Lit(front, light_emission)))`; item fields `kit: Some(Kit(from, to))` and `module: Some(Furnace(cook_time, fuel_value, output))`.
+Folders `cooking/` (`Cooking(ingredient, result, time, experience, kind)`), `fuels/` (`Fuel(ingredient, burn_time)`), `stonecutting/` (`Cutting(ingredient, result)`), `furnace_tiers/` (`FurnaceTier(cook_time, fuel_value, upgrade_slots, upgrade_family)`); block fields `furnace: Some(Furnace(family, tier, kinds, speed))` and `placement: Facing(lit: Some(Lit(front, light_emission)))`; item fields `kit: Some(Kit(from, to))` and `upgrade: Some("strata:furnace_speed")` (upgrades/, stats `strata:cook_time`, `strata:fuel_value`, `strata:output`).

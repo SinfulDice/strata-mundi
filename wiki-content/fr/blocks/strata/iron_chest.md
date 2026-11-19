@@ -1,6 +1,6 @@
 ## Description
 
-Un coffre cerclé de fer : 54 cases (6 rangées de neuf) et 2 emplacements d'amélioration. Sa bordure de fer dit son tier d'un coup d'œil.
+Un coffre cerclé de fer : 45 cases (5 rangées de neuf) et 1 emplacement d'amélioration. Sa bordure de fer dit son tier d'un coup d'œil.
 
 ## Obtention
 
@@ -8,7 +8,7 @@ En créatif : onglet Rangement de l'inventaire. En survie : huit lingots autour 
 
 ## Utilisations
 
-Un clic droit l'ouvre ; l'écran fait défiler ses rangées (boutons sous la grille, molette). Ses améliorations (tri, filtre, compression, destruction, aimant) se posent dans le panneau à droite. Deux coffres du même tier côte à côte se joignent en un coffre double, et **les améliorations des deux moitiés** comptent pour tout le coffre.
+Un clic droit l'ouvre ; l'écran fait défiler ses rangées (boutons du panneau de droite, molette). Ses améliorations (tri, filtre, compression, destruction, aimant) se posent dans le panneau à droite. Deux coffres du même tier côte à côte se joignent en un coffre double, et **les améliorations des deux moitiés** comptent pour tout le coffre.
 
 ## Comportement
 

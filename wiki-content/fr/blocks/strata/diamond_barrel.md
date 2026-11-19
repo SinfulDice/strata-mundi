@@ -1,6 +1,6 @@
 ## Description
 
-Un tonneau cerclé de diamant : 108 cases (12 rangées de neuf) et 4 emplacements d'amélioration. Sa bordure de diamant dit son tier d'un coup d'œil.
+Un tonneau cerclé de diamant : 81 cases (9 rangées de neuf) et 3 emplacements d'amélioration. Sa bordure de diamant dit son tier d'un coup d'œil.
 
 ## Obtention
 
@@ -8,7 +8,7 @@ En créatif : onglet Rangement de l'inventaire. En survie : huit diamants et ver
 
 ## Utilisations
 
-Un clic droit l'ouvre ; l'écran fait défiler ses rangées (boutons sous la grille, molette). Ses améliorations (tri, filtre, compression, destruction, aimant) se posent dans le panneau à droite. Comme tout tonneau, il ne se joint jamais à ses voisins.
+Un clic droit l'ouvre ; l'écran fait défiler ses rangées (boutons du panneau de droite, molette). Ses améliorations (tri, filtre, compression, destruction, aimant) se posent dans le panneau à droite. Comme tout tonneau, il ne se joint jamais à ses voisins.
 
 ## Comportement
 

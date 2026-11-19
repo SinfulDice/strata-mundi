@@ -16,4 +16,4 @@ Posez un bloc dans sa case, choisissez une variante dans la liste (briques de pi
 
 ## Pour les créateurs de packs
 
-Dossiers `cooking/` (`Cooking(ingredient, result, time, experience, kind)`), `fuels/` (`Fuel(ingredient, burn_time)`), `stonecutting/` (`Cutting(ingredient, result)`), `furnace_tiers/` (`FurnaceTier(cook_time, fuel_value, upgrade_slots)`) ; champs de bloc `furnace: Some(Furnace(family, tier, kinds, speed))` et `placement: Facing(lit: Some(Lit(front, light_emission)))` ; champs d'objet `kit: Some(Kit(from, to))` et `module: Some(Furnace(cook_time, fuel_value, output))`.
+Dossiers `cooking/` (`Cooking(ingredient, result, time, experience, kind)`), `fuels/` (`Fuel(ingredient, burn_time)`), `stonecutting/` (`Cutting(ingredient, result)`), `furnace_tiers/` (`FurnaceTier(cook_time, fuel_value, upgrade_slots, upgrade_family)`) ; champs de bloc `furnace: Some(Furnace(family, tier, kinds, speed))` et `placement: Facing(lit: Some(Lit(front, light_emission)))` ; champs d'objet `kit: Some(Kit(from, to))` et `upgrade: Some("strata:furnace_speed")` (upgrades/, stats `strata:cook_time`, `strata:fuel_value`, `strata:output`).

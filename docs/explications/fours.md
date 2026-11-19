@@ -2,7 +2,7 @@
 
 ## À quoi ça sert
 
-Le **four** transforme un objet en un autre avec du feu : minerai de fer → lingot, sable → verre, bûche → charbon de bois. Le **haut fourneau** ne fond que les minerais et le **fumoir** ne cuit que la nourriture, deux fois plus vite. Le **tailleur de pierre** découpe un bloc en ses variantes (briques, pierre polie), sans combustible. Enfin, un four s'**améliore sur place** (pierre → fer → or → diamant) avec un kit, sans le vider : il cuit plus vite et consomme moins. Les coffres et tonneaux améliorables du jalon 7 suivront la même idée.
+Le **four** transforme un objet en un autre avec du feu : minerai de fer → lingot, sable → verre, bûche → charbon de bois. Le **haut fourneau** ne fond que les minerais et le **fumoir** ne cuit que la nourriture, deux fois plus vite. Le **tailleur de pierre** découpe un bloc en ses variantes (briques, pierre polie), sans combustible. Enfin, un four s'**améliore sur place** (pierre → fer → or → diamant) avec un kit, sans le vider : il cuit plus vite et consomme moins. Les coffres et tonneaux font de même depuis le jalon 7 ([Rangement](rangement.md)).
 
 ## Comment ça marche
 
@@ -20,12 +20,12 @@ Cooking(ingredient: Tag("strata:iron_ores"), result: Result(item: "strata:iron_i
 Fuel(ingredient: Tag("strata:coals"), burn_time: 1600)
 
 // furnace_tiers/iron.ron
-FurnaceTier(cook_time: 80, fuel_value: 125, upgrade_slots: 1)
+FurnaceTier(cook_time: 80, fuel_value: 125, upgrade_slots: 1, upgrade_family: "strata:furnace")
 ```
 
 - `kind` dit quels fours cuisent la recette : le four accepte tout, le haut fourneau `strata:ore`, le fumoir `strata:food`.
 - Un tier donne des **pourcentages** : `cook_time: 80` = une cuisson prend 80 % du temps ; `fuel_value: 125` = un charbon fait 25 % de cuissons en plus.
-- Les kits (`kit: Some(Kit(from, to))`) et les modules (`module: Some(Furnace(...))`) sont des champs d'objets.
+- Les kits (`kit: Some(Kit(from, to))`) sont des champs d'objets ; les modules sont des **améliorations** (`upgrades/furnace_*.ron`) portées par un objet (`upgrade: Some("strata:furnace_speed")`), comme celles des coffres : voir [Rangement](rangement.md).
 
 ### Une façade qui regarde le joueur, et qui s'allume
 

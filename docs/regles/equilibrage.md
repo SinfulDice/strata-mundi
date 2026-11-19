@@ -257,7 +257,7 @@ Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
 | Or | 63 | 5 s | 12 | 2 |
 | Diamant | 81 | 3 s | 16 | 3 |
 
-Un coffre double a deux fois les cases de son tier. Le kit passe d'un tier au suivant seulement (pas de saut) ; il coûte moins que la fabrication directe du tier visé.
+Un coffre double a deux fois les cases **et les emplacements** de son tier (les améliorations des deux moitiés comptent pour tout le coffre) ; il monte de tier d'un coup avec **deux kits** (un par bloc), pour garder un seul tier. Le kit passe d'un tier au suivant seulement (pas de saut) ; il coûte moins que la fabrication directe du tier visé. Coffres et tonneaux (`storage_tiers/`) : 3 / 5 / 7 / 9 rangées, 0 / 1 / 2 / 3 emplacements (famille `strata:storage`).
 
 Fours (`furnace_tiers/`) : `cook_time` 100 / 80 / 50 / 30 %, `fuel_value` 100 / 125 / 150 / 200 % (d'où 8 / 10 / 12 / 16 cuissons par charbon). Fumoir et haut fourneau : mêmes tiers, deux fois plus rapides.
 
@@ -274,6 +274,23 @@ Fours (`furnace_tiers/`) : `cook_time` 100 / 80 / 50 / 30 %, `fuel_value` 100 / 
 | Vitesse (4 fer, 4 charbon, 1 or) | 75 % | 80 % | ×1 |
 | Économie (4 fer, 4 charbon, 1 seau de lave) | 100 % | 150 % | ×1 |
 | Double sortie (4 fer, 4 or, 1 diamant) | 125 % | 50 % | ×2 |
+
+Depuis le jalon 7, les modules sont des améliorations (`upgrades/furnace_*.ron`, briques `Stat` sur `strata:cook_time`, `strata:fuel_value`, `strata:output`). Non-cumul par brique : un gain et un coût d'une même stat sont deux briques ; deux coûts (ou deux gains) d'une même stat, seul le plus fort compte. Vitesse + double sortie : temps 75 % × 125 % (comme avant), cuissons par combustible 50 % (au lieu de 80 % × 50 % = 40 %).
+
+| Rangement | Coût | Valeurs |
+|---|---|---|
+| Coffre / tonneau fer ou or direct | 8 lingots du métal autour du tier précédent | — |
+| Coffre / tonneau diamant direct | 4 diamants + 4 verres autour du tier or | — |
+| Kit de rangement fer | 5 lingots de fer + 1 planche | bois → fer |
+| Kit de rangement or | 5 lingots d'or + 1 lingot de fer | fer → or |
+| Kit de rangement diamant | 3 diamants + 3 verres | or → diamant |
+| Tri automatique | 4 planches, 4 fer, 1 lingot de cuivre | à la fermeture, et après une entrée automatique |
+| Filtre | 4 planches, 4 fer, 1 tissu | 9 cases, liste acceptée ou refusée ; vide = tout passe |
+| Compression | 4 planches, 4 fer, 1 lingot d'or | 9 pépites → 1 lingot, 9 lingots → 1 bloc (`compression/`) |
+| Destruction | 4 planches, 4 fer, 1 obsidienne | détruit ce que son filtre désigne ; vide = rien |
+| Aimant | 4 planches, 4 fer, 1 diamant | rayon 5 blocs, toutes les 10 ticks (0,5 s) ; option de monde « Aimants » |
+
+Pépites et blocs : 1 lingot ↔ 9 pépites, 9 lingots ↔ 1 bloc (fer, or, cuivre ; diamant ↔ bloc de diamant), à la grille ou par compression.
 
 Manque pour plus tard : les tiers Ignium, Nihilium et Siderium (v0.10-v0.11) n'ont ni objets ni fichiers de tier.
 

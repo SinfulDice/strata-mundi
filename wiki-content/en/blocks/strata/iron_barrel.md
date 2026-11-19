@@ -1,6 +1,6 @@
 ## Description
 
-A iron-bound barrel: 54 slots (6 rows of nine) and 2 upgrade slots. Its iron border tells its tier at a glance.
+A iron-bound barrel: 45 slots (5 rows of nine) and 1 upgrade slot. Its iron border tells its tier at a glance.
 
 ## How to get it
 
@@ -8,7 +8,7 @@ In creative: Storage tab of the inventory. In survival: eight ingots around a wo
 
 ## Uses
 
-Right click opens it; the screen scrolls its rows (buttons under the grid, mouse wheel). Its upgrades (sorting, filter, compression, destruction, magnet) go in the panel on the right. Like every barrel, it never joins its neighbours.
+Right click opens it; the screen scrolls its rows (buttons of the right panel, mouse wheel). Its upgrades (sorting, filter, compression, destruction, magnet) go in the panel on the right. Like every barrel, it never joins its neighbours.
 
 ## Behaviour
 

@@ -20,7 +20,7 @@
   - [x] J6 Stations de travail spécialisées (forge avec charbon en ingrédient, tannerie, métier à tisser sur l'établi générique ; armures, anneaux, écailles, bottes de mobilité, cuir, tissu, laine, cape déplacés à leur station ; écran propre par établi : `benches/` (disposition, couleur), bandes, aide, liste qui défile ; page wiki « Stations de travail » ; D091-D092)
     - Note pour J7 : convertir d'abord les modules de four en améliorations (D085). Note pour v0.4 : cuir et laine provisoires déjà à la tannerie et au métier, remplacer les ingrédients par peaux et laine de mouton.
   - [ ] J7 Rangement (sac à dos, bourses, coffres et tonneaux améliorables)
-    - [ ] J7a convergence des modules de four en améliorations, coffres et tonneaux améliorables (tiers en pack, kits sur place, coffre double), améliorations tri/filtre/compression/destruction/aimant, écran qui défile et panneau d'améliorations (en cours : code, pack et tests faits ; restent captures, docs `rangement.md`, décisions)
+    - [x] J7a convergence des modules de four en améliorations (un seul système, migration des sauvegardes), coffres et tonneaux par tier en pack (bois 27, fer 45, or 63, diamant 81 ; 0 à 3 emplacements), kits sur place (coffre double : deux kits), tri, filtre, compression (pépites, blocs), destruction, aimant (option de monde), écran qui défile et panneau d'améliorations à la manette, textures par tier, wiki « Rangement », D093-D096
     - [ ] J7b sac à dos, bourses et sacoches
   - [ ] J8 Jauges de survie (vie, faim, soif, température, endurance, dégâts, soins, HUD)
   - [ ] J9 Expérience

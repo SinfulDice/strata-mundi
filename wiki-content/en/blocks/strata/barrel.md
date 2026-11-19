@@ -16,7 +16,7 @@ Its contents are saved with the world; broken, it drops them. It can burn, and i
 
 ## Tips
 
-Line up barrels for a tidy cellar: each keeps its contents, and the screen's search quickly finds an item.
+An **iron storage kit** raises it to the iron tier in place, without emptying it: more slots and an upgrade slot (see the Storage page). Line up barrels for a tidy cellar: each keeps its contents, and the screen's search quickly finds an item.
 
 ## Discovery in game
 

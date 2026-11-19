@@ -20,18 +20,16 @@ pub fn table(ctx: &Ctx<'_>, from: &str) -> String {
                     .iter()
                     .map(|effect| content.effect_text(effect, ctx.lang))
                     .collect();
-                let material = level
-                    .material
-                    .items()
-                    .first()
-                    .map_or_else(String::new, |&item| item_link(ctx, from, item));
+                let cost = match level.material.items().first() {
+                    Some(&item) => format!("{} × {}", level.count, item_link(ctx, from, item)),
+                    None => carrier(ctx, from, &upgrade.id),
+                };
                 format!(
-                    "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} × {material}</td><td>{}</td></tr>",
+                    "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{cost}</td><td>{}</td></tr>",
                     escape(&name),
                     escape(&slot),
                     index + 1,
                     escape(&effects.join(", ")),
-                    level.count,
                     level.xp
                 )
             })
@@ -49,4 +47,12 @@ pub fn table(ctx: &Ctx<'_>, from: &str) -> String {
         "<h2>{}</h2><table class=\"data\"><tr>{head}</tr>{rows}</table>",
         escape(&ctx.tr("wiki-upgrades-table"))
     )
+}
+
+/// An upgrade put in a block's slot is an item: its link stands for the material.
+fn carrier(ctx: &Ctx<'_>, from: &str, upgrade: &strata_core::id::Identifier) -> String {
+    let mut items = ctx.data.content.items.iter();
+    items
+        .find(|(_, _, item)| item.upgrade.as_ref() == Some(upgrade))
+        .map_or_else(String::new, |(key, _, _)| item_link(ctx, from, key))
 }

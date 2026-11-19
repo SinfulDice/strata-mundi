@@ -48,6 +48,8 @@ impl Content {
             if let Some(tool) = &entry.tool {
                 lines.push(self.tool_text(tool, language));
             }
+            let upgrade = entry.upgrade.as_ref();
+            lines.extend(upgrade.and_then(|u| self.upgrade_item_line(u, language)));
             if self.stats_known(item) {
                 lines.extend(self.gear_lines(entry, language));
             }
