@@ -51,8 +51,32 @@ impl Content {
             if self.stats_known(item) {
                 lines.extend(self.gear_lines(entry, language));
             }
+            lines.extend(self.made_at_line(item, language));
         }
         lines.join("\n")
+    }
+
+    /// « Made at: Forge » for what benches make. Bench recipes are all known until the
+    /// knowledge of milestone 13 decides here too.
+    fn made_at_line(&self, item: ItemId, language: &str) -> Option<String> {
+        let mut stations: Vec<String> = (self.benches.list().iter())
+            .filter(|recipe| recipe.result == item)
+            .filter_map(|recipe| self.bench_name(&recipe.bench, language))
+            .collect();
+        stations.sort();
+        stations.dedup();
+        let args = [("stations", stations.join(", "))];
+        (!stations.is_empty()).then(|| self.translations.text_with(language, "gear-made-at", &args))
+    }
+
+    /// The name of the block that opens `bench`.
+    pub fn bench_name(&self, bench: &Identifier, language: &str) -> Option<String> {
+        let opens = |block: &super::Block| matches!(&block.station, Some(super::StationDef::Bench(b)) if b == bench);
+        let (_, id, _) = self.blocks.iter().find(|(_, _, block)| opens(block))?;
+        Some(
+            self.translations
+                .text(language, &id.translation_key("block")),
+        )
     }
 
     /// Sweep, use on blocks, weapon, armour and upgrade slots of an item.

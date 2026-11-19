@@ -88,7 +88,10 @@ fn each_bench_shows_its_own_arrangement_colour_and_help() {
             let help = content
                 .translations
                 .text("fr", &id.translation_key("bench"));
-            assert_eq!(model.text("bench_note").as_deref(), Some(help.as_str()));
+            let note = model.text("bench_note").unwrap();
+            assert!(note.starts_with(&help), "{note}");
+            let choose = content.translations.text("fr", "ui-bench-choose");
+            assert!(note.ends_with(&choose), "{note}");
             let shown = model.items("bench_choices");
             assert!(!shown.is_empty() && shown.len() <= BENCH_COLUMNS * BENCH_ROWS);
         });

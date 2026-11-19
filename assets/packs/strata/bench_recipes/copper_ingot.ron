@@ -1,0 +1,10 @@
+// Smelting at the forge: instant and a quarter more than the furnace (4 ores, 5 ingots),
+// for more coal (1 for 5 ingots instead of 1 for 8) and by hand only.
+BenchRecipe(
+    bench: "strata:forge",
+    ingredients: [
+        (Tag("strata:copper_ores"), 4),
+        (Tag("strata:coals"), 1),
+    ],
+    result: Result(item: "strata:copper_ingot", count: 5),
+)

@@ -144,6 +144,7 @@ wiki-station-crafting = Grille de fabrication
 wiki-station-stonecutter = Taille de pierre
 wiki-station-anvil = Améliorations et réparations
 wiki-station-bench = Atelier à liste de recettes
+wiki-station-furnace = Cuisson et fonte, avec combustible
 wiki-bench-made = Fabriqué à un atelier
 wiki-bench-makes = Ce qu'on y fabrique
 wiki-fact-worn = Porté

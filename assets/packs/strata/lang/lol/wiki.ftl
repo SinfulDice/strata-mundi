@@ -144,6 +144,7 @@ wiki-station-crafting = CRAFTIN SQUAREZ
 wiki-station-stonecutter = ROCK CHOPPIN
 wiki-station-anvil = MAEK BETTR AN FIX
 wiki-station-bench = BENCH WIF LIST OV RECIPEZ
+wiki-station-furnace = COOKIN AN MELTIN, WIF FUEL
 wiki-bench-made = MAEKD AT WERKBENCH
 wiki-bench-makes = WUT IT MAEKZ
 wiki-fact-worn = WEARIN

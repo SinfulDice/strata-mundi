@@ -59,6 +59,7 @@ item-stat-strata-air_jumps = saut en l'air
 item-stat-strata-dash = esquive (touche dédiée)
 item-stat-strata-climb = escalade (avancer contre un mur)
 gear-worn-line = Porté : { $effects }
+gear-made-at = Fabriqué à : { $stations }
 set-worn-line = { $set } : { $worn }/{ $total } pièces portées
 set-bonus-line = - { $pieces } pièces : { $effects }
 set-bonus-active = - { $pieces } pièces : { $effects } (actif)

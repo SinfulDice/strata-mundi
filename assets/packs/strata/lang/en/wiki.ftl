@@ -144,6 +144,7 @@ wiki-station-crafting = Crafting grid
 wiki-station-stonecutter = Stone cutting
 wiki-station-anvil = Upgrades and repairs
 wiki-station-bench = Bench with a list of recipes
+wiki-station-furnace = Cooking and smelting, with fuel
 wiki-bench-made = Made at a work bench
 wiki-bench-makes = What it makes
 wiki-fact-worn = Worn

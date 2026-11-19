@@ -169,8 +169,8 @@ impl SlotsModel<'_> {
         Some(self.content.translations.text(self.language, key))
     }
 
-    /// Ingredients missing, or the bench's own help (`bench-<namespace>-<name>`), or the
-    /// usual help.
+    /// Ingredients missing, or the bench's own help (`bench-<namespace>-<name>`) then how
+    /// to choose, or the usual help.
     pub(super) fn bench_note(&self) -> String {
         let tr = &self.content.translations;
         let Some(view) = self.crafting.map(|c| &c.view) else {
@@ -181,7 +181,10 @@ impl SlotsModel<'_> {
         }
         let own = self.bench().map(|bench| bench.translation_key("bench"));
         match own.filter(|key| tr.has(self.language, key)) {
-            Some(key) => tr.text(self.language, &key),
+            Some(key) => {
+                let choose = tr.text(self.language, "ui-bench-choose");
+                format!("{} {choose}", tr.text(self.language, &key))
+            }
             None => tr.text(self.language, "ui-bench-help"),
         }
     }

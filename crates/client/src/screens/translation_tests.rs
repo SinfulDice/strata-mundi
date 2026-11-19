@@ -3,6 +3,7 @@
 
 /// Interface texts chosen in code rather than in screen files.
 const CODE_KEYS: &[&str] = &[
+    "ui-bench-choose",
     super::inventory::TAB_ALL_KEY,
     "ui-editor-sample",
     "ui-error-incompatible",

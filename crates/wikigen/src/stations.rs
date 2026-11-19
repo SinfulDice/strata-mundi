@@ -1,5 +1,5 @@
-//! The « Work stations » page: every block that opens a station, what kind it is and,
-//! for a bench, everything it makes, all read from the packs.
+//! The « Work stations » page: every block that opens a station or cooks (furnaces),
+//! what kind it is and, for a bench, everything it makes, all read from the packs.
 
 use crate::blocks::block_link;
 use crate::html::escape;
@@ -11,12 +11,12 @@ pub fn table(ctx: &Ctx<'_>, from: &str) -> String {
     let content = &ctx.data.content;
     let rows: String = (content.blocks.iter())
         .filter(|(key, _, block)| block.family(*key) == *key)
-        .filter_map(|(key, _, block)| Some((key, block, block.station.as_ref()?)))
-        .map(|(key, block, station)| {
+        .filter_map(|(key, _, block)| Some((key, block, kind_key(block)?)))
+        .map(|(key, block, kind)| {
             format!(
                 "<tr><td>{}</td><td>{}</td><td>{}</td></tr>",
                 block_link(ctx, from, key),
-                escape(&ctx.tr(kind_key(station))),
+                escape(&ctx.tr(kind)),
                 makes(ctx, from, block)
             )
         })
@@ -35,13 +35,16 @@ pub fn table(ctx: &Ctx<'_>, from: &str) -> String {
     )
 }
 
-fn kind_key(station: &StationDef) -> &'static str {
-    match station {
+fn kind_key(block: &Block) -> Option<&'static str> {
+    if block.furnace.is_some() {
+        return Some("wiki-station-furnace");
+    }
+    Some(match block.station.as_ref()? {
         StationDef::Crafting(_) => "wiki-station-crafting",
         StationDef::Stonecutter => "wiki-station-stonecutter",
         StationDef::Anvil => "wiki-station-anvil",
         StationDef::Bench(_) => "wiki-station-bench",
-    }
+    })
 }
 
 /// The icons of what a bench makes, in its list's order.

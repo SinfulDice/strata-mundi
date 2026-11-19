@@ -110,6 +110,19 @@ fn each_material_has_its_station() {
     for made in ["iron_rings", "gold_rings", "diamond_scales"] {
         expected.push(forge(&format!("strata:{made}")));
     }
+    for metal in ["iron", "gold", "copper"] {
+        let ingot = format!("strata:{metal}_ingot");
+        let key = item(&content, &ingot);
+        let smelt = (content.benches.list().iter())
+            .find(|r| r.result == key)
+            .unwrap();
+        assert_eq!(smelt.bench.to_string(), "strata:forge");
+        let ores = &smelt.ingredients[0];
+        assert!(
+            smelt.count > ores.1,
+            "{ingot}: the forge gives more than the furnace"
+        );
+    }
     for boots in ["leaping_boots", "crampon_boots"] {
         expected.push(forge(&format!("strata:{boots}")));
     }

@@ -59,6 +59,7 @@ item-stat-strata-air_jumps = jump in the air
 item-stat-strata-dash = dash (its own key)
 item-stat-strata-climb = climbing (walk into a wall)
 gear-worn-line = Worn: { $effects }
+gear-made-at = Made at: { $stations }
 set-worn-line = { $set }: { $worn }/{ $total } pieces worn
 set-bonus-line = - { $pieces } pieces: { $effects }
 set-bonus-active = - { $pieces } pieces: { $effects } (active)
