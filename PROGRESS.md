@@ -39,3 +39,7 @@
 ## Défauts signalés
 
 - [x] **Minage sous les pieds** (signalé le 18/11/2026, toujours présent après la v0.2.1) : quand le joueur casse le bloc sur lequel il se tient, il a l'impression d'être téléporté sur le bloc du dessous au lieu de tomber. Cause : le serveur cassait le bloc avant d'appliquer les entrées envoyées avant le clic, et le client rejouait ces entrées sur le monde prédit ; la correction vers le bas s'appliquait d'un coup. Correction (D090) : clics exécutés après les entrées qui les précèdent, rejeu sur le terrain d'avant le clic, petites corrections lissées. Tests `input_order_tests` (serveur, créatif et survie) et `player.rs`.
+
+## Tâches intercalées
+
+- [ ] **Windows en un exe** (demandée le 24/11/2026, à faire juste après J8, orchestrée comme un jalon) : assets (packs, textures, traductions, ui) intégrés au binaire, dossier `packs/` à côté de l'exe prioritaire s'il existe (mods) ; CRT statique sur Windows (`+crt-static` dans `.cargo/config.toml`) ; backend DX12 de wgpu en repli si Vulkan absent ; la CI attache un `strata-windows.exe` portable à chaque release (le .msi reste en option) ; README : téléchargement, double-clic, avertissement SmartScreen ; décision dans `docs/decisions.md`.
