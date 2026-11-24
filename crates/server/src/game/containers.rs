@@ -93,19 +93,59 @@ impl Game {
     /// whose own first joining neighbour is this one (so three in a row make a pair and
     /// a single).
     pub(super) fn partner(&self, loader: &ColumnLoader, pos: BlockPos) -> Option<BlockPos> {
-        let other = self.first_neighbour(loader, pos)?;
-        (self.first_neighbour(loader, other) == Some(pos)).then_some(other)
+        self.partner_in(&|at| loader.block(at), pos)
     }
 
-    fn first_neighbour(&self, loader: &ColumnLoader, pos: BlockPos) -> Option<BlockPos> {
-        let block = loader.block(pos)?;
+    /// `partner` in a world whose blocks `block_at` gives (what a kit would make).
+    pub(super) fn partner_in(
+        &self,
+        block_at: &dyn Fn(BlockPos) -> Option<BlockId>,
+        pos: BlockPos,
+    ) -> Option<BlockPos> {
+        let other = self.first_neighbour(block_at, pos)?;
+        (self.first_neighbour(block_at, other) == Some(pos)).then_some(other)
+    }
+
+    fn first_neighbour(
+        &self,
+        block_at: &dyn Fn(BlockPos) -> Option<BlockId>,
+        pos: BlockPos,
+    ) -> Option<BlockPos> {
+        let block = block_at(pos)?;
         if !self.rules.container(block)?.joins {
             return None;
         }
         SIDES
             .into_iter()
             .map(|side| pos.neighbour(side))
-            .find(|&next| loader.block(next) == Some(block))
+            .find(|&next| block_at(next) == Some(block))
+    }
+
+    /// Whether turning `halves` into `upgraded` would part a double chest around them
+    /// (a neighbour of the new tier taking one of the halves).
+    pub(super) fn would_part_a_pair(
+        &self,
+        loader: &ColumnLoader,
+        halves: &[BlockPos],
+        upgraded: BlockId,
+    ) -> bool {
+        let after = |at: BlockPos| {
+            if halves.contains(&at) {
+                Some(upgraded)
+            } else {
+                loader.block(at)
+            }
+        };
+        let around = halves.iter().flat_map(|&half| {
+            SIDES
+                .map(|side| half.neighbour(side))
+                .into_iter()
+                .chain([half])
+        });
+        around.into_iter().any(|at| {
+            let before = self.partner(loader, at);
+            before.is_some() && before != self.partner_in(&after, at)
+        })
     }
 
     /// What the window shows: the storage of each half end to end, then the upgrade
@@ -208,7 +248,7 @@ impl Game {
             .filter(|&(_, block)| self.rules.container(block).is_some())
             .collect();
         near.sort_by_key(|&(pos, _)| (pos.x, pos.y, pos.z));
-        self.with_window(loader, |window, rules| {
+        self.with_window_entering(loader, true, |window, rules| {
             let Some(open) = window.open.as_deref_mut() else {
                 return;
             };
@@ -225,8 +265,16 @@ impl Game {
             };
             deposit_matching(window.player, open, range, &allowed, rules);
         });
-        for (pos, block) in near {
-            self.deposit_into(pos, block);
+        let mut done: Vec<BlockPos> = Vec::new();
+        for (pos, _) in near {
+            if done.contains(&pos) {
+                continue;
+            }
+            let halves = self.halves_at(loader, pos);
+            done.extend(&halves);
+            if halves.iter().all(|half| !open.contains(half)) {
+                self.deposit_into(&halves);
+            }
         }
     }
 

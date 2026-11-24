@@ -41,15 +41,14 @@ upgrade-effect-compress = SQUISHES LIL BITZ IN2 BARZ, BARZ IN2 BLOKZ
 upgrade-effect-void = NOMS WUT LIST SAYZ
 upgrade-effect-magnet = GRABZ STUFF { $radius } BLOKZ AWAI
 feedback-kit-furnace-wrong-tier = DIS KIT NO FITZ: KIT GOEZ ONE TIER UP, NO SKIPPIN.
-feedback-kit-furnace-needs-two = WAN KIT PER BLOK PLZ.
 feedback-kit-furnace-done = HOT BOX UPGRAYDED!! STUFF STILL INSIDE.
 feedback-kit-storage-wrong-tier = DIS KIT NO FITZ DIS BOX: ONE TIER UP, NO SKIPPIN.
 feedback-kit-storage-needs-two = DUBBL BOX GOEZ UP 2GETHER: HOLD 2 KITZ.
 feedback-kit-storage-done = BOX UPGRAYDED!! STUFF STILL INSIDE.
 ui-storage-rows = { $first }-{ $last } OF { $total }
 ui-storage-filter-mode = { $mode ->
-        [deny] NO WANTS DIS LIST
-       *[allow] ONLY WANTS DIS LIST
+        [deny] NO LIST
+       *[allow] YES LIST
     }
 ui-storage-filter-next = NEXT PICKY
 ui-storage-filter-help = HELD STUFF: ADDZ. NO STUFF: REMOOVZ.
@@ -57,3 +56,7 @@ ui-storage-filter-cell = PICKY BOX: PUT HELD STUFF HERE.
 upgrade-item-line = IN DA SPOT ({ $slot }): { $effects }
 ui-storage-up = UP
 ui-storage-down = DOWN
+feedback-kit-storage-parts-a-pair = DIS KIT WUD BREAK DUBBL BOX: NEIGHBOR BOX WUD STEEL HALF.
+ui-storage-upgrades = UPGRAYDZ
+ui-storage-inventory = MAH STUFF
+ui-storage-filter-mode-tip = YES LIST: ONLY DEZ COME IN (OR GET NOMMED). NO LIST: ALL BUT DEZ. CLIK 2 SWITCH.

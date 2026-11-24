@@ -82,8 +82,11 @@ impl Game {
         let was_lit = state.is_lit();
         let done = step(state, &mut entity.container, &furnace, rules);
         let lit = state.is_lit();
-        if done.slots && open {
-            let contents = Box::new(entity.container.clone());
+        if done.slots
+            && open
+            && let Some(window) = self.ecs.windows.get(self.player).cloned()
+        {
+            let contents = Box::new(self.window_contents(&window));
             self.messages
                 .push(ServerMessage::ContainerContents(contents));
         }

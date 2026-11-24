@@ -105,3 +105,38 @@ fn an_upgraded_chest_comes_back_with_its_upgrades_and_filter() {
     assert!(back.has_magnet(pos), "its magnet works again");
     std::fs::remove_dir_all(saves).unwrap();
 }
+
+#[test]
+fn a_furnace_file_written_before_upgrade_slots_loads_with_its_module() {
+    let (saves, folder, meta) = new_world("old-text");
+    let content = content();
+    let dimension = DimensionId("strata:terra".parse().unwrap());
+    let text = r#"BlockEntities(
+    entities: [
+        BlockEntity(
+            pos: (2, 64, 2),
+            slots: [
+                Some(Stack(item: "strata:iron_ore", count: 3)),
+                None,
+                Some(Stack(item: "strata:iron_ingot", count: 1)),
+                Some(Stack(item: "strata:output_module", count: 1)),
+            ],
+            data: {},
+            furnace: Some(Furnace(burn_left: 0, burn_total: 0, progress: 0)),
+        ),
+    ],
+)"#;
+    let path = folder.dir.join("block_entities/strata/terra.ron");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, text).unwrap();
+    let persistence = Persistence::new(settings(&folder, meta), Arc::clone(&content));
+    let entities = persistence.block_entities(&dimension);
+    let entity = &entities[&BlockPos::new(2, 64, 2)];
+    let output = content
+        .items
+        .key(&"strata:output_module".parse().unwrap())
+        .unwrap();
+    assert_eq!(entity.container.len(), 3);
+    assert_eq!(entity.upgrades.get(0).map(|s| s.item), Some(output));
+    std::fs::remove_dir_all(saves).unwrap();
+}

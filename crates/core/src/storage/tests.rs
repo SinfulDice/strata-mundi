@@ -69,22 +69,57 @@ fn a_filter_allows_or_refuses_what_it_lists_and_an_empty_one_does_nothing() {
 }
 
 #[test]
-fn destruction_removes_only_the_selected_stacks() {
+fn destruction_takes_only_what_came_in() {
     let content = content();
-    let mut storage = Container::new(4);
-    storage.slots[0] = Some(stack(&content, "strata:gravel", 20));
-    storage.slots[2] = Some(stack(&content, "strata:dirt", 5));
+    let gravel = item(&content, "strata:gravel");
     let mut void = stack(&content, "strata:void_upgrade", 1);
-    set_filter_cell(
-        &mut void,
+    set_filter_cell(&mut void, 0, Some(gravel), &content.items);
+    let rules = Upkeep::new(&content.upgrades, &content.items, &[&void]);
+    let mut before = Container::new(4);
+    before.slots[0] = Some(stack(&content, "strata:gravel", 20));
+    before.slots[2] = Some(stack(&content, "strata:dirt", 5));
+    let mut storage = before.clone();
+    assert_eq!(
+        destroy_entered(&before, &mut storage, &rules),
         0,
-        Some(item(&content, "strata:gravel")),
-        &content.items,
+        "already there"
     );
-    let gone = destroy_filtered(&mut storage, &filter_of(&void, &content.items));
-    assert_eq!(gone, 20);
-    assert!(storage.get(0).is_none());
+    storage.slots.swap(0, 3);
+    assert_eq!(
+        destroy_entered(&before, &mut storage, &rules),
+        0,
+        "moved inside"
+    );
+    storage.slots[3] = Some(stack(&content, "strata:gravel", 30));
+    storage.slots[1] = Some(stack(&content, "strata:gravel", 4));
+    assert_eq!(
+        destroy_entered(&before, &mut storage, &rules),
+        14,
+        "10 + 4 came in"
+    );
+    assert_eq!(storage.count(gravel), 20);
     assert_eq!(storage.get(2).map(|s| s.count), Some(5));
+}
+
+#[test]
+fn two_filters_of_a_double_chest_both_count() {
+    let content = content();
+    let (stone, dirt) = (
+        item(&content, "strata:stone"),
+        item(&content, "strata:dirt"),
+    );
+    let mut first = stack(&content, "strata:filter_upgrade", 1);
+    set_filter_cell(&mut first, 0, Some(stone), &content.items);
+    let mut second = stack(&content, "strata:filter_upgrade", 1);
+    set_filter_cell(&mut second, 0, Some(dirt), &content.items);
+    toggle_filter_mode(&mut second, &content.items);
+    let rules = Upkeep::new(&content.upgrades, &content.items, &[&first, &second]);
+    assert!(rules.lets_in(stone));
+    assert!(!rules.lets_in(dirt), "refused by both");
+    assert!(
+        !rules.lets_in(item(&content, "strata:gravel")),
+        "not allowed by the first"
+    );
 }
 
 #[test]
@@ -132,9 +167,17 @@ fn upkeep_sorts_only_when_asked() {
     assert!(rules.sort && rules.acts() && rules.magnet.is_none());
     let mut storage = Container::new(5);
     storage.slots[3] = Some(stack(&content, "strata:dirt", 4));
-    let open = upkeep(&mut storage, &rules, &[], &content.items, false);
+    let before = storage.clone();
+    let open = after_entry(&before, &mut storage, &rules, &[], &content.items, false);
     assert!(!open && storage.get(3).is_some(), "not under the pointer");
-    assert!(upkeep(&mut storage, &rules, &[], &content.items, true));
+    assert!(after_entry(
+        &before,
+        &mut storage,
+        &rules,
+        &[],
+        &content.items,
+        true
+    ));
     assert_eq!(storage.get(0).map(|s| s.count), Some(4));
 }
 
@@ -164,7 +207,7 @@ fn upgrade_slots_take_storage_upgrades_once_and_shift_clicks_follow_the_filter()
             item: chest_item,
         },
         storage: 2,
-        filter: Some(filter_of(&filter, &content.items)),
+        filters: vec![filter_of(&filter, &content.items)],
     };
     let mut slots = Container::new(4);
     let magnet = stack(&content, "strata:magnet_upgrade", 1);

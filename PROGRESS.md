@@ -22,6 +22,7 @@
   - [ ] J7 Rangement (sac à dos, bourses, coffres et tonneaux améliorables)
     - [x] J7a convergence des modules de four en améliorations (un seul système, migration des sauvegardes), coffres et tonneaux par tier en pack (bois 27, fer 45, or 63, diamant 81 ; 0 à 3 emplacements), kits sur place (coffre double : deux kits), tri, filtre, compression (pépites, blocs), destruction, aimant (option de monde), écran qui défile et panneau d'améliorations à la manette, textures par tier, wiki « Rangement », D093-D096
     - [ ] J7b sac à dos, bourses et sacoches
+    - Note pour J11 : l'option de monde « Aimants » (`WorldMeta::storage_magnets`) doit devenir modifiable par `/gamerule`.
   - [ ] J8 Jauges de survie (vie, faim, soif, température, endurance, dégâts, soins, HUD)
   - [ ] J9 Expérience
   - [ ] J10 Combat simple et mort (lit, tombe, messages, statistiques)

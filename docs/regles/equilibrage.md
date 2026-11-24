@@ -275,7 +275,7 @@ Fours (`furnace_tiers/`) : `cook_time` 100 / 80 / 50 / 30 %, `fuel_value` 100 / 
 | Économie (4 fer, 4 charbon, 1 seau de lave) | 100 % | 150 % | ×1 |
 | Double sortie (4 fer, 4 or, 1 diamant) | 125 % | 50 % | ×2 |
 
-Depuis le jalon 7, les modules sont des améliorations (`upgrades/furnace_*.ron`, briques `Stat` sur `strata:cook_time`, `strata:fuel_value`, `strata:output`). Non-cumul par brique : un gain et un coût d'une même stat sont deux briques ; deux coûts (ou deux gains) d'une même stat, seul le plus fort compte. Vitesse + double sortie : temps 75 % × 125 % (comme avant), cuissons par combustible 50 % (au lieu de 80 % × 50 % = 40 %).
+Depuis le jalon 7, les modules sont des améliorations (`upgrades/furnace_*.ron`, briques `Stat` sur `strata:cook_time`, `strata:fuel_value`, `strata:output`). Non-cumul : de deux gains d'une même stat, seul le plus fort compte ; les coûts (briques négatives) s'additionnent toujours. Vitesse + double sortie : temps 75 % × 125 %, cuissons par combustible 80 % × 50 % = 40 %.
 
 | Rangement | Coût | Valeurs |
 |---|---|---|

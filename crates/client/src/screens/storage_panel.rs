@@ -12,7 +12,7 @@ use strata_core::upgrade::Effect;
 use strata_protocol::InventoryRequest;
 
 /// Rows of the chest grid on screen.
-const CHEST_ROWS: usize = 6;
+const CHEST_ROWS: usize = 5;
 const COLUMNS: usize = 9;
 
 impl SlotsModel<'_> {
@@ -22,7 +22,7 @@ impl SlotsModel<'_> {
         let upgrades = usize::from(open.upgrades_at);
         let range = match id {
             "chest" => {
-                let start = (self.state.chest_scroll * COLUMNS).min(upgrades);
+                let start = (self.chest_scroll() * COLUMNS).min(upgrades);
                 start..upgrades.min(start + CHEST_ROWS * COLUMNS)
             }
             "chest_upgrades" | "furnace_modules" => upgrades..open.contents.len(),
@@ -36,9 +36,15 @@ impl SlotsModel<'_> {
             .map_or(0, |open| usize::from(open.upgrades_at).div_ceil(COLUMNS))
     }
 
+    /// Rows scrolled past, within the storage shown now (a smaller one may have opened).
+    pub(super) fn chest_scroll(&self) -> usize {
+        let max = self.storage_rows().saturating_sub(CHEST_ROWS);
+        self.state.chest_scroll.min(max)
+    }
+
     pub(super) fn scroll_chest(&mut self, rows: i32) {
         let max = self.storage_rows().saturating_sub(CHEST_ROWS);
-        let scrolled = self.state.chest_scroll as i64 + i64::from(rows);
+        let scrolled = self.chest_scroll() as i64 + i64::from(rows);
         self.state.chest_scroll = scrolled.clamp(0, max as i64) as usize;
     }
 
@@ -89,21 +95,22 @@ impl SlotsModel<'_> {
     /// The slot and stack of the filtering upgrade the panel shows.
     fn chosen_filter(&self) -> Option<(usize, &ItemStack)> {
         let slots = self.filtering_slots();
-        let slot = *slots.get(self.state.filter_choice % slots.len().max(1))?;
+        let slot = *slots.get(self.state.filter_choice.min(slots.len().saturating_sub(1)))?;
         Some((slot, self.container?.contents.get(slot)?))
     }
 
     pub(super) fn next_filter(&mut self) {
-        self.state.filter_choice = self.state.filter_choice.wrapping_add(1);
+        let count = self.filtering_slots().len().max(1);
+        self.state.filter_choice = (self.state.filter_choice + 1) % count;
     }
 
     pub(super) fn storage_text(&self, id: &str) -> Option<String> {
         let tr = &self.content.translations;
         match id {
             "chest_rows" => {
-                let first = self.state.chest_scroll + 1;
+                let first = self.chest_scroll() + 1;
                 let total = self.storage_rows();
-                let last = (self.state.chest_scroll + CHEST_ROWS).min(total);
+                let last = (self.chest_scroll() + CHEST_ROWS).min(total);
                 let args = [
                     ("first", first.to_string()),
                     ("last", last.to_string()),
@@ -131,6 +138,10 @@ impl SlotsModel<'_> {
             Some((_, stack)) => filter_of(stack, &self.content.items).cells,
             None => vec![None; FILTER_CELLS],
         }
+    }
+
+    pub(super) fn filter_mode_tip(&self) -> String {
+        (self.content.translations).text(self.language, "ui-storage-filter-mode-tip")
     }
 
     pub(super) fn filter_cell_tip(&self, index: usize) -> Option<String> {

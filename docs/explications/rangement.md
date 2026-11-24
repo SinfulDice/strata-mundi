@@ -51,7 +51,7 @@ Upgrade(
 
 Une case d'amélioration accepte un objet si son amélioration est **de la famille des cases**, **convient au bloc** (`applies_to`), **n'y est pas déjà** (même effet non cumulable) et respecte `requires` / `excludes`. C'est une seule fonction, `Upgrades::fits_slot`, utilisée par le four comme par le coffre.
 
-Le calcul est aussi commun : `Upgrades::slotted_effects` rassemble les briques de toutes les améliorations posées en gardant **la plus forte de chaque sorte**. Un gain et un coût d'une même statistique sont deux sortes différentes : le module de vitesse (−25 % de temps) et la double sortie (+25 % de temps) se combinent, mais deux coûts de combustible ne s'additionnent pas.
+Le calcul est aussi commun : `Upgrades::slotted_effects` rassemble les briques de toutes les améliorations posées en gardant **le plus fort gain de chaque statistique** ; les briques qui baissent une statistique (des coûts) s'additionnent toujours. Le module de vitesse (−25 % de temps) et la double sortie (+25 % de temps) se combinent, et leurs deux coûts en combustible (−20 % et −50 %) aussi : 40 % des cuissons par combustible.
 
 ### Les cases d'un bloc : les siennes, puis ses améliorations
 
@@ -86,7 +86,7 @@ flowchart LR
     U1 --> G
 ```
 
-Le kit dit sur quoi il marche : `Kit(on: Storage, from: "strata:wood", to: "strata:iron")` (les kits de four ont `on: Furnace`, la valeur par défaut). Le serveur cherche le bloc de **la même famille** (`Upgradable(family: "strata:chest", tier: …)`) au tier visé, remplace le bloc, agrandit les conteneurs et garde tout. Un coffre double monte toujours **d'un coup**, ses deux moitiés ensemble : il faut deux kits, pour qu'il n'y ait jamais un coffre double à deux tiers.
+Le kit dit sur quoi il marche : `Kit(on: Storage, from: "strata:wood", to: "strata:iron")` (les kits de four ont `on: Furnace`, la valeur par défaut). Le serveur cherche le bloc de **la même famille** (`Upgradable(family: "strata:chest", tier: …)`) au tier visé, remplace le bloc, agrandit les conteneurs et garde tout. Un coffre double monte toujours **d'un coup**, ses deux moitiés ensemble : il faut deux kits, pour qu'il n'y ait jamais un coffre double à deux tiers. Le serveur refuse aussi un kit qui **séparerait une paire** : il recalcule les jonctions comme si le bloc avait déjà changé (`would_part_a_pair`), sans toucher au monde.
 
 ### Ce que font les améliorations de rangement
 
@@ -96,21 +96,21 @@ Toutes passent par `Upkeep` (dans `core::storage`), lu une fois depuis les cases
 |---|---|---|
 | Tri automatique | `Sort` | à la fermeture de l'écran, et après une entrée automatique (aimant, dépôt rapide) — jamais sous le pointeur |
 | Filtre | `Filter` | Maj-clic, dépôt rapide et aimant ne font entrer que ce qu'il laisse passer ; à la main, tout se pose |
-| Compression | `Compress` | après chaque entrée : 9 pépites → 1 lingot, 9 lingots → 1 bloc (`compression/`), s'il y a la place |
-| Destruction | `Void` | après chaque entrée : ce que son filtre désigne disparaît |
+| Compression | `Compress` | après chaque entrée (clics compris) : 9 pépites → 1 lingot, 9 lingots → 1 bloc (`compression/`), s'il y a la place |
+| Destruction | `Void` | au moment où un objet entre de lui-même (Maj-clic, dépôt rapide, aimant) : s'il est désigné par son filtre, il disparaît ; ce qui était déjà rangé ou posé à la main ne disparaît jamais |
 | Aimant | `Magnet(radius, period)` | toutes les `period` ticks, attire les objets au sol dans le rayon |
 
-Le **filtre** (de l'amélioration de filtre ou de destruction) est rangé dans les métadonnées de l'objet d'amélioration : neuf cases (`strata:filter`) et un mode (`strata:filter_deny`). Un filtre **vide ne fait rien** : il laisse tout entrer, il ne détruit rien. On le règle dans le panneau à droite de l'écran : objet tenu sur une case = ajouté, main vide = retiré, bouton pour passer d'« accepte la liste » à « refuse la liste ». Le client envoie `InventoryRequest::SetFilter`, le serveur vérifie que la case contient bien une amélioration à filtre.
+Dans un coffre double, deux filtres comptent ensemble : un objet entre s'il passe **tous** les filtres, il est détruit si **un** filtre de destruction le désigne. Le **filtre** (de l'amélioration de filtre ou de destruction) est rangé dans les métadonnées de l'objet d'amélioration : neuf cases (`strata:filter`) et un mode (`strata:filter_deny`). Un filtre **vide ne fait rien** : il laisse tout entrer, il ne détruit rien. On le règle dans le panneau à droite de l'écran : objet tenu sur une case = ajouté, main vide = retiré, bouton pour passer d'« accepte la liste » à « refuse la liste ». Le client envoie `InventoryRequest::SetFilter`, le serveur vérifie que la case contient bien une amélioration à filtre.
 
 ### Ce qui coûte, et comment le régler
 
-- **Aimant** : seuls les coffres qui en ont un sont listés (`Game::magnets`, refait quand les cases d'amélioration changent ou au chargement) ; chacun ne travaille qu'à sa période (10 ticks dans le pack de base) et seulement si sa colonne est chargée. L'**option de monde « Aimants »** (écran de création) les coupe tous.
+- **Aimant** : seuls les coffres qui en ont un sont listés (`Game::magnets`, refait quand les cases d'amélioration changent ou au chargement) ; chacun ne travaille qu'à sa période (10 ticks dans le pack de base), décalée selon sa position pour étaler le travail, et seulement si sa colonne est chargée. Les objets au sol sont rangés dans des cases de 8 blocs : un aimant ne regarde que les cases proches. L'**option de monde « Aimants »** (écran de création) les coupe tous.
 - **Tri** : seulement à la fermeture et après une entrée automatique, jamais à chaque tick.
 - **Compression** : seulement après une entrée, recettes en pack.
 
 ### L'écran
 
-L'écran du coffre garde six rangées visibles ; un coffre plus grand **défile** (molette sur la grille, ou boutons « Haut » / « Bas » du panneau de droite, accessibles à la manette). Le panneau de droite (`window_upgrades` dans `assets/ui/inventory.ron`) montre les cases d'amélioration et, s'il y a un filtre, ses neuf cases, son mode et une aide courte. Cliquer dans ce panneau ne compte pas comme « clic hors de la fenêtre » (qui jetterait l'objet tenu).
+L'écran du coffre montre cinq rangées, séparées des cases du joueur par l'étiquette « Inventaire » ; un coffre plus grand **défile** (molette sur la grille, boutons « Haut » / « Bas » du panneau de droite, ou à la manette tout seul quand le focus sort de la grille). Le panneau de droite (`window_upgrades` dans `assets/ui/inventory.ron`) montre les cases d'amélioration et, s'il y a un filtre, ses neuf cases, son mode et une aide courte. Cliquer dans ce panneau ne compte pas comme « clic hors de la fenêtre » (qui jetterait l'objet tenu).
 
 La place est prévue pour les améliorations d'**automatisation** (entonnoir, tapis) de la v0.8 : ce seront d'autres briques dans `Effect` et d'autres fichiers `upgrades/`, sur la même famille de cases. Le **sac à dos** (J7b) aura la même famille `strata:storage` : ses améliorations seront rangées dans l'objet sac.
 
@@ -126,7 +126,8 @@ La place est prévue pour les améliorations d'**automatisation** (entonnoir, ta
 | Règles des cases d'un coffre (`StorageSlots`) | `crates/core/src/storage/slots.rs` |
 | Statistiques d'un four depuis les briques | `crates/core/src/cooking/furnace.rs` (`FurnaceStats::new`) |
 | Kits (fours et rangements, coffre double) | `crates/server/src/game/kits.rs` |
-| Aimants, tri à la fermeture, filtre demandé | `crates/server/src/game/storage.rs` |
+| Tri à la fermeture, filtre demandé, entrées | `crates/server/src/game/storage.rs` |
+| Aimants | `crates/server/src/game/magnets.rs` |
 | Fenêtre : cases puis améliorations | `crates/server/src/game/containers.rs` |
 | Migration des modules de four | `crates/server/src/persistence.rs` (`migrate_furnace_modules`) |
 | Écran : défilement, panneau, filtre | `crates/client/src/screens/storage_panel.rs`, `assets/ui/inventory.ron` |

@@ -124,7 +124,7 @@ pub fn max_durability(
             }
             _ => None,
         })
-        .fold(f32::from(base), |uses, (op, value)| change(uses, op, value));
+        .fold(f32::from(base), |uses, (op, value)| op.apply(uses, value));
     Some(uses.round().clamp(1.0, f32::from(u16::MAX)) as u16)
 }
 
@@ -192,10 +192,6 @@ fn areas(held: &[(&Upgrade, u8)]) -> Vec<AreaSize> {
     areas
 }
 
-fn change(value: f32, op: StatOp, by: f32) -> f32 {
-    op.apply(value, by)
-}
-
 fn apply(stats: &mut ItemStats, effect: &Effect) {
     let Effect::Stat { stat, op, value } = effect else {
         return;
@@ -204,24 +200,24 @@ fn apply(stats: &mut ItemStats, effect: &Effect) {
     match engine_stat(stat) {
         Some(EngineStat::Damage) => {
             if let Some(weapon) = &mut stats.weapon {
-                weapon.damage = change(weapon.damage, op, value).max(0.0);
+                weapon.damage = op.apply(weapon.damage, value).max(0.0);
             }
         }
         Some(EngineStat::MiningSpeed) => {
             if let Some(tool) = stats.tool.take() {
-                let speed = change(tool.speed, op, value);
+                let speed = op.apply(tool.speed, value);
                 stats.tool = Some(ToolDef { speed, ..tool }.clamped());
             }
         }
         Some(EngineStat::Durability) => {
             stats.durability = stats.durability.map(|uses| {
-                let more = change(f32::from(uses), op, value).round();
+                let more = op.apply(f32::from(uses), value).round();
                 more.clamp(1.0, f32::from(u16::MAX)) as u16
             });
         }
         Some(EngineStat::Protection) => {
             if let Some(armor) = &mut stats.armor {
-                let points = change(f32::from(armor.protection), op, value).round();
+                let points = op.apply(f32::from(armor.protection), value).round();
                 armor.protection = points.clamp(0.0, f32::from(u16::MAX)) as u16;
             }
         }
@@ -231,7 +227,7 @@ fn apply(stats: &mut ItemStats, effect: &Effect) {
                 for share in [&mut burden.speed, &mut burden.stamina, &mut burden.mana] {
                     let points = match op {
                         StatOp::Add => *share + value / 100.0,
-                        StatOp::Percent => change(*share, op, value),
+                        StatOp::Percent => op.apply(*share, value),
                     };
                     *share = points.max(0.0);
                 }
@@ -239,7 +235,7 @@ fn apply(stats: &mut ItemStats, effect: &Effect) {
         }
         None => {
             let entry = stats.extra.entry(stat.clone()).or_insert(0.0);
-            *entry = change(*entry, op, value);
+            *entry = op.apply(*entry, value);
         }
     }
 }

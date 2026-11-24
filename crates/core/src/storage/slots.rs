@@ -13,8 +13,8 @@ pub struct StorageSlots<'a> {
     pub owner: SlotOwner<'a>,
     /// Slots of storage before the upgrade slots.
     pub storage: usize,
-    /// What a filter upgrade lets in by shift click (everything without one).
-    pub filter: Option<ItemFilter>,
+    /// What filter upgrades let in by shift click (everything without one).
+    pub filters: Vec<ItemFilter>,
 }
 
 impl StorageSlots<'_> {
@@ -57,6 +57,6 @@ impl SlotPolicy for StorageSlots<'_> {
     }
 
     fn lets_in(&self, stack: &ItemStack) -> bool {
-        self.filter.as_ref().is_none_or(|f| f.lets_in(stack.item))
+        self.filters.iter().all(|f| f.lets_in(stack.item))
     }
 }

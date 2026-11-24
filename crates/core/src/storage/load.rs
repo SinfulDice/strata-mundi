@@ -33,11 +33,18 @@ pub(crate) fn load_storage(
     }
     resolve_containers(blocks, &tiers, errors);
     check_kits(items, &tiers, errors);
-    let compressions = packs
-        .layered::<CompressionDef>("compression", errors)
-        .into_iter()
-        .filter_map(|(_, Sourced { value, source })| compression(value, items, &source, errors))
-        .collect();
+    let mut compressions: Vec<Compression> = Vec::new();
+    for (id, Sourced { value, source }) in packs.layered::<CompressionDef>("compression", errors) {
+        let Some(recipe) = compression(value, items, &source, errors) else {
+            continue;
+        };
+        if makes_a_cycle(&compressions, recipe) {
+            let message = format!("compression `{id}` would press items round in a circle");
+            errors.push(PackError::invalid(&source, message));
+            continue;
+        }
+        compressions.push(recipe);
+    }
     Storage {
         tiers,
         compressions,
@@ -135,4 +142,43 @@ fn compression(
         to: to?,
         count: def.count.clamp(2, 64),
     })
+}
+
+/// Whether adding `recipe` lets an item be pressed, step by step, back into itself.
+fn makes_a_cycle(kept: &[Compression], recipe: Compression) -> bool {
+    let mut reached = vec![recipe.to];
+    let mut index = 0;
+    while let Some(&item) = reached.get(index) {
+        if item == recipe.from {
+            return true;
+        }
+        for next in kept.iter().filter(|c| c.from == item).map(|c| c.to) {
+            if !reached.contains(&next) {
+                reached.push(next);
+            }
+        }
+        index += 1;
+    }
+    false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_compression_back_to_its_start_is_refused() {
+        let press = |from, to| Compression {
+            from: ItemId(from),
+            to: ItemId(to),
+            count: 9,
+        };
+        let chain = [press(0, 1), press(1, 2)];
+        assert!(!makes_a_cycle(&chain, press(2, 3)));
+        assert!(
+            makes_a_cycle(&chain, press(2, 0)),
+            "nuggets, ingots, blocks, nuggets"
+        );
+        assert!(makes_a_cycle(&[], press(4, 4)), "an item into itself");
+    }
 }

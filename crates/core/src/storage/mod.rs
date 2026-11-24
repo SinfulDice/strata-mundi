@@ -8,7 +8,7 @@ mod filter;
 mod load;
 mod slots;
 
-pub use behaviour::{Upkeep, compress, destroy_filtered, take_in, upkeep};
+pub use behaviour::{Upkeep, after_entry, compress, destroy_entered, sort_storage, take_in};
 pub use defs::{CompressionDef, StorageTier, Upgradable};
 pub use filter::{FILTER_CELLS, ItemFilter, filter_of, set_filter_cell, toggle_filter_mode};
 pub use slots::StorageSlots;

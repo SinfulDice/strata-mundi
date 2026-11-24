@@ -58,34 +58,22 @@ impl Upgrades {
         !clash && !missing
     }
 
-    /// What the upgrades in these slots do together: level one of each, every brick
-    /// once (the strongest), additions first.
+    /// What the upgrades in these slots do together: level one of each, the same upgrade
+    /// once, the strongest gain of each stat, every cost, additions first.
     pub fn slotted_effects<'s>(
         &self,
         items: &Registry<ItemId, Item>,
         slots: impl Iterator<Item = &'s ItemStack>,
     ) -> Vec<Effect> {
-        let effects = slots
+        let mut held: Vec<&Upgrade> = slots
             .filter_map(|stack| self.of_item(items, stack.item))
+            .collect();
+        held.sort_by(|a, b| a.id.cmp(&b.id));
+        held.dedup_by(|a, b| a.id == b.id);
+        let effects = held
+            .into_iter()
             .filter_map(|upgrade| upgrade.levels.first())
             .flat_map(|level| level.effects.iter().cloned());
         strongest_bricks(effects)
-    }
-
-    /// The slot holding the first upgrade with a brick like `effect`, among `slots`.
-    pub fn slot_with<'s>(
-        &self,
-        items: &Registry<ItemId, Item>,
-        slots: impl Iterator<Item = (usize, &'s ItemStack)>,
-        effect: &Effect,
-    ) -> Option<usize> {
-        slots
-            .filter(|(_, stack)| {
-                self.of_item(items, stack.item)
-                    .and_then(|upgrade| upgrade.levels.first())
-                    .is_some_and(|level| level.effects.iter().any(|e| e.same_kind(effect)))
-            })
-            .map(|(index, _)| index)
-            .next()
     }
 }

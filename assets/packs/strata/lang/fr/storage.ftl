@@ -41,15 +41,14 @@ upgrade-effect-compress = presse pépites en lingots, lingots en blocs
 upgrade-effect-void = détruit ce que le filtre désigne
 upgrade-effect-magnet = attire les objets à { $radius } blocs
 feedback-kit-furnace-wrong-tier = Ce kit ne va pas sur ce four : un kit passe d'un tier au suivant, sans en sauter.
-feedback-kit-furnace-needs-two = Il faut un kit par bloc.
 feedback-kit-furnace-done = Four amélioré, son contenu est intact.
 feedback-kit-storage-wrong-tier = Ce kit ne va pas sur ce rangement : un kit passe d'un tier au suivant, sans en sauter.
 feedback-kit-storage-needs-two = Un coffre double monte d'un coup : il faut deux kits en main.
 feedback-kit-storage-done = Rangement amélioré, son contenu est intact.
 ui-storage-rows = { $first }-{ $last } sur { $total }
 ui-storage-filter-mode = { $mode ->
-        [deny] Refuse la liste
-       *[allow] Accepte la liste
+        [deny] Refuse
+       *[allow] Accepte
     }
 ui-storage-filter-next = Filtre suivant
 ui-storage-filter-help = Objet tenu : ajouté. Main vide : retiré.
@@ -57,3 +56,7 @@ ui-storage-filter-cell = Case de filtre : posez-y l'objet tenu.
 upgrade-item-line = Posé ({ $slot }) : { $effects }
 ui-storage-up = Haut
 ui-storage-down = Bas
+feedback-kit-storage-parts-a-pair = Ce kit séparerait un coffre double de sa moitié (un coffre voisin de ce tier la prendrait).
+ui-storage-upgrades = Améliorations
+ui-storage-inventory = Inventaire
+ui-storage-filter-mode-tip = « Accepte » : seuls les objets listés entrent (ou sont détruits). « Refuse » : tous sauf eux. Cliquez pour changer.

@@ -1,13 +1,13 @@
 //! Kits: used on a furnace, a chest or a barrel, they make it the next tier in place,
 //! contents, fire and upgrades kept. Both halves of a double chest go up together, one
-//! kit each, so the pair keeps one tier.
+//! kit each, so the pair keeps one tier; a kit that would part a pair is refused.
 
 use super::Game;
 use super::containers::block_centre;
 use crate::loader::ColumnLoader;
 use glam::DVec3;
 use strata_core::content::BlockId;
-use strata_core::cooking::{FurnaceState, KitDef, KitTarget};
+use strata_core::cooking::{FurnaceState, KitTarget};
 use strata_core::coords::BlockPos;
 use strata_core::updates::BlockChange;
 use strata_protocol::ServerMessage;
@@ -53,17 +53,21 @@ impl Game {
             None => vec![pos],
         };
         let Some(upgraded) = self.rules.upgraded_by(block, &kit) else {
-            self.kit_feedback(&kit, "wrong-tier", true);
+            self.kit_feedback(kit.on, KitNews::WrongTier);
             return Some(changes);
         };
         if !self.holds_kits(halves.len()) {
-            self.kit_feedback(&kit, "needs-two", true);
+            self.kit_feedback(kit.on, KitNews::NeedsTwo);
+            return Some(changes);
+        }
+        if self.would_part_a_pair(loader, &halves, upgraded) {
+            self.kit_feedback(kit.on, KitNews::PartsAPair);
             return Some(changes);
         }
         for &half in &halves {
             self.raise_tier(loader, half, block, upgraded, &mut changes);
         }
-        self.kit_feedback(&kit, "done", false);
+        self.kit_feedback(kit.on, KitNews::Done);
         Some(changes)
     }
 
@@ -127,17 +131,30 @@ impl Game {
             .push(ServerMessage::ContainerContents(Box::new(contents)));
     }
 
-    fn kit_feedback(&mut self, kit: &KitDef, what: &str, error: bool) {
-        let kind = match kit.on {
-            KitTarget::Furnace => "furnace",
-            KitTarget::Storage => "storage",
+    fn kit_feedback(&mut self, on: KitTarget, news: KitNews) {
+        let key = match (on, news) {
+            (KitTarget::Furnace, KitNews::Done) => "feedback-kit-furnace-done",
+            (KitTarget::Furnace, _) => "feedback-kit-furnace-wrong-tier",
+            (KitTarget::Storage, KitNews::WrongTier) => "feedback-kit-storage-wrong-tier",
+            (KitTarget::Storage, KitNews::NeedsTwo) => "feedback-kit-storage-needs-two",
+            (KitTarget::Storage, KitNews::PartsAPair) => "feedback-kit-storage-parts-a-pair",
+            (KitTarget::Storage, KitNews::Done) => "feedback-kit-storage-done",
         };
-        let key = format!("feedback-kit-{kind}-{what}");
-        let feedback = if error {
-            Feedback::error(&key, &[])
-        } else {
-            Feedback::ok(&key, &[])
+        let feedback = match news {
+            KitNews::Done => Feedback::ok(key, &[]),
+            _ => Feedback::error(key, &[]),
         };
         self.messages.push(ServerMessage::Feedback(feedback));
     }
+}
+
+/// What a kit's player is told.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum KitNews {
+    WrongTier,
+    /// A double chest needs a kit for each half.
+    NeedsTwo,
+    /// A neighbour of the new tier would take a half of a double chest.
+    PartsAPair,
+    Done,
 }

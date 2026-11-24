@@ -8,8 +8,8 @@ use crate::rules::BlockRules;
 use strata_core::content::ItemId;
 use strata_core::cooking::FurnaceSlots;
 use strata_core::inventory::{
-    Area, CraftGrid, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotPolicy, SlotRef,
-    SortOrder, Window, clear_empty, sort, wear_slot,
+    Area, Click, CraftGrid, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotPolicy,
+    SlotRef, SortOrder, Window, clear_empty, sort, wear_slot,
 };
 use strata_core::storage::{ItemFilter, StorageSlots};
 use strata_core::upgrade::SlotOwner;
@@ -85,8 +85,12 @@ impl Game {
                 self.set_filter(loader, slot, cell, item);
             }
             InventoryRequest::Click { slot, click } => {
-                let thrown =
-                    self.with_window(loader, |window, rules| window.click(slot, click, rules));
+                // A shift click from the inventory sends items into the storage; by hand,
+                // whatever is put stays (destruction only takes what comes in by itself).
+                let entering = click == Click::Transfer && slot.area == Area::Player;
+                let thrown = self.with_window_entering(loader, entering, |window, rules| {
+                    window.click(slot, click, rules)
+                });
                 self.throw_all(thrown);
             }
             InventoryRequest::Close => self.close_window(loader),
@@ -249,6 +253,17 @@ impl Game {
         loader: &ColumnLoader,
         change: impl FnOnce(&mut Window<'_>, &BlockRules) -> T,
     ) -> T {
+        self.with_window_entering(loader, false, change)
+    }
+
+    /// `with_window`; `entering`: what reaches the open storage comes in by itself (shift
+    /// click, quick deposit), and its destruction filters take it.
+    pub(super) fn with_window_entering<T: Default>(
+        &mut self,
+        loader: &ColumnLoader,
+        entering: bool,
+        change: impl FnOnce(&mut Window<'_>, &BlockRules) -> T,
+    ) -> T {
         if self.ecs.inventories.get(self.player).is_none() {
             return T::default();
         }
@@ -257,14 +272,21 @@ impl Game {
         let upkeep = open
             .as_ref()
             .map(|(window, _)| self.upkeep_of(&window.halves));
+        let stored_before = open
+            .as_ref()
+            .map(|(window, _)| self.storage_of(&window.halves));
         let mut craft = self.ecs.crafts.remove(self.player);
         let before = craft.as_ref().map(|window| window.grid.clone());
         let Some(player) = self.ecs.inventories.get_mut(self.player) else {
             return T::default();
         };
-        let policy = open
-            .as_ref()
-            .and_then(|(window, _)| policy(&self.rules, window, upkeep.and_then(|u| u.filter)));
+        let policy = open.as_ref().and_then(|(window, _)| {
+            policy(
+                &self.rules,
+                window,
+                upkeep.map(|u| u.filters).unwrap_or_default(),
+            )
+        });
         let mut window = Window {
             player,
             open: open.as_mut().map(|(_, container)| container),
@@ -276,7 +298,11 @@ impl Game {
         if let Some(open) = open {
             let (halves, block) = (open.0.halves.clone(), open.0.block);
             self.put_back_open_container(open);
-            self.open_storage_changed(&halves, block);
+            let before = match stored_before {
+                Some(before) if entering => before,
+                _ => self.storage_of(&halves),
+            };
+            self.open_storage_changed(&halves, block, Some(before));
         }
         if let Some(mut craft) = craft {
             if let Some(before) = before.filter(|before| *before != craft.grid) {
@@ -340,7 +366,7 @@ impl OpenPolicy<'_> {
 fn policy<'a>(
     rules: &'a BlockRules,
     window: &OpenWindow,
-    filter: Option<ItemFilter>,
+    filters: Vec<ItemFilter>,
 ) -> Option<OpenPolicy<'a>> {
     let layout = rules.layout(window.block)?;
     let owner = SlotOwner {
@@ -362,7 +388,7 @@ fn policy<'a>(
             upgrades: &rules.upgrades,
             owner,
             storage: layout.storage * window.halves.len(),
-            filter,
+            filters,
         })
     })
 }

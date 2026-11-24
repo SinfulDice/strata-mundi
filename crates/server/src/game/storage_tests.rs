@@ -7,36 +7,36 @@ use strata_core::content::ItemId;
 use strata_core::inventory::{Click, ItemStack, SlotRef};
 use strata_protocol::InventoryRequest;
 
-const A: BlockPos = BlockPos::new(4, 64, 4);
-const B: BlockPos = BlockPos::new(5, 64, 4);
+pub(super) const A: BlockPos = BlockPos::new(4, 64, 4);
+pub(super) const B: BlockPos = BlockPos::new(5, 64, 4);
 
-fn item(w: &World, name: &str) -> ItemId {
+pub(super) fn item(w: &World, name: &str) -> ItemId {
     w.content.items.key(&name.parse().unwrap()).unwrap()
 }
 
-fn survival() -> World {
+pub(super) fn survival() -> World {
     let mut w = world();
     w.game.set_mode(GameMode::Survival);
     w.game.take_messages();
     w
 }
 
-fn request(w: &mut World, request: InventoryRequest) {
+pub(super) fn request(w: &mut World, request: InventoryRequest) {
     w.game
         .inventory_request(&w.loader, request, &|item, _| item.0.to_string());
 }
 
-fn put(w: &mut World, index: usize, name: &str, count: u16) {
+pub(super) fn put(w: &mut World, index: usize, name: &str, count: u16) {
     let stack = ItemStack::new(item(w, name), count, &w.game.rules);
     w.game
         .with_inventory(|inventory, _| inventory.slots.slots[index] = Some(stack));
 }
 
-fn click(w: &mut World, slot: SlotRef, click: Click) {
+pub(super) fn click(w: &mut World, slot: SlotRef, click: Click) {
     request(w, InventoryRequest::Click { slot, click });
 }
 
-fn chest(w: &mut World, name: &str, at: &[BlockPos]) {
+pub(super) fn chest(w: &mut World, name: &str, at: &[BlockPos]) {
     let block = block(&w.content, name);
     for &pos in at {
         assert!(w.loader.set_block(pos, block));
@@ -44,7 +44,7 @@ fn chest(w: &mut World, name: &str, at: &[BlockPos]) {
 }
 
 /// The open window's contents and where its upgrade slots start.
-fn opened(w: &mut World) -> (u16, usize) {
+pub(super) fn opened(w: &mut World) -> (u16, usize) {
     let messages = w.game.take_messages();
     let open = messages.into_iter().find_map(|m| match m {
         ServerMessage::ContainerOpened(open) => Some(open),
@@ -54,7 +54,7 @@ fn opened(w: &mut World) -> (u16, usize) {
     (open.upgrades_at, open.contents.len())
 }
 
-fn storage_count(w: &World, at: &[BlockPos], name: &str) -> u32 {
+pub(super) fn storage_count(w: &World, at: &[BlockPos], name: &str) -> u32 {
     let item = item(w, name);
     at.iter()
         .map(|pos| w.game.block_entities[pos].container.count(item))
@@ -62,7 +62,7 @@ fn storage_count(w: &World, at: &[BlockPos], name: &str) -> u32 {
 }
 
 /// Opens the chest at `pos` and puts the upgrade `name` in its first upgrade slot.
-fn install(w: &mut World, pos: BlockPos, name: &str) -> u16 {
+pub(super) fn install(w: &mut World, pos: BlockPos, name: &str) -> u16 {
     assert!(w.game.open_block(&w.loader, pos));
     let (upgrades_at, _) = opened(w);
     put(w, 0, name, 1);

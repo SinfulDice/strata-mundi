@@ -41,15 +41,14 @@ upgrade-effect-compress = presses nuggets into ingots, ingots into blocks
 upgrade-effect-void = destroys what the filter selects
 upgrade-effect-magnet = draws items within { $radius } blocks
 feedback-kit-furnace-wrong-tier = This kit does not fit this furnace: a kit goes from one tier to the next, without skipping.
-feedback-kit-furnace-needs-two = One kit per block is needed.
 feedback-kit-furnace-done = Furnace upgraded, its contents kept.
 feedback-kit-storage-wrong-tier = This kit does not fit this storage: a kit goes from one tier to the next, without skipping.
 feedback-kit-storage-needs-two = A double chest goes up at once: hold two kits.
 feedback-kit-storage-done = Storage upgraded, its contents kept.
 ui-storage-rows = { $first }-{ $last } of { $total }
 ui-storage-filter-mode = { $mode ->
-        [deny] Refuses the list
-       *[allow] Allows the list
+        [deny] Deny
+       *[allow] Allow
     }
 ui-storage-filter-next = Next filter
 ui-storage-filter-help = Held item: added. Empty hand: removed.
@@ -57,3 +56,7 @@ ui-storage-filter-cell = Filter cell: put the held item here.
 upgrade-item-line = Installed ({ $slot }): { $effects }
 ui-storage-up = Up
 ui-storage-down = Down
+feedback-kit-storage-parts-a-pair = This kit would part a double chest (a neighbouring chest of that tier would take a half).
+ui-storage-upgrades = Upgrades
+ui-storage-inventory = Inventory
+ui-storage-filter-mode-tip = "Allow": only the listed items come in (or are destroyed). "Deny": all but them. Click to switch.

@@ -46,7 +46,8 @@ Screen(
                     TextField(id: "search", anchor: TopLeft, at: (8, 15), size: (92, 12), placeholder: "ui-search"),
                     Button(id: "sort_chest", anchor: TopLeft, at: (104, 13), size: (40, 14), text: "ui-inventory-sort"),
                     Button(id: "deposit", anchor: TopLeft, at: (148, 13), size: (40, 14), text: "ui-inventory-deposit"),
-                    SlotGrid(id: "chest", anchor: TopLeft, at: (8, 30), columns: 9, rows: 6),
+                    SlotGrid(id: "chest", anchor: TopLeft, at: (8, 30), columns: 9, rows: 5),
+                    Label(id: "chest_inventory", anchor: TopLeft, at: (8, 139), text: "ui-storage-inventory", dim: true),
                 ]),
                 Group(id: "furnace_side", children: [
                     Label(id: "furnace_title", anchor: TopLeft, at: (8, 4), text: "@title"),
@@ -176,7 +177,7 @@ Screen(
                 size: (92, 238),
                 children: [
                     Group(id: "storage_upgrades", children: [
-                        Label(id: "upgrades_label", anchor: TopLeft, at: (8, 4), text: "ui-furnace-modules"),
+                        Label(id: "upgrades_label", anchor: TopLeft, at: (8, 4), text: "ui-storage-upgrades"),
                         SlotGrid(id: "chest_upgrades", anchor: TopLeft, at: (10, 16), columns: 4, rows: 2),
                     ]),
                     Group(id: "storage_filter", children: [

@@ -1,6 +1,6 @@
 ## Principe
 
-Les **coffres** et les **tonneaux** existent en quatre tiers : bois (27 cases), fer (45), or (63) et diamant (81). À partir du fer, chaque tier ajoute des **emplacements d'amélioration** (1 à 3), visibles dans le panneau à droite de l'écran. Quand le rangement dépasse six rangées, la grille défile (boutons du panneau de droite, molette).
+Les **coffres** et les **tonneaux** existent en quatre tiers : bois (27 cases), fer (45), or (63) et diamant (81). À partir du fer, chaque tier ajoute des **emplacements d'amélioration** (1 à 3), visibles dans le panneau à droite de l'écran. Quand le rangement dépasse cinq rangées, la grille défile (boutons du panneau de droite, molette).
 
 ## Monter de tier sans vider
 
@@ -11,7 +11,7 @@ Un **kit de rangement** utilisé (clic droit) sur un coffre ou un tonneau le fai
 - **Tri automatique** : le rangement se trie par type quand son écran se ferme, ou quand il reçoit des objets tout seul.
 - **Filtre** : neuf cases où poser un objet tenu ; en mode « accepte la liste », seuls ces objets entrent par Maj-clic, dépôt rapide et aimant ; en mode « refuse la liste », tout sauf eux. Un filtre vide laisse tout passer. À la main, on peut toujours tout poser.
 - **Compression** : neuf pépites deviennent un lingot, neuf lingots un bloc, dès qu'il y a la place.
-- **Destruction** : ce qui entre et que son filtre désigne est détruit. Un filtre vide ne détruit rien.
+- **Destruction** : ce qui entre de soi-même (Maj-clic, dépôt rapide, aimant) et que son filtre désigne est détruit ; ce qui était déjà rangé ou posé à la main reste. Un filtre vide ne détruit rien.
 - **Aimant** : attire les objets au sol à 5 blocs, deux fois par seconde (option de monde « Aimants » pour le couper).
 
 Une même amélioration ne se pose qu'une fois par rangement ; dans un coffre double, celles des deux moitiés comptent pour tout le coffre. Les améliorations d'automatisation (entonnoir, tapis) arriveront avec les machines.

@@ -3,7 +3,7 @@
 use super::*;
 use std::path::Path;
 use strata_core::coords::BlockPos;
-use strata_core::inventory::{Container, PlayerInventory};
+use strata_core::inventory::{Container, MAIN, PlayerInventory, SlotRef};
 use strata_core::pack::PackSet;
 
 fn content() -> Content {

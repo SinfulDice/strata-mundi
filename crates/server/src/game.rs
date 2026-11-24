@@ -13,6 +13,7 @@ mod furnaces;
 mod hammer;
 mod inventory;
 mod kits;
+mod magnets;
 mod mining;
 mod placing;
 mod storage;
@@ -84,7 +85,7 @@ pub struct Game {
     /// What is worn, until a worn slot changes.
     worn_cache: strata_core::worn::WornCache,
     /// Chests and barrels with a magnet upgrade.
-    magnets: storage::Magnets,
+    magnets: magnets::Magnets,
 }
 
 impl Game {
@@ -383,3 +384,6 @@ mod input_order_tests;
 
 #[cfg(test)]
 mod storage_tests;
+
+#[cfg(test)]
+mod storage_rule_tests;

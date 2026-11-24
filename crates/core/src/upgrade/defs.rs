@@ -73,9 +73,8 @@ impl StatOp {
     }
 }
 
-/// One brick of what an upgrade does. Two upgrades giving the same brick (same stat,
-/// operation and direction: a gain and a cost are two bricks) do not add up: the
-/// strongest counts.
+/// One brick of what an upgrade does. Two upgrades raising the same stat the same way
+/// do not add up: the strongest counts. Bricks lowering a stat (costs) always add up.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum Effect {
     /// Changes a named stat.
@@ -101,7 +100,8 @@ pub enum Effect {
 }
 
 impl Effect {
-    /// Bricks of the same kind do not add up.
+    /// Bricks of the same kind do not add up. A brick that lowers a stat (a cost, or a
+    /// lighter weight) is of no kind: such bricks always add up.
     pub fn same_kind(&self, other: &Self) -> bool {
         match (self, other) {
             (
@@ -111,7 +111,7 @@ impl Effect {
                     op: o,
                     value: v,
                 },
-            ) => stat == s && op == o && (*value < 0.0) == (*v < 0.0),
+            ) => stat == s && op == o && *value >= 0.0 && *v >= 0.0,
             _ => std::mem::discriminant(self) == std::mem::discriminant(other),
         }
     }

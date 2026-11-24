@@ -77,6 +77,10 @@ pub trait ScreenModel {
     fn adjust(&mut self, _id: &str, _index: usize, _step: i32, _fraction: Option<f32>) {}
     /// Wheel or page keys over a list or grid.
     fn scroll(&mut self, _id: &str, _rows: i32) {}
+    /// Rows a scrolled grid shows past (a grid of slots has no `rows`).
+    fn scroll_position(&self, _id: &str) -> Option<usize> {
+        None
+    }
     /// A click or a button on an inventory slot; `false` if the element is no such slot.
     fn slot_press(&mut self, _id: &str, _index: usize, _press: SlotPress) -> bool {
         false

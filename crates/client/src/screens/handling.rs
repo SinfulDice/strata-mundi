@@ -10,7 +10,7 @@ use super::pointer::held_arrows;
 use super::{Screens, UiAction};
 use crate::gameplay::Gameplay;
 use crate::input::{Action, Binding, InputDevice, InputState};
-use crate::ui::{Direction, Hit, HitKind, navigate};
+use crate::ui::{Direction, Hit, HitKind, ScreenModel, navigate};
 use strata_core::content::Content;
 
 /// Result of one frame of menu input.
@@ -21,7 +21,7 @@ pub struct Handled {
 }
 
 /// Widgets showing a window over longer content (world list, item grid, settings rows).
-const SCROLLERS: [&str; 5] = ["list", "items", "options", "layers", "biomes"];
+const SCROLLERS: [&str; 6] = ["list", "items", "options", "layers", "biomes", "chest"];
 
 pub(super) const MOVES: [(Action, Direction); 4] = [
     (Action::MenuUp, Direction::Up),
@@ -320,12 +320,12 @@ impl Screens {
                 (Some(focus), next)
                     if rows != 0 && next.as_ref().is_none_or(|n| n.id != focus.id) =>
                 {
-                    let before =
-                        self.with_model(game.as_deref_mut(), content, |m| m.rows(&focus.id));
+                    let at =
+                        |m: &mut dyn ScreenModel| (m.rows(&focus.id), m.scroll_position(&focus.id));
+                    let before = self.with_model(game.as_deref_mut(), content, at);
                     self.with_model(game.as_deref_mut(), content, |m| m.scroll(&focus.id, rows));
                     self.drop_row_drag();
-                    let after =
-                        self.with_model(game.as_deref_mut(), content, |m| m.rows(&focus.id));
+                    let after = self.with_model(game.as_deref_mut(), content, at);
                     // Nothing left to scroll: the focus may leave the list.
                     if before == after
                         && let Some(next) = next
