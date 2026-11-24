@@ -31,22 +31,6 @@ upgrade-effect-pickup = STUFF U GRAB GOEZ IN FURST
 upgrade-effect-feed = FEEDZ U WHEN U HUNGRY
 upgrade-effect-crafting = 3×3 CRAFTY GRID IN DA BAG
 upgrade-effect-tank = HOLDZ { $buckets } BUKKITZ OF WETZ
-bag-slots-line = { $slots } SPOTZ, { $upgrades ->
-        [0] NO UPGRAYDZ
-        [one] { $upgrades } UPGRAYD SPOT
-       *[other] { $upgrades } UPGRAYD SPOTZ
-    }
-bag-pouch-line = FILLZ ITSELF WIF: { $what }
-bag-accepts-strata-seeds = FLOWRZ AN SHROOMZ (SEEDZ COMIN WIF FARMZ)
-bag-accepts-strata-ores = ROCKZ, COAL, SHINIEZ AN NUGGITZ
-bag-accepts-strata-ammo = PEW PEW STUFF (COMIN WIF BOWZ)
-bag-accepts-strata-potions = POSHUNZ (COMIN WIF MAGIK SOUP)
-bag-backpack-line = RITE CLIK IN PAW: OPEN. ON BAK: <key:Backpack>. SNEEK + RITE CLIK: PUT DOWN.
-bag-open-line = RITE CLIK IN PAW: OPEN.
-bag-holds-line = HAZ { $count } STUFFZ{ $upgrades ->
-        [0] {""}
-       *[other] , { $upgrades } UPGRAYDZ
-    }
 ui-inventory-back = BAK (BAKPAK)
 ui-bag-crafting = CRAFTY
 ui-bag-tank = SPLASHY
@@ -54,3 +38,15 @@ ui-bag-tank-holds = { $liquid }: { $buckets } / { $capacity } BUKKITZ
 ui-bag-tank-empty = NO WETZ (0 / { $capacity })
 ui-bag-tank-use = HELD BUKKIT
 ui-bag-tank-help = FULL BUKKIT: POURZ IN. EMPTY BUKKIT: FILLZ UP.
+bag-slots-line = { $slots } SPOTZ, { $upgrades } UPGRAYD SPOTZ
+bag-pouch-slots-line = { $slots } SPOTZ
+bag-pouch-line = FILLZ ITSELF WIF: { $what }
+bag-accepts-strata-seeds = FLOWRZ, SHROOMZ
+bag-accepts-strata-ores = ROCKZ, COAL, SHINIEZ, NUGGITZ
+bag-accepts-strata-ammo = PEW PEW STUFF (SOON)
+bag-accepts-strata-potions = POSHUNZ (SOON)
+bag-backpack-line = IN PAW, RITE CLIK: OPEN; SNEEKIN: PUT DOWN.
+bag-back-line = ON BAK: OPENZ WIF ITZ OWN KEY (OPSHUNZ).
+bag-holds-line = HAZ { $count } STUFFZ
+bag-holds-upgrades-line = HAZ { $count } STUFFZ AN { $upgrades } UPGRAYDZ
+bag-open-line = IN PAW, RITE CLIK: OPEN.

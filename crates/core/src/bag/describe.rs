@@ -13,11 +13,14 @@ impl Content {
             return Vec::new();
         };
         let tr = &self.translations;
-        let args = [
-            ("slots", bag.layout.storage.to_string()),
-            ("upgrades", bag.layout.upgrades.to_string()),
-        ];
-        let mut lines = vec![tr.text_with(language, "bag-slots-line", &args)];
+        let slots = ("slots", bag.layout.storage.to_string());
+        let mut lines = vec![match bag.layout.upgrades {
+            0 => tr.text_with(language, "bag-pouch-slots-line", &[slots]),
+            upgrades => {
+                let args = [slots, ("upgrades", upgrades.to_string())];
+                tr.text_with(language, "bag-slots-line", &args)
+            }
+        }];
         let accepts = self
             .items
             .get(item)
@@ -31,6 +34,10 @@ impl Content {
             None => "bag-open-line",
         };
         lines.push(tr.text(language, key));
+        let worn = self.items.get(item).and_then(|i| i.equip).is_some();
+        if worn {
+            lines.push(tr.text(language, "bag-back-line"));
+        }
         lines
     }
 

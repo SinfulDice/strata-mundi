@@ -31,22 +31,6 @@ upgrade-effect-pickup = ce que vous ramassez y entre d'abord
 upgrade-effect-feed = vous nourrit de ce qu'il contient quand vous avez faim
 upgrade-effect-crafting = une grille de fabrication 3×3 dans son écran
 upgrade-effect-tank = garde jusqu'à { $buckets } seaux d'un liquide
-bag-slots-line = { $slots } cases, { $upgrades ->
-        [0] sans amélioration
-        [one] { $upgrades } emplacement d'amélioration
-       *[other] { $upgrades } emplacements d'amélioration
-    }
-bag-pouch-line = Se remplit au ramassage : { $what }
-bag-accepts-strata-seeds = fleurs et champignons (les graines viendront avec les cultures)
-bag-accepts-strata-ores = minerais, charbon, diamants et pépites
-bag-accepts-strata-ammo = munitions (viendront avec les armes à distance)
-bag-accepts-strata-potions = potions (viendront avec l'alchimie)
-bag-backpack-line = Clic droit en main : ouvrir. Porté sur le dos : <key:Backpack>. Accroupi + clic droit : poser.
-bag-open-line = Clic droit en main : ouvrir.
-bag-holds-line = Contient { $count } objets{ $upgrades ->
-        [0] {""}
-       *[other] , { $upgrades } améliorations
-    }
 ui-inventory-back = Dos (sac à dos)
 ui-bag-crafting = Établi
 ui-bag-tank = Réservoir
@@ -54,3 +38,15 @@ ui-bag-tank-holds = { $liquid } : { $buckets } / { $capacity } seaux
 ui-bag-tank-empty = Vide (0 / { $capacity })
 ui-bag-tank-use = Seau tenu
 ui-bag-tank-help = Seau plein : il s'y vide. Seau vide : il s'y remplit.
+bag-slots-line = { $slots } cases, { $upgrades } emplacements d'amélioration
+bag-pouch-slots-line = { $slots } cases
+bag-pouch-line = Se remplit au ramassage : { $what }
+bag-accepts-strata-seeds = fleurs, champignons
+bag-accepts-strata-ores = minerais, charbon, diamants, pépites
+bag-accepts-strata-ammo = munitions (à venir)
+bag-accepts-strata-potions = potions (à venir)
+bag-backpack-line = En main, clic droit : ouvrir ; accroupi : poser.
+bag-back-line = Porté sur le dos, il s'ouvre avec sa touche (Options > Touches).
+bag-holds-line = Contient { $count } objets
+bag-holds-upgrades-line = Contient { $count } objets et { $upgrades } améliorations
+bag-open-line = En main, clic droit : ouvrir.

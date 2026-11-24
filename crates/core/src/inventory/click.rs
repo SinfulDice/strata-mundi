@@ -2,7 +2,7 @@
 //! and the open container, so the server applies them and tests check them.
 
 use super::container::{
-    Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory, slot_equip, worn_slots,
+    BACK, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory, slot_equip, worn_slots,
 };
 use super::craft_grid::CraftGrid;
 use super::stack::{ItemRules, ItemStack, clear_empty};
@@ -230,7 +230,7 @@ impl Window<'_> {
         rules: &impl ItemRules,
     ) -> Option<ItemStack> {
         let player = &mut *self.player;
-        let worn = worn_slots().find(|&index| {
+        let worn = worn_slots().chain([BACK]).find(|&index| {
             slot_equip(from).is_none()
                 && PlayerInventory::accepts(index, &stack, rules)
                 && player.slots.get(index).is_none()

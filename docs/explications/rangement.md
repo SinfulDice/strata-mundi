@@ -1,4 +1,4 @@
-# Rangement : coffres, tonneaux et fours améliorables
+# Rangement : coffres, tonneaux, fours améliorables et sacs
 
 ## À quoi ça sert
 
@@ -112,7 +112,38 @@ Dans un coffre double, deux filtres comptent ensemble : un objet entre s'il pass
 
 L'écran du coffre montre cinq rangées, séparées des cases du joueur par l'étiquette « Inventaire » ; un coffre plus grand **défile** (molette sur la grille, boutons « Haut » / « Bas » du panneau de droite, ou à la manette tout seul quand le focus sort de la grille). Le panneau de droite (`window_upgrades` dans `assets/ui/inventory.ron`) montre les cases d'amélioration et, s'il y a un filtre, ses neuf cases, son mode et une aide courte. Cliquer dans ce panneau ne compte pas comme « clic hors de la fenêtre » (qui jetterait l'objet tenu).
 
-La place est prévue pour les améliorations d'**automatisation** (entonnoir, tapis) de la v0.8 : ce seront d'autres briques dans `Effect` et d'autres fichiers `upgrades/`, sur la même famille de cases. Le **sac à dos** (J7b) aura la même famille `strata:storage` : ses améliorations seront rangées dans l'objet sac.
+La place est prévue pour les améliorations d'**automatisation** (entonnoir, tapis) de la v0.8 : ce seront d'autres briques dans `Effect` et d'autres fichiers `upgrades/`, sur la même famille de cases.
+
+## Sacs à dos, bourses et sacoches
+
+Un **sac** est un objet qui porte d'autres objets. Son contenu est rangé **dans l'objet lui-même**, dans ses données :
+
+```
+ItemStack { item: sac à dos en cuir, data: {
+    strata:bag_storage:  Stacks([None, Some(32 pierres), …]),   // ses cases
+    strata:bag_upgrades: Stacks([Some(amélioration d'établi)]), // ses améliorations
+    strata:tank:         List([Id(strata:water_bucket), Int(3)]) // son réservoir
+} }
+```
+
+C'est le choix qui rend la **copie impossible** : il n'existe qu'un exemplaire du contenu, et il voyage avec le sac (inventaire, coffre, sol, et au jalon 10 la mort). `BagContents` (dans `core::bag`) lit et écrit ces données.
+
+```mermaid
+flowchart LR
+    I[Sac dans l'inventaire] -- clic droit / touche --> F[Fenêtre : contenu lu dans l'objet]
+    F -- chaque clic --> I
+    I -- accroupi + clic droit --> B[Bloc posé : contenu dans son entité]
+    B -- cassé, brûlé, emporté --> D[Objet sac au sol, contenu dedans]
+    D -- ramassé --> I
+```
+
+- **Porté** : case du dos (`BACK`, à côté de la main secondaire), ouverte par sa touche (B, croix haut). Il marche aussi dans la barre rapide ou l'inventaire.
+- **Ouvert** : la fenêtre est la même que celle d'un coffre (`OpenWindow` avec `carried`). À chaque clic, le serveur **sort** le contenu de l'objet, applique le clic, puis le remet ; la case du sac ouvert est épinglée (on ne peut ni la prendre, ni l'échanger, ni la jeter).
+- **Posé** : il devient un bloc conteneur (`placed_leather_backpack`…) dont l'entité garde tout, avec une marque `strata:bag` qui dit quel sac rendre. Cassé, il redevient ce sac, plein.
+- **Tiers** : ceux du bloc posé (`storage_tiers/backpack_*`). Un kit s'utilise sur le sac **posé**, comme sur un coffre.
+- **Pas de sac dans un sac** : `Bags::admits`, utilisé par les règles de cases (`StorageSlots.bag`) et par le ramassage.
+- **Améliorations** : celles des coffres, plus `Pickup`, `Feed` (attend la faim du jalon 8), `Crafting` (grille 3×3 dans un panneau à gauche) et `Tank(buckets)`.
+- **Bourses** : `Bag(slots: 9, accepts: Some(tag))`. Au ramassage, `pick_into_bags` essaie d'abord les bourses qui prennent l'objet, puis les sacs avec ramassage, puis l'inventaire.
 
 ## Où c'est dans le code
 
@@ -131,7 +162,11 @@ La place est prévue pour les améliorations d'**automatisation** (entonnoir, ta
 | Fenêtre : cases puis améliorations | `crates/server/src/game/containers.rs` |
 | Migration des modules de four | `crates/server/src/persistence.rs` (`migrate_furnace_modules`) |
 | Écran : défilement, panneau, filtre | `crates/client/src/screens/storage_panel.rs`, `assets/ui/inventory.ron` |
-| Tests | `core/src/storage/tests.rs`, `server/src/game/storage_tests.rs`, `server/src/persistence_storage_tests.rs`, `core/src/cooking/tests.rs` |
+| Sacs : règles, contenu, ramassage, réservoir, infobulles | `crates/core/src/bag/` |
+| Sacs ouverts, établi et réservoir ; sacs posés, ramassage, aimant | `crates/server/src/game/bags.rs`, `bag_world.rs` |
+| Piles portées enregistrées par nom | `crates/server/src/save/stacks.rs` (`SavedData`) |
+| Panneau du sac, case du dos | `crates/client/src/screens/bag_panel.rs`, `assets/ui/inventory.ron` |
+| Tests | `core/src/bag/tests.rs`, `server/src/game/bag_tests.rs`, `server/src/persistence_bag_tests.rs`, `core/src/storage/tests.rs`, `server/src/game/storage_tests.rs`, `server/src/persistence_storage_tests.rs`, `core/src/cooking/tests.rs` |
 
 <details>
 <summary>Côté Rust</summary>
@@ -140,6 +175,7 @@ La place est prévue pour les améliorations d'**automatisation** (entonnoir, ta
 - **Deux règles de cases, un seul type de fenêtre** : `Window` attend un `&dyn SlotPolicy` (un *trait object*). Le serveur construit un `enum OpenPolicy { Furnace(FurnaceSlots), Storage(StorageSlots) }` et le prête sous forme de trait : chaque variante garde ses données, la fenêtre ne voit que les méthodes du trait.
 - **Méthodes par défaut d'un trait** : `SlotPolicy::storage()` et `lets_in()` ont une implémentation par défaut ; seul `StorageSlots` les redéfinit. Ajouter une méthode à un trait sans casser ceux qui l'implémentent déjà, c'est exactement ça.
 - **Emprunts disjoints** : dans `deposit_into`, on emprunte en même temps l'inventaire du joueur (`self.ecs.inventories`) et le coffre (`self.block_entities`) en écriture : Rust l'accepte parce que ce sont deux champs différents de `self`.
+- **Type récursif** : `ItemStack` contient `ItemData`, qui peut contenir des `ItemStack` (`DataValue::Stacks`). Rust l'accepte parce que le `Vec` met les piles internes sur le tas : la taille de `ItemStack` reste connue.
 - **`impl Content` dans un autre module** : `slot_layout` est écrit dans `core::storage`, à côté de ce qu'il calcule, alors que `Content` est défini ailleurs. Un type peut avoir plusieurs blocs `impl` dans sa crate.
 
 </details>

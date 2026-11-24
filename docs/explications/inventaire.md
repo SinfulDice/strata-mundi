@@ -12,7 +12,7 @@ Une `ItemStack` dit **quel objet**, **combien**, **combien d'usages il reste** (
 
 ### L'inventaire et les clics
 
-L'inventaire du joueur est une liste de 46 cases : 0-8 la barre, 9-35 le sac, 36-39 l'armure, 40 la main secondaire, 41-45 les accessoires ([Accessoires et ensembles](accessoires-et-sets.md)). Quand un écran est ouvert, le joueur peut aussi « tenir » une pile sous le pointeur.
+L'inventaire du joueur est une liste de 47 cases : 0-8 la barre, 9-35 le reste de l'inventaire, 36-39 l'armure, 40 la main secondaire, 41-45 les accessoires ([Accessoires et ensembles](accessoires-et-sets.md)), 46 le dos (sac à dos, voir [Rangement](rangement.md)). Quand un écran est ouvert, le joueur peut aussi « tenir » une pile sous le pointeur.
 
 Toutes les règles des clics sont des **fonctions pures** dans `core` (sans réseau ni écran), testées une par une :
 

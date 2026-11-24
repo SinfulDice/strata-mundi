@@ -1,0 +1,25 @@
+// Backpacks put down (`--scene backpacks`): one per tier from leather to diamond on a
+// meadow, by a chest, with pouches, satchels and backpack upgrades on the grass.
+(
+    fills: [
+        (from: (-10, 0, -10), to: (10, 0, 6), block: "strata:dirt"),
+        (from: (-10, 1, -10), to: (10, 1, 6), block: "strata:grass_block"),
+        (from: (-4, 2, -4), to: (-4, 2, -4), block: "strata:placed_leather_backpack"),
+        (from: (-2, 2, -4), to: (-2, 2, -4), block: "strata:placed_iron_backpack"),
+        (from: (0, 2, -4), to: (0, 2, -4), block: "strata:placed_gold_backpack"),
+        (from: (2, 2, -4), to: (2, 2, -4), block: "strata:placed_diamond_backpack"),
+        (from: (4, 2, -5), to: (4, 2, -5), block: "strata:chest"),
+        (from: (-6, 2, -6), to: (-6, 2, -6), block: "strata:poppy"),
+        (from: (5, 2, -3), to: (5, 2, -3), block: "strata:dandelion"),
+    ],
+    entities: [
+        (kind: "strata:item", position: (-3.6, 2.0, -2.2), yaw: 0.3, item: Some("strata:seed_pouch")),
+        (kind: "strata:item", position: (-2.4, 2.0, -2.0), yaw: 0.6, item: Some("strata:ore_pouch")),
+        (kind: "strata:item", position: (-1.2, 2.0, -2.2), yaw: 0.9, item: Some("strata:ammo_pouch")),
+        (kind: "strata:item", position: (0.0, 2.0, -2.0), yaw: 1.2, item: Some("strata:potion_pouch")),
+        (kind: "strata:item", position: (1.2, 2.0, -2.2), yaw: 1.5, item: Some("strata:pickup_upgrade")),
+        (kind: "strata:item", position: (2.4, 2.0, -2.0), yaw: 1.8, item: Some("strata:crafting_upgrade")),
+        (kind: "strata:item", position: (3.6, 2.0, -2.2), yaw: 2.1, item: Some("strata:tank_upgrade")),
+        (kind: "strata:item", position: (4.6, 2.0, -2.6), yaw: 2.4, item: Some("strata:iron_backpack_kit")),
+    ],
+)

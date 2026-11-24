@@ -31,22 +31,6 @@ upgrade-effect-pickup = what you pick up goes in first
 upgrade-effect-feed = feeds you from what it holds when you are hungry
 upgrade-effect-crafting = a 3×3 crafting grid in its screen
 upgrade-effect-tank = holds up to { $buckets } buckets of one liquid
-bag-slots-line = { $slots } slots, { $upgrades ->
-        [0] no upgrades
-        [one] { $upgrades } upgrade slot
-       *[other] { $upgrades } upgrade slots
-    }
-bag-pouch-line = Fills up on pickup: { $what }
-bag-accepts-strata-seeds = flowers and mushrooms (seeds come with crops)
-bag-accepts-strata-ores = ores, coal, diamonds and nuggets
-bag-accepts-strata-ammo = ammunition (comes with ranged weapons)
-bag-accepts-strata-potions = potions (come with alchemy)
-bag-backpack-line = Right click in hand: open. Worn on the back: <key:Backpack>. Sneak + right click: put down.
-bag-open-line = Right click in hand: open.
-bag-holds-line = Holds { $count } items{ $upgrades ->
-        [0] {""}
-       *[other] , { $upgrades } upgrades
-    }
 ui-inventory-back = Back (backpack)
 ui-bag-crafting = Crafting
 ui-bag-tank = Tank
@@ -54,3 +38,15 @@ ui-bag-tank-holds = { $liquid }: { $buckets } / { $capacity } buckets
 ui-bag-tank-empty = Empty (0 / { $capacity })
 ui-bag-tank-use = Held bucket
 ui-bag-tank-help = Full bucket: pours in. Empty bucket: fills up.
+bag-slots-line = { $slots } slots, { $upgrades } upgrade slots
+bag-pouch-slots-line = { $slots } slots
+bag-pouch-line = Fills up on pickup: { $what }
+bag-accepts-strata-seeds = flowers, mushrooms
+bag-accepts-strata-ores = ores, coal, diamonds, nuggets
+bag-accepts-strata-ammo = ammunition (to come)
+bag-accepts-strata-potions = potions (to come)
+bag-backpack-line = In hand, right click: open; sneaking: put down.
+bag-back-line = Worn on the back, it opens with its key (Options > Keys).
+bag-holds-line = Holds { $count } items
+bag-holds-upgrades-line = Holds { $count } items and { $upgrades } upgrades
+bag-open-line = In hand, right click: open.
