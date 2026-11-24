@@ -2,9 +2,10 @@
 //! reordered. An item whose pack is gone leaves an empty slot.
 
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use strata_core::content::{Item, ItemId, Registry};
 use strata_core::id::Identifier;
-use strata_core::inventory::{Container, ItemData, ItemStack, PlayerInventory};
+use strata_core::inventory::{Container, DataValue, ItemData, ItemStack, PlayerInventory};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Stack")]
@@ -14,7 +15,66 @@ pub struct SavedStack {
     #[serde(default)]
     pub durability: Option<u16>,
     #[serde(default)]
-    pub data: ItemData,
+    pub data: SavedData,
+}
+
+/// An item's data as saved: like `ItemData`, but the stacks a bag carries are saved by
+/// item identifier too (written the same way, so older saves read unchanged).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct SavedData(pub BTreeMap<Identifier, SavedValue>);
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum SavedValue {
+    Int(i64),
+    Text(String),
+    Id(Identifier),
+    List(Vec<SavedValue>),
+    Stacks(Vec<Option<SavedStack>>),
+}
+
+impl SavedData {
+    pub fn from_data(data: &ItemData, items: &Registry<ItemId, Item>) -> Self {
+        let values = data.0.iter();
+        Self(
+            values
+                .map(|(key, value)| (key.clone(), SavedValue::from_value(value, items)))
+                .collect(),
+        )
+    }
+
+    pub fn to_data(&self, items: &Registry<ItemId, Item>) -> ItemData {
+        let values = self.0.iter();
+        ItemData(
+            values
+                .map(|(key, value)| (key.clone(), value.to_value(items)))
+                .collect(),
+        )
+    }
+}
+
+impl SavedValue {
+    fn from_value(value: &DataValue, items: &Registry<ItemId, Item>) -> Self {
+        match value {
+            DataValue::Int(n) => Self::Int(*n),
+            DataValue::Text(text) => Self::Text(text.clone()),
+            DataValue::Id(id) => Self::Id(id.clone()),
+            DataValue::List(list) => {
+                Self::List(list.iter().map(|v| Self::from_value(v, items)).collect())
+            }
+            DataValue::Stacks(slots) => Self::Stacks(save_slots(slots, items)),
+        }
+    }
+
+    fn to_value(&self, items: &Registry<ItemId, Item>) -> DataValue {
+        match self {
+            Self::Int(n) => DataValue::Int(*n),
+            Self::Text(text) => DataValue::Text(text.clone()),
+            Self::Id(id) => DataValue::Id(id.clone()),
+            Self::List(list) => DataValue::List(list.iter().map(|v| v.to_value(items)).collect()),
+            Self::Stacks(slots) => DataValue::Stacks(load_slots(slots, items).slots),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -40,7 +100,7 @@ impl SavedStack {
             item: items.identifier(stack.item)?.clone(),
             count: stack.count,
             durability: stack.durability,
-            data: stack.data.clone(),
+            data: SavedData::from_data(&stack.data, items),
         })
     }
 
@@ -49,7 +109,7 @@ impl SavedStack {
             item: items.key(&self.item)?,
             count: self.count,
             durability: self.durability,
-            data: self.data.clone(),
+            data: self.data.to_data(items),
         })
     }
 }

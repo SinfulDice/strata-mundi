@@ -1,0 +1,18 @@
+// What an ore satchel takes: ores, coal, diamonds and nuggets.
+Tag(items: [
+    "strata:coal_ore",
+    "strata:deep_coal_ore",
+    "strata:iron_ore",
+    "strata:deep_iron_ore",
+    "strata:copper_ore",
+    "strata:deep_copper_ore",
+    "strata:gold_ore",
+    "strata:deep_gold_ore",
+    "strata:diamond_ore",
+    "strata:deep_diamond_ore",
+    "strata:coal",
+    "strata:diamond",
+    "strata:iron_nugget",
+    "strata:gold_nugget",
+    "strata:copper_nugget",
+])

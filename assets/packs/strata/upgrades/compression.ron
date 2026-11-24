@@ -1,6 +1,6 @@
 // Compression upgrade: nine nuggets become an ingot, nine ingots a block (compression/).
 Upgrade(
     slot: "strata:storage",
-    applies_to: ["strata:storages"],
+    applies_to: ["strata:storages", "strata:backpacks"],
     levels: [Level(effects: [Compress])],
 )

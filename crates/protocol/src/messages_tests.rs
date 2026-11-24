@@ -128,6 +128,10 @@ fn inventory_messages_survive_serialization() {
     stack
         .data
         .set("strata:parts".parse().unwrap(), DataValue::List(parts));
+    let carried = DataValue::Stacks(vec![None, Some(stack.clone())]);
+    stack
+        .data
+        .set("strata:bag_storage".parse().unwrap(), carried);
     let mut inventory = PlayerInventory::default();
     inventory.slots.slots[40] = Some(stack.clone());
     inventory.cursor = Some(stack.clone());
@@ -141,6 +145,12 @@ fn inventory_messages_survive_serialization() {
             contents: contents.clone(),
             upgrades_at: 54,
             furnace: Some(FurnaceView::default()),
+            bag: Some(ItemId(5)),
+            tank: Some(crate::TankView {
+                bucket: Some(ItemId(6)),
+                buckets: 3,
+                capacity: 8,
+            }),
         })),
         ServerMessage::ContainerUpgraded {
             block: BlockId(10),
@@ -189,6 +199,8 @@ fn inventory_messages_survive_serialization() {
             stack: Some(stack),
         },
         InventoryRequest::DropSelected { whole: true },
+        InventoryRequest::OpenBag(46),
+        InventoryRequest::Tank,
     ] {
         let message = ClientMessage::Inventory(request);
         assert_eq!(round_trip(&message), message);

@@ -1,6 +1,6 @@
 // Magnet upgrade: draws the items lying within 5 blocks, twice a second (world option « magnets »), through the filter if there is one.
 Upgrade(
     slot: "strata:storage",
-    applies_to: ["strata:storages"],
+    applies_to: ["strata:storages", "strata:backpacks"],
     levels: [Level(effects: [Magnet(radius: 5.0, period: 10)])],
 )

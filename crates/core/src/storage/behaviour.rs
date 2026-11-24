@@ -21,6 +21,14 @@ pub struct Upkeep {
     pub filters: Vec<ItemFilter>,
     /// Radius in blocks and period in ticks.
     pub magnet: Option<(f32, u16)>,
+    /// A bag: takes what the player picks up.
+    pub pickup: bool,
+    /// A bag: feeds the player (hunger comes with the survival gauges).
+    pub feed: bool,
+    /// A bag: has a crafting grid.
+    pub crafting: bool,
+    /// A bag: its tank holds this many buckets.
+    pub tank: Option<u16>,
 }
 
 impl Upkeep {
@@ -49,6 +57,10 @@ impl Upkeep {
                 Effect::Sort => upkeep.sort = true,
                 Effect::Compress => upkeep.compress = true,
                 Effect::Magnet { radius, period } => upkeep.magnet = Some((radius, period)),
+                Effect::Pickup => upkeep.pickup = true,
+                Effect::Feed => upkeep.feed = true,
+                Effect::Crafting => upkeep.crafting = true,
+                Effect::Tank { buckets } => upkeep.tank = Some(buckets),
                 _ => {}
             }
         }

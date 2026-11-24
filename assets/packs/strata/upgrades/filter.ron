@@ -1,6 +1,6 @@
 // Filter upgrade: shift clicks, quick deposits and magnets put in only what its filter allows (an empty filter lets all in).
 Upgrade(
     slot: "strata:storage",
-    applies_to: ["strata:storages"],
+    applies_to: ["strata:storages", "strata:backpacks"],
     levels: [Level(effects: [Filter])],
 )

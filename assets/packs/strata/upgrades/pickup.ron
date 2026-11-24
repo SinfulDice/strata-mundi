@@ -1,0 +1,6 @@
+// Pickup upgrade (backpacks): what the player picks up goes into the backpack first, through its filter if there is one.
+Upgrade(
+    slot: "strata:storage",
+    applies_to: ["strata:backpacks"],
+    levels: [Level(effects: [Pickup])],
+)

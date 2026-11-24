@@ -1,0 +1,61 @@
+//! What tooltips tell about bags: their slots and how to use them, what a pouch takes,
+//! and what one holds.
+
+use super::BagContents;
+use crate::content::{Content, ItemId};
+use crate::inventory::ItemStack;
+
+impl Content {
+    /// Lines of a bag item's tooltip: its slots, then how to open and put it down (or
+    /// what a pouch takes).
+    pub(crate) fn bag_item_lines(&self, item: ItemId, language: &str) -> Vec<String> {
+        let Some(bag) = self.bags.get(item) else {
+            return Vec::new();
+        };
+        let tr = &self.translations;
+        let args = [
+            ("slots", bag.layout.storage.to_string()),
+            ("upgrades", bag.layout.upgrades.to_string()),
+        ];
+        let mut lines = vec![tr.text_with(language, "bag-slots-line", &args)];
+        let accepts = self
+            .items
+            .get(item)
+            .and_then(|i| i.bag.as_ref()?.accepts.as_ref());
+        if let Some(tag) = accepts {
+            let what = tr.text(language, &tag.translation_key("bag-accepts"));
+            lines.push(tr.text_with(language, "bag-pouch-line", &[("what", what)]));
+        }
+        let key = match bag.placed {
+            Some(_) => "bag-backpack-line",
+            None => "bag-open-line",
+        };
+        lines.push(tr.text(language, key));
+        lines
+    }
+
+    /// « Holds 12 items » for a bag that holds something.
+    pub fn bag_stack_line(&self, stack: &ItemStack, language: &str) -> Option<String> {
+        let bag = self.bags.get(stack.item)?;
+        let (contents, _) = BagContents::read(&stack.data, &bag.layout);
+        let count: u32 = contents
+            .storage
+            .slots
+            .iter()
+            .flatten()
+            .map(|s| u32::from(s.count))
+            .sum();
+        let upgrades = contents.upgrades.slots.iter().flatten().count();
+        if count == 0 && upgrades == 0 {
+            return None;
+        }
+        let args = [
+            ("count", count.to_string()),
+            ("upgrades", upgrades.to_string()),
+        ];
+        Some(
+            self.translations
+                .text_with(language, "bag-holds-line", &args),
+        )
+    }
+}

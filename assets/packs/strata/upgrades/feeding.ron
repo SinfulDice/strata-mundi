@@ -1,0 +1,6 @@
+// Feeding upgrade (backpacks): feeds the player from the food the backpack holds when they are hungry (hunger comes with the survival gauges).
+Upgrade(
+    slot: "strata:storage",
+    applies_to: ["strata:backpacks"],
+    levels: [Level(effects: [Feed])],
+)

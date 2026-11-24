@@ -1,0 +1,2 @@
+// The leather pouch with a dark flint sewn on it: the ammunition pouch.
+Recolor(base: "strata:seed_pouch", swap: {"grass": "flint"})

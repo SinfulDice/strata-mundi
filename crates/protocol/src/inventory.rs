@@ -57,6 +57,11 @@ pub enum InventoryRequest {
         cell: Option<u8>,
         item: Option<ItemId>,
     },
+    /// Opens the bag in this player slot (the back, the hand).
+    OpenBag(u16),
+    /// The open bag's tank and the carried bucket: a full one pours in, an empty one
+    /// fills.
+    Tank,
 }
 
 /// A container the player opened, as the screen shows it.
@@ -71,6 +76,19 @@ pub struct OpenedContainer {
     pub upgrades_at: u16,
     /// A furnace's fire and cooking (`ServerMessage::Furnace` keeps it up to date).
     pub furnace: Option<FurnaceView>,
+    /// The bag opened (carried, or put down): its name is the title.
+    pub bag: Option<ItemId>,
+    /// Its tank, if it has a tank upgrade (`ServerMessage::Tank` keeps it up to date).
+    pub tank: Option<TankView>,
+}
+
+/// A bag's tank as its screen shows it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TankView {
+    /// The full bucket its liquid comes in; `None` when empty.
+    pub bucket: Option<ItemId>,
+    pub buckets: u16,
+    pub capacity: u16,
 }
 
 /// The player's crafting grid, as the screen shows it.

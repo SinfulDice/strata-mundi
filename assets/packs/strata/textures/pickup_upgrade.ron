@@ -1,0 +1,28 @@
+// A leather board in an iron frame, an arrow going down into it: the pickup upgrade.
+Sprite(
+    colors: {
+        'I': ("iron", 1),
+        'w': ("leather", 2),
+        'W': ("leather", 1),
+        'S': ("gold", 2),
+        's': ("gold", 1),
+    },
+    rows: [
+        "................",
+        ".IIIIIIIIIIIIII.",
+        ".IwWwwwwwwwwwWI.",
+        ".IwwwwwSSwwwwwI.",
+        ".IWwwwwSSwwwwwI.",
+        ".IwwwwwSSwwwwWI.",
+        ".IwwwwwSSwwwwwI.",
+        ".IwwwSSSSSSwwwI.",
+        ".IwwwwSSSSwwwwI.",
+        ".IwWwwwSSwwwWwI.",
+        ".IwwwwwwwwwwwwI.",
+        ".IwwsssssssswwI.",
+        ".IwwwwwwwwwwwwI.",
+        ".IWwwwwwwwwwwwI.",
+        ".IIIIIIIIIIIIII.",
+        "................",
+    ],
+)

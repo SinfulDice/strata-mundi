@@ -198,12 +198,12 @@ mod tests {
         let bindings = Bindings::default();
         let translations = Translations::default();
         let label = |names: &KeyNames, device| {
-            names.label(&bindings, device, Action::MoveForward, &translations, "fr")
+            names.label(&bindings, device, Action::MoveLeft, &translations, "fr")
         };
-        assert_eq!(label(&names, InputDevice::KeyboardMouse), "W");
-        names.learn(KeyCode::KeyW, "z");
-        assert_eq!(label(&names, InputDevice::KeyboardMouse), "Z");
-        assert_eq!(label(&names, InputDevice::Gamepad), "pad-up");
+        assert_eq!(label(&names, InputDevice::KeyboardMouse), "A");
+        names.learn(KeyCode::KeyA, "q");
+        assert_eq!(label(&names, InputDevice::KeyboardMouse), "Q");
+        assert_eq!(label(&names, InputDevice::Gamepad), "pad-left");
         assert_eq!(plain_key(KeyCode::F7).as_deref(), Some("F7"));
         assert_eq!(plain_key(KeyCode::Escape), None);
     }

@@ -44,6 +44,7 @@ fn piece(equip: EquipSlot, worn: Vec<Effect>, protection: u16) -> Item {
         remainder: None,
         kit: None,
         upgrade: None,
+        bag: None,
         gear: ItemGear {
             armor,
             worn,

@@ -1,0 +1,28 @@
+// A leather board in an iron frame with a drop of water on it: the tank upgrade.
+Sprite(
+    colors: {
+        'I': ("iron", 1),
+        'w': ("leather", 2),
+        'W': ("leather", 1),
+        'B': ("cornflower", 1),
+        'b': ("cornflower", 3),
+    },
+    rows: [
+        "................",
+        ".IIIIIIIIIIIIII.",
+        ".IwWwwwwwwwwwWI.",
+        ".IwwwwwBwwwwwwI.",
+        ".IWwwwwBwwwwwwI.",
+        ".IwwwwBBBwwwwWI.",
+        ".IwwwwBBBwwwwwI.",
+        ".IwwwBbBBBwwwwI.",
+        ".IwwwBbBBBwwwwI.",
+        ".IwWBBbBBBBwWwI.",
+        ".IwwBBBBBBBwwwI.",
+        ".IwwwBBBBBwwwwI.",
+        ".IwwwwBBBwwwwwI.",
+        ".IWwwwwwwwwwwwI.",
+        ".IIIIIIIIIIIIII.",
+        "................",
+    ],
+)

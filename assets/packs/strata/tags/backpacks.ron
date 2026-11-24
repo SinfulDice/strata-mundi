@@ -1,0 +1,7 @@
+// Backpacks of every tier: what backpack upgrades suit.
+Tag(items: [
+    "strata:leather_backpack",
+    "strata:iron_backpack",
+    "strata:gold_backpack",
+    "strata:diamond_backpack",
+])

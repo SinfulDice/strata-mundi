@@ -183,3 +183,4 @@ spatial-simple = Simple stereo
 action-journal = Journal
 action-hammer-area = Hammer area
 action-dash = Dash
+action-backpack = Open backpack

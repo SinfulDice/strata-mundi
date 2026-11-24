@@ -1,0 +1,2 @@
+// Used on a leather backpack put down: makes it iron, keeping what it holds and its upgrades.
+Item(texture: "strata:iron_backpack_kit", max_stack: 16, category: Some("strata:storage"), kit: Some(Kit(on: Storage, from: "strata:backpack_leather", to: "strata:backpack_iron")))

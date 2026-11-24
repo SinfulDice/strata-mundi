@@ -1,0 +1,2 @@
+// A iron plate on a leather patch marked with an arrow: a backpack kit.
+Recolor(base: "strata:iron_furnace_kit", swap: {"stone": "leather"})

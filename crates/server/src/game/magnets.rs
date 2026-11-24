@@ -142,7 +142,10 @@ impl Game {
         radius: f64,
         cells: &DropCells,
     ) -> bool {
-        let near = self.near_drops(block_centre(pos), radius, cells);
+        let mut near = self.near_drops(block_centre(pos), radius, cells);
+        if self.is_put_down_bag(pos) {
+            near.retain(|(_, stack)| !self.rules.bags.is_bag(stack.item));
+        }
         if near.is_empty() {
             return false;
         }

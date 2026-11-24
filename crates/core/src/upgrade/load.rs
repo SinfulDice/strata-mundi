@@ -15,6 +15,8 @@ const MAX_LEVELS: usize = 8;
 pub const MAX_AREA: u8 = 9;
 /// Farthest a storage magnet draws from, in blocks.
 const MAX_MAGNET: f32 = 16.0;
+/// A bag tank holds at most this many buckets.
+const MAX_TANK: u16 = 64;
 
 pub(crate) fn load_upgrades(
     packs: &PackSet,
@@ -149,6 +151,9 @@ pub(crate) fn bounded(
                 1.0
             },
             period: period.max(1),
+        }),
+        Effect::Tank { buckets } => Some(Effect::Tank {
+            buckets: buckets.clamp(1, MAX_TANK),
         }),
         other => Some(other),
     }

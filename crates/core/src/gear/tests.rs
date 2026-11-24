@@ -148,6 +148,7 @@ fn armor_items() -> (Registry<ItemId, Item>, ItemId, ItemId) {
             remainder: None,
             kit: None,
             upgrade: None,
+            bag: None,
             gear: resolved.gear,
         };
         items.insert(id(name), item).unwrap()

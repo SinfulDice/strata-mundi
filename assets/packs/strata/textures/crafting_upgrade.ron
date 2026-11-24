@@ -1,0 +1,28 @@
+// A leather board in an iron frame with a small crafting grid on it: the crafting upgrade.
+Sprite(
+    colors: {
+        'I': ("iron", 1),
+        'w': ("leather", 2),
+        'W': ("leather", 1),
+        'P': ("oak_wood", 2),
+        'p': ("oak_wood", 0),
+    },
+    rows: [
+        "................",
+        ".IIIIIIIIIIIIII.",
+        ".IwWwwwwwwwwwWI.",
+        ".IwpppppppppwwI.",
+        ".IWpPPpPPpPPpwI.",
+        ".IwpPPpPPpPPpWI.",
+        ".IwpppppppppwwI.",
+        ".IwpPPpPPpPPpwI.",
+        ".IwpPPpPPpPPpwI.",
+        ".IWpppppppppwWI.",
+        ".IwpPPpPPpPPpwI.",
+        ".IwpPPpPPpPPpwI.",
+        ".IwpppppppppwwI.",
+        ".IWwwwwwwwwwwwI.",
+        ".IIIIIIIIIIIIII.",
+        "................",
+    ],
+)

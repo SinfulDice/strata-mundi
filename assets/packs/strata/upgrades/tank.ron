@@ -1,0 +1,6 @@
+// Tank upgrade (backpacks): holds up to 8 buckets of one liquid, poured in and taken out with buckets in its screen.
+Upgrade(
+    slot: "strata:storage",
+    applies_to: ["strata:backpacks"],
+    levels: [Level(effects: [Tank(buckets: 8)])],
+)

@@ -203,11 +203,12 @@ fn upgrade_slots_take_storage_upgrades_once_and_shift_clicks_follow_the_filter()
         items: &content.items,
         upgrades: &content.upgrades,
         owner: SlotOwner {
-            family: &family,
+            family: Some(&family),
             item: chest_item,
         },
         storage: 2,
         filters: vec![filter_of(&filter, &content.items)],
+        bag: None,
     };
     let mut slots = Container::new(4);
     let magnet = stack(&content, "strata:magnet_upgrade", 1);

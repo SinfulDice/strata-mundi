@@ -2,6 +2,8 @@
 
 mod actions;
 mod anvil;
+mod bag_world;
+mod bags;
 mod bench;
 mod boat;
 mod bucket;
@@ -387,3 +389,6 @@ mod storage_tests;
 
 #[cfg(test)]
 mod storage_rule_tests;
+
+#[cfg(test)]
+mod bag_tests;

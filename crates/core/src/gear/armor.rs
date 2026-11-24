@@ -44,7 +44,11 @@ pub fn piece_durability(slot: EquipSlot) -> Option<u16> {
         EquipSlot::Chest => Some(16),
         EquipSlot::Legs => Some(15),
         EquipSlot::Feet => Some(13),
-        EquipSlot::Ring | EquipSlot::Amulet | EquipSlot::Belt | EquipSlot::Cloak => None,
+        EquipSlot::Ring
+        | EquipSlot::Amulet
+        | EquipSlot::Belt
+        | EquipSlot::Cloak
+        | EquipSlot::Back => None,
     }
 }
 

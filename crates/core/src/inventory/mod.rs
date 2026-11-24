@@ -9,7 +9,7 @@ mod stack;
 
 pub use click::{Area, Click, SlotPolicy, SlotRef, Window};
 pub use container::{
-    ACCESSORIES, ARMOR, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory,
+    ACCESSORIES, ARMOR, BACK, Container, HOTBAR, MAIN, OFFHAND, PLAYER_SLOTS, PlayerInventory,
     slot_equip, worn_slots,
 };
 pub use craft_grid::CraftGrid;

@@ -1,0 +1,2 @@
+// Used on a gold backpack put down: makes it diamond, keeping what it holds and its upgrades.
+Item(texture: "strata:diamond_backpack_kit", max_stack: 16, category: Some("strata:storage"), kit: Some(Kit(on: Storage, from: "strata:backpack_gold", to: "strata:backpack_diamond")))

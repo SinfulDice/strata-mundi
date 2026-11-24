@@ -2,6 +2,7 @@
 //! a double chest), then the upgrade slots of each half.
 
 use super::filter::ItemFilter;
+use crate::bag::{BagRules, Bags};
 use crate::content::{Item, ItemId, Registry};
 use crate::inventory::{Container, ItemStack, SlotPolicy};
 use crate::upgrade::{SlotOwner, Upgrades};
@@ -15,9 +16,16 @@ pub struct StorageSlots<'a> {
     pub storage: usize,
     /// What filter upgrades let in by shift click (everything without one).
     pub filters: Vec<ItemFilter>,
+    /// A bag's storage takes no bag, and a pouch only its tag's items.
+    pub bag: Option<(&'a Bags, &'a BagRules)>,
 }
 
 impl StorageSlots<'_> {
+    fn bag_admits(&self, stack: &ItemStack) -> bool {
+        self.bag
+            .is_none_or(|(bags, rules)| bags.admits(rules, stack))
+    }
+
     fn is_upgrade(&self, stack: &ItemStack) -> bool {
         self.upgrades.of_item(self.items, stack.item).is_some()
     }
@@ -31,9 +39,12 @@ impl StorageSlots<'_> {
 }
 
 impl SlotPolicy for StorageSlots<'_> {
-    /// By hand anything goes in the storage; an upgrade slot takes an upgrade that suits.
+    /// By hand anything goes in the storage (but a bag's takes no bag); an upgrade slot takes an upgrade that suits.
     fn accepts(&self, slots: &Container, index: usize, stack: &ItemStack) -> bool {
-        index < self.storage || self.upgrade_fits(slots, index, stack)
+        if index < self.storage {
+            return self.bag_admits(stack);
+        }
+        self.upgrade_fits(slots, index, stack)
     }
 
     /// An upgrade goes to a free upgrade slot it fits; anything else to the storage, if
@@ -57,6 +68,6 @@ impl SlotPolicy for StorageSlots<'_> {
     }
 
     fn lets_in(&self, stack: &ItemStack) -> bool {
-        self.filters.iter().all(|f| f.lets_in(stack.item))
+        self.bag_admits(stack) && self.filters.iter().all(|f| f.lets_in(stack.item))
     }
 }

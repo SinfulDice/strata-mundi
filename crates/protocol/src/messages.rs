@@ -1,6 +1,6 @@
 use crate::GameMode;
 use crate::commands::Feedback;
-use crate::inventory::{CraftingView, FurnaceView, InventoryRequest, OpenedContainer};
+use crate::inventory::{CraftingView, FurnaceView, InventoryRequest, OpenedContainer, TankView};
 use serde::{Deserialize, Serialize};
 use strata_core::chunk::{BiomeMap, Column};
 use strata_core::content::{BiomeTints, BlockId, EntityTypeId, Face, ItemId, RecipeId};
@@ -205,6 +205,8 @@ pub enum ServerMessage {
     ContainerClosed,
     /// The open furnace's fire and cooking changed.
     Furnace(FurnaceView),
+    /// The open bag's tank changed (or its tank upgrade came or went).
+    Tank(Option<TankView>),
     /// The crafting grid changed, or a work station opened (or closed: `station` empty).
     Crafting(Box<CraftingView>),
     /// The recipes the player knows; `all` when every recipe counts as known (creative,

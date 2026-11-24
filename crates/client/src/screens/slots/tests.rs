@@ -33,6 +33,8 @@ fn grids_name_the_right_slots_and_clicks_become_requests() {
         contents: chest,
         upgrades_at: 27,
         furnace: None,
+        bag: None,
+        tank: None,
     };
     let mut state = SlotsState {
         search: "zzz".into(),

@@ -11,7 +11,9 @@ pub const OFFHAND: usize = 40;
 /// Two rings, an amulet, a belt, a cloak (`EquipSlot::ACCESSORIES` order); saves from
 /// before them have 41 slots and get these empty.
 pub const ACCESSORIES: Range<usize> = 41..46;
-pub const PLAYER_SLOTS: usize = 46;
+/// The backpack worn on the back; saves from before it have 46 slots and get it empty.
+pub const BACK: usize = 46;
+pub const PLAYER_SLOTS: usize = 47;
 
 /// The slots whose stack is worn: armour, then accessories.
 pub fn worn_slots() -> impl Iterator<Item = usize> + Clone {
@@ -28,7 +30,7 @@ pub fn slot_equip(index: usize) -> Option<EquipSlot> {
             .get(index - ACCESSORIES.start)
             .copied();
     }
-    None
+    (index == BACK).then_some(EquipSlot::Back)
 }
 
 /// A fixed number of slots (a chest, a barrel, the player's inventory).

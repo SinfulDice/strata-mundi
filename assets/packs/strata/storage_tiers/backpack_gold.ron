@@ -1,0 +1,2 @@
+// Rows of nine slots and upgrade slots of a gold backpack (carried or put down).
+StorageTier(rows: 7, upgrade_slots: 3, upgrade_family: "strata:storage")

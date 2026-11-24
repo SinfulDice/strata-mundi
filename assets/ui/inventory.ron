@@ -1,11 +1,12 @@
 // Survival inventory with its 2×2 crafting grid; at a crafting table, the 3×3 grid; at a
-// stonecutter, its cell and the variants to choose; the accessories (two rings, an amulet, a
-// belt, a cloak) under the buttons, named by the tooltips of their empty slots; at an anvil, the item, the material,
+// stonecutter, its cell and the variants to choose; the backpack worn on the back beside the off hand; the
+// accessories (two rings, an amulet, a belt, a cloak) under the buttons, named by the tooltips of their empty slots; at an anvil, the item, the material,
 // the upgrades it can take (shown by their material) and the repair; at a bench (forge,
 // tannery, loom, jeweller), its four cells, the list of what it makes (scrolled by rows) and the
 // result, in the bench's own arrangement (`layout` of its `benches/` file) and colour (bands); with a container open, the container
 // (or the furnace: input, fuel and its flame, the arrow, output, upgrade slots) on top, a tall chest scrolled by
-// rows, its upgrade slots and filter in a panel beside the window. The player's slots are always below. Slots
+// rows, its upgrade slots and filter in a panel beside the window; an open bag's crafting grid and tank in a
+// panel on the other side. The player's slots are always below. Slots
 // take clicks (the help below gives way to the crafting hint or the recipe learnt): left takes or puts, right halves or puts one, shift-click sends across
 // (on the result: crafts as many as fit), double-click gathers, middle click (L1) locks.
 Screen(
@@ -21,6 +22,7 @@ Screen(
                     Label(id: "title", anchor: TopLeft, at: (8, 4), text: "ui-inventory-survival-title"),
                     SlotGrid(id: "armor", anchor: TopLeft, at: (8, 16), columns: 1, rows: 4),
                     SlotGrid(id: "offhand", anchor: TopLeft, at: (32, 76), columns: 1, rows: 1),
+                    SlotGrid(id: "back", anchor: TopLeft, at: (56, 76), columns: 1, rows: 1),
                     Label(id: "offhand_label", anchor: TopLeft, at: (8, 96), text: "ui-inventory-offhand", dim: true),
                     Label(id: "protection", anchor: TopLeft, at: (34, 62), text: "@protection"),
                     SlotGrid(id: "craft", anchor: TopLeft, at: (34, 20), columns: 2, rows: 2),
@@ -169,6 +171,31 @@ Screen(
         // A chest's or a barrel's upgrades beside the window, and the filter of the filter
         // or destruction upgrade chosen: the carried item goes in a cell (A), an empty hand
         // empties it.
+        // An open bag's crafting upgrade (a 3×3 grid and its result) and tank upgrade (the
+        // carried bucket pours in or fills up) beside the window.
+        Group(id: "bag_side", children: [
+            Panel(
+                id: "window_bag",
+                anchor: Center,
+                at: (-148, 0),
+                size: (92, 238),
+                children: [
+                    Group(id: "bag_crafting", children: [
+                        Label(id: "bag_craft_label", anchor: TopLeft, at: (8, 4), text: "ui-bag-crafting"),
+                        SlotGrid(id: "bag_craft", anchor: TopLeft, at: (19, 16), columns: 3, rows: 3),
+                        SlotGrid(id: "bag_craft_result", anchor: TopLeft, at: (37, 78), columns: 1, rows: 1),
+                        Label(id: "bag_craft_note", anchor: TopLeft, at: (8, 100), text: "@craft_note", dim: true, wrap: Some(76)),
+                    ]),
+                    Group(id: "bag_tank", children: [
+                        Label(id: "tank_label", anchor: TopLeft, at: (8, 134), text: "ui-bag-tank"),
+                        Gauge(id: "tank_level", anchor: TopLeft, at: (8, 146), size: (76, 8)),
+                        Label(id: "tank_contents", anchor: TopLeft, at: (8, 158), text: "@tank_contents", wrap: Some(76)),
+                        Button(id: "tank", anchor: TopLeft, at: (8, 182), size: (76, 14), text: "ui-bag-tank-use"),
+                        Label(id: "tank_help", anchor: TopLeft, at: (8, 200), text: "ui-bag-tank-help", dim: true, wrap: Some(76)),
+                    ]),
+                ],
+            ),
+        ]),
         Group(id: "storage_side", children: [
             Panel(
                 id: "window_upgrades",

@@ -28,6 +28,8 @@ pub enum DataValue {
     Text(String),
     Id(Identifier),
     List(Vec<DataValue>),
+    /// The slots of a container carried in the item (a backpack's contents).
+    Stacks(Vec<Option<ItemStack>>),
 }
 
 impl ItemData {

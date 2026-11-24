@@ -13,7 +13,7 @@ use strata_core::content::{BlockId, Content, HitBox, ItemAction, ItemId, ItemKin
 use strata_core::physics::{Aabb, LiquidCell};
 use strata_core::raycast::{RayHit, ray_box, raycast};
 use strata_core::updates::UpdateRules;
-use strata_protocol::{NetEntity, WorldAction};
+use strata_protocol::{InventoryRequest, NetEntity, WorldAction};
 
 /// Creative reach, in blocks from the eyes.
 const REACH: f64 = 5.0;
@@ -158,6 +158,12 @@ impl Interaction {
         let triggered =
             |action| input.just_pressed(action) || (input.is_held(action) && cooldown == 0.0);
         let held = hotbar.selected();
+        if input.just_pressed(Action::Use)
+            && let Some(bag) = held.and_then(|item| info.content.bags.get(item))
+        {
+            self.cooldown = REPEAT_DELAY;
+            return self.use_bag(bag.placed, input, hotbar);
+        }
         let action = held.and_then(|item| info.content.items.get(item)?.action);
         if let (Some(item), Some(action), true) = (held, action, triggered(Action::Use)) {
             let action = use_item(camera, world, info, item, action);
@@ -256,6 +262,27 @@ impl Interaction {
         }
         self.cooldown = REPEAT_DELAY;
         Some(WorldAction::UseBlock { pos: target.block })
+    }
+
+    /// Right click with a bag in hand opens it; sneaking, it is put down against the
+    /// aimed block (if it can be).
+    fn use_bag(
+        &self,
+        placed: Option<BlockId>,
+        input: &InputState,
+        hotbar: &mut ClientInventory,
+    ) -> Option<WorldAction> {
+        if !input.is_held(Action::Sneak) {
+            let slot = u16::try_from(hotbar.selected_index()).unwrap_or(0);
+            hotbar.request(InventoryRequest::OpenBag(slot));
+            return None;
+        }
+        let target = self.target?;
+        Some(WorldAction::Place {
+            against: target.block,
+            face: target.face,
+            block: placed?,
+        })
     }
 
     /// Right click gets into the aimed boat, left click takes it away (creative).

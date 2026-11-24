@@ -7,7 +7,7 @@ mod local;
 mod messages;
 mod worlds;
 
-pub use inventory::{CraftingView, FurnaceView, InventoryRequest, OpenedContainer};
+pub use inventory::{CraftingView, FurnaceView, InventoryRequest, OpenedContainer, TankView};
 pub use local::{ClientConnection, Disconnected, ServerConnection, local_pair};
 pub use messages::{
     ActionId, BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,
@@ -27,4 +27,4 @@ pub fn in_view_disc(dx: i32, dz: i32, view_distance: u32) -> bool {
 }
 
 /// Bumped whenever a message changes in an incompatible way.
-pub const PROTOCOL_VERSION: u32 = 12;
+pub const PROTOCOL_VERSION: u32 = 13;

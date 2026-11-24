@@ -36,6 +36,7 @@ pub(super) fn add_pickaxe(content: &mut Content) {
         remainder: None,
         kit: None,
         upgrade: None,
+        bag: None,
         gear: Default::default(),
     };
     content

@@ -1,0 +1,6 @@
+// Crafting upgrade (backpacks): a 3×3 crafting grid in the backpack's screen.
+Upgrade(
+    slot: "strata:storage",
+    applies_to: ["strata:backpacks"],
+    levels: [Level(effects: [Crafting])],
+)

@@ -55,10 +55,13 @@ pub struct ItemDef {
     /// What it gives while worn (with `equip`), in the bricks of upgrades.
     #[serde(default)]
     pub worn: Vec<crate::upgrade::Effect>,
+    /// Makes it a bag that carries items (a backpack, a pouch); such an item never stacks.
+    #[serde(default)]
+    pub bag: Option<crate::bag::BagDef>,
 }
 
-/// Where a worn item goes: an armour slot, or an accessory slot (two rings, an amulet,
-/// a belt, a cloak). Special boots go in the feet slot.
+/// Where a worn item goes: an armour slot, an accessory slot (two rings, an amulet, a
+/// belt, a cloak) or the back (a backpack). Special boots go in the feet slot.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, serde::Serialize)]
 pub enum EquipSlot {
     Head,
@@ -69,6 +72,7 @@ pub enum EquipSlot {
     Amulet,
     Belt,
     Cloak,
+    Back,
 }
 
 impl EquipSlot {
@@ -118,6 +122,8 @@ pub struct Item {
     pub kit: Option<KitDef>,
     /// The upgrade it is in a block's upgrade slot.
     pub upgrade: Option<Identifier>,
+    /// As written; resolved in `Content::bags`.
+    pub bag: Option<crate::bag::BagDef>,
     /// Tier, weapon and armour stats.
     pub gear: ItemGear,
 }
@@ -169,6 +175,7 @@ pub(super) fn load_items(
                 remainder: None,
                 kit: None,
                 upgrade: None,
+                bag: None,
                 gear: ItemGear::default(),
             },
         );
@@ -201,7 +208,7 @@ pub(super) fn load_items(
             errors,
         );
         let durable = resolved.durability;
-        let single = durable.is_some() || value.upgrade.is_some();
+        let single = durable.is_some() || value.upgrade.is_some() || value.bag.is_some();
         let item = Item {
             max_stack: if single { 1 } else { value.max_stack.max(1) },
             category: value.category,
@@ -213,6 +220,7 @@ pub(super) fn load_items(
             remainder: None,
             kit: value.kit,
             upgrade: value.upgrade,
+            bag: value.bag,
             gear: resolved.gear,
         };
         match items.insert(id.clone(), item) {

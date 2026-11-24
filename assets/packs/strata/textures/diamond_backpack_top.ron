@@ -1,0 +1,2 @@
+// The leather backpack put down, from above with its handle in diamond: its tier.
+Recolor(base: "strata:leather_backpack_top", swap: {"stick": "diamond"})

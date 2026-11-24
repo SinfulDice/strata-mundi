@@ -292,7 +292,36 @@ Depuis le jalon 7, les modules sont des améliorations (`upgrades/furnace_*.ron`
 
 Pépites et blocs : 1 lingot ↔ 9 pépites, 9 lingots ↔ 1 bloc (fer, or, cuivre ; diamant ↔ bloc de diamant), à la grille ou par compression.
 
-Manque pour plus tard : les tiers Ignium, Nihilium et Siderium (v0.10-v0.11) n'ont ni objets ni fichiers de tier.
+## Sacs à dos, bourses et sacoches (v0.3)
+
+Valeurs de départ, à ajuster avec la crate `balance` (jalon 17). Le sac à dos a **un emplacement de plus** que le coffre du même rang : il porte aussi ses améliorations propres (ramassage, établi, réservoir, nourrissage).
+
+| Tier (`storage_tiers/backpack_*`) | Cases | Emplacements d'amélioration | Obtention |
+|---|---|---|---|
+| Cuir | 27 | 1 | 7 cuirs + 1 laine + 1 coffre |
+| Fer | 45 | 2 | kit : 5 lingots de fer + 1 cuir |
+| Or | 63 | 3 | kit : 5 lingots d'or + 1 lingot de fer |
+| Diamant | 81 | 4 | kit : 3 diamants + 3 cuirs |
+
+Pas de recette directe des tiers supérieurs : un sac ne sert jamais d'ingrédient (son contenu serait perdu) ; le kit s'utilise sur le sac **posé**.
+
+| Amélioration de sac (famille `strata:storage`, tag `strata:backpacks`) | Coût | Valeurs |
+|---|---|---|
+| Ramassage | 4 cuirs, 4 fer, 1 pépite d'or | ce qui est ramassé entre d'abord, à travers le filtre |
+| Nourrissage | 4 cuirs, 4 fer, 1 champignon brun | branché au jalon 8 (faim) |
+| Établi intégré | 4 cuirs, 4 fer, 1 établi | grille 3×3 dans l'écran du sac |
+| Réservoir | 4 cuirs, 4 fer, 1 seau | 8 seaux d'un liquide (borné à 64 par le moteur) |
+
+Tri, filtre, compression, destruction et aimant vont aussi dans un sac (aimant : rayon 5, toutes les 10 ticks, vers le joueur ; option de monde « Aimants »).
+
+| Bourse / sacoche | Cases | Tag accepté | Coût |
+|---|---|---|---|
+| Bourse à graines | 9 | `strata:seeds` (fleurs, champignons ; graines avec les cultures) | 3 cuirs + 1 fibre |
+| Sacoche à minerais | 9 | `strata:ores` (minerais, charbon, diamants, pépites) | 3 cuirs + 1 lingot de fer |
+| Bourse à munitions | 9 | `strata:ammo` (vide jusqu'aux armes à distance) | 3 cuirs + 1 bâton |
+| Sacoche à potions | 9 | `strata:potions` (vide jusqu'à l'alchimie) | 3 cuirs + 1 verre |
+
+Manque pour plus tard : les tiers Ignium, Nihilium et Siderium (v0.10-v0.11) n'ont ni objets ni fichiers de tier (coffres, fours et sacs à dos).
 
 ## Outils d'équilibrage (créés en v0.3, enrichis à chaque version)
 

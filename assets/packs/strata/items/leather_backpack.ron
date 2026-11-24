@@ -1,0 +1,2 @@
+// A leather backpack: worn on the back (or carried), opened with its key or a right click, put down with sneak + right click.
+Item(texture: "strata:leather_backpack", category: Some("strata:storage"), equip: Some(Back), bag: Some(Bag(placed: Some("strata:placed_leather_backpack"))))

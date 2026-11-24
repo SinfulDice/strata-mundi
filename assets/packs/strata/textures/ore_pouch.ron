@@ -1,0 +1,2 @@
+// The leather pouch with a grey stone sewn on it: the ore satchel.
+Recolor(base: "strata:seed_pouch", swap: {"grass": "iron"})

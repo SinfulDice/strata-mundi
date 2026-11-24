@@ -43,6 +43,7 @@ fn items() -> Registry<ItemId, Item> {
             remainder: (name == "lava").then_some(BUCKET),
             kit: None,
             upgrade: module,
+            bag: None,
             gear: Default::default(),
         };
         items.insert(id(name), item);
@@ -330,7 +331,7 @@ fn shift_clicks_go_to_the_right_furnace_slot() {
         upgrades: &upgrades,
         kinds: &[],
         owner: SlotOwner {
-            family: &family,
+            family: Some(&family),
             item: None,
         },
     };
@@ -366,7 +367,7 @@ fn furnace_slots_refuse_what_does_not_belong() {
         upgrades: &upgrades,
         kinds: &[],
         owner: SlotOwner {
-            family: &family,
+            family: Some(&family),
             item: None,
         },
     };

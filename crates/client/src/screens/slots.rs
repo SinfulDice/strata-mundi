@@ -77,6 +77,10 @@ impl SlotsModel<'_> {
                 text.push_str(&self.tr("gear-broken-line"));
             }
         }
+        if let Some(line) = self.content.bag_stack_line(stack, self.language) {
+            text.push('\n');
+            text.push_str(&line);
+        }
         let equipment = self.inventory.equipment(self.content);
         let sets = (self.content).set_lines(stack.item, &equipment.stats, self.language);
         for line in self
@@ -181,7 +185,11 @@ impl ScreenModel for SlotsModel<'_> {
                 .crafting
                 .and_then(|c| c.view.station)
                 .map(|(block, _)| self.block_title(block)),
-            "title" => self.container.map(|open| self.block_title(open.block)),
+            "title" => self.container.map(|open| match open.bag {
+                Some(bag) => self.name(bag),
+                None => self.block_title(open.block),
+            }),
+            "tank_contents" => self.tank_text(),
             _ => None,
         }
     }
@@ -220,6 +228,9 @@ impl ScreenModel for SlotsModel<'_> {
     }
 
     fn gauge(&self, id: &str) -> Option<f32> {
+        if id == "tank_level" {
+            return self.tank_level();
+        }
         let view = self.container?.furnace?;
         match id {
             "furnace_flame" => Some(view.flame()),
@@ -244,6 +255,7 @@ impl ScreenModel for SlotsModel<'_> {
         if let Some(shown) = self
             .bench_group_shown(id)
             .or_else(|| self.storage_shown(id))
+            .or_else(|| self.bag_shown(id))
         {
             return shown;
         }
@@ -285,6 +297,7 @@ impl ScreenModel for SlotsModel<'_> {
             "chest_later" => self.scroll_chest(1),
             "filter_next" => self.next_filter(),
             "filter_mode" => self.toggle_filter_mode(),
+            "tank" => self.inventory.request(InventoryRequest::Tank),
             "book" => self
                 .effects
                 .push(Effect::Push(Menu::Journal(JournalState::for_grid()))),

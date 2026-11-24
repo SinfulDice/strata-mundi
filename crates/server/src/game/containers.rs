@@ -5,7 +5,7 @@ use super::{Game, MAX_REACH};
 use crate::loader::ColumnLoader;
 use glam::DVec3;
 use std::collections::HashMap;
-use strata_core::content::{BlockId, Face};
+use strata_core::content::{BlockId, Face, ItemId};
 use strata_core::cooking::FurnaceState;
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{Container, ItemData, ItemStack, deposit_matching};
@@ -33,11 +33,18 @@ pub struct BlockEntity {
 /// The block entities of the dimension, by position.
 pub type BlockEntities = HashMap<BlockPos, BlockEntity>;
 
-/// The container a player has open: one block, or both halves of a double chest.
+/// The container a player has open: one block, both halves of a double chest, or a bag
+/// they carry.
 #[derive(Debug, Clone, PartialEq)]
 pub struct OpenWindow {
+    /// For a carried bag, the block it becomes when put down (or air).
     pub block: BlockId,
+    /// None for a carried bag.
     pub halves: Vec<BlockPos>,
+    /// The bag opened, carried or put down.
+    pub bag: Option<ItemId>,
+    /// The player slot of the carried bag opened.
+    pub carried: Option<usize>,
 }
 
 impl Game {
@@ -64,9 +71,15 @@ impl Game {
         };
         self.close_container();
         let upgrades_at = self.upgrades_at(block, halves.len());
-        let window = OpenWindow { block, halves };
+        let window = OpenWindow {
+            block,
+            halves,
+            bag: self.rules.bags.of_block(block),
+            carried: None,
+        };
         let contents = self.window_contents(&window);
-        self.ecs.windows.insert(self.player, window);
+        let tank = self.tank_view(&window);
+        self.ecs.windows.insert(self.player, window.clone());
         if self.rules.furnace(block).is_some() {
             self.wake_furnace(pos);
         }
@@ -79,7 +92,10 @@ impl Game {
                 contents,
                 upgrades_at,
                 furnace,
+                bag: window.bag,
+                tank,
             })));
+        self.sync_bag_crafting(&window);
         true
     }
 
@@ -151,6 +167,12 @@ impl Game {
     /// What the window shows: the storage of each half end to end, then the upgrade
     /// slots of each half.
     pub(super) fn window_contents(&mut self, window: &OpenWindow) -> Container {
+        if let Some(slot) = window.carried {
+            return self
+                .carried_contents(slot)
+                .map(|c| c.window())
+                .unwrap_or_default();
+        }
         let layout = self.rules.layout(window.block).cloned();
         let (storage, upgrades) = layout.map_or((0, 0), |l| (l.storage, l.upgrades));
         let mut contents = Container::default();
@@ -183,19 +205,34 @@ impl Game {
         loader: &ColumnLoader,
     ) -> Option<(OpenWindow, Container)> {
         let window = self.ecs.windows.get(self.player)?.clone();
-        let present = window.halves.iter().all(|&half| {
-            loader.block(half) == Some(window.block) && self.within(half, MAX_REACH + 1.0)
-        });
-        if !present {
+        if !self.window_present(loader, &window) {
             self.close_container();
             return None;
+        }
+        if window.carried.is_some() {
+            return self.take_carried(window);
         }
         let contents = self.window_contents(&window);
         Some((window, contents))
     }
 
+    /// Whether what the window shows is still there: the blocks within reach, or the bag
+    /// in its slot.
+    pub(super) fn window_present(&self, loader: &ColumnLoader, window: &OpenWindow) -> bool {
+        if let Some(slot) = window.carried {
+            return self.bag_at(slot).map(|(item, _)| item) == window.bag;
+        }
+        window.halves.iter().all(|&half| {
+            loader.block(half) == Some(window.block) && self.within(half, MAX_REACH + 1.0)
+        })
+    }
+
     /// Puts the clicked contents back into their halves and tells the client.
     pub(super) fn put_back_open_container(&mut self, (window, contents): (OpenWindow, Container)) {
+        if window.carried.is_some() {
+            self.put_back_carried(&window, contents);
+            return;
+        }
         let storage: usize = window
             .halves
             .iter()
@@ -225,7 +262,10 @@ impl Game {
     pub(super) fn close_container(&mut self) {
         if let Some(window) = self.ecs.windows.remove(self.player) {
             self.messages.push(ServerMessage::ContainerClosed);
-            self.storage_closed(&window.halves, window.block);
+            self.storage_closed(&window);
+            if window.bag.is_some() {
+                self.leave_bag_crafting();
+            }
         }
     }
 
@@ -316,6 +356,10 @@ impl Game {
             if !kept && let Some(mut entity) = self.block_entities.remove(&pos) {
                 self.magnets.at.remove(&pos);
                 let centre = block_centre(pos);
+                if let Some(bag) = self.bag_taken_up(&mut entity) {
+                    self.spawn_drop(bag, centre, DVec3::ZERO);
+                    continue;
+                }
                 let mut stacks = entity.container.drain();
                 stacks.extend(entity.upgrades.drain());
                 for stack in stacks {

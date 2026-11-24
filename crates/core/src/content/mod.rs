@@ -110,6 +110,8 @@ pub struct Content {
     pub worn: Worn,
     /// Chest and barrel tiers, compression recipes.
     pub storage: Storage,
+    /// Backpacks and pouches.
+    pub bags: crate::bag::Bags,
     /// Recipes of the benches (jeweller…).
     pub benches: Benches,
     /// Item tooltips by language, see `item_tooltip`.
@@ -168,6 +170,7 @@ impl Content {
         let upgrades = load_upgrades(packs, &names, &gear.slot_families, &mut errors);
         let storage_context = (&cooking, &gear.slot_families);
         let storage = load_storage(packs, &items, &mut blocks, storage_context, &mut errors);
+        let bags = crate::bag::load_bags(&items, &blocks, &tags, &storage, &mut errors);
         bound_worn_effects(&mut items, &upgrades.stats, &mut errors);
         let worn = load_worn(packs, &items, &upgrades.stats, &mut errors);
         loot::check_loot_names(&refs.loot, &loot_tables, &mut errors);
@@ -198,6 +201,7 @@ impl Content {
             upgrades,
             worn,
             storage,
+            bags,
             benches,
             tooltips: Default::default(),
         };

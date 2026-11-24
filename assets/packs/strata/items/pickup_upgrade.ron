@@ -1,0 +1,2 @@
+// Pickup upgrade (backpacks) (upgrades/pickup.ron), put in an upgrade slot of a backpack.
+Item(texture: "strata:pickup_upgrade", category: Some("strata:storage"), upgrade: Some("strata:pickup"))

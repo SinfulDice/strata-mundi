@@ -84,6 +84,9 @@ impl Game {
             InventoryRequest::SetFilter { slot, cell, item } => {
                 self.set_filter(loader, slot, cell, item);
             }
+            InventoryRequest::OpenBag(slot) => self.open_bag(loader, slot),
+            InventoryRequest::Tank => self.tank_click(loader),
+            InventoryRequest::Click { slot, click } if self.touches_pinned(slot, click) => {}
             InventoryRequest::Click { slot, click } => {
                 // A shift click from the inventory sends items into the storage; by hand,
                 // whatever is put stays (destruction only takes what comes in by itself).
@@ -98,12 +101,17 @@ impl Game {
                 area,
                 order,
                 language,
-            } => self.sort(loader, area, order, &|item| names(item, &language)),
+            } => self.with_bag_pinned(|game| {
+                game.sort(loader, area, order, &|item| names(item, &language));
+            }),
             InventoryRequest::ToggleLock(index) => {
                 self.with_inventory(|inventory, _| inventory.toggle_lock(usize::from(index)));
             }
-            InventoryRequest::QuickDeposit => self.quick_deposit(loader),
+            InventoryRequest::QuickDeposit => {
+                self.with_bag_pinned(|game| game.quick_deposit(loader))
+            }
             InventoryRequest::CreativeSet { index, stack } => self.creative_set(index, stack),
+            InventoryRequest::DropSelected { .. } if self.pinned() == Some(self.selected()) => {}
             InventoryRequest::DropSelected { whole } => {
                 let thrown = self.with_inventory(|inventory, _| {
                     let slot = inventory.selected_slot_mut();
@@ -121,6 +129,8 @@ impl Game {
         let index = usize::from(index);
         let valid = index < PLAYER_SLOTS
             && self.is_creative()
+            && self.pinned() != Some(index)
+            && stack.as_ref().is_none_or(|stack| self.holds_no_bag(stack))
             && stack.as_ref().is_none_or(|stack| {
                 stack.is_valid(&self.rules) && PlayerInventory::accepts(index, stack, &self.rules)
             });
@@ -271,10 +281,10 @@ impl Game {
         self.check_station(loader);
         let upkeep = open
             .as_ref()
-            .map(|(window, _)| self.upkeep_of(&window.halves));
+            .map(|(window, _)| self.upkeep_of_window(window));
         let stored_before = open
             .as_ref()
-            .map(|(window, _)| self.storage_of(&window.halves));
+            .map(|(window, _)| self.storage_of_window(window));
         let mut craft = self.ecs.crafts.remove(self.player);
         let before = craft.as_ref().map(|window| window.grid.clone());
         let Some(player) = self.ecs.inventories.get_mut(self.player) else {
@@ -295,15 +305,6 @@ impl Game {
         };
         let result = change(&mut window, &self.rules);
         drop(policy);
-        if let Some(open) = open {
-            let (halves, block) = (open.0.halves.clone(), open.0.block);
-            self.put_back_open_container(open);
-            let before = match stored_before {
-                Some(before) if entering => before,
-                _ => self.storage_of(&halves),
-            };
-            self.open_storage_changed(&halves, block, Some(before));
-        }
         if let Some(mut craft) = craft {
             if let Some(before) = before.filter(|before| *before != craft.grid) {
                 let first = |grid: &CraftGrid| grid.slots.get(0).map(|s| s.item);
@@ -314,6 +315,15 @@ impl Game {
                 self.craft_changed();
             }
             self.ecs.crafts.insert(self.player, craft);
+        }
+        if let Some(open) = open {
+            let shown = open.0.clone();
+            self.put_back_open_container(open);
+            let before = match stored_before {
+                Some(before) if entering => before,
+                _ => self.storage_of_window(&shown),
+            };
+            self.open_storage_changed(&shown, Some(before));
         }
         self.inventory_changed();
         result
@@ -368,9 +378,23 @@ fn policy<'a>(
     window: &OpenWindow,
     filters: Vec<ItemFilter>,
 ) -> Option<OpenPolicy<'a>> {
+    let bag = window.bag.and_then(|item| rules.bags.get(item));
+    if let Some(bag) = bag {
+        return Some(OpenPolicy::Storage(StorageSlots {
+            items: rules.items(),
+            upgrades: &rules.upgrades,
+            owner: SlotOwner {
+                family: bag.layout.family.as_ref(),
+                item: window.bag,
+            },
+            storage: bag.layout.storage,
+            filters,
+            bag: Some((&rules.bags, bag)),
+        }));
+    }
     let layout = rules.layout(window.block)?;
     let owner = SlotOwner {
-        family: layout.family.as_ref()?,
+        family: Some(layout.family.as_ref()?),
         item: rules.block_item(window.block),
     };
     if let Some(furnace) = rules.furnace(window.block) {
@@ -389,6 +413,7 @@ fn policy<'a>(
             owner,
             storage: layout.storage * window.halves.len(),
             filters,
+            bag: None,
         })
     })
 }

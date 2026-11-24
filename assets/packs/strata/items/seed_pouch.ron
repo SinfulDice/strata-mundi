@@ -1,0 +1,2 @@
+// A small pouch of 9 slots for seeds and plants (flowers, mushrooms) (tags/seeds.ron): they go in first when picked up. Opened with a right click.
+Item(texture: "strata:seed_pouch", category: Some("strata:storage"), bag: Some(Bag(slots: 9, accepts: Some("strata:seeds"))))

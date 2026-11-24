@@ -1,0 +1,2 @@
+// Crafting upgrade (backpacks) (upgrades/crafting.ron), put in an upgrade slot of a backpack.
+Item(texture: "strata:crafting_upgrade", category: Some("strata:storage"), upgrade: Some("strata:crafting"))

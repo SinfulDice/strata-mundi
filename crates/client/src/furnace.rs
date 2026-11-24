@@ -53,6 +53,8 @@ mod tests {
                 seconds: 10.0,
                 per_coal: Some(8.0),
             }),
+            bag: None,
+            tank: None,
         };
         let mut clock = FurnaceClock::default();
         clock.follow(Some(&mut open), 1.0);

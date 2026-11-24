@@ -77,6 +77,11 @@ impl Gameplay {
                 }
             }
             ServerMessage::ContainerClosed => self.container = None,
+            ServerMessage::Tank(tank) => {
+                if let Some(open) = &mut self.container {
+                    open.tank = tank;
+                }
+            }
             ServerMessage::Furnace(view) => {
                 if let Some(open) = &mut self.container {
                     open.furnace = Some(view);

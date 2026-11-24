@@ -1,0 +1,2 @@
+// A small pouch of 9 slots for potions (they come with alchemy) (tags/potions.ron): they go in first when picked up. Opened with a right click.
+Item(texture: "strata:potion_pouch", category: Some("strata:storage"), bag: Some(Bag(slots: 9, accepts: Some("strata:potions"))))

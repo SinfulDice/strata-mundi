@@ -3,7 +3,9 @@
 
 use super::SlotsModel;
 use strata_core::cooking::{FURNACE_FUEL, FURNACE_INPUT, FURNACE_OUTPUT};
-use strata_core::inventory::{ACCESSORIES, ARMOR, Area, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef};
+use strata_core::inventory::{
+    ACCESSORIES, ARMOR, Area, BACK, HOTBAR, ItemStack, MAIN, OFFHAND, SlotRef,
+};
 
 /// Where the slots of a grid are: the area and its slots (the open container's grids
 /// are placed by `storage_grid`).
@@ -14,13 +16,15 @@ fn grid(id: &str) -> Option<(Area, std::ops::Range<usize>)> {
         "armor" => (Area::Player, ARMOR),
         "offhand" => (Area::Player, OFFHAND..OFFHAND + 1),
         "accessories" => (Area::Player, ACCESSORIES),
+        "back" => (Area::Player, BACK..BACK + 1),
         "furnace_input" => (Area::Open, FURNACE_INPUT..FURNACE_INPUT + 1),
         "furnace_fuel" => (Area::Open, FURNACE_FUEL..FURNACE_FUEL + 1),
         "furnace_output" => (Area::Open, FURNACE_OUTPUT..FURNACE_OUTPUT + 1),
-        "craft" | "table" | "cutter" | "anvil" | "bench" => (Area::Craft, 0..usize::from(u16::MAX)),
-        "craft_result" | "table_result" | "cutter_result" | "anvil_result" | "bench_result" => {
-            (Area::CraftResult, 0..1)
+        "craft" | "table" | "cutter" | "anvil" | "bench" | "bag_craft" => {
+            (Area::Craft, 0..usize::from(u16::MAX))
         }
+        "craft_result" | "table_result" | "cutter_result" | "anvil_result" | "bench_result"
+        | "bag_craft_result" => (Area::CraftResult, 0..1),
         _ => return None,
     })
 }

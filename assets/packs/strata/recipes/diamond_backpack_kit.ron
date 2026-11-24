@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["DDD", "LLL"],
+    key: {'D': Item("strata:diamond"), 'L': Item("strata:leather")},
+    result: Result(item: "strata:diamond_backpack_kit"),
+)

@@ -50,6 +50,7 @@ impl Content {
             }
             let upgrade = entry.upgrade.as_ref();
             lines.extend(upgrade.and_then(|u| self.upgrade_item_line(u, language)));
+            lines.extend(self.bag_item_lines(item, language));
             if self.stats_known(item) {
                 lines.extend(self.gear_lines(entry, language));
             }

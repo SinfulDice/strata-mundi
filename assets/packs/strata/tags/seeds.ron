@@ -1,0 +1,10 @@
+// What a seed pouch takes: plants to replant until crops and their seeds come with farming.
+Tag(items: [
+    "strata:poppy",
+    "strata:dandelion",
+    "strata:cornflower",
+    "strata:lavender",
+    "strata:daisy",
+    "strata:red_mushroom",
+    "strata:brown_mushroom",
+])

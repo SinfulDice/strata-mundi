@@ -354,6 +354,10 @@ mod storage_tests;
 #[path = "persistence_gear_tests.rs"]
 mod gear_tests;
 
+#[cfg(test)]
+#[path = "persistence_bag_tests.rs"]
+mod bag_tests;
+
 /// A furnace saved before upgrade slots had their own place kept its modules after its
 /// input, fuel and output: they move to its upgrade slots.
 fn migrate_furnace_modules(entity: &mut BlockEntity) {

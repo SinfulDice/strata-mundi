@@ -1,5 +1,6 @@
 use crate::mining_rules::MiningRules;
 use std::sync::Arc;
+use strata_core::bag::Bags;
 use strata_core::content::{
     BlockId, ContainerDef, Content, EntityType, EntityTypeId, EquipSlot, Facing, FurnaceDef, Item,
     ItemAction, ItemId, ItemKind, Registry, StationDef,
@@ -47,6 +48,8 @@ pub struct BlockRules {
     pub benches: Arc<Benches>,
     /// Chest and barrel tiers, compression recipes.
     pub storage: Arc<Storage>,
+    /// Backpacks and pouches.
+    pub bags: Arc<Bags>,
 }
 
 impl BlockRules {
@@ -108,6 +111,7 @@ impl BlockRules {
             worn: Arc::new(content.worn.clone()),
             benches: Arc::new(content.benches.clone()),
             storage: Arc::new(content.storage.clone()),
+            bags: Arc::new(content.bags.clone()),
             updates: Arc::new(UpdateRules::new(content)),
             mining: Arc::new(MiningRules::new(content)),
         }

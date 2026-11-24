@@ -105,6 +105,7 @@ impl Game {
         for stack in cut {
             self.spawn_drop(stack, block_centre(pos), DVec3::ZERO);
         }
+        self.follow_bag_tier(pos, upgraded);
         self.follow_upgraded_window(pos, upgraded);
         self.set_block(loader, pos, upgraded, changes);
         self.consume_held();
@@ -122,6 +123,7 @@ impl Game {
             return;
         }
         window.block = block;
+        window.bag = self.rules.bags.of_block(block);
         let window = window.clone();
         let upgrades_at = self.upgrades_at(block, window.halves.len());
         let contents = self.window_contents(&window);

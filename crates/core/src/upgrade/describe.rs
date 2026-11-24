@@ -46,6 +46,13 @@ impl Content {
             Effect::Filter => tr.text(language, "upgrade-effect-filter"),
             Effect::Compress => tr.text(language, "upgrade-effect-compress"),
             Effect::Void => tr.text(language, "upgrade-effect-void"),
+            Effect::Pickup => tr.text(language, "upgrade-effect-pickup"),
+            Effect::Feed => tr.text(language, "upgrade-effect-feed"),
+            Effect::Crafting => tr.text(language, "upgrade-effect-crafting"),
+            Effect::Tank { buckets } => {
+                let args = [("buckets", buckets.to_string())];
+                tr.text_with(language, "upgrade-effect-tank", &args)
+            }
         }
     }
 

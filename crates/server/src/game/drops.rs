@@ -131,6 +131,7 @@ impl Game {
             self.merge_drops(def.merge_radius);
         }
         self.pick_up(def.pickup_radius);
+        self.bag_magnets_tick();
     }
 
     fn report_drop_moves(&mut self, moved: &[Entity]) {
@@ -228,18 +229,7 @@ impl Game {
             .map(|(entity, _)| entity)
             .collect();
         for entity in near {
-            let Some(stack) = self.ecs.drops.get(entity).map(|d| d.stack.clone()) else {
-                continue;
-            };
-            match self.give(stack.clone()) {
-                None => self.remove_drop(entity),
-                Some(left) if left != stack => {
-                    if let Some(drop) = self.ecs.drops.get_mut(entity) {
-                        drop.stack = left;
-                    }
-                }
-                Some(_) => {}
-            }
+            self.collect_drop(entity);
         }
     }
 

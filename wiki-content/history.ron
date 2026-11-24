@@ -51,6 +51,10 @@
         "blocks/strata/iron_barrel": [(version: "0.3.0", change: Added)],
         "blocks/strata/iron_block": [(version: "0.3.0", change: Added)],
         "blocks/strata/iron_chest": [(version: "0.3.0", change: Added)],
+        "blocks/strata/placed_leather_backpack": [(version: "0.3.0", change: Added)],
+        "blocks/strata/placed_iron_backpack": [(version: "0.3.0", change: Added)],
+        "blocks/strata/placed_gold_backpack": [(version: "0.3.0", change: Added)],
+        "blocks/strata/placed_diamond_backpack": [(version: "0.3.0", change: Added)],
         "blocks/strata/coal_ore": [
             (version: "0.1.0", change: Added),
             (version: "0.3.0", change: Changed(fr: "Donne du charbon.", en: "Gives coal.", lol: "GIVZ COAL.")),

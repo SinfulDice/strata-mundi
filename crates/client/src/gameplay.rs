@@ -128,6 +128,10 @@ impl Gameplay {
             self.inventory
                 .request(InventoryRequest::DropSelected { whole });
         }
+        if input.just_pressed(Action::Backpack) {
+            let back = u16::try_from(strata_core::inventory::BACK).unwrap_or(u16::MAX);
+            self.inventory.request(InventoryRequest::OpenBag(back));
+        }
         let move_input = MoveInput {
             wish: input.movement().to_array(),
             yaw: self.camera.yaw,

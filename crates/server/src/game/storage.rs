@@ -2,9 +2,9 @@
 //! compression, sorting when the screen closes, filters on what enters. A double chest's
 //! upgrades (both halves') work on its whole storage. Magnets: `magnets.rs`.
 
-use super::Game;
+use super::{Game, OpenWindow};
 use crate::loader::ColumnLoader;
-use strata_core::content::{BlockId, ItemId};
+use strata_core::content::ItemId;
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{Container, ItemStack, deposit_matching};
 use strata_core::storage::{
@@ -97,26 +97,68 @@ impl Game {
         })
     }
 
+    /// The behaviours of the open window's storage (a carried bag's upgrades, or the
+    /// blocks').
+    pub(super) fn upkeep_of_window(&self, window: &OpenWindow) -> Upkeep {
+        match window.carried {
+            Some(slot) => self.carried_upkeep(slot),
+            None => self.upkeep_of(&window.halves),
+        }
+    }
+
+    pub(super) fn storage_of_window(&self, window: &OpenWindow) -> Container {
+        match window.carried {
+            Some(slot) => {
+                (self.carried_contents(slot)).map_or_else(Container::default, |c| c.storage)
+            }
+            None => self.storage_of(&window.halves),
+        }
+    }
+
+    /// `storage_entered` for the open window.
+    fn window_entered(&mut self, window: &OpenWindow, before: &Container, sort_now: bool) -> bool {
+        let Some(slot) = window.carried else {
+            return self.storage_entered(&window.halves, before, sort_now);
+        };
+        let rules = self.carried_upkeep(slot);
+        if !rules.acts() {
+            return false;
+        }
+        let changed = self.with_carried(slot, |contents, game| {
+            let compressions = &game.rules.storage.compressions;
+            let items = game.rules.items();
+            after_entry(
+                before,
+                &mut contents.storage,
+                &rules,
+                compressions,
+                items,
+                sort_now,
+            )
+        });
+        changed.unwrap_or(false)
+    }
+
     /// The open storage after a click (`before`: its storage just before): what came in
-    /// is destroyed or compressed (sorting waits for the screen to close), and its magnets
-    /// follow its upgrade slots.
-    pub(super) fn open_storage_changed(
-        &mut self,
-        halves: &[BlockPos],
-        block: BlockId,
-        before: Option<Container>,
-    ) {
-        if self.rules.container(block).is_none() {
+    /// is destroyed or compressed (sorting waits for the screen to close), its magnets
+    /// follow its upgrade slots, and a bag's grid and tank follow its upgrades.
+    pub(super) fn open_storage_changed(&mut self, window: &OpenWindow, before: Option<Container>) {
+        if window.carried.is_none() && self.rules.container(window.block).is_none() {
             return;
         }
-        let changed = before.is_some_and(|before| self.storage_entered(halves, &before, false));
-        if changed && let Some(window) = self.ecs.windows.get(self.player).cloned() {
-            let contents = self.window_contents(&window);
+        let changed = before.is_some_and(|before| self.window_entered(window, &before, false));
+        if changed {
+            let contents = self.window_contents(window);
             self.messages
                 .push(ServerMessage::ContainerContents(Box::new(contents)));
         }
-        for &half in halves {
+        for &half in &window.halves {
             self.refresh_magnet(half);
+        }
+        if window.bag.is_some() {
+            self.sync_bag_crafting(window);
+            let tank = self.tank_view(window);
+            self.messages.push(ServerMessage::Tank(tank));
         }
     }
 
@@ -141,11 +183,22 @@ impl Game {
     }
 
     /// The screen of a storage closes: it sorts itself if it has a sorting upgrade.
-    pub(super) fn storage_closed(&mut self, halves: &[BlockPos], block: BlockId) {
-        if self.rules.container(block).is_some() && self.upkeep_of(halves).sort {
-            self.with_storage(halves, |storage, game| {
-                sort_storage(storage, game.rules.items())
-            });
+    pub(super) fn storage_closed(&mut self, window: &OpenWindow) {
+        let storage = window.carried.is_some() || self.rules.container(window.block).is_some();
+        if !storage || !self.upkeep_of_window(window).sort {
+            return;
+        }
+        match window.carried {
+            Some(slot) => {
+                self.with_carried(slot, |contents, game| {
+                    sort_storage(&mut contents.storage, game.rules.items());
+                });
+            }
+            None => {
+                self.with_storage(&window.halves, |storage, game| {
+                    sort_storage(storage, game.rules.items());
+                });
+            }
         }
     }
 
@@ -163,8 +216,7 @@ impl Game {
             return;
         };
         let items = self.rules.items();
-        let storage = self.rules.layout(window.block).map_or(0, |l| l.storage);
-        let first_upgrade = storage * window.halves.len();
+        let first_upgrade = usize::from(self.window_upgrades_at(&window));
         let index = usize::from(slot);
         let filters = |stack: &ItemStack| {
             let upgrade = self.rules.upgrades.of_item(items, stack.item);
@@ -185,9 +237,8 @@ impl Game {
                 None => toggle_filter_mode(stack, items),
             }
         }
-        let halves = window.halves.clone();
-        let block = window.block;
+        let shown = window.clone();
         self.put_back_open_container((window, contents));
-        self.open_storage_changed(&halves, block, None);
+        self.open_storage_changed(&shown, None);
     }
 }

@@ -1,0 +1,2 @@
+// Feeding upgrade (backpacks) (upgrades/feeding.ron), put in an upgrade slot of a backpack.
+Item(texture: "strata:feed_upgrade", category: Some("strata:storage"), upgrade: Some("strata:feeding"))

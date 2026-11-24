@@ -44,6 +44,7 @@ impl SlotsModel<'_> {
             "filter_mode" => Some(Some(self.filter_mode_tip())),
             "anvil" => self.anvil_cell_tip(index).map(Some),
             "accessories" => self.accessory_slot_tip(index).map(Some),
+            "back" => self.back_slot_tip().map(Some),
             _ => None,
         }
     }

@@ -32,11 +32,11 @@ impl Game {
             .updates()
             .placed_variant(block, face, |side| cell(&world, target.neighbour(side)))
             .map(|variant| self.facing_player(variant));
+        let bag = self.holds_bag_of(block);
         let held = self
             .held_item()
             .is_some_and(|item| self.rules.block_item(block) == Some(item));
-        let allowed = self.rules.is_placeable(block)
-            && held
+        let allowed = ((self.rules.is_placeable(block) && held) || bag)
             && self.in_reach(target)
             && !self.blocks_a_player(target, block)
             && variant.is_some()
@@ -44,7 +44,11 @@ impl Game {
         let mut changes = Vec::new();
         if let (true, Some(variant)) = (allowed, variant) {
             self.set_block(loader, target, variant, &mut changes);
-            self.consume_held();
+            if bag {
+                self.put_down_bag(target);
+            } else {
+                self.consume_held();
+            }
         }
         changes
     }

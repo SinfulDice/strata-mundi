@@ -1,0 +1,9 @@
+// A leather backpack put down (sneak + right click with it): 27 slots and 1 upgrade slot (storage_tiers/backpack_leather.ron).
+// Breaking it gives the backpack back with all it holds; it never burns. A kit raises its tier in place.
+Block(
+    textures: TopBottomSides(top: "strata:leather_backpack_top", bottom: "strata:leather_backpack_side", sides: "strata:leather_backpack_side"),
+    hardness: 0.8,
+    sound: Some("strata:wool"),
+    has_item: false,
+    container: Some(Container(upgradable: Some(Upgradable(family: "strata:backpack", tier: "strata:backpack_leather")))),
+)

@@ -58,10 +58,12 @@ pub enum Action {
     HammerArea,
     /// With equipment that dashes: a short dash.
     Dash,
+    /// Opens the backpack worn on the back.
+    Backpack,
 }
 
 impl Action {
-    pub const COUNT: usize = 45;
+    pub const COUNT: usize = 46;
     pub const ALL: [Action; Self::COUNT] = [
         Self::MoveForward,
         Self::MoveBackward,
@@ -108,6 +110,7 @@ impl Action {
         Self::Journal,
         Self::HammerArea,
         Self::Dash,
+        Self::Backpack,
     ];
 
     /// Names used in `<key:…>` markup, in the order of `ALL`.
@@ -157,6 +160,7 @@ impl Action {
         "Journal",
         "HammerArea",
         "Dash",
+        "Backpack",
     ];
 
     /// By its name in the code (`Inventory`), as written in `<key:…>` markup.

@@ -13,7 +13,8 @@ use crate::inventory::ItemStack;
 /// block they belong to (what `applies_to` tags name).
 #[derive(Debug, Clone, Copy)]
 pub struct SlotOwner<'a> {
-    pub family: &'a Identifier,
+    /// Family of its upgrade slots (none: it has none).
+    pub family: Option<&'a Identifier>,
     pub item: Option<ItemId>,
 }
 
@@ -40,7 +41,7 @@ impl Upgrades {
             .applies_to
             .as_ref()
             .is_none_or(|targets| owner.item.is_some_and(|item| targets.accepts(item)));
-        if upgrade.slot != *owner.family || !suits {
+        if owner.family != Some(&upgrade.slot) || !suits {
             return false;
         }
         let present: Vec<&Upgrade> = others

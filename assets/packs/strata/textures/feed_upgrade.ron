@@ -1,0 +1,30 @@
+// A leather board in an iron frame with an apple on it: the feeding upgrade.
+Sprite(
+    colors: {
+        'I': ("iron", 1),
+        'w': ("leather", 2),
+        'W': ("leather", 1),
+        'R': ("poppy", 1),
+        'r': ("poppy", 2),
+        'G': ("grass", 2),
+        'S': ("stick", 1),
+    },
+    rows: [
+        "................",
+        ".IIIIIIIIIIIIII.",
+        ".IwWwwwwwwwwwWI.",
+        ".IwwwwwwSwwwwwI.",
+        ".IWwwwwwSGGwwwI.",
+        ".IwwwwRRSRRwwWI.",
+        ".IwwwRrrRRRRwwI.",
+        ".IwwwRrRRRRRwwI.",
+        ".IwwwRRRRRRRwwI.",
+        ".IwWwRRRRRRRwWI.",
+        ".IwwwwRRRRRwwwI.",
+        ".IwwwwwRwRwwwwI.",
+        ".IwwwwwwwwwwwwI.",
+        ".IWwwwwwwwwwwwI.",
+        ".IIIIIIIIIIIIII.",
+        "................",
+    ],
+)

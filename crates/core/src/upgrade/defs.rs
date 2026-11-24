@@ -97,6 +97,14 @@ pub enum Effect {
     Void,
     /// Storage: draws the items lying within `radius` blocks, every `period` ticks.
     Magnet { radius: f32, period: u16 },
+    /// Bag: what the player picks up goes into it first (what its filter lets in).
+    Pickup,
+    /// Bag: feeds the player from the food it holds when they are hungry.
+    Feed,
+    /// Bag: a 3×3 crafting grid in its screen.
+    Crafting,
+    /// Bag: holds up to `buckets` buckets of one liquid, filled and emptied with buckets.
+    Tank { buckets: u16 },
 }
 
 impl Effect {
@@ -122,7 +130,14 @@ impl Effect {
             Self::Stat { value, .. } => value.abs(),
             Self::Area(w, h) => f32::from(*w) * f32::from(*h),
             Self::Magnet { radius, .. } => *radius,
-            Self::Sort | Self::Filter | Self::Compress | Self::Void => 1.0,
+            Self::Tank { buckets } => f32::from(*buckets),
+            Self::Sort
+            | Self::Filter
+            | Self::Compress
+            | Self::Void
+            | Self::Pickup
+            | Self::Feed
+            | Self::Crafting => 1.0,
         }
     }
 }

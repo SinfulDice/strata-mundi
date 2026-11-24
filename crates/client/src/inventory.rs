@@ -196,6 +196,7 @@ mod tests {
                 remainder: None,
                 kit: None,
                 upgrade: None,
+                bag: None,
                 gear: Default::default(),
             };
             items.insert(format!("strata:{name}").parse().unwrap(), item);

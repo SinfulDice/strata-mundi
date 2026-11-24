@@ -183,3 +183,4 @@ spatial-simple = Stéréo simple
 action-journal = Journal
 action-hammer-area = Zone du marteau
 action-dash = Esquive (dash)
+action-backpack = Ouvrir le sac à dos

@@ -1,0 +1,2 @@
+// A small pouch of 9 slots for ammunition (arrows and bolts come with ranged weapons) (tags/ammo.ron): they go in first when picked up. Opened with a right click.
+Item(texture: "strata:ammo_pouch", category: Some("strata:storage"), bag: Some(Bag(slots: 9, accepts: Some("strata:ammo"))))
