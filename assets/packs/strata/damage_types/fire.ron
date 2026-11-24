@@ -1,0 +1,2 @@
+// Flames, and burning afterwards.
+DamageType(resistance: Some("strata:fire_resistance"), ignores_invulnerability: true)

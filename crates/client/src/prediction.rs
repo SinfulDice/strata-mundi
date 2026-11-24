@@ -121,6 +121,10 @@ pub fn predicted_change(
         | WorldAction::StartBreak { .. }
         | WorldAction::StopBreak
         | WorldAction::UseBlock { .. }
+        | WorldAction::StartUse { .. }
+        | WorldAction::StopUse
+        | WorldAction::Fill { .. }
+        | WorldAction::Drink { .. }
         | WorldAction::Interact(_)
         | WorldAction::Attack(_) => None,
     }

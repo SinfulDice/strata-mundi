@@ -1,9 +1,10 @@
 //! Systems: functions run once per tick over the ECS storages.
 
-use crate::ecs::{Ecs, Entity};
+use crate::ecs::{Ecs, Entity, PlayerControl};
 use crate::rules::BlockRules;
 use glam::DVec3;
-use strata_core::physics::{BoatControls, MoveInput, Terrain, step, step_boat};
+use strata_core::physics::{BoatControls, Body, MoveInput, Terrain, step, step_boat};
+use strata_core::survival::Health;
 use strata_core::updates::BlockChange;
 
 /// Inputs a client may bank to catch up after a stall (one more is earned each tick).
@@ -38,9 +39,19 @@ pub fn player_movement(ecs: &mut Ecs, terrain: &impl Terrain) -> Vec<Entity> {
             };
             let pressed_sneak = input.sneak && !control.sneaking;
             control.sneaking = input.sneak;
+            let health = ecs.healths.get_mut(entity);
             match boat.as_deref_mut() {
-                Some(boat) => boat.controls = steering(&input),
-                None => step(body, &input, &control.movement, terrain),
+                Some(boat) => {
+                    boat.controls = steering(&input);
+                    if let Some(health) = health {
+                        health.fall_peak = None;
+                    }
+                }
+                None => {
+                    let before = *body;
+                    step(body, &input, &control.movement, terrain);
+                    track_effort(control, health, (&before, body), &input, terrain);
+                }
             }
             control.last_sequence = sequence;
             control.look = [input.yaw, input.pitch];
@@ -63,11 +74,67 @@ pub fn player_movement(ecs: &mut Ecs, terrain: &impl Terrain) -> Vec<Entity> {
         if control.idle_ticks > IDLE_TICKS {
             match boat {
                 Some(boat) => boat.controls = BoatControls::default(),
-                None => step(body, &MoveInput::default(), &control.movement, terrain),
+                None => {
+                    let before = *body;
+                    let still = MoveInput::default();
+                    step(body, &still, &control.movement, terrain);
+                    let health = ecs.healths.get_mut(entity);
+                    track_effort(control, health, (&before, body), &still, terrain);
+                }
             }
         }
     }
     dismounts
+}
+
+/// Counts the effort of one move for the needs (sprint, jumps, swimming, dashes) and
+/// follows the fall going on: landing adds the blocks fallen to `PlayerControl::fallen`.
+fn track_effort(
+    control: &mut PlayerControl,
+    health: Option<&mut Health>,
+    (before, after): (&Body, &Body),
+    input: &MoveInput,
+    terrain: &impl Terrain,
+) {
+    let position = after.position;
+    let (x, z) = (position.x.floor() as i32, position.z.floor() as i32);
+    let wet = [0.1, 0.9].iter().any(|&dy| {
+        terrain
+            .liquid(x, (position.y + dy).floor() as i32, z)
+            .is_some()
+    });
+    if let Some(health) = health {
+        let cushioned = wet || after.flying;
+        let fallen = health.follow_fall(position.y, after.velocity.y, after.on_ground, cushioned);
+        control.fallen = control.fallen.max(fallen);
+    }
+    if after.flying {
+        return;
+    }
+    let shift = after.position - before.position;
+    let moved = shift.x.hypot(shift.z);
+    let effort = &mut control.exertion;
+    let sprinting = input.sprint
+        && control.movement.can_sprint
+        && !input.sneak
+        && input.wish != [0.0; 2]
+        && moved > 0.0;
+    if wet {
+        effort.swum += moved as f32;
+    } else if sprinting {
+        effort.sprinted += moved as f32;
+        effort.sprint_ticks = effort.sprint_ticks.saturating_add(1);
+    }
+    let jumped = before.on_ground && !after.on_ground && after.velocity.y > 0.0 && input.jump;
+    let air_jumped = after.abilities.air_jumps_used > before.abilities.air_jumps_used;
+    match (jumped || air_jumped, sprinting) {
+        (true, true) => effort.sprint_jumps = effort.sprint_jumps.saturating_add(1),
+        (true, false) => effort.jumps = effort.jumps.saturating_add(1),
+        _ => {}
+    }
+    if after.abilities.dash_left > before.abilities.dash_left {
+        effort.dashes = effort.dashes.saturating_add(1);
+    }
 }
 
 /// Forward/backward paddles, left/right turns.

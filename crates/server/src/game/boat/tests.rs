@@ -65,6 +65,7 @@ fn a_boat_put_on_water_floats_at_the_surface() {
         w.game
             .take_messages()
             .iter()
+            .filter(|m| !matches!(m, ServerMessage::Vitals(_)))
             .all(|m| matches!(m, ServerMessage::EntityMoved { .. }))
     );
 }

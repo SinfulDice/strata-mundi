@@ -1,0 +1,2 @@
+// Bathing in lava.
+DamageType(resistance: Some("strata:fire_resistance"))

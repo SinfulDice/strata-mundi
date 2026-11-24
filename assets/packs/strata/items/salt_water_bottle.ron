@@ -1,0 +1,2 @@
+// Sea water: makes one thirstier; boiled in a smoker or a furnace, it becomes fresh water.
+Item(texture: "strata:salt_water_bottle", max_stack: 16, category: Some("strata:food"))

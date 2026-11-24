@@ -1,0 +1,30 @@
+// A leather case with a red cross: bandages and balm inside.
+Sprite(
+    colors: {
+        'O': ("leather", 0),
+        'L': ("leather", 1),
+        'H': ("leather", 2),
+        'W': ("leather", 3),
+        'r': ("poppy", 1),
+        'R': ("poppy", 3),
+        's': ("iron", 2),
+    },
+    rows: [
+        "................",
+        "................",
+        "......OssO......",
+        ".....Os..sO.....",
+        "..OOOOOOOOOOOO..",
+        ".OLHHHHHHHHHHLO.",
+        ".OHWHHHrrHHHHHO.",
+        ".OHHHHHrRHHHHHO.",
+        ".OHHHrrRRrrHHHO.",
+        ".OHHHrRRRRrHHHO.",
+        ".OHHHHHrRHHHHHO.",
+        ".OHHHHHrrHHHHHO.",
+        ".OLHHHHHHHHHHLO.",
+        "..OOOOOOOOOOOO..",
+        "................",
+        "................",
+    ],
+)

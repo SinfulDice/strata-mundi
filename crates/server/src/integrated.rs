@@ -58,16 +58,14 @@ impl IntegratedServer {
 
     fn start(connection: ServerConnection, config: ServerConfig) -> std::io::Result<Self> {
         let persistence = Persistence::new(config.world, Arc::clone(&config.content));
-        let generator = Arc::clone(&config.generator);
-        let start = persistence.player_start(&config.dimension, || {
-            let spawn = generator.spawn_point();
-            tracing::info!(?spawn, "spawn point chosen");
-            DVec3::new(
-                f64::from(spawn.x) + 0.5,
-                f64::from(spawn.y),
-                f64::from(spawn.z) + 0.5,
-            )
-        });
+        let spawn = config.generator.spawn_point();
+        tracing::info!(?spawn, "spawn point chosen");
+        let spawn = DVec3::new(
+            f64::from(spawn.x) + 0.5,
+            f64::from(spawn.y),
+            f64::from(spawn.z) + 0.5,
+        );
+        let start = persistence.player_start(&config.dimension, || spawn);
         let meta = &persistence.meta;
         let mut game = Game::new(
             BlockRules::new(&config.content),
@@ -79,8 +77,19 @@ impl IntegratedServer {
         game.durability = meta.durability;
         game.set_gear_mobility(meta.gear_mobility);
         game.set_storage_magnets(meta.storage_magnets);
+        game.set_survival_options(meta.survival);
+        game.set_spawn(spawn);
+        game.set_biomes(
+            biome_infos(&config.generator)
+                .into_iter()
+                .map(|b| b.id)
+                .collect(),
+        );
         game.set_known_recipes(start.recipes);
         game.set_inventory(start.inventory);
+        if let Some(vitals) = start.vitals {
+            game.restore_vitals(vitals);
+        }
         game.unknown_recipes = game.adopt_moved_recipes(start.unknown_recipes);
         game.give_back(start.grid);
         game.set_look(start.look);

@@ -1,0 +1,1 @@
+Consume(ticks: 24, thirst: -3.0, leaves: Some("strata:waterskin"), sips: Some(4), sound: Some("strata:drink"), always: true)

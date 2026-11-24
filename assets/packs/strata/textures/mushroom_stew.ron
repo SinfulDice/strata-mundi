@@ -1,0 +1,30 @@
+// A bowl of mushroom stew, red and brown bits in a warm broth.
+Sprite(
+    colors: {
+        'O': ("oak_wood", 0),
+        'w': ("oak_wood", 1),
+        'W': ("oak_wood", 3),
+        's': ("stew", 2),
+        'S': ("stew", 3),
+        'r': ("red_mushroom_cap", 2),
+        'b': ("brown_mushroom", 1),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        ".OOOOOOOOOOOOOO.",
+        ".OsSsrsSsbsSrsO.",
+        ".OWsbssSrssbsWO.",
+        ".OWwwwwwwwwwwWO.",
+        "..OWwwwwwwwwWO..",
+        "..OwWwwwwwwwwO..",
+        "...OwwwwwwwwO...",
+        "....OOwwwwOO....",
+        ".....OOOOOO.....",
+        "................",
+        "................",
+    ],
+)

@@ -1,0 +1,4 @@
+Shapeless(
+    ingredients: [Item("strata:brown_mushroom"), Item("strata:red_mushroom"), Item("strata:bowl")],
+    result: Result(item: "strata:mushroom_stew"),
+)

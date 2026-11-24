@@ -1,0 +1,2 @@
+// Lava burns hard and sets one on fire.
+Contact(damage: "strata:lava", amount: 4.0, effect: Some((effect: "strata:burning", seconds: 8.0)))

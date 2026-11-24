@@ -77,6 +77,15 @@ pub enum WorldAction {
     },
     /// Right click on a block that does something of its own (opens a chest).
     UseBlock { pos: BlockPos },
+    /// Starts eating, drinking or applying `item`, held in hotbar slot `slot`, until
+    /// `StopUse` (or another item, or another slot) stops it.
+    StartUse { item: ItemId, slot: u8 },
+    /// The use button was let go before the item was consumed.
+    StopUse,
+    /// Fills the held empty container (a bottle) at the liquid source at `pos`.
+    Fill { item: ItemId, pos: BlockPos },
+    /// Sneaking with an empty hand, drinks a sip at the liquid source at `pos`.
+    Drink { pos: BlockPos },
     /// Right click on an entity (get into a boat).
     Interact(NetEntity),
     /// Left click on an entity (creative: takes a boat away).
@@ -219,6 +228,13 @@ pub enum ServerMessage {
     RecipeLearned(RecipeId),
     /// Answer to a console command.
     Feedback(Feedback),
+    /// The survival gauges changed.
+    Vitals(Box<crate::VitalsView>),
+    /// The player was hurt.
+    Hurt(crate::HurtView),
+    /// The player fell unconscious and woke at the spawn point, keeping everything
+    /// (until death comes with milestone 10).
+    Fainted,
 }
 
 #[cfg(test)]

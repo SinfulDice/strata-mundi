@@ -1,0 +1,28 @@
+// A waterskin of sea water, a green stopper.
+Sprite(
+    colors: {
+        'O': ("leather", 0),
+        'L': ("leather", 1),
+        'H': ("leather", 2),
+        'W': ("leather", 3),
+        'f': ("sea_water", 2),
+    },
+    rows: [
+        "................",
+        "......OOO.......",
+        "......OfO.......",
+        ".......OO.......",
+        "......OLLO......",
+        ".....OLHHLO.....",
+        "....OLHHHHLO....",
+        "...OLHWHHHHLO...",
+        "...OLHWHHHHLO...",
+        "...OLHHHHHHLO...",
+        "...OLHHHHHHLO...",
+        "...OLLHHHHLLO...",
+        "....OLLLLLLO....",
+        ".....OOOOOO.....",
+        "................",
+        "................",
+    ],
+)

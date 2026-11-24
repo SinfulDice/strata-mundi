@@ -1,0 +1,2 @@
+// Care over time (bandages, kits, a warm stew): one point a second, times the strength.
+StatusEffect(heal: Some((amount: 1.0, every: 20)))

@@ -29,6 +29,9 @@ use strata_protocol::{
 };
 
 mod messages;
+mod vitals;
+
+pub use vitals::{ClientUse, ClientVitals};
 
 /// Field of view widening while sprinting, and how fast it eases in and out (per second).
 const SPRINT_ZOOM: f32 = 1.1;
@@ -43,6 +46,8 @@ pub struct Gameplay {
     pub controls: ControlSettings,
     /// Off with "reduce camera effects".
     pub camera_effects: bool,
+    /// How hard a hit shakes the camera, in percent (off with "reduce camera effects").
+    pub hurt_shake: u32,
     /// A cinematic has the camera; the player stands still meanwhile.
     pub cinematic: Option<PlayingShot>,
     /// Answers to console commands, not shown yet.
@@ -65,6 +70,8 @@ pub struct Gameplay {
     pub container_opened: bool,
     furnace_clock: crate::furnace::FurnaceClock,
     pub crafting: ClientCrafting,
+    /// Survival gauges, hits and eating.
+    pub vitals: ClientVitals,
 }
 
 impl Gameplay {
@@ -82,6 +89,7 @@ impl Gameplay {
             info,
             controls,
             camera_effects: true,
+            hurt_shake: 100,
             cinematic: None,
             feedback: Vec::new(),
             dimension: None,
@@ -95,6 +103,7 @@ impl Gameplay {
             container_opened: false,
             furnace_clock: Default::default(),
             crafting: ClientCrafting::default(),
+            vitals: ClientVitals::default(),
         }
     }
 
@@ -147,6 +156,12 @@ impl Gameplay {
         if let Some(eyes) = self.riding_eyes() {
             self.camera.position = eyes;
         }
+        let shake = if self.camera_effects {
+            self.hurt_shake
+        } else {
+            0
+        };
+        self.camera.shake = self.vitals.shake(shake);
         let intent = self.interaction.update(
             dt,
             &self.camera,
@@ -155,6 +170,10 @@ impl Gameplay {
             input,
             &mut self.inventory,
         );
+        self.vitals.advance(dt);
+        let intent = intent
+            .or_else(|| self.fill_or_drink(input))
+            .or_else(|| self.use_consumable(input));
         if let Some(action) = intent {
             self.send_action(action, connection);
         }

@@ -1,0 +1,1 @@
+Cooking(ingredient: Item("strata:apple"), result: Result(item: "strata:baked_apple"), experience: 0.35, kind: "strata:food")

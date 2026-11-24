@@ -1,0 +1,2 @@
+// An apple baked in a smoker or a furnace.
+Item(texture: "strata:baked_apple", category: Some("strata:food"))

@@ -116,6 +116,9 @@ impl Gameplay {
                 Some(day) => day.receive(time, cycle),
                 None => self.day = Some(DayClock::at(time, cycle)),
             },
+            ServerMessage::Vitals(view) => self.receive_vitals(*view),
+            ServerMessage::Hurt(hurt) => self.vitals.hit(&hurt, &self.info.content),
+            ServerMessage::Fainted => self.vitals.faint(),
             ServerMessage::Tick { .. } | ServerMessage::Saved => {}
         }
     }

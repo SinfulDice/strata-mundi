@@ -1,0 +1,2 @@
+// Thirst at zero: slow harm that never kills on its own (`thirst.floor`).
+DamageType(ignores_invulnerability: true, shakes: false)

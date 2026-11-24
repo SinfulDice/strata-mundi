@@ -1,0 +1,4 @@
+Shapeless(
+    ingredients: [Item("strata:leather"), Item("strata:bandage"), Item("strata:bandage"), Item("strata:bandage"), Item("strata:iron_nugget")],
+    result: Result(item: "strata:medical_kit"),
+)

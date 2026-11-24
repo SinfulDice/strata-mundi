@@ -1,0 +1,13 @@
+// Getting hurt: a dull thump with a short low grunt.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-hurt",
+    volume: 0.5,
+    pitch: (0.9, 1.1),
+    variants: 4,
+    duration: 0.25,
+    layers: [
+        Noise(color: Brown, filter: LowPass((hz: (200, 320))), envelope: (decay: (0.08, 0.12))),
+        Modes(modes: [(hz: (140, 180), decay: (0.08, 0.12), gain: 0.4)]),
+    ],
+)

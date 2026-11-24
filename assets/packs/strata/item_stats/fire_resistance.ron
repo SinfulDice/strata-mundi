@@ -1,0 +1,2 @@
+// Share of the harm of fire and lava taken away, in percent (equipment, potions, spells). Bounds of the values effects give it.
+ItemStat(min: 0.0, max: 100.0)

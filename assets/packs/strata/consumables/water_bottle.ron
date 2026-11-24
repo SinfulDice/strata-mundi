@@ -1,0 +1,1 @@
+Consume(thirst: 6.0, leaves: Some("strata:glass_bottle"), sound: Some("strata:drink"))

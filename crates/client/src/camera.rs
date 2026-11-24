@@ -13,6 +13,8 @@ pub struct Camera {
     pub fov_y_degrees: f32,
     /// Multiplies the field of view for effects (sprinting widens it); 1 = none.
     pub zoom: f32,
+    /// Radians the view tilts up or down for a hit, drawn only (aiming ignores it).
+    pub shake: f32,
 }
 
 const MAX_PITCH: f32 = 89.9_f32 * std::f32::consts::PI / 180.0;
@@ -26,6 +28,7 @@ impl Camera {
             pitch: 0.0,
             fov_y_degrees,
             zoom: 1.0,
+            shake: 0.0,
         };
         camera.rotate(0.0, pitch_degrees.to_radians());
         camera
@@ -56,7 +59,11 @@ impl Camera {
     /// View-projection with the camera at the origin, reverse-Z and an infinite far plane.
     /// wgpu uses the DirectX clip-space convention (depth 0..1, Y up) on every backend.
     pub fn view_projection(&self, aspect_ratio: f32) -> Mat4 {
-        let view = view::look_to_mat4(Vec3::ZERO, self.forward(), Vec3::Y);
+        let shaken = Self {
+            pitch: (self.pitch + self.shake).clamp(-MAX_PITCH, MAX_PITCH),
+            ..*self
+        };
+        let view = view::look_to_mat4(Vec3::ZERO, shaken.forward(), Vec3::Y);
         let projection = directx::perspective_infinite_reverse(
             (self.fov_y_degrees * self.zoom)
                 .clamp(1.0, 170.0)

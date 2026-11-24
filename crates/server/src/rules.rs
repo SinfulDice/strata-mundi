@@ -11,6 +11,7 @@ use strata_core::id::Identifier;
 use strata_core::inventory::ItemRules;
 use strata_core::physics::LiquidCell;
 use strata_core::storage::{SlotLayout, Storage};
+use strata_core::survival::Survival;
 use strata_core::updates::UpdateRules;
 use strata_core::upgrade::Upgrades;
 use strata_core::worn::Worn;
@@ -50,6 +51,8 @@ pub struct BlockRules {
     pub storage: Arc<Storage>,
     /// Backpacks and pouches.
     pub bags: Arc<Bags>,
+    /// Health, needs, damage, effects, food and drinks.
+    pub survival: Arc<Survival>,
 }
 
 impl BlockRules {
@@ -112,6 +115,7 @@ impl BlockRules {
             benches: Arc::new(content.benches.clone()),
             storage: Arc::new(content.storage.clone()),
             bags: Arc::new(content.bags.clone()),
+            survival: Arc::new(content.survival.clone()),
             updates: Arc::new(UpdateRules::new(content)),
             mining: Arc::new(MiningRules::new(content)),
         }

@@ -1,0 +1,2 @@
+// Brown and red mushrooms in a bowl: filling, and a little healing.
+Item(texture: "strata:mushroom_stew", max_stack: 1, category: Some("strata:food"))

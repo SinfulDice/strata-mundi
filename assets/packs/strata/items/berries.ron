@@ -1,0 +1,2 @@
+// Wild berries, sometimes found on bushes cut without a sickle.
+Item(texture: "strata:berries", category: Some("strata:food"))

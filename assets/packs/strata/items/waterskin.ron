@@ -1,0 +1,2 @@
+// An empty leather waterskin, filled at a water source.
+Item(texture: "strata:waterskin", max_stack: 1, category: Some("strata:food"))

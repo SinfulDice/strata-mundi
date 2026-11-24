@@ -1,0 +1,29 @@
+// An apple: round and red, a stalk and a leaf.
+Sprite(
+    colors: {
+        'O': ("apple", 0),
+        'r': ("apple", 1),
+        'R': ("apple", 2),
+        'W': ("apple", 3),
+        's': ("stick", 0),
+        'L': ("apple_leaf", 2),
+    },
+    rows: [
+        "................",
+        ".......s........",
+        ".......sLL......",
+        "......OsLLL.....",
+        "....OOOsOOOO....",
+        "...OrrrrRRRRO...",
+        "..OrrRRRRRWWRO..",
+        "..OrRRRRRRWWRO..",
+        "..OrRRRRRRRRRO..",
+        "..OrrRRRRRRRRO..",
+        "..OrrRRRRRRRRO..",
+        "...OrrRRRRRRO...",
+        "...OrrrRRRRrO...",
+        "....OOrrrrOO....",
+        "......OOOO......",
+        "................",
+    ],
+)

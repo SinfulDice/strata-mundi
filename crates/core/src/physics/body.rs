@@ -64,6 +64,9 @@ pub struct MovementSettings {
     /// What the worn equipment gives (none when `gear_mobility` is off).
     #[serde(default)]
     pub mobility: Mobility,
+    /// Off when out of stamina or too hungry (survival gauges): sprinting walks.
+    #[serde(default = "yes")]
+    pub can_sprint: bool,
 }
 
 fn full_speed() -> f64 {
@@ -83,6 +86,7 @@ impl Default for MovementSettings {
             speed: 1.0,
             gear_mobility: true,
             mobility: Mobility::default(),
+            can_sprint: true,
         }
     }
 }
@@ -133,7 +137,7 @@ pub fn step(
     } else {
         swim::immersion(body, terrain)
     };
-    let wish = wished_velocity(body, input, liquid);
+    let wish = wished_velocity(body, input, settings.can_sprint, liquid);
     let wish = if body.flying {
         wish
     } else {
@@ -192,8 +196,14 @@ impl Body {
     }
 }
 
-fn wished_velocity(body: &Body, input: &MoveInput, liquid: Option<LiquidMotion>) -> DVec2 {
-    let speed = match (body.flying, input.sprint, input.sneak) {
+fn wished_velocity(
+    body: &Body,
+    input: &MoveInput,
+    can_sprint: bool,
+    liquid: Option<LiquidMotion>,
+) -> DVec2 {
+    let sprint = input.sprint && (can_sprint || body.flying);
+    let speed = match (body.flying, sprint, input.sneak) {
         (true, true, _) => FLY_SPEED * 2.0,
         (true, false, _) => FLY_SPEED,
         (false, _, true) => SNEAK_SPEED,

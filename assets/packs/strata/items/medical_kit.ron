@@ -1,0 +1,2 @@
+// Bandages, a needle and a balm in a leather case: stops bleeding and heals much.
+Item(texture: "strata:medical_kit", max_stack: 4, category: Some("strata:care"))

@@ -1,12 +1,25 @@
 // In-game overlay. Every element has an anchor and an offset in interface pixels, so it
-// can later be moved in the HUD editor (milestone 7).
+// can be moved in the HUD editor. Bars: health, stamina and mana at the top left (Dark
+// Souls), food, thirst and temperature over the hotbar, experience just above it; their
+// colours are in theme.ron. No armour bar: protection shows in the inventory.
 Screen(
     root: [
         Crosshair(id: "crosshair", anchor: Center, at: (0, 0)),
+        Gauge(id: "use", anchor: Center, at: (0, 12), size: (32, 4), optional: true),
         Label(id: "target", anchor: Top, at: (0, 4), text: "@target", boxed: true),
+        Gauge(id: "health", anchor: TopLeft, at: (4, 4), size: (104, 8), optional: true),
+        Gauge(id: "stamina", anchor: TopLeft, at: (4, 14), size: (84, 5), optional: true),
+        Gauge(id: "mana", anchor: TopLeft, at: (4, 21), size: (84, 5), optional: true),
+        Label(id: "effects", anchor: TopLeft, at: (4, 29), text: "@effects", boxed: true),
         Slots(id: "hotbar", anchor: Bottom, at: (0, -3), count: 9),
-        Label(id: "mount", anchor: Bottom, at: (0, -32), text: "@mount", boxed: true),
-        Label(id: "area", anchor: Bottom, at: (0, -46), text: "@area", boxed: true),
+        Gauge(id: "experience", anchor: Bottom, at: (0, -27), size: (182, 4), optional: true),
+        Gauge(id: "food", anchor: Bottom, at: (-46, -33), size: (88, 5), optional: true),
+        Gauge(id: "thirst", anchor: Bottom, at: (46, -33), size: (88, 5), optional: true),
+        Gauge(id: "breath", anchor: Bottom, at: (46, -40), size: (88, 4), optional: true),
+        Gauge(id: "temperature", anchor: Bottom, at: (-46, -40), size: (88, 4), optional: true),
+        Label(id: "mount", anchor: Bottom, at: (0, -48), text: "@mount", boxed: true),
+        Label(id: "area", anchor: Bottom, at: (0, -62), text: "@area", boxed: true),
+        Label(id: "notice", anchor: Center, at: (0, -36), text: "@notice", boxed: true),
         Log(id: "subtitles", anchor: BottomRight, at: (-2, -2), size: (150, 72)),
     ],
 )

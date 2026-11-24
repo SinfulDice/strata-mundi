@@ -5,6 +5,7 @@ pub mod commands;
 mod inventory;
 mod local;
 mod messages;
+mod vitals;
 mod worlds;
 
 pub use inventory::{CraftingView, FurnaceView, InventoryRequest, OpenedContainer, TankView};
@@ -13,6 +14,7 @@ pub use messages::{
     ActionId, BiomeInfo, ClientMessage, DAY_TIME_PERIOD, DayState, EntityState,
     MAX_PENDING_ACTIONS, NetEntity, ServerMessage, WorldAction,
 };
+pub use vitals::{EffectView, HurtView, VitalsView};
 pub use worlds::{GameMode, NewWorld, WorldStatus, WorldSummary};
 
 /// Bounds of `ClientMessage::ViewDistance`, in columns: the client asks for a little
@@ -27,4 +29,4 @@ pub fn in_view_disc(dx: i32, dz: i32, view_distance: u32) -> bool {
 }
 
 /// Bumped whenever a message changes in an incompatible way.
-pub const PROTOCOL_VERSION: u32 = 13;
+pub const PROTOCOL_VERSION: u32 = 14;

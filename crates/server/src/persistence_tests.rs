@@ -32,6 +32,7 @@ fn a_saved_player_comes_back_as_left() {
         gear_mobility: true,
         storage_magnets: true,
         durability: Default::default(),
+        survival: Default::default(),
         generation: Default::default(),
     };
     let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
@@ -94,6 +95,7 @@ fn boats_and_the_seat_come_back_and_old_worlds_have_none() {
         gear_mobility: true,
         storage_magnets: true,
         durability: Default::default(),
+        survival: Default::default(),
         generation: Default::default(),
     };
     let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
@@ -146,6 +148,7 @@ pub(super) fn new_world(name: &str) -> (std::path::PathBuf, save::WorldFolder, W
         gear_mobility: true,
         storage_magnets: true,
         durability: Default::default(),
+        survival: Default::default(),
         generation: Default::default(),
     };
     let (folder, meta) = save::create(&saves, &new, 9, 100).unwrap();
@@ -177,6 +180,7 @@ fn a_world_from_before_inventories_keeps_its_hotbar() {
         selected: 2,
         boat: None,
         recipes: Vec::new(),
+        vitals: None,
     };
     folder.write_player(&old).unwrap();
     let path = saves.join(&folder.id).join("player.ron");

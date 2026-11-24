@@ -1,0 +1,2 @@
+// An empty bottle, filled at a water source (salt water by the sea).
+Item(texture: "strata:glass_bottle", category: Some("strata:food"))

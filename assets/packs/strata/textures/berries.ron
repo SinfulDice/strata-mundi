@@ -1,0 +1,29 @@
+// A handful of dark berries on a twig.
+Sprite(
+    colors: {
+        'O': ("berry", 0),
+        'b': ("berry", 1),
+        'B': ("berry", 2),
+        'W': ("berry", 3),
+        's': ("stick", 1),
+        'L': ("apple_leaf", 2),
+    },
+    rows: [
+        "................",
+        "................",
+        ".........ss.....",
+        "........sLL.....",
+        "...OO..sLLL.....",
+        "..ObBO.s..OO....",
+        "..OBWO.s.ObBO...",
+        "..ObBOss.OBWO...",
+        "...OOs...ObBO...",
+        "....s.OO..OO....",
+        "...s.ObBO.......",
+        "..OO.OBWO.......",
+        ".ObBOObBO.......",
+        ".OBWO.OO........",
+        ".ObBO...........",
+        "..OO............",
+    ],
+)

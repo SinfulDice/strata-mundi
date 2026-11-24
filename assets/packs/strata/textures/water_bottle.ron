@@ -1,0 +1,29 @@
+// A bottle of fresh water.
+Sprite(
+    colors: {
+        'O': ("glass", 0),
+        'G': ("glass", 1),
+        'W': ("glass", 3),
+        'c': ("oak_bark", 2),
+        'a': ("water", 1),
+        'b': ("water", 3),
+    },
+    rows: [
+        "................",
+        "......OOOO......",
+        "......OccO......",
+        ".......OO.......",
+        "......OGWO......",
+        "......OGWO......",
+        ".....OG..GO.....",
+        "....OGW...GO....",
+        "...OGWaaaaaGO...",
+        "...OWabbbbaGO...",
+        "...OWabbbbaGO...",
+        "...OGabbbbaGO...",
+        "...OGaaaaaaGO...",
+        "....OGaaaaGO....",
+        ".....OOOOOO.....",
+        "................",
+    ],
+)

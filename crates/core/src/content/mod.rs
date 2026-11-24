@@ -114,6 +114,8 @@ pub struct Content {
     pub bags: crate::bag::Bags,
     /// Recipes of the benches (jeweller…).
     pub benches: Benches,
+    /// Health, needs, damage, status effects, food and drinks.
+    pub survival: crate::survival::Survival,
     /// Item tooltips by language, see `item_tooltip`.
     pub tooltips: describe::TooltipCache,
 }
@@ -173,6 +175,12 @@ impl Content {
         let bags = crate::bag::load_bags(&items, &blocks, &tags, &storage, &mut errors);
         bound_worn_effects(&mut items, &upgrades.stats, &mut errors);
         let worn = load_worn(packs, &items, &upgrades.stats, &mut errors);
+        let survival_known = crate::survival::Known {
+            items: &items,
+            blocks: &blocks,
+            stats: &upgrades.stats,
+        };
+        let survival = crate::survival::load_survival(packs, &survival_known, &mut errors);
         loot::check_loot_names(&refs.loot, &loot_tables, &mut errors);
         worked::resolve_worked(&mut blocks, refs.worked, &items, &mut errors);
         let translations = Translations::load(&presentation, &mut errors);
@@ -203,6 +211,7 @@ impl Content {
             storage,
             bags,
             benches,
+            survival,
             tooltips: Default::default(),
         };
         content.cache_tooltips();

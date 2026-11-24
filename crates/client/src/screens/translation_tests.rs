@@ -54,6 +54,20 @@ const CODE_KEYS: &[&str] = &[
     "ui-gen-preview-failed",
     "ui-gen-copied",
     "ui-gen-no-clipboard",
+    "ui-new-world-hunger",
+    "ui-new-world-thirst",
+    "ui-new-world-stamina",
+    "ui-new-world-survival-rate",
+    "hud-fainted",
+    "hud-effect",
+    "hud-effects-sample",
+    "survival-food-line",
+    "survival-thirst-line",
+    "survival-salty-line",
+    "survival-effect-line",
+    "survival-cure-line",
+    "survival-sips-line",
+    "survival-fill-line",
 ];
 
 mod tests {

@@ -1,0 +1,8 @@
+// Bushes: kept with a sickle; otherwise berries one time in two.
+LootTable(pools: [
+    Pool(conditions: [Tool("strata:sickle")], entries: [Itself()]),
+    Pool(conditions: [Not(Tool("strata:sickle"))], entries: [
+        Nothing(),
+        Item(item: "strata:berries"),
+    ]),
+])

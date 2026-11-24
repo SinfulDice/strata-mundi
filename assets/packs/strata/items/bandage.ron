@@ -1,0 +1,2 @@
+// Cloth strips: stop bleeding and heal a little over a few seconds.
+Item(texture: "strata:bandage", max_stack: 16, category: Some("strata:care"))

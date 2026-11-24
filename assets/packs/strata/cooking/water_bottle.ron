@@ -1,0 +1,2 @@
+// Boiling salt water leaves the salt behind.
+Cooking(ingredient: Item("strata:salt_water_bottle"), result: Result(item: "strata:water_bottle"), experience: 0.1, kind: "strata:food")

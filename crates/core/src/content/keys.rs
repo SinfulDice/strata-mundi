@@ -48,6 +48,15 @@ impl Content {
         let upgrades = upgrades.map(|u| u.id.translation_key("upgrade"));
         let stats = self.upgrades.stats.keys();
         let stats = stats.map(|id| id.translation_key("item-stat"));
+        let survival = &self.survival;
+        let effects = survival
+            .effects
+            .keys()
+            .map(|id| id.translation_key("effect"));
+        let damage = survival
+            .damage
+            .keys()
+            .map(|id| id.translation_key("damage"));
         let mut keys: Vec<String> = blocks
             .chain(tags)
             .chain(items)
@@ -60,6 +69,8 @@ impl Content {
             .chain(categories)
             .chain(subtitles)
             .chain(sounds)
+            .chain(effects)
+            .chain(damage)
             .collect();
         keys.sort();
         keys.dedup();

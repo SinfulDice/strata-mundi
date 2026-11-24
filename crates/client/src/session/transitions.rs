@@ -101,6 +101,7 @@ impl Session {
         let info = BlockInfo::new(Arc::clone(&self.content));
         let mut game = Gameplay::new(view, camera, info, self.applied.controls.clone());
         game.camera_effects = !self.applied.interface.reduce_camera_effects;
+        game.hurt_shake = self.applied.interface.hurt_shake;
         self.stage = Stage::Playing(Box::new(InWorld::new(running, game)));
         self.screens.enter_world();
         Ok(())

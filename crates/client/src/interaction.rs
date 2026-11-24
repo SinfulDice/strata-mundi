@@ -367,6 +367,11 @@ fn use_item(
     })
 }
 
+/// The liquid source (or block) aimed at, as an empty bucket or bottle sees it.
+pub(crate) fn aim_source(camera: &Camera, world: &ClientWorld, info: &BlockInfo) -> Option<RayHit> {
+    aim(camera, world, |block| info.bucket_hit_box(block))
+}
+
 fn aim(
     camera: &Camera,
     world: &ClientWorld,

@@ -1,0 +1,2 @@
+// Four sips of fresh water, then the empty waterskin.
+Consume(ticks: 24, thirst: 5.0, leaves: Some("strata:waterskin"), sips: Some(4), sound: Some("strata:drink"))

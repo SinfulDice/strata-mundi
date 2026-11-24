@@ -1,0 +1,4 @@
+Shapeless(
+    ingredients: [Item("strata:cloth"), Item("strata:plant_fiber")],
+    result: Result(item: "strata:bandage", count: 2),
+)

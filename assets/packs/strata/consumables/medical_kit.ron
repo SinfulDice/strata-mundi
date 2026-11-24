@@ -1,0 +1,2 @@
+// Stops bleeding and heals 14 points over 7 seconds.
+Consume(ticks: 60, effects: [(effect: "strata:healing", seconds: 7.0, strength: 2.0)], cures: ["strata:bleeding"], sound: Some("strata:bandage"), always: true)

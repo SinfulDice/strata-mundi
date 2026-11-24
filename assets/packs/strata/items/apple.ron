@@ -1,0 +1,2 @@
+// Sometimes falls from oak leaves cut without shears.
+Item(texture: "strata:apple", category: Some("strata:food"))

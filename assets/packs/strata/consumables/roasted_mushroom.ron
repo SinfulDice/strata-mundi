@@ -1,0 +1,1 @@
+Consume(food: 4.0, saturation: 4.8, sound: Some("strata:eat"))

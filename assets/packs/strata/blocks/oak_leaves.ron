@@ -5,7 +5,7 @@ Block(
     light_opacity: 1,
     hardness: 0.2,
     tool: Some(BlockTool(kind: "strata:shears")),
-    loot: Some("strata:shears_only"),
+    loot: Some("strata:oak_leaves"),
     sound: Some("strata:leaves"),
     category: Some("strata:natural"),
     flammability: Some((catch: 30, burn: 60)),

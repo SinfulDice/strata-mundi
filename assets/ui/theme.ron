@@ -14,4 +14,17 @@ Theme(
     field: "#151412",
     gauge: "#8a7444",
     shade: "#00000080",
+    // HUD bars: health red, stamina green, mana blue, food brown, thirst light blue.
+    bars: {
+        "health": "#c8402e",
+        "stamina": "#5fa043",
+        "mana": "#4a6fd0",
+        "food": "#c08a3e",
+        "thirst": "#4fa8d8",
+        "breath": "#9ad4f0",
+        "temperature": "#e0a040",
+        "experience": "#8fd14f",
+        "use": "#f2efe8",
+    },
+    hurt: "#c0201870",
 )

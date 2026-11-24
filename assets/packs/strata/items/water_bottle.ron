@@ -1,0 +1,2 @@
+// Fresh water; leaves the empty bottle.
+Item(texture: "strata:water_bottle", max_stack: 16, category: Some("strata:food"))

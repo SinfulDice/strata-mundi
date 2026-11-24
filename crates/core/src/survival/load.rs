@@ -1,0 +1,279 @@
+//! Reading `survival.ron`, `damage_types/`, `status_effects/`, `consumables/`, `fills/`
+//! and `contacts/`, and checking what they name.
+
+use super::defs::{ConsumeDef, ContactDef, DamageType, EffectGrant, FillDef, StatusEffectDef};
+use super::{Consumable, Contact, Fill, Survival, SurvivalRules};
+use crate::content::{Block, BlockId, FluidLevel, Item, ItemId, Registry};
+use crate::id::Identifier;
+use crate::pack::{PackError, PackSet, Sourced, read_ron};
+use crate::upgrade::ItemStatDef;
+use std::collections::BTreeMap;
+use std::path::Path;
+
+pub(crate) struct Known<'a> {
+    pub items: &'a Registry<ItemId, Item>,
+    pub blocks: &'a Registry<BlockId, Block>,
+    pub stats: &'a BTreeMap<Identifier, ItemStatDef>,
+}
+
+pub(crate) fn load_survival(
+    packs: &PackSet,
+    known: &Known<'_>,
+    errors: &mut Vec<PackError>,
+) -> Survival {
+    let damage = load_damage(packs, known, errors);
+    let effects = load_effects(packs, known, &damage, errors);
+    let check = Checker {
+        known,
+        damage: &damage,
+        effects: &effects,
+    };
+    let consumables = packs
+        .layered::<ConsumeDef>("consumables", errors)
+        .into_iter()
+        .filter_map(|(id, sourced)| check.consumable(&id, sourced, errors))
+        .collect();
+    let fills = packs
+        .layered::<FillDef>("fills", errors)
+        .into_iter()
+        .filter_map(|(id, sourced)| check.fill(&id, &sourced, errors))
+        .collect();
+    let contacts = load_contacts(packs, &check, errors);
+    let rules = survival_rules(packs, errors);
+    let drink_source = known
+        .blocks
+        .key(&rules.drinking.source)
+        .filter(|&block| is_source(known.blocks, block));
+    Survival {
+        rules,
+        damage,
+        effects,
+        consumables,
+        fills,
+        contacts,
+        drink_source,
+    }
+}
+
+fn survival_rules(packs: &PackSet, errors: &mut Vec<PackError>) -> SurvivalRules {
+    let mut rules = SurvivalRules::default();
+    for pack in packs.packs() {
+        let path = pack.root.join("survival.ron");
+        if !path.is_file() {
+            continue;
+        }
+        match read_ron::<SurvivalRules>(&path) {
+            Ok(read) => rules = read.clamped(),
+            Err(error) => errors.push(error),
+        }
+    }
+    rules
+}
+
+fn load_damage(
+    packs: &PackSet,
+    known: &Known<'_>,
+    errors: &mut Vec<PackError>,
+) -> BTreeMap<Identifier, DamageType> {
+    let mut damage = BTreeMap::new();
+    for (id, Sourced { value, source }) in packs.layered::<DamageType>("damage_types", errors) {
+        if let Some(stat) = &value.resistance
+            && !known.stats.contains_key(stat)
+        {
+            errors.push(PackError::invalid(
+                &source,
+                format!("unknown stat `{stat}`"),
+            ));
+        }
+        damage.insert(id, value);
+    }
+    damage
+}
+
+fn load_effects(
+    packs: &PackSet,
+    known: &Known<'_>,
+    damage: &BTreeMap<Identifier, DamageType>,
+    errors: &mut Vec<PackError>,
+) -> BTreeMap<Identifier, StatusEffectDef> {
+    let mut effects = BTreeMap::new();
+    let layered = packs.layered::<StatusEffectDef>("status_effects", errors);
+    for (id, Sourced { mut value, source }) in layered {
+        if let Some(hurt) = &value.damage
+            && !damage.contains_key(&hurt.kind)
+        {
+            errors.push(PackError::invalid(
+                &source,
+                format!("unknown damage `{}`", hurt.kind),
+            ));
+            value.damage = None;
+        }
+        value.stats.retain(|(stat, _)| {
+            let known_stat = known.stats.contains_key(stat);
+            if !known_stat {
+                errors.push(PackError::invalid(
+                    &source,
+                    format!("unknown stat `{stat}`"),
+                ));
+            }
+            known_stat
+        });
+        for periodic in value.heal.iter_mut() {
+            periodic.every = periodic.every.max(1);
+        }
+        for periodic in value.damage.iter_mut() {
+            periodic.every = periodic.every.max(1);
+        }
+        effects.insert(id, value);
+    }
+    effects
+}
+
+fn load_contacts(
+    packs: &PackSet,
+    check: &Checker<'_>,
+    errors: &mut Vec<PackError>,
+) -> Vec<Option<Contact>> {
+    let blocks = check.known.blocks;
+    let mut contacts = vec![None; blocks.len()];
+    for (id, Sourced { value, source }) in packs.layered::<ContactDef>("contacts", errors) {
+        let Some(block) = blocks.key(&id) else {
+            errors.push(PackError::invalid(&source, format!("unknown block `{id}`")));
+            continue;
+        };
+        if !check.damage.contains_key(&value.damage) {
+            let message = format!("unknown damage `{}`", value.damage);
+            errors.push(PackError::invalid(&source, message));
+            continue;
+        }
+        let effect = value
+            .effect
+            .and_then(|grant| check.grant(grant, &source, errors));
+        let contact = Contact {
+            damage: value.damage,
+            amount: finite(value.amount),
+            effect,
+        };
+        // Every block of the family (a lit or turned variant) hurts the same.
+        for (key, _, other) in blocks.iter() {
+            if (key == block || other.family(key) == block)
+                && let Some(slot) = contacts.get_mut(usize::from(key.0))
+            {
+                *slot = Some(contact.clone());
+            }
+        }
+    }
+    contacts
+}
+
+fn is_source(blocks: &Registry<BlockId, Block>, block: BlockId) -> bool {
+    blocks
+        .get(block)
+        .and_then(|b| b.fluid)
+        .is_some_and(|state| state.level == FluidLevel::Source && state.source == block)
+}
+
+fn finite(value: f32) -> f32 {
+    if value.is_finite() {
+        value.max(0.0)
+    } else {
+        0.0
+    }
+}
+
+struct Checker<'a> {
+    known: &'a Known<'a>,
+    damage: &'a BTreeMap<Identifier, DamageType>,
+    effects: &'a BTreeMap<Identifier, StatusEffectDef>,
+}
+
+impl Checker<'_> {
+    fn item(&self, id: &Identifier, source: &Path, errors: &mut Vec<PackError>) -> Option<ItemId> {
+        let item = self.known.items.key(id);
+        if item.is_none() {
+            errors.push(PackError::invalid(source, format!("unknown item `{id}`")));
+        }
+        item
+    }
+
+    fn grant(
+        &self,
+        grant: EffectGrant,
+        source: &Path,
+        errors: &mut Vec<PackError>,
+    ) -> Option<EffectGrant> {
+        if !self.effects.contains_key(&grant.effect) {
+            let message = format!("unknown status effect `{}`", grant.effect);
+            errors.push(PackError::invalid(source, message));
+            return None;
+        }
+        Some(EffectGrant {
+            seconds: finite(grant.seconds).min(3600.0),
+            strength: finite(grant.strength).min(100.0),
+            ..grant
+        })
+    }
+
+    fn consumable(
+        &self,
+        id: &Identifier,
+        Sourced { value, source }: Sourced<ConsumeDef>,
+        errors: &mut Vec<PackError>,
+    ) -> Option<(ItemId, Consumable)> {
+        let item = self.item(id, &source, errors)?;
+        let leaves = match &value.leaves {
+            Some(left) => Some(self.item(left, &source, errors)?),
+            None => None,
+        };
+        let effects = (value.effects.into_iter())
+            .filter_map(|grant| self.grant(grant, &source, errors))
+            .collect();
+        for cured in &value.cures {
+            if !self.effects.contains_key(cured) {
+                let message = format!("unknown status effect `{cured}`");
+                errors.push(PackError::invalid(&source, message));
+            }
+        }
+        let number = |value: f32| if value.is_finite() { value } else { 0.0 };
+        Some((
+            item,
+            Consumable {
+                ticks: value.ticks.clamp(1, 200),
+                food: number(value.food),
+                saturation: finite(value.saturation),
+                thirst: number(value.thirst),
+                effects,
+                cures: value.cures,
+                leaves,
+                sips: value.sips.filter(|&sips| sips > 1),
+                sound: value.sound,
+                always: value.always,
+            },
+        ))
+    }
+
+    fn fill(
+        &self,
+        id: &Identifier,
+        Sourced { value, source }: &Sourced<FillDef>,
+        errors: &mut Vec<PackError>,
+    ) -> Option<(ItemId, Fill)> {
+        let item = self.item(id, source, errors)?;
+        let fresh = self.item(&value.fresh, source, errors)?;
+        let salty = self.item(&value.salty, source, errors)?;
+        let blocks = self.known.blocks;
+        let liquid = blocks.key(&value.liquid).filter(|&b| is_source(blocks, b));
+        if liquid.is_none() {
+            let message = format!("`{}` is not a liquid source", value.liquid);
+            errors.push(PackError::invalid(source, message));
+        }
+        Some((
+            item,
+            Fill {
+                liquid: liquid?,
+                fresh,
+                salty,
+            },
+        ))
+    }
+}

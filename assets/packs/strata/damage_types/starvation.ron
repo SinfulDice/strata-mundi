@@ -1,0 +1,2 @@
+// Food at zero: slow harm that never kills on its own (`starve_floor`).
+DamageType(ignores_invulnerability: true, shakes: false)

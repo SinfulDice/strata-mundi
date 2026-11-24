@@ -1,0 +1,28 @@
+// A rolled bandage, its end hanging loose.
+Sprite(
+    colors: {
+        'O': ("cloth", 0),
+        'c': ("cloth", 1),
+        'C': ("cloth", 2),
+        'W': ("cloth", 3),
+        'r': ("poppy", 2),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "....OOOOOO......",
+        "...OCCCCCCO.....",
+        "..OCWWCCCCcO....",
+        "..OCWOOOOCcO....",
+        "..OCCO..OCcO....",
+        "..OCCO..OCcO....",
+        "..OCCCOOCCcO....",
+        "..OcCCCCCCcOOO..",
+        "...OcccccccCCWO.",
+        "....OOOOOOOOcCO.",
+        "............OOO.",
+        "................",
+        "................",
+    ],
+)

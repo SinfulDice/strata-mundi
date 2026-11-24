@@ -16,6 +16,48 @@ pub struct HudModel<'a> {
     pub mount: Option<String>,
     /// Sounds heard lately, oldest first.
     pub subtitles: Vec<LogLine>,
+    /// The survival bars (none in creative); sample values in the editor.
+    pub bars: Bars,
+    /// Status effects, translated, with their time left.
+    pub effects: Option<String>,
+    /// The notice after fainting.
+    pub notice: Option<String>,
+}
+
+/// How full each bar of the HUD is.
+#[derive(Debug, Clone, Default)]
+pub struct Bars {
+    pub vitals: Option<strata_protocol::VitalsView>,
+    /// The bite or sip going on.
+    pub using: Option<f32>,
+    /// Show the mana bar, empty, before magic exists (option).
+    pub empty_mana: bool,
+    /// HUD editor: every bar half full.
+    pub sample: bool,
+}
+
+impl Bars {
+    fn gauge(&self, id: &str) -> Option<f32> {
+        if self.sample {
+            return (id != "use").then_some(0.7);
+        }
+        if id == "use" {
+            return self.using;
+        }
+        let vitals = self.vitals.as_ref()?;
+        let fraction = |value: f32, max: f32| value / max.max(1.0);
+        match id {
+            "health" => Some(fraction(vitals.health, vitals.max_health)),
+            "stamina" => vitals.stamina.map(|s| fraction(s, vitals.max_stamina)),
+            "mana" => self.empty_mana.then_some(0.0),
+            "food" => vitals.food.map(|f| fraction(f, vitals.max_food)),
+            "thirst" => vitals.thirst.map(|t| fraction(t, vitals.max_thirst)),
+            "breath" => (vitals.breath < vitals.max_breath)
+                .then(|| fraction(f32::from(vitals.breath), f32::from(vitals.max_breath))),
+            // Temperature comes with milestone 8b, experience with milestone 9.
+            _ => None,
+        }
+    }
 }
 
 impl ScreenModel for HudModel<'_> {
@@ -24,8 +66,14 @@ impl ScreenModel for HudModel<'_> {
             "target" => self.target.clone(),
             "mount" => self.mount.clone(),
             "area" => self.area.clone(),
+            "effects" => self.effects.clone(),
+            "notice" => self.notice.clone(),
             _ => None,
         }
+    }
+
+    fn gauge(&self, id: &str) -> Option<f32> {
+        self.bars.gauge(id)
     }
 
     fn items(&self, id: &str) -> Vec<Option<ItemId>> {
@@ -97,4 +145,39 @@ pub fn aimed_block_name(game: &Gameplay, content: &Content, language: &str) -> O
             .translations
             .text(language, &id.translation_key("block"))
     })
+}
+
+/// The effects on the player, translated: « Saignement 12 s · Soin 4 s ».
+pub fn effect_line(game: &Gameplay, content: &Content, language: &str) -> Option<String> {
+    let view = game.vitals.view.as_ref().filter(|_| !game.is_creative())?;
+    let translations = &content.translations;
+    let parts: Vec<String> = view
+        .effects
+        .iter()
+        .map(|effect| {
+            let name = translations.text(language, &effect.effect.translation_key("effect"));
+            let seconds = effect.seconds_left.to_string();
+            translations.text_with(
+                language,
+                "hud-effect",
+                &[("effect", name), ("seconds", seconds)],
+            )
+        })
+        .collect();
+    (!parts.is_empty()).then(|| parts.join(" · "))
+}
+
+/// The survival bars of the player (none in creative).
+pub fn player_bars(game: &Gameplay, empty_mana: bool) -> Bars {
+    let survival = !game.is_creative();
+    Bars {
+        vitals: game.vitals.view.clone().filter(|_| survival),
+        using: game
+            .vitals
+            .using
+            .as_ref()
+            .map(crate::gameplay::ClientUse::progress),
+        empty_mana: empty_mana && survival,
+        sample: false,
+    }
 }

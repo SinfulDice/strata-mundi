@@ -1,7 +1,9 @@
 //! Drawing of the interface: HUD (or cinematic bands), the open menu, the on-screen
 //! keyboard and the F3 overlay, in one batch of quads.
 
-use super::hud::{HudModel, aimed_block_name, sample_subtitles, subtitle_lines};
+use super::hud::{
+    Bars, HudModel, aimed_block_name, effect_line, player_bars, sample_subtitles, subtitle_lines,
+};
 use super::keyboard::KeyboardModel;
 use super::menu::{self, Menu, Shared};
 use super::{MAX_AUTO_SCALE, Screens, UiFrame};
@@ -82,6 +84,10 @@ impl Screens {
                         .is_riding()
                         .then(|| content.translations.text(&language, "hud-dismount")),
                     subtitles: subtitle_lines(subtitles, content, &language),
+                    bars: player_bars(game, self.settings.interface.show_empty_mana),
+                    effects: effect_line(game, content, &language),
+                    notice: (game.vitals.fainted > 0.0)
+                        .then(|| content.translations.text(&language, "hud-fainted")),
                 },
                 None => HudModel {
                     hotbar: &sample,
@@ -90,8 +96,24 @@ impl Screens {
                     target: Some(content.translations.text(&language, "ui-editor-sample")),
                     mount: Some(content.translations.text(&language, "hud-dismount")),
                     subtitles: subtitle_lines(&sample_subtitles(), content, &language),
+                    bars: Bars {
+                        sample: true,
+                        ..Bars::default()
+                    },
+                    effects: Some(content.translations.text(&language, "hud-effects-sample")),
+                    notice: None,
                 },
             };
+            if let Some(game) = game.as_deref()
+                && self.settings.interface.hurt_flash
+            {
+                paint_flash(
+                    &mut painter,
+                    screen,
+                    &self.assets.theme,
+                    game.vitals.flash(),
+                );
+            }
             let hud_ctx = UiContext {
                 offsets: Some(&self.settings.interface.hud),
                 editing: editor,
@@ -157,6 +179,21 @@ impl Screens {
             &painter.indices,
         );
     }
+}
+
+/// The red flash over the screen after a hit, fading.
+fn paint_flash(
+    painter: &mut crate::ui::Painter<'_>,
+    screen: Rect,
+    theme: &crate::ui::Theme,
+    strength: f32,
+) {
+    if strength <= 0.0 {
+        return;
+    }
+    let mut color = theme.hurt.0;
+    color.0[3] = (f32::from(color.0[3]) * strength.min(1.0)).round() as u8;
+    painter.fill(screen, color);
 }
 
 /// Where the panel named `window` of a screen lies, with the panels beside it

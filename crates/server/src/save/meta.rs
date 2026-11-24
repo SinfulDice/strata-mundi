@@ -4,6 +4,7 @@ use strata_core::generation::WorldgenSettings;
 use strata_core::id::Identifier;
 use strata_core::inventory::DurabilityMode;
 use strata_core::physics::Body;
+use strata_core::survival::SurvivalOptions;
 use strata_core::updates::{FireSettings, FluidSettings};
 use strata_protocol::GameMode;
 
@@ -55,6 +56,9 @@ pub struct WorldMeta {
     /// World option: magnet upgrades of chests and barrels draw the items lying around.
     #[serde(default = "yes")]
     pub storage_magnets: bool,
+    /// World options: hunger, thirst and stamina, and how fast they go down.
+    #[serde(default)]
+    pub survival: SurvivalOptions,
     /// World type and generation settings; older worlds are of the pack's normal type.
     #[serde(default)]
     pub generation: WorldgenSettings,
@@ -101,4 +105,16 @@ pub struct PlayerData {
     /// Recipes learnt, by identifier (the starting ones are added at every load).
     #[serde(default)]
     pub recipes: Vec<Identifier>,
+    /// Health, needs and effects (v0.3); older worlds start with full gauges.
+    #[serde(default)]
+    pub vitals: Option<SavedVitals>,
+}
+
+/// The survival gauges of a player as saved.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SavedVitals {
+    pub health: f32,
+    pub needs: strata_core::survival::Needs,
+    #[serde(default)]
+    pub effects: strata_core::survival::StatusEffects,
 }

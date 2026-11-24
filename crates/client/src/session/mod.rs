@@ -290,6 +290,7 @@ impl Session {
                 world
                     .game
                     .show_breaking(&mut self.renderer, &mut self.audio);
+                world.game.play_vitals(&mut self.audio);
                 self.renderer.immersion = world
                     .game
                     .view

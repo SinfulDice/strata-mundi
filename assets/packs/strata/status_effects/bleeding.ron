@@ -1,0 +1,2 @@
+// Losing blood: one point every two seconds until cared for.
+StatusEffect(harmful: true, damage: Some((kind: "strata:bleeding", amount: 1.0, every: 40)))

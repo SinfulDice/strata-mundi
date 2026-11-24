@@ -1,0 +1,2 @@
+// Filling, and warm enough to heal a little (healing at half strength for 10 s).
+Consume(food: 6.0, saturation: 7.2, effects: [(effect: "strata:healing", seconds: 10.0, strength: 0.5)], leaves: Some("strata:bowl"), sound: Some("strata:eat"))

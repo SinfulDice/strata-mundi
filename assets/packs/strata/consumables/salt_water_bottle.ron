@@ -1,0 +1,2 @@
+// Drinkable, but it dries one out.
+Consume(thirst: -3.0, leaves: Some("strata:glass_bottle"), sound: Some("strata:drink"), always: true)

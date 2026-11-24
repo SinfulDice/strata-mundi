@@ -21,6 +21,7 @@ use strata_core::content::{Content, ItemKind};
 use strata_core::coords::DEFAULT_WORLD_BORDER;
 use strata_core::id::Identifier;
 use strata_core::inventory::DurabilityMode;
+use strata_core::survival::SurvivalOptions;
 use strata_protocol::{GameMode, NewWorld};
 
 const MAX_NAME: usize = 32;
@@ -70,6 +71,7 @@ pub struct CreateForm {
     pub durability: DurabilityMode,
     pub gear_mobility: bool,
     pub storage_magnets: bool,
+    pub survival: SurvivalOptions,
     pub editor: GenerationEditor,
     pub page: Page,
     pub tab: usize,
@@ -102,6 +104,7 @@ impl CreateForm {
             durability: DurabilityMode::Break,
             gear_mobility: true,
             storage_magnets: true,
+            survival: SurvivalOptions::default(),
             editor: GenerationEditor::new(catalog, blocks),
             page: Page::Main,
             tab: 0,
@@ -146,6 +149,7 @@ impl CreateForm {
             durability: self.durability,
             gear_mobility: self.gear_mobility,
             storage_magnets: self.storage_magnets,
+            survival: self.survival,
             generation: self.editor.settings.clone(),
         }
     }
@@ -268,6 +272,13 @@ impl ScreenModel for CreateModel<'_> {
             "storage_magnets" => {
                 Some(self.toggle("ui-new-world-magnets", "allowed", form.storage_magnets))
             }
+            "hunger" => Some(self.toggle("ui-new-world-hunger", "on", form.survival.hunger)),
+            "thirst" => Some(self.toggle("ui-new-world-thirst", "on", form.survival.thirst)),
+            "stamina" => Some(self.toggle("ui-new-world-stamina", "on", form.survival.stamina)),
+            "survival_rate" => Some(self.shared.tr_with(
+                "ui-new-world-survival-rate",
+                &[("rate", form.survival.rate.to_string())],
+            )),
             _ => None,
         }
     }
@@ -303,10 +314,22 @@ impl ScreenModel for CreateModel<'_> {
             "recipes" => Some(&mut form.discover_recipes),
             "gear_mobility" => Some(&mut form.gear_mobility),
             "storage_magnets" => Some(&mut form.storage_magnets),
+            "hunger" => Some(&mut form.survival.hunger),
+            "thirst" => Some(&mut form.survival.thirst),
+            "stamina" => Some(&mut form.survival.stamina),
             _ => None,
         };
         if let Some(flag) = flag {
             *flag = !*flag;
+            return;
+        }
+        if id == "survival_rate" {
+            let rates = SurvivalOptions::RATES;
+            let at = rates
+                .iter()
+                .position(|&r| r == form.survival.rate)
+                .unwrap_or(0);
+            form.survival.rate = rates.get((at + 1) % rates.len()).copied().unwrap_or(100);
             return;
         }
         if id == "durability" {

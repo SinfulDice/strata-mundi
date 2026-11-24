@@ -1,0 +1,29 @@
+// A bottle of sea water, greener and cloudy.
+Sprite(
+    colors: {
+        'O': ("glass", 0),
+        'G': ("glass", 1),
+        'W': ("glass", 3),
+        'c': ("oak_bark", 2),
+        'a': ("sea_water", 1),
+        'b': ("sea_water", 3),
+    },
+    rows: [
+        "................",
+        "......OOOO......",
+        "......OccO......",
+        ".......OO.......",
+        "......OGWO......",
+        "......OGWO......",
+        ".....OG..GO.....",
+        "....OGW...GO....",
+        "...OGWaaaaaGO...",
+        "...OWabbbbaGO...",
+        "...OWabbbbaGO...",
+        "...OGabbbbaGO...",
+        "...OGaaaaaaGO...",
+        "....OGaaaaGO....",
+        ".....OOOOOO.....",
+        "................",
+    ],
+)

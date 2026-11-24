@@ -1,0 +1,5 @@
+Shaped(
+    pattern: ["G G", " G "],
+    key: {'G': Item("strata:glass")},
+    result: Result(item: "strata:glass_bottle", count: 3),
+)

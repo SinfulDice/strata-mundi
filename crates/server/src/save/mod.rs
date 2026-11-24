@@ -20,7 +20,7 @@ mod stacks;
 pub use backup::back_up;
 pub use block_entities::{BlockEntitiesData, SavedBlockEntity};
 pub use entities::{EntitiesData, SavedBoat, SavedDrop};
-pub use meta::{FORMAT_VERSION, PlayerData, WorldMeta};
+pub use meta::{FORMAT_VERSION, PlayerData, SavedVitals, WorldMeta};
 pub use region::{BlockNames, REGION_SIZE, RegionStore};
 pub use stacks::{SavedData, SavedInventory, SavedStack, load_slots, save_slots};
 pub use strata_core::files::write_atomic;
@@ -222,6 +222,7 @@ pub fn create(
         durability: new.durability,
         gear_mobility: new.gear_mobility,
         storage_magnets: new.storage_magnets,
+        survival: new.survival,
         generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;
@@ -310,6 +311,7 @@ mod tests {
             durability: Default::default(),
             gear_mobility: true,
             storage_magnets: true,
+            survival: Default::default(),
             generation: Default::default(),
         }
     }

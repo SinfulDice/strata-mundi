@@ -101,6 +101,7 @@ impl Session {
         if let Stage::Playing(world) = &mut self.stage {
             world.game.controls = controls.clone();
             world.game.camera_effects = !self.applied.interface.reduce_camera_effects;
+            world.game.hurt_shake = self.applied.interface.hurt_shake;
             if (controls.auto_jump, controls.step_up)
                 != (old.controls.auto_jump, old.controls.step_up)
             {

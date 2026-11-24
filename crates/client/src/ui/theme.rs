@@ -19,4 +19,9 @@ pub struct Theme {
     /// Filled part of an options gauge.
     pub gauge: HexColor,
     pub shade: HexColor,
+    /// Fill of the HUD bars, by gauge id (health, stamina…); the accent otherwise.
+    #[serde(default)]
+    pub bars: std::collections::BTreeMap<String, HexColor>,
+    /// The flash over the screen when hurt.
+    pub hurt: HexColor,
 }

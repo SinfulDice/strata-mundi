@@ -1,0 +1,8 @@
+// Oak leaves: kept with shears; otherwise an apple one time in twenty.
+LootTable(pools: [
+    Pool(conditions: [Tool("strata:shears")], entries: [Itself()]),
+    Pool(conditions: [Not(Tool("strata:shears"))], entries: [
+        Nothing(weight: 19),
+        Item(item: "strata:apple"),
+    ]),
+])

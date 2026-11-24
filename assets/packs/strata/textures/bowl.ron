@@ -1,0 +1,27 @@
+// A wooden bowl.
+Sprite(
+    colors: {
+        'O': ("oak_wood", 0),
+        'w': ("oak_wood", 1),
+        'W': ("oak_wood", 3),
+        'd': ("oak_bark", 1),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        ".OOOOOOOOOOOOOO.",
+        ".OddddddddddddO.",
+        ".OWddddddddddWO.",
+        ".OWwwwwwwwwwwWO.",
+        "..OWwwwwwwwwWO..",
+        "..OwWwwwwwwwwO..",
+        "...OwwwwwwwwO...",
+        "....OOwwwwOO....",
+        ".....OOOOOO.....",
+        "................",
+        "................",
+    ],
+)

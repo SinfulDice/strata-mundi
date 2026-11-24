@@ -149,6 +149,9 @@ pub enum Node {
         size: (u32, u32),
         #[serde(default)]
         vertical: bool,
+        /// Not drawn when the model gives no value (a bar of the HUD turned off).
+        #[serde(default)]
+        optional: bool,
     },
     /// A bevelled strip of the model's colour (a station's title band and work surface),
     /// the theme's light panel colour otherwise.

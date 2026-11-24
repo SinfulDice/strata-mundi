@@ -1,0 +1,2 @@
+// A fall from higher than three blocks; armour softens it.
+DamageType(armor: true)

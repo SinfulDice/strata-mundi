@@ -1,0 +1,1 @@
+Cooking(ingredient: Item("strata:brown_mushroom"), result: Result(item: "strata:roasted_mushroom"), experience: 0.35, kind: "strata:food")

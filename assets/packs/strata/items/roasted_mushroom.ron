@@ -1,0 +1,2 @@
+// A brown mushroom roasted in a smoker or a furnace.
+Item(texture: "strata:roasted_mushroom", category: Some("strata:food"))

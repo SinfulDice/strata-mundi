@@ -1,0 +1,2 @@
+// Walking through flames.
+Contact(damage: "strata:fire", amount: 1.0, effect: Some((effect: "strata:burning", seconds: 4.0)))

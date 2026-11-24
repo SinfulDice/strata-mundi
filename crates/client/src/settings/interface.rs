@@ -47,6 +47,12 @@ pub struct InterfaceSettings {
     pub color_filter: ColorFilter,
     /// No camera sway or zoom effects (sprint zoom).
     pub reduce_camera_effects: bool,
+    /// How hard the camera shakes when hurt, in percent (0: never).
+    pub hurt_shake: u32,
+    /// The screen flashes red when hurt.
+    pub hurt_flash: bool,
+    /// The mana bar shows, empty, before there is any magic.
+    pub show_empty_mana: bool,
     /// Stop the world in every menu, not only in the pause menu (off, like Minecraft).
     pub pause_in_menus: bool,
     /// HUD elements moved in the editor: offset from their anchor, by element id.
@@ -61,6 +67,9 @@ impl Default for InterfaceSettings {
             font: FontChoice::default(),
             color_filter: ColorFilter::default(),
             reduce_camera_effects: false,
+            hurt_shake: 100,
+            hurt_flash: true,
+            show_empty_mana: false,
             pause_in_menus: false,
             hud: BTreeMap::new(),
         }
@@ -77,6 +86,7 @@ impl InterfaceSettings {
             self.language = Self::default().language;
         }
         self.scale = self.scale.min(MAX_SCALE);
+        self.hurt_shake = self.hurt_shake.min(100);
     }
 
     /// The next language in `LANGUAGES`, for the options screen.

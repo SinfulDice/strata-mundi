@@ -1,0 +1,30 @@
+// A roasted brown mushroom on a stick.
+Sprite(
+    colors: {
+        'O': ("brown_mushroom", 0),
+        'm': ("brown_mushroom", 1),
+        'M': ("brown_mushroom", 2),
+        'W': ("brown_mushroom", 3),
+        's': ("stick", 1),
+        'S': ("mushroom_stem", 1),
+        'c': ("coal", 2),
+    },
+    rows: [
+        "................",
+        "................",
+        ".....OOOOOO.....",
+        "...OOmMMMMmOO...",
+        "..OmMMWWMMMMmO..",
+        "..OMMcWMMMcMMO..",
+        ".OmMMMMMcMMMMmO.",
+        ".OOOOOOOOOOOOOO.",
+        "......OSSO......",
+        "......OSSO......",
+        "......OSSO......",
+        ".......ss.......",
+        ".......ss.......",
+        ".......ss.......",
+        ".......ss.......",
+        "................",
+    ],
+)

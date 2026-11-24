@@ -5,7 +5,7 @@ use crate::game::{BlockEntities, BlockEntity, Game};
 use crate::loader::ColumnLoader;
 use crate::save::{
     BlockEntitiesData, EntitiesData, PlayerData, SavedBlockEntity, SavedBoat, SavedDrop,
-    SavedInventory, WorldFolder, WorldMeta, back_up,
+    SavedInventory, SavedVitals, WorldFolder, WorldMeta, back_up,
 };
 use glam::DVec3;
 use std::collections::BTreeSet;
@@ -45,6 +45,8 @@ pub struct PlayerStart {
     pub unknown_recipes: Vec<Identifier>,
     /// What the crafting grid held, to give back.
     pub grid: Vec<ItemStack>,
+    /// Health, needs and effects (`None`: full gauges).
+    pub vitals: Option<SavedVitals>,
 }
 
 pub struct Persistence {
@@ -114,6 +116,7 @@ impl Persistence {
                     .as_ref()
                     .map(|saved| saved.grid(&self.content.items))
                     .unwrap_or_default(),
+                vitals: player.vitals,
             },
             None => PlayerStart {
                 body: Body::at(spawn()),
@@ -123,6 +126,7 @@ impl Persistence {
                 recipes: BTreeSet::new(),
                 unknown_recipes: Vec::new(),
                 grid: Vec::new(),
+                vitals: None,
             },
         }
     }
@@ -259,6 +263,7 @@ impl Persistence {
                 .filter_map(|recipe| self.content.recipes.identifier(recipe).cloned())
                 .chain(game.unknown_recipes.iter().cloned())
                 .collect(),
+            vitals: game.saved_vitals(),
         })
     }
 
@@ -357,6 +362,10 @@ mod gear_tests;
 #[cfg(test)]
 #[path = "persistence_bag_tests.rs"]
 mod bag_tests;
+
+#[cfg(test)]
+#[path = "persistence_vitals_tests.rs"]
+mod vitals_tests;
 
 /// A furnace saved before upgrade slots had their own place kept its modules after its
 /// input, fuel and output: they move to its upgrade slots.

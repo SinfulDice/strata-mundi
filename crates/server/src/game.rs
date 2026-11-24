@@ -7,8 +7,10 @@ mod bags;
 mod bench;
 mod boat;
 mod bucket;
+mod consume;
 mod containers;
 mod crafting;
+mod damage;
 mod drops;
 mod equipment;
 mod furnaces;
@@ -21,6 +23,7 @@ mod placing;
 mod policy;
 mod storage;
 mod terrain;
+mod vitals;
 mod work;
 
 pub use containers::{BlockEntities, BlockEntity, OpenWindow};
@@ -91,6 +94,14 @@ pub struct Game {
     magnets: magnets::Magnets,
     /// The strongest magnet among the player's bags, until the inventory changes.
     bag_magnet: Option<Option<(f32, u16)>>,
+    /// World options of the survival gauges.
+    survival_options: strata_core::survival::SurvivalOptions,
+    /// Where the player wakes after fainting.
+    spawn: DVec3,
+    /// Biome names by `BiomeId` (salt water).
+    biomes: Vec<strata_core::id::Identifier>,
+    /// The gauges as the client last knew them.
+    vitals_sent: Option<strata_protocol::VitalsView>,
 }
 
 impl Game {
@@ -109,7 +120,8 @@ impl Game {
         ecs.controls
             .insert(player, PlayerControl::new(movement, mode));
         let updates = BlockUpdates::new(Arc::clone(rules.updates()), FluidSettings::default());
-        Self {
+        let spawn_point = spawn.position;
+        let mut game = Self {
             ecs,
             player,
             rules,
@@ -132,7 +144,13 @@ impl Game {
             furnace_view: None,
             magnets: Default::default(),
             bag_magnet: None,
-        }
+            survival_options: Default::default(),
+            spawn: spawn_point,
+            biomes: Vec::new(),
+            vitals_sent: None,
+        };
+        game.fresh_vitals();
+        game
     }
 
     /// The player left: their entity and all its components go away.
@@ -240,6 +258,7 @@ impl Game {
         self.drops_tick(loader);
         self.magnets_tick(loader);
         let mut changes = self.run_queued_actions(loader);
+        self.vitals_tick(loader);
         changes.extend(self.mining_tick(loader));
         changes.extend(self.furnaces_tick(loader));
         for pos in loader.take_arrived() {
@@ -396,3 +415,9 @@ mod storage_rule_tests;
 
 #[cfg(test)]
 mod bag_tests;
+
+#[cfg(test)]
+mod bag_upkeep_tests;
+
+#[cfg(test)]
+mod vitals_tests;

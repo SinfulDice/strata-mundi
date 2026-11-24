@@ -51,6 +51,9 @@ pub enum Setting {
     Font,
     ColorFilter,
     ReduceCamera,
+    HurtShake,
+    HurtFlash,
+    ShowMana,
     PauseInMenus,
     BlockName,
     EditHud,
@@ -110,6 +113,9 @@ pub const INTERFACE: &[Setting] = &[
     Setting::Font,
     Setting::ColorFilter,
     Setting::ReduceCamera,
+    Setting::HurtShake,
+    Setting::HurtFlash,
+    Setting::ShowMana,
     Setting::PauseInMenus,
     Setting::BlockName,
     Setting::EditHud,
@@ -133,6 +139,7 @@ const FPS_LIMITS: [u32; 6] = [0, 30, 60, 120, 144, 240];
 const TEXTURE_SIZES: [u32; 6] = [0, 16, 32, 64, 128, 256];
 pub(super) const BACKUPS: (u32, u32) = (0, 10);
 const AUTOSAVE: [u32; 7] = [0, 1, 2, 5, 10, 15, 30];
+const HURT_SHAKES: [u32; 5] = [0, 25, 50, 75, 100];
 
 pub fn setting_key(setting: Setting) -> String {
     kebab_key("option", &format!("{setting:?}"))
@@ -269,6 +276,10 @@ pub fn value(setting: Setting, s: &Settings, shared: &Shared<'_>) -> (String, Op
             None,
         ),
         Setting::ReduceCamera => (on_off(shared, i.reduce_camera_effects), None),
+        Setting::HurtShake if i.hurt_shake == 0 => (shared.tr("ui-off"), None),
+        Setting::HurtShake => (format!("{} %", i.hurt_shake), None),
+        Setting::HurtFlash => (on_off(shared, i.hurt_flash), None),
+        Setting::ShowMana => (on_off(shared, i.show_empty_mana), None),
         Setting::PauseInMenus => (on_off(shared, i.pause_in_menus), None),
         Setting::BlockName => (on_off(shared, c.show_block_name), None),
         Setting::EditHud | Setting::ResetKeys => (String::new(), None),
@@ -379,6 +390,9 @@ fn step_choice(setting: Setting, s: &mut Settings, step: i32) {
         }
         Setting::ColorFilter => i.color_filter = cycle(&ColorFilter::ALL, i.color_filter, step),
         Setting::ReduceCamera => i.reduce_camera_effects = !i.reduce_camera_effects,
+        Setting::HurtShake => i.hurt_shake = cycle(&HURT_SHAKES, i.hurt_shake, step),
+        Setting::HurtFlash => i.hurt_flash = !i.hurt_flash,
+        Setting::ShowMana => i.show_empty_mana = !i.show_empty_mana,
         Setting::PauseInMenus => i.pause_in_menus = !i.pause_in_menus,
         Setting::BlockName => c.show_block_name = !c.show_block_name,
         Setting::InvertY => c.invert_y = !c.invert_y,

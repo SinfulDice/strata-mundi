@@ -1,0 +1,2 @@
+// A wound that keeps bleeding (some weapons); a bandage stops it.
+DamageType(ignores_invulnerability: true, shakes: false)

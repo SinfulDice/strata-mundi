@@ -1,0 +1,2 @@
+// Quick to eat, not very filling.
+Consume(ticks: 16, food: 2.0, saturation: 0.4, sound: Some("strata:eat"))

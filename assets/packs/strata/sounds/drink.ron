@@ -1,0 +1,13 @@
+// A gulp: a low bubble rising.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-drinking",
+    volume: 0.4,
+    pitch: (0.85, 1.15),
+    variants: 6,
+    duration: 0.25,
+    layers: [
+        Bubbles(count: (1, 2), spread: 0.06, hz: (260, 420), rise: 1.6, decay: (0.06, 0.1)),
+        Noise(color: Brown, filter: LowPass((hz: (250, 400))), envelope: (decay: (0.05, 0.08)), gain: 0.3),
+    ],
+)

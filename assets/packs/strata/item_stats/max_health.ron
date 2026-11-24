@@ -1,2 +1,2 @@
-// Health points added while worn (applied with the survival gauges, milestone 8). Bounds of the values effects give it.
+// Health points added while worn. Bounds of the values effects give it.
 ItemStat(min: -50.0, max: 100.0)

@@ -1,0 +1,12 @@
+// Cloth wound round an arm: a soft rustle.
+Sound(
+    category: Blocks,
+    subtitle: "subtitle-bandaging",
+    volume: 0.35,
+    pitch: (0.9, 1.1),
+    variants: 4,
+    duration: 0.3,
+    layers: [
+        Noise(color: Pink, filter: BandPass((hz: (1800, 3200))), envelope: (attack: 0.06, decay: (0.15, 0.2)), gain: 0.5),
+    ],
+)

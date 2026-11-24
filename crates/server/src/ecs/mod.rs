@@ -14,6 +14,7 @@ use strata_core::content::{BlockId, EntityTypeId, Face, ItemId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{ItemStack, PlayerInventory};
 use strata_core::physics::{BoatBody, BoatControls, Body, ItemBody, MoveInput, MovementSettings};
+use strata_core::survival::{Exertion, Health, Needs, StatusEffects};
 use strata_core::upgrade::AreaSize;
 use strata_protocol::{ActionId, GameMode, WorldAction};
 
@@ -34,6 +35,12 @@ pub struct Ecs {
     pub crafts: Storage<CraftWindow>,
     /// The recipes each player has learnt.
     pub recipes: Storage<BTreeSet<RecipeId>>,
+    /// Health of every living body (players, mobs later).
+    pub healths: Storage<Health>,
+    /// Food, thirst, stamina and breath of each player.
+    pub needs: Storage<Needs>,
+    /// Status effects on living bodies (bleeding, healing, burning).
+    pub effects: Storage<StatusEffects>,
 }
 
 /// Items lying on the ground.
@@ -97,6 +104,21 @@ pub struct PlayerControl {
     pub sneaking: bool,
     /// The block being broken in survival.
     pub mining: Option<Mining>,
+    /// Effort since the needs last counted it (sprint, jumps, blocks broken).
+    pub exertion: Exertion,
+    /// Blocks fallen at the last landing since the gauges last counted (fall damage).
+    pub fallen: f64,
+    /// The item being eaten, drunk or applied, held down since `started`.
+    pub using: Option<Using>,
+}
+
+/// An item held down with the use button (`StartUse`), consumed once `needed` ticks pass.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Using {
+    pub item: ItemId,
+    pub slot: usize,
+    pub started: u64,
+    pub needed: u16,
 }
 
 /// A survival break in progress, from `StartBreak`.
@@ -158,6 +180,9 @@ impl PlayerControl {
             actions: VecDeque::new(),
             sneaking: false,
             mining: None,
+            exertion: Exertion::default(),
+            fallen: 0.0,
+            using: None,
         }
     }
 }
@@ -173,6 +198,9 @@ impl Ecs {
         self.windows.remove(entity);
         self.crafts.remove(entity);
         self.recipes.remove(entity);
+        self.healths.remove(entity);
+        self.needs.remove(entity);
+        self.effects.remove(entity);
         self.entities.despawn(entity);
     }
 }

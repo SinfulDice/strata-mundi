@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use strata_core::generation::WorldgenSettings;
 use strata_core::inventory::DurabilityMode;
+use strata_core::survival::SurvivalOptions;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum GameMode {
@@ -38,6 +39,8 @@ pub struct NewWorld {
     pub gear_mobility: bool,
     /// Magnet upgrades of chests and barrels draw the items lying around.
     pub storage_magnets: bool,
+    /// Hunger, thirst and stamina, and how fast they go down.
+    pub survival: SurvivalOptions,
     /// World type, sliders of the generation.
     pub generation: WorldgenSettings,
 }

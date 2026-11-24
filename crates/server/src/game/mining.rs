@@ -177,6 +177,11 @@ impl Game {
             None => self.sweep_around(loader, pos, block, &mut changes),
         }
         self.spawn_loot(heap, pos);
+        if let Some(control) = self.ecs.controls.get_mut(self.player) {
+            let broken = changes.iter().filter(|(_, b)| *b == BlockId::AIR).count();
+            let broken = u16::try_from(broken).unwrap_or(u16::MAX).max(1);
+            control.exertion.mined = control.exertion.mined.saturating_add(broken);
+        }
         changes
     }
 

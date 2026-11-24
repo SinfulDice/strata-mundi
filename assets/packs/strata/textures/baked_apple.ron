@@ -1,0 +1,29 @@
+// A baked apple: browned and a little wrinkled.
+Sprite(
+    colors: {
+        'O': ("baked_apple", 0),
+        'r': ("baked_apple", 1),
+        'R': ("baked_apple", 2),
+        'W': ("baked_apple", 3),
+        's': ("stick", 0),
+        'L': ("baked_apple", 1),
+    },
+    rows: [
+        "................",
+        ".......s........",
+        ".......sLL......",
+        "......OsLLL.....",
+        "....OOOsOOOO....",
+        "...OrrrrRRRRO...",
+        "..OrrRRRRRWWRO..",
+        "..OrRRRRRRWWRO..",
+        "..OrRRRRRRRRRO..",
+        "..OrrRRRRRRRRO..",
+        "..OrrRRRRRRRRO..",
+        "...OrrRRRRRRO...",
+        "...OrrrRRRRrO...",
+        "....OOrrrrOO....",
+        "......OOOO......",
+        "................",
+    ],
+)

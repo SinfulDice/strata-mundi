@@ -1,0 +1,2 @@
+// A waterskin of sea water: four sips one would rather not take.
+Item(texture: "strata:waterskin_of_salt_water", max_stack: 1, category: Some("strata:food"))

@@ -64,6 +64,7 @@ impl GameLauncher {
             durability: Default::default(),
             gear_mobility: true,
             storage_magnets: true,
+            survival: Default::default(),
             generation: self.args.world_code.clone().unwrap_or_default(),
         };
         self.start(meta, None)

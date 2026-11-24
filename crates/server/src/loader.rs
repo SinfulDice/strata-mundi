@@ -171,6 +171,16 @@ impl ColumnLoader {
         self.columns.get(&pos)
     }
 
+    /// The biome of the column at `pos`, once known.
+    pub fn biome(&self, pos: BlockPos) -> Option<strata_core::chunk::BiomeId> {
+        let biomes = self.biomes.get(&pos.column())?;
+        let (x, z) = (
+            pos.x.rem_euclid(SECTION_SIZE),
+            pos.z.rem_euclid(SECTION_SIZE),
+        );
+        Some(biomes.get(x as u32, z as u32))
+    }
+
     /// `None` when the column is not loaded.
     pub fn block(&self, pos: BlockPos) -> Option<BlockId> {
         let column = self.columns.get(&pos.column())?;

@@ -1,0 +1,2 @@
+// A wooden bowl, for stews; given back once the stew is eaten.
+Item(texture: "strata:bowl", category: Some("strata:food"))

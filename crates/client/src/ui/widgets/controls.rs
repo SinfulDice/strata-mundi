@@ -255,18 +255,24 @@ pub(super) fn gauge(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         at,
         size,
         vertical,
+        optional,
     } = node
     else {
         return;
     };
     let rect = parent.place(*anchor, d.ctx.offset(id, *at), *size);
-    let value = d.model.gauge(id).unwrap_or(0.0).clamp(0.0, 1.0);
+    let given = d.model.gauge(id);
+    if *optional && given.is_none() && !d.ctx.editing {
+        return;
+    }
+    let value = given.unwrap_or(0.0).clamp(0.0, 1.0);
     let theme = d.theme();
+    let bar = theme.bars.get(id.as_str()).unwrap_or(&theme.accent);
     let (field, light, dark, fill) = (
         theme.field.0,
         theme.panel_light.0,
         theme.panel_dark.0,
-        theme.accent.0,
+        bar.0,
     );
     d.painter.fill(rect, field);
     d.painter.bevel(rect, dark, light);
@@ -290,6 +296,9 @@ pub(super) fn gauge(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     };
     if filled.w > 0 && filled.h > 0 {
         d.painter.fill(filled, fill);
+    }
+    if d.ctx.editing {
+        d.element(id, rect);
     }
 }
 

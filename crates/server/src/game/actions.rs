@@ -105,6 +105,22 @@ impl Game {
                 face,
             } => self.use_item(loader, item, against, face),
             WorldAction::UseBlock { pos } => self.use_block(loader, pos),
+            WorldAction::StartUse { item, slot } => {
+                self.start_use(item, slot);
+                Vec::new()
+            }
+            WorldAction::StopUse => {
+                self.stop_use();
+                Vec::new()
+            }
+            WorldAction::Fill { item, pos } => {
+                self.fill_held(loader, item, pos);
+                Vec::new()
+            }
+            WorldAction::Drink { pos } => {
+                self.drink_at(loader, pos);
+                Vec::new()
+            }
             WorldAction::Interact(entity) => {
                 self.interact_entity(entity);
                 Vec::new()
@@ -167,7 +183,10 @@ impl Game {
 fn rate_limited(action: WorldAction) -> bool {
     !matches!(
         action,
-        WorldAction::StartBreak { .. } | WorldAction::StopBreak
+        WorldAction::StartBreak { .. }
+            | WorldAction::StopBreak
+            | WorldAction::StartUse { .. }
+            | WorldAction::StopUse
     )
 }
 
@@ -182,7 +201,11 @@ fn aimed_cells(action: WorldAction) -> Vec<BlockPos> {
         | WorldAction::Attack(_)
         | WorldAction::UseBlock { .. }
         | WorldAction::StartBreak { .. }
-        | WorldAction::StopBreak => {
+        | WorldAction::StopBreak
+        | WorldAction::StartUse { .. }
+        | WorldAction::StopUse
+        | WorldAction::Fill { .. }
+        | WorldAction::Drink { .. } => {
             return Vec::new();
         }
     };
