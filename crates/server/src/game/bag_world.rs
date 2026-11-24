@@ -5,7 +5,6 @@
 
 use super::Game;
 use super::containers::BlockEntity;
-use super::drops::DROP_SIZE;
 use crate::ecs::Entity;
 use glam::DVec3;
 use strata_core::bag::{BagContents, BagWorld, bag_slots, pick_into_bags};
@@ -64,12 +63,18 @@ impl Game {
         }
     }
 
-    /// The strongest magnet among the player's bags: radius and period.
-    fn bag_magnet(&self) -> Option<(f32, u16)> {
-        bag_slots()
+    /// The strongest magnet among the player's bags (radius and period), kept until the
+    /// inventory changes.
+    fn bag_magnet(&mut self) -> Option<(f32, u16)> {
+        if let Some(magnet) = self.bag_magnet {
+            return magnet;
+        }
+        let magnet = bag_slots()
             .filter(|&slot| self.bag_at(slot).is_some())
             .filter_map(|slot| self.carried_upkeep(slot).magnet)
-            .max_by(|a, b| a.0.total_cmp(&b.0))
+            .max_by(|a, b| a.0.total_cmp(&b.0));
+        self.bag_magnet = Some(magnet);
+        magnet
     }
 
     /// A bag with a magnet upgrade draws the items around the player at its period
@@ -81,23 +86,17 @@ impl Game {
         let Some((radius, period)) = self.bag_magnet() else {
             return;
         };
-        let Some(body) = self.player_body().copied() else {
-            return;
-        };
         if !self.tick.is_multiple_of(u64::from(period.max(1))) {
             return;
         }
+        let Some(body) = self.player_body().copied() else {
+            return;
+        };
         let reach = body.aabb();
         let centre = (reach.min + reach.max) / 2.0;
-        let near: Vec<Entity> = (self.ecs.drops.iter())
-            .filter(|(_, drop)| drop.pickup_delay == 0)
-            .filter(|(_, drop)| {
-                let middle = drop.body.position + DVec3::Y * (DROP_SIZE / 2.0);
-                middle.distance(centre) <= f64::from(radius)
-            })
-            .map(|(entity, _)| entity)
-            .collect();
-        for entity in near {
+        let cells = self.drop_cells();
+        let near = self.near_drops(centre, f64::from(radius), &cells);
+        for (entity, _) in near {
             self.collect_drop(entity);
         }
     }

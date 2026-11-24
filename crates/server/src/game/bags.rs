@@ -28,8 +28,17 @@ impl Game {
     }
 
     pub(super) fn carried_upkeep(&self, slot: usize) -> Upkeep {
-        let contents = self.carried_contents(slot).unwrap_or_default();
-        let upgrades: Vec<&ItemStack> = contents.upgrades.slots.iter().flatten().collect();
+        let stack = self
+            .ecs
+            .inventories
+            .get(self.player)
+            .and_then(|i| i.slots.get(slot));
+        let rules = stack.and_then(|stack| self.rules.bags.get(stack.item));
+        let (Some(stack), Some(rules)) = (stack, rules) else {
+            return Upkeep::default();
+        };
+        let upgrades = BagContents::read_upgrades(&stack.data, &rules.layout);
+        let upgrades: Vec<&ItemStack> = upgrades.slots.iter().flatten().collect();
         Upkeep::new(&self.rules.upgrades, self.rules.items(), &upgrades)
     }
 
@@ -280,14 +289,21 @@ impl Game {
         Some(std::mem::replace(lock, locked))
     }
 
-    /// Whether `stack` holds no bag (no bag in a bag, whatever a client sends).
-    pub(super) fn holds_no_bag(&self, stack: &ItemStack) -> bool {
-        let Some(rules) = self.rules.bags.get(stack.item) else {
+    /// Whether what a bag stack holds could be there (what a client sends in creative):
+    /// within its slots, valid stacks, no bag inside, the pouch's tag, upgrades only in
+    /// the upgrade slots.
+    pub(super) fn bag_contents_valid(&self, stack: &ItemStack) -> bool {
+        let bags = &self.rules.bags;
+        let Some(rules) = bags.get(stack.item) else {
             return true;
         };
-        let (contents, _) = BagContents::read(&stack.data, &rules.layout);
-        contents
-            .stacks()
-            .all(|inner| !self.rules.bags.is_bag(inner.item))
+        let (contents, cut) = BagContents::read(&stack.data, &rules.layout);
+        let items = self.rules.items();
+        let stored = (contents.storage.slots.iter().flatten())
+            .all(|inner| inner.is_valid(&self.rules) && bags.admits(rules, inner));
+        let upgrades = (contents.upgrades.slots.iter().flatten()).all(|inner| {
+            inner.is_valid(&self.rules) && self.rules.upgrades.of_item(items, inner.item).is_some()
+        });
+        cut.is_empty() && stored && upgrades
     }
 }

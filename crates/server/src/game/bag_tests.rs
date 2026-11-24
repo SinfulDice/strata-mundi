@@ -190,7 +190,7 @@ fn putting_down_and_breaking_a_bag_never_copies_what_it_holds() {
 }
 
 #[test]
-fn a_bag_thrown_or_left_on_death_keeps_what_it_holds() {
+fn a_bag_thrown_keeps_what_it_holds() {
     let mut w = survival();
     worn(&mut w, "strata:iron_backpack");
     fill(&mut w, BACK, "strata:gravel", 12);
@@ -205,7 +205,7 @@ fn a_bag_thrown_or_left_on_death_keeps_what_it_holds() {
         w.game.remove_drop(*entity);
     }
     let thrown = thrown.into_iter().map(|(_, stack)| stack);
-    // What death will do (milestone 10): every stack thrown as it is.
+    // Thrown again as death will throw it (milestone 10 tests death itself).
     w.game.throw_all(thrown);
     assert_eq!(total(&w, "strata:gravel"), 12);
 }
@@ -355,4 +355,95 @@ fn the_tank_takes_and_gives_buckets_of_one_liquid() {
     assert_eq!(cursor(&w), Some(item(&w, "strata:water_bucket")));
     let bag = slot(&w, BACK).unwrap();
     assert_eq!(contents(&w, &bag).tank, None, "empty again");
+}
+
+#[test]
+fn a_worn_bag_filters_and_destroys_only_what_comes_in_by_itself() {
+    let mut w = survival();
+    worn(&mut w, "strata:iron_backpack");
+    request(&mut w, InventoryRequest::OpenBag(BACK as u16));
+    for upgrade in ["strata:filter_upgrade", "strata:void_upgrade"] {
+        put(&mut w, 0, upgrade, 1);
+        click(&mut w, SlotRef::player(0), Click::Transfer);
+    }
+    let (gravel, dirt) = (item(&w, "strata:gravel"), item(&w, "strata:dirt"));
+    let set = |w: &mut World, slot: u16, cell, item| {
+        request(w, InventoryRequest::SetFilter { slot, cell, item });
+    };
+    set(&mut w, 45, Some(0), Some(gravel));
+    set(&mut w, 45, None, None);
+    set(&mut w, 46, Some(0), Some(dirt));
+    put(&mut w, 0, "strata:dirt", 5);
+    click(&mut w, SlotRef::player(0), Click::Primary);
+    click(&mut w, SlotRef::open(0), Click::Primary);
+    put(&mut w, 1, "strata:dirt", 7);
+    click(&mut w, SlotRef::player(1), Click::Transfer);
+    put(&mut w, 2, "strata:gravel", 3);
+    click(&mut w, SlotRef::player(2), Click::Transfer);
+    let bag = slot(&w, BACK).unwrap();
+    let held = contents(&w, &bag);
+    assert_eq!(
+        held.storage.count(dirt),
+        5,
+        "put by hand: kept; shift click: destroyed"
+    );
+    assert_eq!(held.storage.count(gravel), 0, "refused by the filter");
+    assert_eq!(slot(&w, 2).map(|s| s.count), Some(3));
+}
+
+#[test]
+fn a_bag_holding_something_never_expires_on_the_ground() {
+    let mut w = survival();
+    let selected = w.game.selected();
+    put(&mut w, selected, "strata:leather_backpack", 1);
+    fill(&mut w, selected, "strata:stone", 4);
+    request(&mut w, InventoryRequest::Close);
+    let full = slot(&w, selected).unwrap();
+    let empty = stack(&w, "strata:leather_backpack", 1);
+    let far = DVec3::new(2.5, 64.0, 2.5);
+    w.game.spawn_drop(full, far, DVec3::ZERO);
+    w.game.spawn_drop(empty, far + DVec3::X, DVec3::ZERO);
+    for (_, drop) in w.game.ecs.drops.iter_mut() {
+        drop.age = u32::MAX / 2;
+    }
+    wait(&mut w, 1);
+    let left: Vec<ItemStack> = w
+        .game
+        .ecs
+        .drops
+        .iter()
+        .map(|(_, d)| d.stack.clone())
+        .collect();
+    assert_eq!(left.len(), 1, "the empty bag expired");
+    assert_eq!(
+        contents(&w, &left[0])
+            .storage
+            .count(item(&w, "strata:stone")),
+        4
+    );
+}
+
+#[test]
+fn the_client_sees_a_summary_of_each_bag() {
+    let mut w = survival();
+    worn(&mut w, "strata:leather_backpack");
+    fill(&mut w, BACK, "strata:stone", 9);
+    let sent = w
+        .game
+        .take_messages()
+        .into_iter()
+        .rev()
+        .find_map(|m| match m {
+            ServerMessage::Inventory(inventory) => Some(inventory),
+            _ => None,
+        });
+    let bag = sent.unwrap().slots.get(BACK).cloned().unwrap();
+    let rules = w.game.rules.bags.get(bag.item).unwrap();
+    assert!(
+        BagContents::read(&bag.data, &rules.layout)
+            .0
+            .storage
+            .is_empty()
+    );
+    assert_eq!(BagContents::summary(&bag.data, &rules.layout), (9, 0));
 }

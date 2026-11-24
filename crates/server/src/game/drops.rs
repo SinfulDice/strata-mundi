@@ -109,12 +109,14 @@ impl Game {
             rules: &self.rules,
             border: self.border,
         };
+        let bags = &self.rules.bags;
+        let lasts = |stack: &ItemStack| lasts_forever(bags, stack);
         let mut expired = Vec::new();
         let mut moved = Vec::new();
         for (entity, drop) in self.ecs.drops.iter_mut() {
             drop.age = drop.age.saturating_add(1);
             drop.pickup_delay = drop.pickup_delay.saturating_sub(1);
-            if lifetime > 0 && u64::from(drop.age) >= lifetime {
+            if lifetime > 0 && u64::from(drop.age) >= lifetime && !lasts(&drop.stack) {
                 expired.push(entity);
                 continue;
             }
@@ -233,11 +235,11 @@ impl Game {
         }
     }
 
+    /// Makes room for a new drop; a bag that holds something is never the one to go.
     fn remove_oldest_drop(&mut self) {
-        let oldest = self
-            .ecs
-            .drops
-            .iter()
+        let bags = &self.rules.bags;
+        let oldest = (self.ecs.drops.iter())
+            .filter(|(_, drop)| !lasts_forever(bags, &drop.stack))
             .max_by_key(|(_, drop)| drop.age)
             .map(|(entity, _)| entity);
         if let Some(entity) = oldest {
@@ -267,6 +269,11 @@ impl Game {
             }
         }
     }
+}
+
+/// A bag holding something never expires nor makes room: its contents would go with it.
+fn lasts_forever(bags: &strata_core::bag::Bags, stack: &ItemStack) -> bool {
+    bags.is_bag(stack.item) && !stack.data.is_empty()
 }
 
 /// Items in unloaded columns wait (they would fall through the missing ground).

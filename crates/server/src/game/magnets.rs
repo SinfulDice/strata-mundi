@@ -102,7 +102,7 @@ impl Game {
         }
     }
 
-    fn drop_cells(&self) -> DropCells {
+    pub(super) fn drop_cells(&self) -> DropCells {
         let mut cells: DropCells = HashMap::new();
         for (entity, drop) in self.ecs.drops.iter() {
             if drop.pickup_delay == 0 {
@@ -114,7 +114,7 @@ impl Game {
     }
 
     /// The items within `radius` of `centre`, from the cells it touches.
-    fn near_drops(
+    pub(super) fn near_drops(
         &self,
         centre: DVec3,
         radius: f64,

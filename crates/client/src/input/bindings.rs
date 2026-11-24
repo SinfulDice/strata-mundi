@@ -54,13 +54,33 @@ impl PartialEq for Bindings {
 /// their default inputs; an action written with `[]` stays unbound.
 impl From<ByAction> for Bindings {
     fn from(map: ByAction) -> Self {
+        let before_backpack = !map.is_empty() && !map.contains_key(&Action::Backpack);
         let mut all = ByAction::from(Bindings::default());
         all.extend(map);
+        if before_backpack {
+            give_dpad_up_to_the_backpack(&mut all);
+        }
         let entries = all
             .into_iter()
             .flat_map(|(action, inputs)| inputs.into_iter().map(move |b| (b, action)))
             .collect();
         Self { entries }
+    }
+}
+
+/// Files from before the backpack key had the d-pad up moving forward: it now opens the
+/// backpack, unless the player gave it to another action.
+fn give_dpad_up_to_the_backpack(all: &mut ByAction) {
+    let up = Binding::Pad(PadButton::DPadUp);
+    if let Some(forward) = all.get_mut(&Action::MoveForward) {
+        forward.retain(|binding| *binding != up);
+    }
+    let in_game = |action: &Action| !format!("{action:?}").starts_with("Menu");
+    let taken = (all.iter()).any(|(action, inputs)| {
+        *action != Action::Backpack && in_game(action) && inputs.contains(&up)
+    });
+    if taken && let Some(backpack) = all.get_mut(&Action::Backpack) {
+        backpack.retain(|binding| *binding != up);
     }
 }
 
@@ -188,6 +208,27 @@ impl Default for Bindings {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_older_file_gives_the_dpad_up_to_the_backpack_if_free() {
+        let up = Binding::Pad(PadButton::DPadUp);
+        let mut old = ByAction::new();
+        old.insert(Action::MoveForward, vec![Binding::Key(KeyCode::KeyW), up]);
+        let bindings = Bindings::from(old.clone());
+        assert_eq!(
+            bindings
+                .actions_for(up)
+                .filter(|a| !format!("{a:?}").starts_with("Menu"))
+                .collect::<Vec<_>>(),
+            [Action::Backpack]
+        );
+        old.insert(Action::Jump, vec![up]);
+        let bindings = Bindings::from(old);
+        assert!(
+            !bindings.bindings_for(Action::Backpack).any(|b| b == up),
+            "taken by jump"
+        );
+    }
 
     #[test]
     fn rebinding_replaces_only_the_same_kind_of_input() {

@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use strata_core::cooking::FurnaceState;
 use strata_core::dimension::DimensionId;
-use strata_core::inventory::ItemData;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "BlockEntities")]
@@ -26,7 +25,7 @@ pub struct SavedBlockEntity {
     #[serde(default)]
     pub upgrades: Vec<Option<SavedStack>>,
     #[serde(default)]
-    pub data: ItemData,
+    pub data: super::stacks::SavedData,
     /// Fire and cooking of a furnace.
     #[serde(default)]
     pub furnace: Option<FurnaceState>,

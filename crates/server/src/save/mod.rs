@@ -22,7 +22,7 @@ pub use block_entities::{BlockEntitiesData, SavedBlockEntity};
 pub use entities::{EntitiesData, SavedBoat, SavedDrop};
 pub use meta::{FORMAT_VERSION, PlayerData, WorldMeta};
 pub use region::{BlockNames, REGION_SIZE, RegionStore};
-pub use stacks::{SavedInventory, SavedStack, load_slots, save_slots};
+pub use stacks::{SavedData, SavedInventory, SavedStack, load_slots, save_slots};
 pub use strata_core::files::write_atomic;
 
 use meta::FormatOnly;

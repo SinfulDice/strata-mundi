@@ -175,7 +175,7 @@ impl Persistence {
                 let mut entity = BlockEntity {
                     container: crate::save::load_slots(&saved.slots, items),
                     upgrades: crate::save::load_slots(&saved.upgrades, items),
-                    data: saved.data,
+                    data: saved.data.to_data(items),
                     furnace: saved.furnace,
                 };
                 migrate_furnace_modules(&mut entity);
@@ -277,7 +277,7 @@ impl Persistence {
                 pos: [pos.x, pos.y, pos.z],
                 slots: crate::save::save_slots(&entity.container.slots, items),
                 upgrades: crate::save::save_slots(&entity.upgrades.slots, items),
-                data: entity.data.clone(),
+                data: crate::save::SavedData::from_data(&entity.data, items),
                 furnace: entity.furnace.clone(),
             })
             .collect();

@@ -2,17 +2,14 @@
 //! Every change is sent back once per batch of messages (`take_messages`).
 
 use super::Game;
-use super::OpenWindow;
+use super::policy::{OpenPolicy, policy};
 use crate::loader::ColumnLoader;
 use crate::rules::BlockRules;
 use strata_core::content::ItemId;
-use strata_core::cooking::FurnaceSlots;
 use strata_core::inventory::{
-    Area, Click, CraftGrid, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotPolicy,
-    SlotRef, SortOrder, Window, clear_empty, sort, wear_slot,
+    Area, Click, CraftGrid, HOTBAR, ItemStack, MAIN, PLAYER_SLOTS, PlayerInventory, SlotRef,
+    SortOrder, Window, clear_empty, sort, wear_slot,
 };
-use strata_core::storage::{ItemFilter, StorageSlots};
-use strata_core::upgrade::SlotOwner;
 use strata_protocol::{InventoryRequest, ServerMessage};
 
 impl Game {
@@ -22,6 +19,23 @@ impl Game {
             .get(self.player)
             .cloned()
             .unwrap_or_default()
+    }
+
+    /// The inventory as its client sees it: bags summarised (their screen gets their
+    /// slots when open).
+    fn inventory_view(&self) -> PlayerInventory {
+        let mut inventory = self.inventory();
+        let stacks = inventory
+            .slots
+            .slots
+            .iter_mut()
+            .chain([&mut inventory.cursor]);
+        for stack in stacks.flatten() {
+            if let Some(bag) = self.rules.bags.get(stack.item) {
+                strata_core::bag::BagContents::summarise(&mut stack.data, &bag.layout);
+            }
+        }
+        inventory
     }
 
     /// Restores a saved inventory, made valid for the current packs; what has no place
@@ -130,7 +144,9 @@ impl Game {
         let valid = index < PLAYER_SLOTS
             && self.is_creative()
             && self.pinned() != Some(index)
-            && stack.as_ref().is_none_or(|stack| self.holds_no_bag(stack))
+            && stack
+                .as_ref()
+                .is_none_or(|stack| self.bag_contents_valid(stack))
             && stack.as_ref().is_none_or(|stack| {
                 stack.is_valid(&self.rules) && PlayerInventory::accepts(index, stack, &self.rules)
             });
@@ -277,14 +293,12 @@ impl Game {
         if self.ecs.inventories.get(self.player).is_none() {
             return T::default();
         }
+        // Read before taking: a carried bag's contents leave its item while it is clicked.
+        let shown = self.ecs.windows.get(self.player).cloned();
+        let upkeep = shown.as_ref().map(|window| self.upkeep_of_window(window));
+        let stored_before = shown.as_ref().map(|window| self.storage_of_window(window));
         let mut open = self.take_open_container(loader);
         self.check_station(loader);
-        let upkeep = open
-            .as_ref()
-            .map(|(window, _)| self.upkeep_of_window(window));
-        let stored_before = open
-            .as_ref()
-            .map(|(window, _)| self.storage_of_window(window));
         let mut craft = self.ecs.crafts.remove(self.player);
         let before = craft.as_ref().map(|window| window.grid.clone());
         let Some(player) = self.ecs.inventories.get_mut(self.player) else {
@@ -340,12 +354,13 @@ impl Game {
 
     pub(super) fn inventory_changed(&mut self) {
         self.inventory_dirty = true;
+        self.bag_magnet = None;
     }
 
     /// Entity, container and inventory news since the last call.
     pub fn take_messages(&mut self) -> Vec<ServerMessage> {
         if std::mem::take(&mut self.inventory_dirty) {
-            let inventory = Box::new(self.inventory());
+            let inventory = Box::new(self.inventory_view());
             self.messages.push(ServerMessage::Inventory(inventory));
         }
         if std::mem::take(&mut self.craft_dirty)
@@ -355,65 +370,4 @@ impl Game {
         }
         std::mem::take(&mut self.messages)
     }
-}
-
-/// The rules of the open container's slots: a furnace's, or a storage's with upgrade
-/// slots; none for plain storage.
-enum OpenPolicy<'a> {
-    Furnace(FurnaceSlots<'a>),
-    Storage(StorageSlots<'a>),
-}
-
-impl OpenPolicy<'_> {
-    fn as_dyn(&self) -> &dyn SlotPolicy {
-        match self {
-            Self::Furnace(policy) => policy,
-            Self::Storage(policy) => policy,
-        }
-    }
-}
-
-fn policy<'a>(
-    rules: &'a BlockRules,
-    window: &OpenWindow,
-    filters: Vec<ItemFilter>,
-) -> Option<OpenPolicy<'a>> {
-    let bag = window.bag.and_then(|item| rules.bags.get(item));
-    if let Some(bag) = bag {
-        return Some(OpenPolicy::Storage(StorageSlots {
-            items: rules.items(),
-            upgrades: &rules.upgrades,
-            owner: SlotOwner {
-                family: bag.layout.family.as_ref(),
-                item: window.bag,
-            },
-            storage: bag.layout.storage,
-            filters,
-            bag: Some((&rules.bags, bag)),
-        }));
-    }
-    let layout = rules.layout(window.block)?;
-    let owner = SlotOwner {
-        family: Some(layout.family.as_ref()?),
-        item: rules.block_item(window.block),
-    };
-    if let Some(furnace) = rules.furnace(window.block) {
-        return Some(OpenPolicy::Furnace(FurnaceSlots {
-            cooking: &rules.cooking,
-            items: rules.items(),
-            upgrades: &rules.upgrades,
-            kinds: &furnace.kinds,
-            owner,
-        }));
-    }
-    (layout.upgrades > 0).then(|| {
-        OpenPolicy::Storage(StorageSlots {
-            items: rules.items(),
-            upgrades: &rules.upgrades,
-            owner,
-            storage: layout.storage * window.halves.len(),
-            filters,
-            bag: None,
-        })
-    })
 }

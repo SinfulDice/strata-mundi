@@ -41,28 +41,22 @@ impl Content {
         lines
     }
 
-    /// « Holds 12 items » for a bag that holds something.
+    /// « Holds 12 items » for a bag that holds something (from the summary the client
+    /// receives with the inventory).
     pub fn bag_stack_line(&self, stack: &ItemStack, language: &str) -> Option<String> {
         let bag = self.bags.get(stack.item)?;
-        let (contents, _) = BagContents::read(&stack.data, &bag.layout);
-        let count: u32 = contents
-            .storage
-            .slots
-            .iter()
-            .flatten()
-            .map(|s| u32::from(s.count))
-            .sum();
-        let upgrades = contents.upgrades.slots.iter().flatten().count();
+        let (count, upgrades) = BagContents::summary(&stack.data, &bag.layout);
         if count == 0 && upgrades == 0 {
             return None;
         }
-        let args = [
-            ("count", count.to_string()),
-            ("upgrades", upgrades.to_string()),
-        ];
-        Some(
-            self.translations
-                .text_with(language, "bag-holds-line", &args),
-        )
+        let tr = &self.translations;
+        let count = ("count", count.to_string());
+        Some(match upgrades {
+            0 => tr.text_with(language, "bag-holds-line", &[count]),
+            _ => {
+                let args = [count, ("upgrades", upgrades.to_string())];
+                tr.text_with(language, "bag-holds-upgrades-line", &args)
+            }
+        })
     }
 }

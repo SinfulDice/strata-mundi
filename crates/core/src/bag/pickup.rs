@@ -33,10 +33,11 @@ pub fn pick_into_bags(
     mut stack: ItemStack,
     world: &BagWorld<'_>,
 ) -> Option<ItemStack> {
-    let pouches_first = bag_slots().filter(|&slot| is_pouch(slots, slot, world.bags));
-    let others = bag_slots().filter(|&slot| !is_pouch(slots, slot, world.bags));
-    let order: Vec<usize> = pouches_first.chain(others).collect();
-    for index in order {
+    let bags = bag_slots()
+        .filter(|&slot| (slots.get(slot)).is_some_and(|bag| world.bags.is_bag(bag.item)));
+    let (pouches, others): (Vec<usize>, Vec<usize>) =
+        bags.partition(|&slot| is_pouch(slots, slot, world.bags));
+    for index in pouches.into_iter().chain(others) {
         let Some(Some(bag)) = slots.slots.get_mut(index) else {
             continue;
         };
@@ -52,7 +53,8 @@ fn is_pouch(slots: &Container, slot: usize, bags: &Bags) -> bool {
         .is_some_and(|rules| rules.accepts.is_some())
 }
 
-/// One bag takes what it can of `stack`.
+/// One bag takes what it can of `stack`: only its upgrades are read until it is sure to
+/// take it.
 fn offer(bag: &mut ItemStack, stack: ItemStack, world: &BagWorld<'_>) -> Option<ItemStack> {
     let Some(rules) = world.bags.get(bag.item) else {
         return Some(stack);
@@ -60,28 +62,34 @@ fn offer(bag: &mut ItemStack, stack: ItemStack, world: &BagWorld<'_>) -> Option<
     if !world.bags.admits(rules, &stack) {
         return Some(stack);
     }
-    let (mut contents, cut) = BagContents::read(&bag.data, &rules.layout);
-    let upgrades: Vec<&ItemStack> = contents.upgrades.slots.iter().flatten().collect();
+    let upgrades = BagContents::read_upgrades(&bag.data, &rules.layout);
+    let upgrades: Vec<&ItemStack> = upgrades.slots.iter().flatten().collect();
     let upkeep = Upkeep::new(world.upgrades, world.items, &upgrades);
     let takes = rules.accepts.is_some() || upkeep.pickup;
-    if !cut.is_empty() || !takes || !upkeep.lets_in(stack.item) {
+    if !takes || !upkeep.lets_in(stack.item) {
         return Some(stack);
     }
-    let before = contents.storage.clone();
+    let (mut contents, cut) = BagContents::read(&bag.data, &rules.layout);
+    if !cut.is_empty() {
+        return Some(stack);
+    }
+    let before = upkeep.acts().then(|| contents.storage.clone());
     let count = stack.count;
     let left = contents.storage.insert_anywhere(stack, world.items);
     if left.as_ref().is_some_and(|left| left.count == count) {
         return left;
     }
-    let storage = &mut contents.storage;
-    after_entry(
-        &before,
-        storage,
-        &upkeep,
-        world.compressions,
-        world.items,
-        upkeep.sort,
-    );
+    if let Some(before) = before {
+        let storage = &mut contents.storage;
+        after_entry(
+            &before,
+            storage,
+            &upkeep,
+            world.compressions,
+            world.items,
+            upkeep.sort,
+        );
+    }
     contents.write(&mut bag.data);
     left
 }

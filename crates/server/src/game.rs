@@ -18,6 +18,7 @@ mod kits;
 mod magnets;
 mod mining;
 mod placing;
+mod policy;
 mod storage;
 mod terrain;
 mod work;
@@ -88,6 +89,8 @@ pub struct Game {
     worn_cache: strata_core::worn::WornCache,
     /// Chests and barrels with a magnet upgrade.
     magnets: magnets::Magnets,
+    /// The strongest magnet among the player's bags, until the inventory changes.
+    bag_magnet: Option<Option<(f32, u16)>>,
 }
 
 impl Game {
@@ -128,6 +131,7 @@ impl Game {
             worn_cache: Default::default(),
             furnace_view: None,
             magnets: Default::default(),
+            bag_magnet: None,
         }
     }
 

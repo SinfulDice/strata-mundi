@@ -353,6 +353,17 @@ fn quick_deposit_moves_only_known_unlocked_items() {
 }
 
 #[test]
+fn an_inventory_of_46_slots_gets_an_empty_back_slot() {
+    let mut old = with(&[(45, stack(DIRT, 2))]);
+    old.slots.slots.truncate(46);
+    old.locked.truncate(46);
+    old.normalize();
+    assert_eq!(old.slots.len(), PLAYER_SLOTS);
+    assert!(old.slots.get(BACK).is_none());
+    assert_eq!(old.slots.count(DIRT), 2, "the cloak slot kept");
+}
+
+#[test]
 fn a_saved_inventory_reads_back() {
     let mut player = with(&[(0, stack(PICK, 1)), (40, stack(DIRT, 2))]);
     player.toggle_lock(0);

@@ -78,10 +78,6 @@ impl Bags {
     pub fn admits(&self, bag: &BagRules, stack: &ItemStack) -> bool {
         !self.is_bag(stack.item) && bag.accepts.as_ref().is_none_or(|a| a.contains(&stack.item))
     }
-
-    pub fn iter(&self) -> impl Iterator<Item = (ItemId, &BagRules)> {
-        self.items.iter().map(|(&item, rules)| (item, rules))
-    }
 }
 
 pub(crate) fn load_bags(

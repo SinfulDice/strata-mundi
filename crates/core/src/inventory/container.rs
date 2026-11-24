@@ -165,7 +165,7 @@ impl Container {
     }
 }
 
-/// The player's 46 slots (hotbar, main, armour, off hand, accessories), the selected hotbar slot,
+/// The player's 47 slots (hotbar, main, armour, off hand, accessories, back), the selected hotbar slot,
 /// the locked slots and the stack carried under the pointer while a screen is open.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerInventory {
