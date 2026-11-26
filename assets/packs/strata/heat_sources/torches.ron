@@ -1,0 +1,2 @@
+// A torch or a lantern warms only what stands next to it.
+HeatSource(blocks: ["strata:torch", "strata:lantern"], warmth: 4.0, range: 2.5)

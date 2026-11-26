@@ -26,9 +26,10 @@ impl Game {
 
     pub(super) fn apply_equipment(&mut self) {
         let equipment = self.equipment();
+        let strain = self.temperature_strain(self.player);
         if let Some(control) = self.ecs.controls.get_mut(self.player) {
             let movement = &mut control.movement;
-            movement.speed = f64::from(equipment.stats.burden.speed_factor());
+            movement.speed = f64::from(equipment.stats.burden.speed_factor() * strain.speed);
             movement.mobility = if movement.gear_mobility {
                 equipment.mobility
             } else {

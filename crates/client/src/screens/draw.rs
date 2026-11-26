@@ -4,6 +4,7 @@
 use super::hud::{
     Bars, HudModel, aimed_block_name, effect_line, player_bars, sample_subtitles, subtitle_lines,
 };
+use super::hud_temperature::{paint_edges, temperature_hint, temperature_line, temperature_text};
 use super::keyboard::KeyboardModel;
 use super::menu::{self, Menu, Shared};
 use super::{MAX_AUTO_SCALE, Screens, UiFrame};
@@ -88,6 +89,8 @@ impl Screens {
                     effects: effect_line(game, content, &language),
                     notice: (game.vitals.fainted > 0.0)
                         .then(|| content.translations.text(&language, "hud-fainted")),
+                    temperature: temperature_line(game, content, &language),
+                    temperature_hint: temperature_hint(game, content, &language),
                 },
                 None => HudModel {
                     hotbar: &sample,
@@ -102,8 +105,16 @@ impl Screens {
                     },
                     effects: Some(content.translations.text(&language, "hud-effects-sample")),
                     notice: None,
+                    temperature: temperature_text(&sample_temperature(), content, &language),
+                    temperature_hint: None,
                 },
             };
+            if let Some(game) = game.as_deref()
+                && self.settings.interface.temperature_edges
+                && !game.is_creative()
+            {
+                paint_edges(&mut painter, screen, &self.assets.theme, game.vitals.edges);
+            }
             if let Some(game) = game.as_deref()
                 && self.settings.interface.hurt_flash
             {
@@ -178,6 +189,15 @@ impl Screens {
             &painter.vertices,
             &painter.indices,
         );
+    }
+}
+
+/// What the HUD editor shows for the temperature line.
+fn sample_temperature() -> strata_protocol::TemperatureView {
+    strata_protocol::TemperatureView {
+        felt: 3.0,
+        zone: strata_core::survival::temperature::TemperatureZone::Cold,
+        wet: false,
     }
 }
 

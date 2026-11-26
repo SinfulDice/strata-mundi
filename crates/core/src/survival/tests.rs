@@ -18,6 +18,7 @@ fn context() -> NeedsContext {
         underwater: false,
         extra_breath: 0.0,
         stamina_burden: 0.0,
+        strain: temperature::Strain::NONE,
     }
 }
 
@@ -141,6 +142,7 @@ fn options_turn_needs_off_and_change_their_speed() {
         hunger: false,
         thirst: false,
         stamina: false,
+        temperature: false,
         rate: 100,
     };
     let sprint = Exertion {

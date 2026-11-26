@@ -1,0 +1,33 @@
+// Campfire: two crossed logs on a ring of stones, flames rising from the embers.
+Sprite(
+    colors: {
+        'Y': ("lava", 3),
+        'F': ("lava", 2),
+        'f': ("lava", 1),
+        'r': ("lava", 0),
+        'B': ("oak_bark", 2),
+        'b': ("oak_bark", 1),
+        'd': ("oak_bark", 0),
+        'c': ("charcoal", 1),
+        'S': ("stone", 2),
+        's': ("stone", 1),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        ".......f........",
+        "......fF....f...",
+        "...f..fFf..fF...",
+        "..fF.fFYFf.fF...",
+        "..fFfFYYYFfFf...",
+        "...fFYYYYYFf....",
+        "...rfFYYYFFfr...",
+        "....rfFFFFfr....",
+        "..Bbd.rffr.dbB..",
+        "...BBbbccbbBB...",
+        "..sBbBbddbBbBs..",
+        ".SsdbdccccdbdsS.",
+        "SsSsSsSsSsSsSsSs",
+    ],
+)

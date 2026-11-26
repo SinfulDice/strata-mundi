@@ -1,0 +1,2 @@
+// Too hot for too long (temperature above `scorching`): slow harm, lessened by fire resistance.
+DamageType(resistance: Some("strata:fire_resistance"), ignores_invulnerability: true, shakes: false)

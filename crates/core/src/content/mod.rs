@@ -179,6 +179,7 @@ impl Content {
             items: &items,
             blocks: &blocks,
             stats: &upgrades.stats,
+            tags: &tags,
         };
         let survival = crate::survival::load_survival(packs, &survival_known, &mut errors);
         loot::check_loot_names(&refs.loot, &loot_tables, &mut errors);

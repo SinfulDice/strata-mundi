@@ -1,0 +1,2 @@
+// Furnaces, smokers and blast furnaces of every tier, while they burn.
+HeatSource(tag: Some("strata:furnaces"), warmth: 10.0, range: 4.0, lit: true)

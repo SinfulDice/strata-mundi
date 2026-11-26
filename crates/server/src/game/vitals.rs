@@ -49,6 +49,7 @@ impl Game {
         self.ecs
             .effects
             .insert(self.player, StatusEffects::default());
+        self.fresh_temperature(self.player);
     }
 
     pub(super) fn vitals_tick(&mut self, loader: &ColumnLoader) {
@@ -59,6 +60,7 @@ impl Game {
                 continue;
             }
             let around = self.surroundings(entity, loader);
+            self.temperature_tick(entity, (around.wet, around.underwater), loader);
             self.needs_tick(entity, &around, &effort);
             self.effects_tick(entity, around.wet);
             self.hazards_tick(entity, &around, fallen);
@@ -100,6 +102,7 @@ impl Game {
             underwater: around.underwater,
             extra_breath: worn(WornStat::Breath),
             stamina_burden: equipment.as_ref().map_or(0.0, |e| e.stats.burden.stamina),
+            strain: self.temperature_strain(entity),
         };
         let Some(health) = self.ecs.healths.get_mut(entity) else {
             return;

@@ -183,8 +183,10 @@ impl Gameplay {
         let terrain = terrain(&self.view, &self.info, self.border, None);
         if let Some(player) = &mut self.player {
             let equipment = self.inventory.equipment(&self.info.content);
+            let slowness = self.vitals.view.as_ref().map_or(0.0, |v| v.slowness);
             let movement = &mut player.movement;
-            movement.speed = f64::from(equipment.stats.burden.speed_factor());
+            let speed = equipment.stats.burden.speed_factor() * (1.0 - slowness.clamp(0.0, 0.9));
+            movement.speed = f64::from(speed);
             movement.mobility = if movement.gear_mobility {
                 equipment.mobility
             } else {

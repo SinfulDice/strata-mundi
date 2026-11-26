@@ -75,6 +75,7 @@ impl Game {
         self.ecs.needs.insert(self.player, Needs::full(rules));
         let effects = StatusEffects::default();
         self.ecs.effects.insert(self.player, effects);
+        self.fresh_temperature(self.player);
         if let Some(control) = self.ecs.controls.get_mut(self.player) {
             control.using = None;
             control.exertion = Default::default();

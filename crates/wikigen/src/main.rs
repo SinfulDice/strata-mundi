@@ -18,6 +18,7 @@ mod site;
 mod stations;
 mod storage;
 mod survival;
+mod temperature;
 mod texts;
 mod upgrades;
 mod worn;

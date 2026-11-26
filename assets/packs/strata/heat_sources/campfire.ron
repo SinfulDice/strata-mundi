@@ -1,0 +1,2 @@
+// The campfire: the warmth to gather round on a cold night.
+HeatSource(blocks: ["strata:campfire"], warmth: 14.0, range: 6.0)

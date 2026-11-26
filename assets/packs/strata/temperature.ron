@@ -1,0 +1,48 @@
+// Temperature (v0.3, milestone 8): felt in degrees Celsius, the sum of named parts
+// (biome by day, the night's drop, altitude, water, the strongest heat source, a roof,
+// clothing). Comfortable from `cold` to `hot`; beyond, it strains (cold: slower and
+// hungrier; heat: thirstier, stamina slower to come back), then hurts past `freezing`
+// and `scorching`. A world option turns it off. Values: docs/regles/equilibrage.md.
+Temperature(
+    sample_every: 20,
+    smoothing: 20.0,
+    zones: (freezing: -4.0, cold: 8.0, hot: 30.0, scorching: 42.0),
+    gauge_span: 10.0,
+    default_biome: (day: 18.0, night: 11.0),
+    biomes: {
+        "strata:snowy_tundra": (day: -3.0, night: -12.0),
+        "strata:snowy_peaks": (day: -2.0, night: -9.0),
+        "strata:taiga": (day: 5.0, night: -2.0),
+        "strata:mountains": (day: 12.0, night: 5.0),
+        "strata:birch_forest": (day: 16.0, night: 9.0),
+        "strata:forest": (day: 18.0, night: 11.0),
+        "strata:plains": (day: 20.0, night: 12.0),
+        "strata:flower_meadow": (day: 21.0, night: 13.0),
+        "strata:swamp": (day: 23.0, night: 17.0),
+        "strata:jungle": (day: 31.0, night: 24.0),
+        "strata:savanna": (day: 32.0, night: 19.0),
+        "strata:warm_mountains": (day: 27.0, night: 17.0),
+        "strata:desert": (day: 40.0, night: 9.0),
+        "strata:badlands": (day: 38.0, night: 12.0),
+        "strata:mushroom_fields": (day: 16.0, night: 12.0),
+        "strata:beach": (day: 23.0, night: 16.0),
+        "strata:river": (day: 17.0, night: 11.0),
+        "strata:ocean": (day: 16.0, night: 12.0),
+        "strata:deep_ocean": (day: 13.0, night: 10.0),
+    },
+    // Extreme dimensions (v0.10) add their own shift here, by dimension.
+    dimensions: {},
+    altitude: (from: 140.0, per_block: 0.06),
+    water: (wet: -6.0, immersed: -6.0, dry_seconds: 60.0, heat_drying: 3.0),
+    shelter: (height: 12, night_share: 0.5, day_share: 0.5),
+    clothing: (
+        cold_stat: "strata:insulation",
+        heat_stat: "strata:heat_insulation",
+        per_point: 3.0,
+        overheat_share: 0.5,
+    ),
+    cold: (speed: 0.85, hunger: 0.003, thirst: 0.0, stamina_regen: 1.0),
+    hot: (speed: 1.0, hunger: 0.0, thirst: 0.004, stamina_regen: 0.5),
+    freezing: (damage: "strata:freezing", amount: 1.0, every: 80),
+    scorching: (damage: "strata:overheating", amount: 1.0, every: 80),
+)

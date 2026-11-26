@@ -275,6 +275,9 @@ impl ScreenModel for CreateModel<'_> {
             "hunger" => Some(self.toggle("ui-new-world-hunger", "on", form.survival.hunger)),
             "thirst" => Some(self.toggle("ui-new-world-thirst", "on", form.survival.thirst)),
             "stamina" => Some(self.toggle("ui-new-world-stamina", "on", form.survival.stamina)),
+            "temperature" => {
+                Some(self.toggle("ui-new-world-temperature", "on", form.survival.temperature))
+            }
             "survival_rate" => Some(self.shared.tr_with(
                 "ui-new-world-survival-rate",
                 &[("rate", form.survival.rate.to_string())],
@@ -317,6 +320,7 @@ impl ScreenModel for CreateModel<'_> {
             "hunger" => Some(&mut form.survival.hunger),
             "thirst" => Some(&mut form.survival.thirst),
             "stamina" => Some(&mut form.survival.stamina),
+            "temperature" => Some(&mut form.survival.temperature),
             _ => None,
         };
         if let Some(flag) = flag {

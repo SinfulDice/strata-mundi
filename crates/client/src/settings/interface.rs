@@ -51,6 +51,8 @@ pub struct InterfaceSettings {
     pub hurt_shake: u32,
     /// The screen flashes red when hurt.
     pub hurt_flash: bool,
+    /// Frost or heat at the edges of the screen away from a comfortable temperature.
+    pub temperature_edges: bool,
     /// The mana bar shows, empty, before there is any magic.
     pub show_empty_mana: bool,
     /// Stop the world in every menu, not only in the pause menu (off, like Minecraft).
@@ -69,6 +71,7 @@ impl Default for InterfaceSettings {
             reduce_camera_effects: false,
             hurt_shake: 100,
             hurt_flash: true,
+            temperature_edges: true,
             show_empty_mana: false,
             pause_in_menus: false,
             hud: BTreeMap::new(),

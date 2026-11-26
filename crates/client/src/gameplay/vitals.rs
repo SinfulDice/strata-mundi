@@ -8,6 +8,7 @@ use crate::input::{Action, InputState};
 use crate::interaction::aim_source;
 use std::cell::RefCell;
 use strata_core::content::{Content, ItemId, SoundId};
+use strata_core::survival::temperature::TemperatureZone;
 use strata_protocol::{HurtView, VitalsView, WorldAction};
 
 /// Seconds the red flash and the shake last.
@@ -18,6 +19,10 @@ const FAINT_SECONDS: f32 = 6.0;
 const USE_SOUND_EVERY: f32 = 0.25;
 /// Strongest shake, in radians (at 100 % and a heavy hit).
 const MAX_SHAKE: f32 = 0.06;
+/// Seconds the temperature hint stays once the zone gets worse.
+const HINT_SECONDS: f32 = 8.0;
+/// Seconds for the frost or heat at the edges to come or go.
+const EDGE_SECONDS: f32 = 1.5;
 
 #[derive(Debug, Default)]
 pub struct ClientVitals {
@@ -35,6 +40,10 @@ pub struct ClientVitals {
     sounds: Vec<SoundId>,
     /// The effects line of the HUD in a language, made again when the gauges change.
     effects_line: RefCell<Option<(String, Option<String>)>>,
+    /// The zone the temperature got worse into, and the seconds its hint has left.
+    pub hint: Option<(TemperatureZone, f32)>,
+    /// Frost (below 0, to -1) or heat (above 0, to 1) at the edges of the screen.
+    pub edges: f32,
 }
 
 impl ClientVitals {
@@ -94,7 +103,41 @@ impl ClientVitals {
         wave * fade * self.hurt_strength * MAX_SHAKE * percent.min(100) as f32 / 100.0
     }
 
+    /// A new temperature zone: a hint when it gets further from comfort.
+    fn temperature_changed(&mut self, before: TemperatureZone, now: TemperatureZone) {
+        let worse = now.severity() > before.severity()
+            || (now.severity() > 0
+                && (now > TemperatureZone::Comfortable) != (before > TemperatureZone::Comfortable));
+        if worse {
+            self.hint = Some((now, HINT_SECONDS));
+        } else if now == TemperatureZone::Comfortable {
+            self.hint = None;
+        }
+    }
+
+    fn advance_temperature(&mut self, dt: f32) {
+        if let Some((_, left)) = &mut self.hint {
+            *left -= dt;
+        }
+        self.hint = self.hint.filter(|(_, left)| *left > 0.0);
+        let zone = self
+            .view
+            .as_ref()
+            .and_then(|v| v.temperature)
+            .map(|t| t.zone);
+        let target = match zone {
+            Some(TemperatureZone::Freezing) => -1.0,
+            Some(TemperatureZone::Cold) => -0.45,
+            Some(TemperatureZone::Hot) => 0.4,
+            Some(TemperatureZone::Scorching) => 1.0,
+            _ => 0.0,
+        };
+        let step = dt / EDGE_SECONDS;
+        self.edges += (target - self.edges).clamp(-step, step);
+    }
+
     pub(super) fn advance(&mut self, dt: f32, content: &Content) {
+        self.advance_temperature(dt);
         self.hurt = (self.hurt - dt).max(0.0);
         self.fainted = (self.fainted - dt).max(0.0);
         let using = self.view.as_ref().and_then(|view| view.using);
@@ -122,6 +165,11 @@ impl Gameplay {
         if let Some(player) = &mut self.player {
             player.movement.can_sprint = view.can_sprint;
         }
+        let zone = |view: Option<&VitalsView>| {
+            (view.and_then(|v| v.temperature)).map_or(TemperatureZone::Comfortable, |t| t.zone)
+        };
+        let before = zone(self.vitals.view.as_ref());
+        self.vitals.temperature_changed(before, zone(Some(&view)));
         self.vitals.view = Some(view);
         self.vitals.effects_line.replace(None);
     }

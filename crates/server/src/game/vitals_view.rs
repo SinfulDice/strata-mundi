@@ -5,7 +5,7 @@ use super::Game;
 use strata_core::content::TICKS_PER_SECOND;
 use strata_core::survival::{Needs, StatusEffects, breath_ticks};
 use strata_core::worn::WornStat;
-use strata_protocol::{EffectView, ServerMessage, VitalsView};
+use strata_protocol::{EffectView, ServerMessage, TemperatureView, VitalsView};
 
 /// Stamina is sent in steps of this many points.
 const STAMINA_STEP: f32 = 5.0;
@@ -68,6 +68,20 @@ impl Game {
                 .is_none_or(|c| c.movement.can_sprint),
             effects,
             using,
+            temperature: self.temperature_view().filter(|_| survival),
+            slowness: 1.0 - self.temperature_strain(self.player).speed,
+        })
+    }
+
+    /// The felt temperature in half degrees, its zone, whether still wet.
+    fn temperature_view(&self) -> Option<TemperatureView> {
+        let rules = &self.rules.survival.temperature;
+        let body = self.ecs.temperatures.get(self.player)?;
+        let felt = body.felt.filter(|_| self.survival_options.temperature)?;
+        Some(TemperatureView {
+            felt: (felt * 2.0).round() / 2.0,
+            zone: rules.zone(felt),
+            wet: body.wetness > 0.0,
         })
     }
 

@@ -1,0 +1,2 @@
+// Too cold for too long (temperature below `freezing`): slow harm, lessened by cold resistance.
+DamageType(resistance: Some("strata:cold_resistance"), ignores_invulnerability: true, shakes: false)

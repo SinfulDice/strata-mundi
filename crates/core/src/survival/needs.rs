@@ -4,6 +4,7 @@
 
 use super::health::Health;
 use super::rules::SurvivalRules;
+use super::temperature::Strain;
 use crate::content::TICKS_PER_SECOND;
 use serde::{Deserialize, Serialize};
 
@@ -16,6 +17,8 @@ pub struct SurvivalOptions {
     pub thirst: bool,
     #[serde(default = "yes")]
     pub stamina: bool,
+    #[serde(default = "yes")]
+    pub temperature: bool,
     /// Percent of the normal speed at which hunger and thirst go down.
     #[serde(default = "hundred")]
     pub rate: u16,
@@ -35,6 +38,7 @@ impl Default for SurvivalOptions {
             hunger: true,
             thirst: true,
             stamina: true,
+            temperature: true,
             rate: 100,
         }
     }
@@ -72,6 +76,8 @@ pub struct NeedsContext {
     pub extra_breath: f32,
     /// Share of the stamina heavy armour takes away (`Burden::stamina`).
     pub stamina_burden: f32,
+    /// What the temperature does to the needs (`Strain::NONE` when comfortable).
+    pub strain: Strain,
 }
 
 /// Harm the needs deal (starving, parched, drowning).
@@ -170,8 +176,12 @@ impl Needs {
         context: &NeedsContext,
     ) -> Vec<(NeedHarm, f32)> {
         let options = context.options;
+        let strain = &context.strain;
         if options.thirst {
-            self.thirst_exhaustion += rules.thirst.idle * options.factor();
+            self.thirst_exhaustion += (rules.thirst.idle + strain.thirst) * options.factor();
+        }
+        if options.hunger {
+            self.exhaustion += strain.hunger * options.factor();
         }
         self.digest(rules);
         let mut harm = Vec::new();
@@ -252,7 +262,7 @@ impl Needs {
         }
         self.rest = self.rest.saturating_add(1);
         if self.rest > stamina.delay {
-            self.stamina += stamina.regen;
+            self.stamina += stamina.regen * context.strain.stamina_regen;
         }
         self.stamina = self.stamina.min(max);
         if self.winded && self.stamina >= stamina.resume.min(max) {

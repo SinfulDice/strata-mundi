@@ -2,8 +2,9 @@
 //! and `contacts/`, and checking what they name.
 
 use super::defs::{ConsumeDef, ContactDef, DamageType, EffectGrant, FillDef, StatusEffectDef};
+use super::temperature::{HeatKnown, TemperatureRules, load_heat_sources};
 use super::{Consumable, Contact, Fill, Survival, SurvivalRules, engine};
-use crate::content::{Block, BlockId, FluidLevel, Item, ItemId, Registry};
+use crate::content::{Block, BlockId, FluidLevel, Item, ItemId, ItemTags, Registry};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced, read_ron};
 use crate::upgrade::ItemStatDef;
@@ -25,6 +26,7 @@ pub(crate) struct Known<'a> {
     pub items: &'a Registry<ItemId, Item>,
     pub blocks: &'a Registry<BlockId, Block>,
     pub stats: &'a BTreeMap<Identifier, ItemStatDef>,
+    pub tags: &'a ItemTags,
 }
 
 pub(crate) fn load_survival(
@@ -50,7 +52,17 @@ pub(crate) fn load_survival(
         .filter_map(|(id, sourced)| check.fill(&id, &sourced, errors))
         .collect();
     let contacts = load_contacts(packs, &check, errors);
-    let rules = survival_rules(packs, errors);
+    let rules = last_file(packs, "survival.ron", errors)
+        .map_or_else(SurvivalRules::default, SurvivalRules::clamped);
+    let temperature = last_file(packs, "temperature.ron", errors)
+        .map_or_else(TemperatureRules::default, TemperatureRules::clamped);
+    check_temperature(&temperature, known, &damage, errors);
+    let heat_known = HeatKnown {
+        blocks: known.blocks,
+        items: known.items,
+        tags: known.tags,
+    };
+    let heat = load_heat_sources(packs, &heat_known, errors);
     let drink_source = known
         .blocks
         .key(&rules.drinking.source)
@@ -63,22 +75,50 @@ pub(crate) fn load_survival(
         fills,
         contacts,
         drink_source,
+        temperature,
+        heat,
     }
 }
 
-fn survival_rules(packs: &PackSet, errors: &mut Vec<PackError>) -> SurvivalRules {
-    let mut rules = SurvivalRules::default();
+/// The file `name` of the last pack that has one, read.
+fn last_file<T: serde::de::DeserializeOwned>(
+    packs: &PackSet,
+    name: &str,
+    errors: &mut Vec<PackError>,
+) -> Option<T> {
+    let mut found = None;
     for pack in packs.packs() {
-        let path = pack.root.join("survival.ron");
+        let path = pack.root.join(name);
         if !path.is_file() {
             continue;
         }
-        match read_ron::<SurvivalRules>(&path) {
-            Ok(read) => rules = read.clamped(),
+        match read_ron::<T>(&path) {
+            Ok(read) => found = Some(read),
             Err(error) => errors.push(error),
         }
     }
-    rules
+    found
+}
+
+/// The damage kinds and stats `temperature.ron` names exist (when the packs define any).
+fn check_temperature(
+    rules: &TemperatureRules,
+    known: &Known<'_>,
+    damage: &BTreeMap<Identifier, DamageType>,
+    errors: &mut Vec<PackError>,
+) {
+    let path = Path::new("temperature.ron");
+    for harm in [&rules.freezing, &rules.scorching] {
+        if !damage.is_empty() && !damage.contains_key(&harm.damage) {
+            let message = format!("unknown damage `{}`", harm.damage);
+            errors.push(PackError::invalid(path, message));
+        }
+    }
+    for stat in [&rules.clothing.cold_stat, &rules.clothing.heat_stat] {
+        if !known.stats.is_empty() && !known.stats.contains_key(stat) {
+            errors.push(PackError::invalid(path, format!("unknown stat `{stat}`")));
+        }
+    }
 }
 
 fn load_damage(

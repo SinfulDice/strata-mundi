@@ -47,6 +47,7 @@ pub const INTERFACE: &[Setting] = &[
     Setting::ReduceCamera,
     Setting::HurtShake,
     Setting::HurtFlash,
+    Setting::TemperatureEdges,
     Setting::ShowMana,
     Setting::PauseInMenus,
     Setting::BlockName,

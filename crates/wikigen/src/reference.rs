@@ -10,7 +10,7 @@ use strata_client::settings::{GraphicsSettings, Preset};
 use strata_protocol::commands::{COMMANDS, CommandSpec, Runs};
 
 /// Mechanics pages, by text key (`mechanics/<name>`).
-const MECHANICS: [&str; 17] = [
+const MECHANICS: [&str; 18] = [
     "world-generation",
     "fluids",
     "fire",
@@ -28,6 +28,7 @@ const MECHANICS: [&str; 17] = [
     "stations",
     "storage",
     "survival",
+    "temperature",
 ];
 
 pub fn pages(ctx: &Ctx<'_>) -> Vec<Page> {
@@ -94,6 +95,7 @@ fn mechanic(ctx: &Ctx<'_>, name: &str) -> Page {
         "stations" => crate::stations::table(ctx, &path),
         "storage" => crate::storage::table(ctx, &path),
         "survival" => crate::survival::tables(ctx, &path),
+        "temperature" => crate::temperature::tables(ctx, &path),
         "accessories-and-sets" => {
             crate::worn::sets_table(ctx, &path) + &crate::worn::mobility_table(ctx)
         }

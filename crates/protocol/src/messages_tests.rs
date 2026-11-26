@@ -228,6 +228,12 @@ fn survival_messages_survive_serialization() {
             harmful: true,
         }],
         using: Some((ItemId(2), 10)),
+        temperature: Some(crate::TemperatureView {
+            felt: -3.5,
+            zone: strata_core::survival::temperature::TemperatureZone::Cold,
+            wet: true,
+        }),
+        slowness: 0.15,
     }));
     let hurt = ServerMessage::Hurt(crate::HurtView {
         kind: "strata:fall".parse().unwrap(),

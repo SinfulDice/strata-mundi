@@ -1,0 +1,12 @@
+// Campfire: logs burning on a ring of stones. Warms the air around it (heat_sources/campfire.ron) and lights like a torch; walking into it burns.
+Block(
+    textures: All("strata:campfire"),
+    render: Cross,
+    solid: false,
+    light_opacity: 0,
+    light_emission: 15,
+    hardness: 1.0,
+    sound: Some("strata:wood"),
+    category: Some("strata:building"),
+    rooted: true,
+)

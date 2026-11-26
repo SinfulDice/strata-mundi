@@ -121,4 +121,6 @@ pub struct SavedVitals {
     pub needs: strata_core::survival::Needs,
     #[serde(default)]
     pub effects: strata_core::survival::StatusEffects,
+    #[serde(default)]
+    pub temperature: strata_core::survival::temperature::BodyTemperature,
 }

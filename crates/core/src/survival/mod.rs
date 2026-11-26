@@ -10,6 +10,7 @@ mod health;
 mod load;
 mod needs;
 mod rules;
+pub mod temperature;
 
 pub use defs::{
     ConsumeDef, ContactDef, DamageType, EffectGrant, FillDef, Periodic, PeriodicDamage,
@@ -47,6 +48,10 @@ pub struct Survival {
     pub contacts: Vec<Option<Contact>>,
     /// The liquid source one may drink from (`DrinkingRules::source`).
     pub drink_source: Option<BlockId>,
+    /// `temperature.ron`.
+    pub temperature: temperature::TemperatureRules,
+    /// Blocks that warm the air (`heat_sources/`).
+    pub heat: temperature::HeatSources,
 }
 
 /// `ConsumeDef` with its items found.

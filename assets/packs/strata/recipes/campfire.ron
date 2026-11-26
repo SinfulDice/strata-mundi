@@ -1,0 +1,5 @@
+Shaped(
+    pattern: [" S ", "SCS", "LLL"],
+    key: {'S': Item("strata:stick"), 'C': Tag("strata:coals"), 'L': Tag("strata:logs")},
+    result: Result(item: "strata:campfire", count: 1),
+)

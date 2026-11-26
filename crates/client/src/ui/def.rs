@@ -152,6 +152,10 @@ pub enum Node {
         /// Not drawn when the model gives no value (a bar of the HUD turned off).
         #[serde(default)]
         optional: bool,
+        /// A scale rather than a bar: coloured stretches (where each ends, 0 to 1, and its
+        /// colour in the theme's `bars`) under a marker at the value (temperature).
+        #[serde(default)]
+        segments: Vec<(f32, String)>,
     },
     /// A bevelled strip of the model's colour (a station's title band and work surface),
     /// the theme's light panel colour otherwise.

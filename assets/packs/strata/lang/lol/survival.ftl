@@ -63,3 +63,26 @@ option-show-mana = EMPTEE MAGIC BAR
 option-show-mana-help = SHOW TEH MAGIC BAR B4 MAGIC IZ HERE.
 hud-effect-separator = {" · "}
 ui-percent = { $value } %
+# Temperature (v0.3, milestone 8)
+damage-strata-freezing = FROZED
+damage-strata-overheating = 2 HOT
+item-stat-strata-heat_insulation = NO HOT
+item-stat-strata-cold_resistance = % NO FROZE
+temperature-zone-freezing = SO FROZE
+temperature-zone-cold = COLDZ
+temperature-zone-comfortable = COZY
+temperature-zone-hot = HOTZ
+temperature-zone-scorching = SO SPICY
+hud-temperature = { $zone } { $degrees } °C
+hud-temperature-wet = WETZ
+hud-temperature-hint-freezing = U IZ FROZIN AN OUCH: FIRE, ROOF OR WOOLZ, QUIK!
+hud-temperature-hint-cold = IZ COLD: U SLOW AN GET HUNGRIER. FIRE, ROOF OR WOOLZ HALP.
+hud-temperature-hint-hot = IZ HOT: U GET THIRSTY AN TIRED. FIND SHADE OR WATR.
+hud-temperature-hint-scorching = TEH HOT HURTZ: GO AWAI FROM FIRE, IN SHADE OR WATR!
+hud-temperature-hint-comfortable = IZ COZY.
+ui-new-world-temperature = HOT AN COLD: { $on ->
+        [on] YIS
+       *[off] NOPE
+    }
+option-temperature-edges = FROST AN HOT ON EDGEZ
+option-temperature-edges-help = TEH SCREEN EDGEZ GO FROSTY WEN U COLD AN GLOWY WEN U HOT.

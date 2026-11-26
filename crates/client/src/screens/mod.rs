@@ -10,6 +10,7 @@ mod editor;
 mod effects;
 mod handling;
 mod hud;
+mod hud_temperature;
 mod inventory;
 mod journal;
 mod keyboard;

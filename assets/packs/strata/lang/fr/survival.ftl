@@ -63,3 +63,26 @@ option-show-mana = Barre de mana vide
 option-show-mana-help = Afficher la barre de mana avant que la magie n'arrive.
 hud-effect-separator = {" · "}
 ui-percent = { $value } %
+# Température (v0.3, jalon 8)
+damage-strata-freezing = Gel
+damage-strata-overheating = Coup de chaleur
+item-stat-strata-heat_insulation = d'isolation contre la chaleur
+item-stat-strata-cold_resistance = % de résistance au gel
+temperature-zone-freezing = Glacial
+temperature-zone-cold = Froid
+temperature-zone-comfortable = Agréable
+temperature-zone-hot = Chaud
+temperature-zone-scorching = Brûlant
+hud-temperature = { $zone } { $degrees } °C
+hud-temperature-wet = Mouillé
+hud-temperature-hint-freezing = Vous gelez et perdez de la vie : un feu, un abri ou de la laine, vite !
+hud-temperature-hint-cold = Il fait froid : vous ralentissez et avez faim plus vite. Feu, abri ou laine aident.
+hud-temperature-hint-hot = Il fait chaud : vous avez soif plus vite et soufflez moins bien. Cherchez l'ombre ou l'eau.
+hud-temperature-hint-scorching = La chaleur vous blesse : éloignez-vous du feu, mettez-vous à l'ombre ou dans l'eau !
+hud-temperature-hint-comfortable = La température est agréable.
+ui-new-world-temperature = Température : { $on ->
+        [on] oui
+       *[off] non
+    }
+option-temperature-edges = Givre et chaleur sur les bords
+option-temperature-edges-help = Les bords de l'écran se couvrent de givre quand on a froid et rougeoient quand on a chaud.

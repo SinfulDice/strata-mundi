@@ -279,6 +279,7 @@ fn world_options_turn_hunger_and_thirst_off() {
         hunger: false,
         thirst: false,
         stamina: true,
+        temperature: true,
         rate: 100,
     });
     needs(&mut w).food = 3.0;

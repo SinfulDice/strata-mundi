@@ -15,6 +15,7 @@ fn the_gauges_and_the_survival_options_come_back() {
         hunger: true,
         thirst: false,
         stamina: true,
+        temperature: false,
         rate: 50,
     };
     folder.write_meta(&meta).unwrap();
@@ -28,6 +29,8 @@ fn the_gauges_and_the_survival_options_come_back() {
     saved.health = 9.0;
     saved.needs.food = 11.0;
     saved.needs.thirst = 3.0;
+    saved.temperature.felt = Some(3.5);
+    saved.temperature.wetness = 0.5;
     saved.effects.give(&EffectGrant {
         effect: "strata:bleeding".parse().unwrap(),
         seconds: 20.0,
@@ -39,6 +42,7 @@ fn the_gauges_and_the_survival_options_come_back() {
     let reopened = Persistence::new(settings(&folder, folder.read_meta().unwrap()), content);
     assert_eq!(reopened.meta.survival.rate, 50);
     assert!(!reopened.meta.survival.thirst);
+    assert!(!reopened.meta.survival.temperature);
     let start = reopened.player_start(&dimension, || DVec3::ZERO);
     assert_eq!(start.vitals, Some(saved));
     std::fs::remove_dir_all(saves).unwrap();

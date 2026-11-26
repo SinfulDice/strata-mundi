@@ -1,0 +1,2 @@
+// Lava, still or flowing: the strongest heat.
+HeatSource(blocks: ["strata:lava"], warmth: 20.0, range: 6.0)

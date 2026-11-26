@@ -16,6 +16,9 @@ impl Game {
                 .get(self.player)
                 .cloned()
                 .unwrap_or_default(),
+            temperature: (self.ecs.temperatures.get(self.player))
+                .cloned()
+                .unwrap_or_default(),
         })
     }
 
@@ -46,5 +49,7 @@ impl Game {
         self.ecs.healths.insert(self.player, health);
         self.ecs.needs.insert(self.player, needs);
         self.ecs.effects.insert(self.player, saved.effects);
+        let temperature = saved.temperature.bounded();
+        self.ecs.temperatures.insert(self.player, temperature);
     }
 }

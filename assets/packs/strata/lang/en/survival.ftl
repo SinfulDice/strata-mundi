@@ -63,3 +63,26 @@ option-show-mana = Empty mana bar
 option-show-mana-help = Show the mana bar before magic arrives.
 hud-effect-separator = {" · "}
 ui-percent = { $value } %
+# Temperature (v0.3, milestone 8)
+damage-strata-freezing = Freezing
+damage-strata-overheating = Heatstroke
+item-stat-strata-heat_insulation = heat insulation
+item-stat-strata-cold_resistance = % freezing resistance
+temperature-zone-freezing = Freezing
+temperature-zone-cold = Cold
+temperature-zone-comfortable = Pleasant
+temperature-zone-hot = Hot
+temperature-zone-scorching = Scorching
+hud-temperature = { $zone } { $degrees } °C
+hud-temperature-wet = Wet
+hud-temperature-hint-freezing = You are freezing and losing health: a fire, a shelter or wool, quick!
+hud-temperature-hint-cold = It is cold: you slow down and get hungry faster. Fire, shelter or wool help.
+hud-temperature-hint-hot = It is hot: you get thirsty faster and tire sooner. Find shade or water.
+hud-temperature-hint-scorching = The heat hurts: get away from the fire, into the shade or the water!
+hud-temperature-hint-comfortable = The temperature is pleasant.
+ui-new-world-temperature = Temperature: { $on ->
+        [on] on
+       *[off] off
+    }
+option-temperature-edges = Frost and heat at the edges
+option-temperature-edges-help = The edges of the screen frost over when you are cold and glow when you are hot.

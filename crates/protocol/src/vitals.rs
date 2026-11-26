@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use strata_core::content::ItemId;
 use strata_core::id::Identifier;
+use strata_core::survival::temperature::TemperatureZone;
 
 /// Health, needs and effects of the player, sent when they change.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -25,6 +26,19 @@ pub struct VitalsView {
     pub effects: Vec<EffectView>,
     /// The item being eaten, drunk or applied, and the ticks left of this use.
     pub using: Option<(ItemId, u16)>,
+    /// `None` when the world turns temperature off.
+    pub temperature: Option<TemperatureView>,
+    /// Share of the movement speed the cold takes away (the client's prediction).
+    pub slowness: f32,
+}
+
+/// The felt temperature (in steps of half a degree) and its zone.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct TemperatureView {
+    pub felt: f32,
+    pub zone: TemperatureZone,
+    /// Still wet from the water.
+    pub wet: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

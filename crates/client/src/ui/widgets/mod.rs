@@ -1,6 +1,7 @@
 //! Draws a described screen with its model and records the interactive elements.
 
 mod controls;
+mod gauge;
 mod items;
 mod list;
 mod text;
@@ -156,7 +157,7 @@ fn draw_node(node: &Node, parent: Rect, d: &mut Draw<'_, '_>) {
         Node::SlotGrid { .. } => items::slot_grid(d, node, parent),
         Node::Crosshair { .. } => items::crosshair(d, node, parent),
         Node::Log { .. } => list::log(d, node, parent),
-        Node::Gauge { .. } => controls::gauge(d, node, parent),
+        Node::Gauge { .. } => gauge::gauge(d, node, parent),
         Node::Band {
             id,
             anchor,

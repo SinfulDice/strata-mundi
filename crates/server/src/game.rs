@@ -23,6 +23,7 @@ mod placing;
 mod player;
 mod policy;
 mod storage;
+mod temperature;
 mod terrain;
 mod vitals;
 mod vitals_save;
@@ -105,6 +106,10 @@ pub struct Game {
     biomes: Vec<strata_core::id::Identifier>,
     /// The gauges as the client last knew them.
     vitals_sent: Option<strata_protocol::VitalsView>,
+    /// 0 at night, 1 by day (temperature).
+    daylight: f32,
+    /// The dimension simulated (temperature shifts by dimension).
+    dimension: Option<strata_core::id::Identifier>,
 }
 
 impl Game {
@@ -151,6 +156,8 @@ impl Game {
             spawn: spawn_point,
             biomes: Vec::new(),
             vitals_sent: None,
+            daylight: 1.0,
+            dimension: None,
         };
         game.fresh_vitals();
         game
@@ -179,6 +186,7 @@ impl Game {
 
     pub fn set_world_seed(&mut self, seed: u64, dimension: &DimensionId) {
         self.updates.set_seed(seed, dimension);
+        self.dimension = Some(dimension.0.clone());
         let dimension = strata_core::hash::fnv1a(dimension.0.to_string().as_bytes());
         self.loot_seed = seed ^ dimension.rotate_left(17);
     }
@@ -322,3 +330,6 @@ mod vitals_tests;
 
 #[cfg(test)]
 mod consume_tests;
+
+#[cfg(test)]
+mod temperature_tests;

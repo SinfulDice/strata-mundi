@@ -1,0 +1,2 @@
+// Stepping into the campfire burns a little, without setting one on fire.
+Contact(damage: "strata:fire", amount: 1.0, every: 10)

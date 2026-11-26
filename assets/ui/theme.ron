@@ -14,7 +14,8 @@ Theme(
     field: "#151412",
     gauge: "#8a7444",
     shade: "#00000080",
-    // HUD bars: health red, stamina green, mana blue, food brown, thirst light blue.
+    // HUD bars: health red, stamina green, mana blue, food brown, thirst light blue;
+    // temperature: a scale from deep blue (freezing) through green (comfortable) to red.
     bars: {
         "health": "#c8402e",
         "stamina": "#5fa043",
@@ -22,9 +23,16 @@ Theme(
         "food": "#c08a3e",
         "thirst": "#4fa8d8",
         "breath": "#9ad4f0",
-        "temperature": "#e0a040",
+        "temperature": "#6f8f5a",
+        "temperature_freezing": "#3a5fc8",
+        "temperature_cold": "#7fb2e0",
+        "temperature_hot": "#e0a040",
+        "temperature_scorching": "#c8402e",
         "experience": "#8fd14f",
         "use": "#f2efe8",
     },
     hurt: "#c0201870",
+    // Edges of the screen when cold (frost) or hot (heat), stronger in the harmful zones.
+    frost: "#dcefff90",
+    heat: "#ff8c3070",
 )

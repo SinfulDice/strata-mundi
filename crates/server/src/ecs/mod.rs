@@ -14,6 +14,7 @@ use strata_core::content::{BlockId, EntityTypeId, Face, ItemId, RecipeId};
 use strata_core::coords::BlockPos;
 use strata_core::inventory::{ItemStack, PlayerInventory};
 use strata_core::physics::{BoatBody, BoatControls, Body, ItemBody, MoveInput, MovementSettings};
+use strata_core::survival::temperature::BodyTemperature;
 use strata_core::survival::{Exertion, Health, Needs, StatusEffects};
 use strata_core::upgrade::AreaSize;
 use strata_protocol::{ActionId, GameMode, WorldAction};
@@ -41,6 +42,8 @@ pub struct Ecs {
     pub needs: Storage<Needs>,
     /// Status effects on living bodies (bleeding, healing, burning).
     pub effects: Storage<StatusEffects>,
+    /// Felt temperature and wetness of living bodies.
+    pub temperatures: Storage<BodyTemperature>,
 }
 
 /// Items lying on the ground.
@@ -201,6 +204,7 @@ impl Ecs {
         self.healths.remove(entity);
         self.needs.remove(entity);
         self.effects.remove(entity);
+        self.temperatures.remove(entity);
         self.entities.despawn(entity);
     }
 }

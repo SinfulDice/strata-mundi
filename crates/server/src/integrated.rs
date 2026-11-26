@@ -263,6 +263,9 @@ impl IntegratedServer {
     #[tracing::instrument(skip(self), level = "trace")]
     fn tick(&mut self) {
         self.tick += 1;
+        let time = self.persistence.meta.day_time as f64;
+        let daylight = self.day_cycle().daylight(time);
+        self.game.set_daylight(daylight);
         let changes = self.game.tick(&mut self.loader);
         self.broadcast_changes(changes);
         self.send_game_messages();

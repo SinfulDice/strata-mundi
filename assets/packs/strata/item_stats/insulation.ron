@@ -1,2 +1,2 @@
-// Protection from the cold (applied with temperature, milestone 8). Bounds of the values effects give it.
+// Protection from the cold (temperature: each point brings the felt temperature 3 degrees back toward comfort). Bounds of the values effects give it.
 ItemStat(min: -20.0, max: 20.0)

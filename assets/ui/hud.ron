@@ -1,7 +1,9 @@
 // In-game overlay. Every element has an anchor and an offset in interface pixels, so it
 // can be moved in the HUD editor. Bars: health, stamina and mana at the top left (Dark
 // Souls), food, thirst and temperature over the hotbar, experience just above it; their
-// colours are in theme.ron. No armour bar: protection shows in the inventory.
+// colours are in theme.ron. No armour bar: protection shows in the inventory. The
+// temperature is a scale (cold to hot, comfortable in the middle third) with a marker; its
+// label shows away from comfort, its hint for a few seconds when it gets worse.
 Screen(
     root: [
         Crosshair(id: "crosshair", anchor: Center, at: (0, 0)),
@@ -16,7 +18,15 @@ Screen(
         Gauge(id: "food", anchor: Bottom, at: (-46, -33), size: (88, 5), optional: true),
         Gauge(id: "thirst", anchor: Bottom, at: (46, -33), size: (88, 5), optional: true),
         Gauge(id: "breath", anchor: Bottom, at: (46, -40), size: (88, 4), optional: true),
-        Gauge(id: "temperature", anchor: Bottom, at: (-46, -40), size: (88, 4), optional: true),
+        Gauge(id: "temperature", anchor: Bottom, at: (-46, -41), size: (88, 6), optional: true, segments: [
+            (0.1667, "temperature_freezing"),
+            (0.3333, "temperature_cold"),
+            (0.6667, "temperature"),
+            (0.8333, "temperature_hot"),
+            (1.0, "temperature_scorching"),
+        ]),
+        Label(id: "temperature_label", anchor: Bottom, at: (-46, -52), text: "@temperature"),
+        Label(id: "temperature_hint", anchor: Bottom, at: (0, -92), text: "@temperature_hint", boxed: true, wrap: Some(220)),
         Label(id: "mount", anchor: Bottom, at: (0, -48), text: "@mount", boxed: true),
         Label(id: "area", anchor: Bottom, at: (0, -62), text: "@area", boxed: true),
         Label(id: "notice", anchor: Center, at: (0, -36), text: "@notice", boxed: true),

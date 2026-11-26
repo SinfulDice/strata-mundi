@@ -22,6 +22,9 @@ pub struct HudModel<'a> {
     pub effects: Option<String>,
     /// The notice after fainting.
     pub notice: Option<String>,
+    /// The temperature away from comfort, and the hint after it got worse.
+    pub temperature: Option<String>,
+    pub temperature_hint: Option<String>,
 }
 
 /// How full each bar of the HUD is.
@@ -32,6 +35,8 @@ pub struct Bars<'a> {
     pub using: Option<f32>,
     /// Show the mana bar, empty, before magic exists (option).
     pub empty_mana: bool,
+    /// Where the temperature sits on its scale (none when off).
+    pub temperature: Option<f32>,
     /// HUD editor: every bar half full.
     pub sample: bool,
 }
@@ -54,7 +59,8 @@ impl Bars<'_> {
             "thirst" => vitals.thirst.map(|t| fraction(t, vitals.max_thirst)),
             "breath" => (vitals.breath < vitals.max_breath)
                 .then(|| fraction(f32::from(vitals.breath), f32::from(vitals.max_breath))),
-            // Temperature comes with milestone 8b, experience with milestone 9.
+            "temperature" => self.temperature,
+            // Experience comes with milestone 9.
             _ => None,
         }
     }
@@ -68,6 +74,8 @@ impl ScreenModel for HudModel<'_> {
             "area" => self.area.clone(),
             "effects" => self.effects.clone(),
             "notice" => self.notice.clone(),
+            "temperature" => self.temperature.clone(),
+            "temperature_hint" => self.temperature_hint.clone(),
             _ => None,
         }
     }
@@ -185,6 +193,7 @@ pub fn player_bars<'a>(game: &'a Gameplay, content: &Content, empty_mana: bool) 
         vitals: game.vitals.view.as_ref().filter(|_| survival),
         using: game.vitals.use_progress(content).filter(|_| survival),
         empty_mana: empty_mana && survival,
+        temperature: super::hud_temperature::temperature_gauge(game, content),
         sample: false,
     }
 }
@@ -223,7 +232,9 @@ mod tests {
         assert_eq!(bars.gauge("thirst"), None, "thirst off");
         assert_eq!(bars.gauge("breath"), None, "full breath");
         assert_eq!(bars.gauge("mana"), None);
-        assert_eq!(bars.gauge("temperature"), None);
+        assert_eq!(bars.gauge("temperature"), None, "temperature off");
+        bars.temperature = Some(0.25);
+        assert_eq!(bars.gauge("temperature"), Some(0.25));
         bars.empty_mana = true;
         assert_eq!(bars.gauge("mana"), Some(0.0));
         let mut diving = vitals();

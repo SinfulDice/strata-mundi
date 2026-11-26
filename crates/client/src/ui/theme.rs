@@ -25,6 +25,19 @@ pub struct Theme {
     /// The flash over the screen when hurt.
     #[serde(default = "hurt_red")]
     pub hurt: HexColor,
+    /// The edges of the screen in the cold and in the heat.
+    #[serde(default = "frost_white")]
+    pub frost: HexColor,
+    #[serde(default = "heat_orange")]
+    pub heat: HexColor,
+}
+
+fn frost_white() -> HexColor {
+    HexColor(strata_core::texture::Rgba([220, 239, 255, 144]))
+}
+
+fn heat_orange() -> HexColor {
+    HexColor(strata_core::texture::Rgba([255, 140, 48, 112]))
 }
 
 /// A translucent red, for themes written before the survival gauges.
