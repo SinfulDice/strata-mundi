@@ -27,7 +27,7 @@ pub struct Worked {
 /// A block's `worked` entries, kept until every block is known.
 pub(super) type WorkedRefs = Vec<(Identifier, BTreeMap<Identifier, WorkedDef>, PathBuf)>;
 
-/// Resolves the target blocks; a tool kind no item has is reported (a typo would make
+/// Resolves the target blocks; a tool kind (or a fire) no item has is reported (a typo would make
 /// the entry unreachable).
 pub(super) fn resolve_worked(
     blocks: &mut Registry<BlockId, Block>,
@@ -35,10 +35,18 @@ pub(super) fn resolve_worked(
     items: &Registry<ItemId, Item>,
     errors: &mut Vec<PackError>,
 ) {
+    // A fire an item lights (flint and steel's `strata:fire`) works blocks too: an unlit
+    // campfire is lit again.
+    let fires: Vec<Identifier> = (items.iter())
+        .filter_map(|(_, _, item)| match item.action {
+            Some(super::ItemAction::Ignite(fire)) => blocks.identifier(fire).cloned(),
+            _ => None,
+        })
+        .collect();
     let has_kind = |kind: &Identifier| {
-        items
-            .iter()
-            .any(|(_, _, item)| item.tool.as_ref().is_some_and(|tool| tool.is(kind)))
+        fires.contains(kind)
+            || (items.iter())
+                .any(|(_, _, item)| item.tool.as_ref().is_some_and(|tool| tool.is(kind)))
     };
     for (id, entries, source) in refs {
         let mut worked = BTreeMap::new();

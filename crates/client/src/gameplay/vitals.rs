@@ -19,8 +19,6 @@ const FAINT_SECONDS: f32 = 6.0;
 const USE_SOUND_EVERY: f32 = 0.25;
 /// Strongest shake, in radians (at 100 % and a heavy hit).
 const MAX_SHAKE: f32 = 0.06;
-/// Seconds the temperature hint stays once the zone gets worse.
-const HINT_SECONDS: f32 = 8.0;
 /// Seconds for the frost or heat at the edges to come or go.
 const EDGE_SECONDS: f32 = 1.5;
 
@@ -40,9 +38,11 @@ pub struct ClientVitals {
     sounds: Vec<SoundId>,
     /// The effects line of the HUD in a language, made again when the gauges change.
     effects_line: RefCell<Option<(String, Option<String>)>>,
-    /// The zone the temperature got worse into, and the seconds its hint has left.
+    /// The zone the temperature got worse into, and the seconds since (the theme says how
+    /// long its hint shows).
     pub hint: Option<(TemperatureZone, f32)>,
-    /// Frost (below 0, to -1) or heat (above 0, to 1) at the edges of the screen.
+    /// Frost (below 0) or heat (above 0) at the edges of the screen: ±0.5 in a straining
+    /// zone, ±1 in a harmful one, eased in and out.
     pub edges: f32,
 }
 
@@ -109,17 +109,16 @@ impl ClientVitals {
             || (now.severity() > 0
                 && (now > TemperatureZone::Comfortable) != (before > TemperatureZone::Comfortable));
         if worse {
-            self.hint = Some((now, HINT_SECONDS));
+            self.hint = Some((now, 0.0));
         } else if now == TemperatureZone::Comfortable {
             self.hint = None;
         }
     }
 
     fn advance_temperature(&mut self, dt: f32) {
-        if let Some((_, left)) = &mut self.hint {
-            *left -= dt;
+        if let Some((_, age)) = &mut self.hint {
+            *age += dt;
         }
-        self.hint = self.hint.filter(|(_, left)| *left > 0.0);
         let zone = self
             .view
             .as_ref()
@@ -127,8 +126,8 @@ impl ClientVitals {
             .map(|t| t.zone);
         let target = match zone {
             Some(TemperatureZone::Freezing) => -1.0,
-            Some(TemperatureZone::Cold) => -0.45,
-            Some(TemperatureZone::Hot) => 0.4,
+            Some(TemperatureZone::Cold) => -0.5,
+            Some(TemperatureZone::Hot) => 0.5,
             Some(TemperatureZone::Scorching) => 1.0,
             _ => 0.0,
         };

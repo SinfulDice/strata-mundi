@@ -69,7 +69,7 @@ impl Game {
             effects,
             using,
             temperature: self.temperature_view().filter(|_| survival),
-            slowness: 1.0 - self.temperature_strain(self.player).speed,
+            speed: self.movement_speed(self.player),
         })
     }
 
@@ -80,7 +80,7 @@ impl Game {
         let felt = body.felt.filter(|_| self.survival_options.temperature)?;
         Some(TemperatureView {
             felt: (felt * 2.0).round() / 2.0,
-            zone: rules.zone(felt),
+            zone: body.zone(rules),
             wet: body.wetness > 0.0,
         })
     }

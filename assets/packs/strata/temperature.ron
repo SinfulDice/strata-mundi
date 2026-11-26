@@ -6,7 +6,10 @@
 Temperature(
     sample_every: 20,
     smoothing: 20.0,
-    zones: (freezing: -4.0, cold: 8.0, hot: 30.0, scorching: 42.0),
+    // A body leaves its zone only `margin` degrees past it (no flicker on a threshold).
+    zones: (freezing: -4.0, cold: 8.0, hot: 30.0, scorching: 42.0, margin: 0.5),
+    // Share of a source's heat felt through a solid block (a wall between body and fire).
+    walls: 0.25,
     gauge_span: 10.0,
     default_biome: (day: 18.0, night: 11.0),
     biomes: {

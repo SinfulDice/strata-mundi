@@ -35,4 +35,7 @@ Theme(
     // Edges of the screen when cold (frost) or hot (heat), stronger in the harmful zones.
     frost: "#dcefff90",
     heat: "#ff8c30a8",
+    // Strength of those edges (0 to 1) when cold or hot, and when freezing or scorching
+    // (halved with « Reduce camera effects »); seconds the temperature hint stays.
+    temperature: (edges_straining: 0.45, edges_harmful: 1.0, hint_seconds: 8.0),
 )

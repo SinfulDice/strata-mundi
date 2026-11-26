@@ -1,0 +1,13 @@
+// A campfire put out with a shovel: cold logs and ash. Flint and steel lights it again; it gives the campfire back when broken.
+Block(
+    textures: All("strata:unlit_campfire"),
+    render: Cross,
+    solid: false,
+    light_opacity: 0,
+    hardness: 1.0,
+    sound: Some("strata:wood"),
+    has_item: false,
+    loot: Some("strata:campfire"),
+    rooted: true,
+    worked: {"strata:fire": Worked(into: "strata:campfire")},
+)

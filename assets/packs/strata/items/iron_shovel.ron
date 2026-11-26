@@ -3,4 +3,5 @@ Item(
     tier: "strata:iron",
     category: Some("strata:tools"),
     tool: Some(Tool(kinds: ["strata:shovel"])),
+    action: Some(Work),
 )

@@ -1,18 +1,21 @@
 //! Temperature of every body that has one: wetness each tick, the surroundings sampled
-//! every `sample_every` ticks (biome, height, time of day, roof, water, the strongest heat
-//! source within reach, clothing), the felt temperature following, and the harm of the
-//! extreme zones. Off with the world option, nothing in creative.
+//! every `sample_every` ticks, each body on its own tick (biome, height, time of day, roof,
+//! water, the strongest heat source within reach, clothing), the felt temperature
+//! following, and the harm of the extreme zones. Off with the world option, nothing in
+//! creative. The heat found is kept while the body stays in its cell and no block changes
+//! within reach.
 
 use super::Game;
-use crate::ecs::Entity;
+use crate::ecs::{Entity, HeatCache};
 use crate::loader::ColumnLoader;
 use glam::DVec3;
 use std::sync::Arc;
-use strata_core::coords::BlockPos;
+use strata_core::coords::{BlockPos, ColumnPos};
 use strata_core::survival::temperature::{
-    BodyTemperature, Insulation, Strain, Surroundings, contributions, total,
+    Insulation, Strain, Surroundings, strongest_heat, target,
 };
 use strata_core::survival::{Defences, Survival, resistance};
+use strata_core::updates::BlockChange;
 
 impl Game {
     /// 0 at night, 1 by day: the server's clock tells it each tick.
@@ -23,13 +26,20 @@ impl Game {
     /// What the temperature of `entity` does to it now (nothing when off or creative).
     pub(super) fn temperature_strain(&self, entity: Entity) -> Strain {
         let rules = &self.rules.survival.temperature;
-        let felt = self.ecs.temperatures.get(entity);
-        match felt {
+        match self.ecs.temperatures.get(entity) {
             Some(body) if self.survival_options.temperature && !self.is_creative_entity(entity) => {
                 rules.strain(body.zone(rules))
             }
             _ => Strain::NONE,
         }
+    }
+
+    /// The share of its walking speed `entity` keeps: heavy armour and the cold.
+    pub(super) fn movement_speed(&self, entity: Entity) -> f32 {
+        let burden = self
+            .worn_by(entity)
+            .map_or(1.0, |e| e.stats.burden.speed_factor());
+        burden * self.temperature_strain(entity).speed
     }
 
     /// One tick of temperature for `entity`: `wet` when some of it is in water,
@@ -48,12 +58,13 @@ impl Game {
         let Some(state) = self.ecs.temperatures.get(entity) else {
             return;
         };
-        let due = state.felt.is_none() || self.tick.is_multiple_of(u64::from(rules.sample_every));
+        let every = u64::from(rules.sample_every);
+        let due = state.felt.is_none() || (self.tick + entity.index() as u64).is_multiple_of(every);
         let sample = due.then(|| self.sample(entity, immersed, loader, &survival));
         let Some(state) = self.ecs.temperatures.get_mut(entity) else {
             return;
         };
-        state.soak(wet, state.heat > 0.0, rules);
+        state.soak(wet, rules);
         if let Some((target, heat)) = sample {
             state.heat = heat;
             state.follow(target, rules.sample_every, rules);
@@ -65,59 +76,74 @@ impl Game {
 
     /// The temperature the surroundings of `entity` come to, and the heat nearby.
     fn sample(
-        &self,
+        &mut self,
         entity: Entity,
         immersed: bool,
         loader: &ColumnLoader,
         survival: &Survival,
     ) -> (f32, f32) {
         let rules = &survival.temperature;
-        let Some(body) = self.ecs.bodies.get(entity) else {
+        let Some(body) = self.ecs.bodies.get(entity).copied() else {
             return (rules.comfort(), 0.0);
         };
-        let feet = cell(body.position);
-        let biome = loader
-            .biome(feet)
-            .and_then(|b| self.biomes.get(usize::from(b.0)));
         let aabb = body.aabb();
-        let heat = self.heat_near((aabb.min + aabb.max) * 0.5, loader);
+        let heat = self.heat_near(entity, (aabb.min + aabb.max) * 0.5, loader);
+        let biome = loader.biome(cell(body.position));
         let around = Surroundings {
-            biome: biome.cloned(),
-            dimension: self.dimension.clone(),
+            biome: biome.and_then(|b| self.biomes.get(usize::from(b.0))),
+            dimension: self.dimension.as_ref(),
             height: body.position.y,
             daylight: self.daylight,
             sheltered: self.sheltered(cell(body.eyes()), rules.shelter.height, loader),
             immersed,
             heat,
-            extra: Vec::new(),
+            extra: &[],
         };
         let wetness = self.ecs.temperatures.get(entity).map_or(0.0, |t| t.wetness);
-        let parts = contributions(rules, &around, wetness, self.clothing(entity));
-        (total(&parts), heat)
+        (target(rules, &around, wetness, self.clothing(entity)), heat)
     }
 
-    /// The warmth of the strongest heat source within reach of `centre`.
-    fn heat_near(&self, centre: DVec3, loader: &ColumnLoader) -> f32 {
-        let heat = &self.rules.survival.heat;
-        let reach = i32::from(heat.reach);
-        if reach == 0 {
-            return 0.0;
+    /// The strongest heat at `centre`, kept for `entity` while it stays in the same cell.
+    fn heat_near(&mut self, entity: Entity, centre: DVec3, loader: &ColumnLoader) -> f32 {
+        let here = cell(centre);
+        if let Some(cache) = self.ecs.heat_caches.get(entity)
+            && cache.cell == here
+        {
+            return cache.warmth;
         }
-        let middle = cell(centre);
-        let mut strongest = 0.0f32;
-        for x in -reach..=reach {
-            for z in -reach..=reach {
-                for y in -reach..=reach {
-                    let pos = BlockPos::new(middle.x + x, middle.y + y, middle.z + z);
-                    let Some(source) = loader.block(pos).and_then(|b| heat.get(b)) else {
-                        continue;
-                    };
-                    let distance = (block_centre(pos) - centre).length() as f32;
-                    strongest = strongest.max(source.at((distance - 0.5).max(0.0)));
-                }
-            }
+        let survival = &self.rules.survival;
+        let found = strongest_heat(
+            &survival.heat,
+            survival.temperature.walls,
+            centre,
+            |pos: ColumnPos| loader.column(pos),
+            |pos| loader.block(pos).is_some_and(|b| self.rules.is_solid(b)),
+        );
+        let warmth = found.map_or(0.0, |f| f.warmth);
+        self.ecs
+            .heat_caches
+            .insert(entity, HeatCache { cell: here, warmth });
+        warmth
+    }
+
+    /// Forgets the heat found near blocks that changed (a fire lit, a furnace gone out),
+    /// or everywhere when columns arrived.
+    pub(super) fn forget_heat(&mut self, changes: &[BlockChange], columns_arrived: bool) {
+        let reach = i32::from(self.rules.survival.heat.reach) + 1;
+        let stale: Vec<Entity> = (self.ecs.heat_caches.iter())
+            .filter(|(_, cache)| {
+                columns_arrived
+                    || changes.iter().any(|(pos, _)| {
+                        (pos.x - cache.cell.x).abs() <= reach
+                            && (pos.y - cache.cell.y).abs() <= reach
+                            && (pos.z - cache.cell.z).abs() <= reach
+                    })
+            })
+            .map(|(entity, _)| entity)
+            .collect();
+        for entity in stale {
+            self.ecs.heat_caches.remove(entity);
         }
-        strongest
     }
 
     /// A solid block over the head, up to `height` blocks above.
@@ -140,17 +166,30 @@ impl Game {
             worn: equipment.as_ref().map(|e| &e.stats.values),
             effects: self.ecs.effects.get(entity),
         };
+        let points = |stat| {
+            let worn = (defences.worn.and_then(|worn| worn.get(stat))).copied();
+            let worn = worn.unwrap_or(0.0);
+            // Negative clothing (a curse) counts even without an effect; else the stronger.
+            if worn < 0.0
+                && !defences
+                    .effects
+                    .is_some_and(|e| e.stat(&survival.effects, stat) > 0.0)
+            {
+                worn
+            } else {
+                resistance(stat, &defences, &survival.effects)
+            }
+        };
         Insulation {
-            cold: resistance(&clothing.cold_stat, &defences, &survival.effects),
-            heat: resistance(&clothing.heat_stat, &defences, &survival.effects),
+            cold: points(&clothing.cold_stat),
+            heat: points(&clothing.heat_stat),
         }
     }
 
     /// A body starts at the temperature of where it stands (sampled at its first tick).
     pub(super) fn fresh_temperature(&mut self, entity: Entity) {
-        self.ecs
-            .temperatures
-            .insert(entity, BodyTemperature::default());
+        self.ecs.temperatures.insert(entity, Default::default());
+        self.ecs.heat_caches.remove(entity);
     }
 }
 
@@ -159,13 +198,5 @@ fn cell(point: DVec3) -> BlockPos {
         point.x.floor() as i32,
         point.y.floor() as i32,
         point.z.floor() as i32,
-    )
-}
-
-fn block_centre(pos: BlockPos) -> DVec3 {
-    DVec3::new(
-        f64::from(pos.x) + 0.5,
-        f64::from(pos.y) + 0.5,
-        f64::from(pos.z) + 0.5,
     )
 }

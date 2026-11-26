@@ -42,6 +42,12 @@ impl Game {
                 (against, BlockId::AIR)
             }
             ItemAction::Ignite(fire) => {
+                let lit = loader
+                    .block(against)
+                    .and_then(|b| self.rules.mining.lit(b, fire));
+                if let Some(lit) = lit {
+                    return self.relight(loader, against, lit.into);
+                }
                 let Some(target) = self.fire_target(loader, against, face) else {
                     return Vec::new();
                 };
@@ -60,6 +66,21 @@ impl Game {
             let replaced = loader.block(target);
             self.set_block(loader, target, block, &mut changes);
             self.after_use(action, replaced);
+        }
+        changes
+    }
+
+    /// Flint and steel on a block that lights (an unlit campfire): it becomes `into`.
+    fn relight(
+        &mut self,
+        loader: &mut ColumnLoader,
+        pos: BlockPos,
+        into: BlockId,
+    ) -> Vec<BlockChange> {
+        let mut changes = Vec::new();
+        if pos.is_valid(self.border) && self.in_reach(pos) && self.take_action() {
+            self.set_block(loader, pos, into, &mut changes);
+            self.wear_held(1);
         }
         changes
     }

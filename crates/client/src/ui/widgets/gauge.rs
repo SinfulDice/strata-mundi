@@ -21,7 +21,6 @@ pub(super) fn gauge(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
     if *optional && given.is_none() && !d.ctx.editing {
         return;
     }
-    let value = given.unwrap_or(0.5).clamp(0.0, 1.0);
     let theme = d.ctx.theme;
     d.painter.fill(rect, theme.field.0);
     d.painter
@@ -33,10 +32,15 @@ pub(super) fn gauge(d: &mut Draw<'_, '_>, node: &Node, parent: Rect) {
         rect.h.saturating_sub(2),
     );
     if segments.is_empty() {
-        let value = given.unwrap_or(0.0).clamp(0.0, 1.0);
-        fill(d, id, inner, value, *vertical);
+        fill(
+            d,
+            id,
+            inner,
+            given.unwrap_or(0.0).clamp(0.0, 1.0),
+            *vertical,
+        );
     } else {
-        scale(d, inner, segments, value);
+        scale(d, inner, segments, given.unwrap_or(0.5).clamp(0.0, 1.0));
     }
     if d.ctx.editing {
         d.element(id, rect);

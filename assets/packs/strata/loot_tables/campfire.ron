@@ -1,0 +1,4 @@
+// A campfire, lit or not, gives itself back.
+LootTable(pools: [
+    Pool(entries: [Item(item: "strata:campfire")]),
+])

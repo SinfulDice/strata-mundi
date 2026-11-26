@@ -12,7 +12,7 @@ Warming up at night or in the snow, drying off after a swim, lighting a camp.
 
 ## Behaviour
 
-Gives the strongest light (**level 15**) and the strongest heat after lava: **+14 °C** up close, up to 6 blocks away. It is not solid and must stand on a block. Walking into it burns a little, without setting your clothes on fire.
+Gives the strongest light (**level 15**) and the strongest heat after lava: **+14 °C** up close, up to 6 blocks away. It is not solid and must stand on a block. Walking into it burns a little, without setting your clothes on fire. Right-click it with a **shovel** to put it out; **flint and steel** lights it again. A wall between you and the fire holds three quarters of its heat back.
 
 ## Tips
 

@@ -2,15 +2,22 @@
 //! clothing, followed slowly; its zone strains (cold: slower, hungrier; heat: thirstier,
 //! less stamina) then hurts (`strata:freezing`, `strata:overheating`).
 
+mod body;
 mod felt;
 mod heat;
 mod rules;
+mod scan;
 
-pub use felt::{BodyTemperature, Contribution, Insulation, Surroundings, contributions, total};
+pub use body::BodyTemperature;
+pub use felt::{
+    ALTITUDE, BIOME, CLOTHING, Contribution, DIMENSION, HEAT, Insulation, NIGHT, PartName, SHELTER,
+    Surroundings, WATER, contributions, target, total,
+};
 pub use heat::{HeatSource, HeatSourceDef, HeatSources, MAX_REACH};
 pub use rules::{
     Altitude, BiomeTemperature, Clothing, Shelter, Strain, TemperatureRules, Water, ZoneHarm, Zones,
 };
+pub use scan::{HeatFound, strongest_heat};
 
 pub(crate) use heat::{HeatKnown, load_heat_sources};
 

@@ -13,6 +13,7 @@
         "mechanics/survival": [(version: "0.3.0", change: Added)],
         "mechanics/temperature": [(version: "0.3.0", change: Added)],
         "blocks/strata/campfire": [(version: "0.3.0", change: Added)],
+        "blocks/strata/unlit_campfire": [(version: "0.3.0", change: Added)],
         "mechanics/accessories-and-sets": [(version: "0.3.0", change: Added)],
         "blocks/strata/jeweller": [(version: "0.3.0", change: Added)],
         "mechanics/stations": [(version: "0.3.0", change: Added)],

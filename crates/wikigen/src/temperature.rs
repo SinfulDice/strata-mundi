@@ -10,28 +10,27 @@ pub fn tables(ctx: &Ctx<'_>, from: &str) -> String {
     zones(ctx) + &biomes(ctx, from) + &heat(ctx)
 }
 
-fn degrees(value: f32) -> String {
-    format!("{} °C", (value * 10.0).round() / 10.0)
+fn number(value: f32) -> String {
+    format!("{}", (value * 10.0).round() / 10.0)
+}
+
+fn degrees(ctx: &Ctx<'_>, value: f32) -> String {
+    ctx.tr_with("wiki-temperature-degrees", &[("value", number(value))])
 }
 
 fn zones(ctx: &Ctx<'_>) -> String {
-    let rules = &ctx.data.content.survival.temperature;
-    let z = &rules.zones;
+    let z = &ctx.data.content.survival.temperature.zones;
+    let one = |key: &str, value: f32| ctx.tr_with(key, &[("value", degrees(ctx, value))]);
+    let between = |from: f32, to: f32| {
+        let args = [("from", degrees(ctx, from)), ("to", degrees(ctx, to))];
+        ctx.tr_with("wiki-temperature-between", &args)
+    };
     let rows = [
-        ("freezing", format!("< {}", degrees(z.freezing))),
-        (
-            "cold",
-            format!("{} – {}", degrees(z.freezing), degrees(z.cold)),
-        ),
-        (
-            "comfortable",
-            format!("{} – {}", degrees(z.cold), degrees(z.hot)),
-        ),
-        (
-            "hot",
-            format!("{} – {}", degrees(z.hot), degrees(z.scorching)),
-        ),
-        ("scorching", format!("> {}", degrees(z.scorching))),
+        ("freezing", one("wiki-temperature-below", z.freezing)),
+        ("cold", between(z.freezing, z.cold)),
+        ("comfortable", between(z.cold, z.hot)),
+        ("hot", between(z.hot, z.scorching)),
+        ("scorching", one("wiki-temperature-above", z.scorching)),
     ];
     let rows: String = rows
         .iter()
@@ -53,8 +52,8 @@ fn biomes(ctx: &Ctx<'_>, from: &str) -> String {
             format!(
                 "<tr><td>{}</td><td>{}</td><td>{}</td></tr>",
                 biome_link(ctx, from, id),
-                escape(&degrees(biome.day)),
-                escape(&degrees(biome.night))
+                escape(&degrees(ctx, biome.day)),
+                escape(&degrees(ctx, biome.night))
             )
         })
         .collect();
@@ -80,10 +79,13 @@ fn heat(ctx: &Ctx<'_>) -> String {
     let rows: String = (sources.iter())
         .map(|(name, source)| {
             format!(
-                "<tr><td>{}</td><td>+{}</td><td>{}</td></tr>",
+                "<tr><td>{}</td><td>{}</td><td>{}</td></tr>",
                 escape(name),
-                escape(&degrees(source.warmth)),
-                (source.range * 10.0).round() / 10.0
+                escape(&ctx.tr_with(
+                    "wiki-temperature-warmth",
+                    &[("value", degrees(ctx, source.warmth))]
+                )),
+                escape(&number(source.range))
             )
         })
         .collect();

@@ -12,7 +12,7 @@ Se réchauffer la nuit ou dans la neige, sécher ses vêtements après une baign
 
 ## Comportement
 
-Donne la lumière la plus forte (**niveau 15**) et la chaleur la plus forte après la lave : **+14 °C** tout près, jusqu'à 6 blocs. Il n'est pas solide et doit reposer sur un bloc. Marcher dedans brûle un peu, sans mettre le feu à vos vêtements.
+Donne la lumière la plus forte (**niveau 15**) et la chaleur la plus forte après la lave : **+14 °C** tout près, jusqu'à 6 blocs. Il n'est pas solide et doit reposer sur un bloc. Marcher dedans brûle un peu, sans mettre le feu à vos vêtements. Un clic droit avec une **pelle** l'éteint ; le **briquet** le rallume. Un mur entre vous et le feu retient les trois quarts de sa chaleur.
 
 ## Conseils
 

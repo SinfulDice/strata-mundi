@@ -52,11 +52,15 @@ pub(crate) fn load_survival(
         .filter_map(|(id, sourced)| check.fill(&id, &sourced, errors))
         .collect();
     let contacts = load_contacts(packs, &check, errors);
-    let rules = last_file(packs, "survival.ron", errors)
-        .map_or_else(SurvivalRules::default, SurvivalRules::clamped);
-    let temperature = last_file(packs, "temperature.ron", errors)
-        .map_or_else(TemperatureRules::default, TemperatureRules::clamped);
-    check_temperature(&temperature, known, &damage, errors);
+    let rules = last_file::<SurvivalRules>(packs, "survival.ron", errors)
+        .map_or_else(SurvivalRules::default, |(rules, _)| rules.clamped());
+    let temperature = match last_file::<TemperatureRules>(packs, "temperature.ron", errors) {
+        Some((read, path)) => {
+            check_temperature(&read, known, &damage, &path, errors);
+            read.clamped()
+        }
+        None => TemperatureRules::default(),
+    };
     let heat_known = HeatKnown {
         blocks: known.blocks,
         items: known.items,
@@ -85,7 +89,7 @@ fn last_file<T: serde::de::DeserializeOwned>(
     packs: &PackSet,
     name: &str,
     errors: &mut Vec<PackError>,
-) -> Option<T> {
+) -> Option<(T, std::path::PathBuf)> {
     let mut found = None;
     for pack in packs.packs() {
         let path = pack.root.join(name);
@@ -93,7 +97,7 @@ fn last_file<T: serde::de::DeserializeOwned>(
             continue;
         }
         match read_ron::<T>(&path) {
-            Ok(read) => found = Some(read),
+            Ok(read) => found = Some((read, path)),
             Err(error) => errors.push(error),
         }
     }
@@ -105,9 +109,9 @@ fn check_temperature(
     rules: &TemperatureRules,
     known: &Known<'_>,
     damage: &BTreeMap<Identifier, DamageType>,
+    path: &Path,
     errors: &mut Vec<PackError>,
 ) {
-    let path = Path::new("temperature.ron");
     for harm in [&rules.freezing, &rules.scorching] {
         if !damage.is_empty() && !damage.contains_key(&harm.damage) {
             let message = format!("unknown damage `{}`", harm.damage);

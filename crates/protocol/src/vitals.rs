@@ -28,8 +28,8 @@ pub struct VitalsView {
     pub using: Option<(ItemId, u16)>,
     /// `None` when the world turns temperature off.
     pub temperature: Option<TemperatureView>,
-    /// Share of the movement speed the cold takes away (the client's prediction).
-    pub slowness: f32,
+    /// Share of the walking speed kept (heavy armour, the cold), for the prediction.
+    pub speed: f32,
 }
 
 /// The felt temperature (in steps of half a degree) and its zone.

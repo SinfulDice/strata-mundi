@@ -4,7 +4,9 @@
 use super::hud::{
     Bars, HudModel, aimed_block_name, effect_line, player_bars, sample_subtitles, subtitle_lines,
 };
-use super::hud_temperature::{paint_edges, temperature_hint, temperature_line, temperature_text};
+use super::hud_temperature::{
+    edge_strength, paint_edges, temperature_hint, temperature_line, temperature_text,
+};
 use super::keyboard::KeyboardModel;
 use super::menu::{self, Menu, Shared};
 use super::{MAX_AUTO_SCALE, Screens, UiFrame};
@@ -90,7 +92,12 @@ impl Screens {
                     notice: (game.vitals.fainted > 0.0)
                         .then(|| content.translations.text(&language, "hud-fainted")),
                     temperature: temperature_line(game, content, &language),
-                    temperature_hint: temperature_hint(game, content, &language),
+                    temperature_hint: temperature_hint(
+                        game,
+                        content,
+                        &language,
+                        &self.assets.theme,
+                    ),
                 },
                 None => HudModel {
                     hotbar: &sample,
@@ -113,7 +120,10 @@ impl Screens {
                 && self.settings.interface.temperature_edges
                 && !game.is_creative()
             {
-                paint_edges(&mut painter, screen, &self.assets.theme, game.vitals.edges);
+                let theme = &self.assets.theme;
+                let reduced = self.settings.interface.reduce_camera_effects;
+                let strength = edge_strength(game.vitals.edges, theme, reduced);
+                paint_edges(&mut painter, screen, theme, game.vitals.edges, strength);
             }
             if let Some(game) = game.as_deref()
                 && self.settings.interface.hurt_flash

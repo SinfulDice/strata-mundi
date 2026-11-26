@@ -69,6 +69,7 @@ block-strata-obsidian = Obsidienne
 block-strata-torch = Torche
 block-strata-lantern = Lanterne
 block-strata-campfire = Feu de camp
+block-strata-unlit_campfire = Feu de camp éteint
 block-strata-glowstone = Pierre lumineuse
 block-strata-fire = Feu
 block-strata-portal = Portail d'essai

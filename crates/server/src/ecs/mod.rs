@@ -44,6 +44,15 @@ pub struct Ecs {
     pub effects: Storage<StatusEffects>,
     /// Felt temperature and wetness of living bodies.
     pub temperatures: Storage<BodyTemperature>,
+    /// The heat last found around a body, while it stays in its cell.
+    pub heat_caches: Storage<HeatCache>,
+}
+
+/// The strongest heat found from `cell`, until the body leaves it or a block nearby changes.
+#[derive(Debug, Clone, Copy)]
+pub struct HeatCache {
+    pub cell: BlockPos,
+    pub warmth: f32,
 }
 
 /// Items lying on the ground.
@@ -205,6 +214,7 @@ impl Ecs {
         self.needs.remove(entity);
         self.effects.remove(entity);
         self.temperatures.remove(entity);
+        self.heat_caches.remove(entity);
         self.entities.despawn(entity);
     }
 }

@@ -69,6 +69,7 @@ block-strata-obsidian = SHINY DARK ROCK
 block-strata-torch = FIRE STIK
 block-strata-lantern = GLOWY BOX
 block-strata-campfire = CAMP FIREZ
+block-strata-unlit_campfire = COLD CAMP FIREZ
 block-strata-glowstone = GLOWY ROCK
 block-strata-fire = HOT FIRE
 block-strata-portal = PRETEND DOOR 2 NOWHERE

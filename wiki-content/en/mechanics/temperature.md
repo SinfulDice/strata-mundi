@@ -8,7 +8,7 @@ The felt temperature slowly follows your surroundings (it takes a good minute to
 - the **night**, cooler everywhere, and icy in the desert;
 - **altitude**: the higher, the colder;
 - **water**: swimming cools you, and you stay **wet** for a while after (you dry three times faster near a fire);
-- the **heat** of nearby blocks: fire, lava, torches and lanterns (up close), lit furnaces, the **campfire**; only the strongest counts;
+- the **heat** of nearby blocks: fire, lava, torches and lanterns (up close), lit furnaces, the **campfire**; only the strongest counts, and a wall between it and you holds three quarters of it back;
 - a **shelter**: a roof over your head keeps half the warmth at night and gives shade by day;
 - **clothing**: the wool cloak and the cloth and leather sets keep the cold out (each point brings you 3 degrees back toward comfort, never past it). Beware, wool keeps you warm in the desert too!
 

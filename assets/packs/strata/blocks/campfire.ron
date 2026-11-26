@@ -1,4 +1,4 @@
-// Campfire: logs burning on a ring of stones. Warms the air around it (heat_sources/campfire.ron) and lights like a torch; walking into it burns.
+// Campfire: logs burning on a ring of stones. Warms the air around it (heat_sources/campfire.ron) and lights like a torch; walking into it burns. A shovel puts it out.
 Block(
     textures: All("strata:campfire"),
     render: Cross,
@@ -9,4 +9,5 @@ Block(
     sound: Some("strata:wood"),
     category: Some("strata:building"),
     rooted: true,
+    worked: {"strata:shovel": Worked(into: "strata:unlit_campfire")},
 )

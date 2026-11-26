@@ -7,6 +7,7 @@ use super::*;
 use strata_core::inventory::{ACCESSORIES, ItemStack};
 use strata_core::survival::temperature::{BodyTemperature, TemperatureZone};
 use strata_core::survival::{EffectGrant, StatusEffectDef, SurvivalOptions};
+use strata_core::upgrade::{Effect, StatOp};
 
 /// A survival world whose only biome is `biome`, at `daylight`.
 fn in_biome(biome: &str, daylight: f32) -> World {
@@ -65,7 +66,7 @@ fn the_cold_slows_and_makes_hungry_then_freezes() {
     wait(&mut w, 2);
     assert_eq!(zone(&w), TemperatureZone::Cold);
     let view = w.game.vitals_view().unwrap();
-    assert!(view.slowness > 0.1, "{}", view.slowness);
+    assert!(view.speed < 0.9, "{}", view.speed);
     assert!(w.game.movement().unwrap().speed < 0.9);
     let before = needs(&mut w).exhaustion - needs(&mut w).saturation * 4.0;
     wait(&mut w, 200);
@@ -132,7 +133,7 @@ fn water_cools_and_the_body_dries_out_of_it() {
     wait(&mut w, 600);
     let wetness = body(&w).wetness;
     assert!(wetness > 0.4 && wetness < 0.6, "{wetness}");
-    assert!(body(&w).target < 20.0, "still damp: {}", body(&w).target);
+    assert!(felt(&w) < 19.0, "still damp: {}", felt(&w));
 }
 
 #[test]
@@ -182,7 +183,7 @@ fn the_option_off_and_creative_feel_nothing() {
     assert!(hurts(&mut w).is_empty());
     let view = w.game.vitals_view().unwrap();
     assert!(view.temperature.is_none());
-    assert_eq!(view.slowness, 0.0);
+    assert_eq!(view.speed, 1.0);
     assert!(body(&w).felt.is_none(), "not even sampled");
     let mut creative = in_biome("strata:snowy_tundra", 0.0);
     creative.game.set_mode(strata_protocol::GameMode::Creative);
@@ -211,5 +212,147 @@ fn the_temperature_and_wetness_are_saved() {
         felt(&back) < 10.0,
         "no jump to the desert's heat: {}",
         felt(&back)
+    );
+}
+
+fn with_effect(stat: &str, value: f32) -> World {
+    let mut w = world_with(|content| {
+        let def = StatusEffectDef {
+            harmful: false,
+            heal: None,
+            damage: None,
+            ends_in_water: false,
+            stats: vec![(id(stat), value)],
+        };
+        content.survival.effects.insert(id("test:effect"), def);
+    });
+    w.game.set_mode(strata_protocol::GameMode::Survival);
+    let effects = w.game.ecs.effects.get_mut(w.game.player).unwrap();
+    effects.give(&EffectGrant {
+        effect: id("test:effect"),
+        seconds: 60.0,
+        strength: 1.0,
+    });
+    w.game.take_messages();
+    w
+}
+
+#[test]
+fn fire_resistance_lessens_heatstroke() {
+    let mut w = with_effect("strata:fire_resistance", 100.0);
+    w.game.set_biomes(vec![id("strata:desert")]);
+    put_block(&mut w, BlockPos::new(10, 63, 8), "strata:lava");
+    wait(&mut w, 1);
+    assert_eq!(zone(&w), TemperatureZone::Scorching);
+    wait(&mut w, 200);
+    assert!(hurts(&mut w).is_empty());
+    assert_eq!(health(&w), 20.0);
+}
+
+#[test]
+fn worn_heat_insulation_cools_in_the_desert() {
+    let mut w = world_with(|content| {
+        let cloak = content.items.key(&id("strata:wool_cloak")).unwrap();
+        let item = content.items.get_mut(cloak).unwrap();
+        item.gear.worn = vec![Effect::Stat {
+            stat: id("strata:heat_insulation"),
+            op: StatOp::Add,
+            value: 4.0,
+        }];
+    });
+    w.game.set_mode(strata_protocol::GameMode::Survival);
+    w.game.set_biomes(vec![id("strata:desert")]);
+    w.game.set_daylight(1.0);
+    wear_cloak(&mut w);
+    wait(&mut w, 1);
+    assert_eq!(felt(&w), 28.0, "40 − 4 points × 3");
+    assert_eq!(zone(&w), TemperatureZone::Comfortable);
+}
+
+#[test]
+fn a_wall_holds_the_heat_of_a_fire_back() {
+    let mut open = in_biome("strata:snowy_tundra", 0.0);
+    put_block(&mut open, BlockPos::new(11, 64, 8), "strata:campfire");
+    wait(&mut open, 1);
+    let mut walled = in_biome("strata:snowy_tundra", 0.0);
+    put_block(&mut walled, BlockPos::new(11, 64, 8), "strata:campfire");
+    put_block(&mut walled, BlockPos::new(10, 64, 8), "strata:stone");
+    put_block(&mut walled, BlockPos::new(10, 65, 8), "strata:stone");
+    wait(&mut walled, 1);
+    assert!(
+        felt(&walled) < felt(&open) - 4.0,
+        "{} vs {}",
+        felt(&walled),
+        felt(&open)
+    );
+}
+
+#[test]
+fn the_heat_found_is_forgotten_when_a_block_changes_nearby() {
+    let mut w = in_biome("strata:snowy_tundra", 0.0);
+    wait(&mut w, 1);
+    let cold = body(&w).heat;
+    assert_eq!(cold, 0.0);
+    let mut changes = Vec::new();
+    let campfire = super::tests::block(&w.content, "strata:campfire");
+    w.game.set_block(
+        &mut w.loader,
+        BlockPos::new(11, 64, 8),
+        campfire,
+        &mut changes,
+    );
+    w.game.forget_heat(&changes, false);
+    wait(&mut w, 40);
+    assert!(body(&w).heat > 0.0, "the new campfire is found");
+}
+
+#[test]
+fn each_body_is_measured_on_its_own_tick() {
+    let mut w = in_biome("strata:plains", 1.0);
+    wait(&mut w, 1);
+    let index = w.game.player.index() as u64;
+    w.game.set_biomes(vec![id("strata:desert")]);
+    let every = u64::from(w.content.survival.temperature.sample_every);
+    let before = felt(&w);
+    let mut changed_at = None;
+    for _ in 0..every {
+        wait(&mut w, 1);
+        if changed_at.is_none() && felt(&w) != before {
+            changed_at = Some(w.game.tick);
+        }
+    }
+    let tick = changed_at.unwrap();
+    assert_eq!((tick + index) % every, 0);
+}
+
+#[test]
+fn a_shovel_puts_a_campfire_out_and_flint_lights_it_again() {
+    use strata_core::content::Face;
+    let mut w = in_biome("strata:snowy_tundra", 0.0);
+    let spot = BlockPos::new(10, 64, 8);
+    put_block(&mut w, spot, "strata:campfire");
+    let shovel = item(&w, "strata:wooden_shovel");
+    super::tests::hold(&mut w, Some(shovel));
+    assert!(
+        !w.game
+            .use_item(&mut w.loader, shovel, spot, Face::Up)
+            .is_empty()
+    );
+    let unlit = super::tests::block(&w.content, "strata:unlit_campfire");
+    assert_eq!(w.loader.block(spot), Some(unlit));
+    wait(&mut w, 2);
+    let flint = item(&w, "strata:flint_and_steel");
+    super::tests::hold(&mut w, Some(flint));
+    assert!(
+        !w.game
+            .use_item(&mut w.loader, flint, spot, Face::Up)
+            .is_empty()
+    );
+    let lit = super::tests::block(&w.content, "strata:campfire");
+    assert_eq!(w.loader.block(spot), Some(lit));
+    assert_eq!(
+        w.loader.block(BlockPos::new(10, 65, 8)),
+        Some(BlockId::AIR),
+        "no fire on top"
     );
 }

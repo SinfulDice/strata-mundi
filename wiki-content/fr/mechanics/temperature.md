@@ -8,7 +8,7 @@ La température ressentie suit doucement ce qui vous entoure (il faut une bonne 
 - la **nuit**, plus fraîche partout, et glaciale au désert ;
 - l'**altitude** : plus on monte, plus il fait froid ;
 - l'**eau** : on se refroidit en nageant, et on reste **mouillé** un moment en sortant (on sèche trois fois plus vite près d'un feu) ;
-- la **chaleur** des blocs voisins : feu, lave, torches et lanternes (tout près), fours allumés, **feu de camp** ; seule la plus forte compte ;
+- la **chaleur** des blocs voisins : feu, lave, torches et lanternes (tout près), fours allumés, **feu de camp** ; seule la plus forte compte, et un mur entre elle et vous en retient les trois quarts ;
 - un **abri** : un toit au-dessus de la tête garde la moitié de la chaleur la nuit et fait de l'ombre le jour ;
 - les **vêtements** : la cape de laine et les ensembles de tissu et de cuir isolent du froid (chaque point rapproche de 3 degrés du confort, sans jamais le dépasser). Attention, la laine tient chaud aussi dans le désert !
 

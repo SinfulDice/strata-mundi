@@ -32,7 +32,7 @@ pub fn temperature_text(
     let mut parts = Vec::new();
     if view.zone != TemperatureZone::Comfortable {
         let zone = tr.text(language, &format!("temperature-zone-{}", view.zone.key()));
-        let degrees = format!("{}", view.felt.round());
+        let degrees = (view.felt.round() as i32).to_string();
         let args = [("zone", zone), ("degrees", degrees)];
         parts.push(tr.text_with(language, "hud-temperature", &args));
     }
@@ -44,9 +44,17 @@ pub fn temperature_text(
 }
 
 /// What the zone does and how to get out of it, for a few seconds after it gets worse.
-pub fn temperature_hint(game: &Gameplay, content: &Content, language: &str) -> Option<String> {
+pub fn temperature_hint(
+    game: &Gameplay,
+    content: &Content,
+    language: &str,
+    theme: &Theme,
+) -> Option<String> {
     player_temperature(game)?;
-    let (zone, _) = game.vitals.hint?;
+    let (zone, age) = game.vitals.hint?;
+    if age > theme.temperature.hint_seconds {
+        return None;
+    }
     let key = format!("hud-temperature-hint-{}", zone.key());
     Some(content.translations.text(language, &key))
 }
@@ -56,9 +64,29 @@ fn player_temperature(game: &Gameplay) -> Option<TemperatureView> {
     view.temperature
 }
 
-/// Frost (`edges` below 0) or heat (above 0) creeping in from the edges of the screen.
-pub fn paint_edges(painter: &mut Painter<'_>, screen: Rect, theme: &Theme, edges: f32) {
-    let strength = edges.abs().min(1.0);
+/// How strong the edges are for an eased level `edges` (±0.5 straining, ±1 harmful), as
+/// the theme says; `reduced` (fewer camera effects) halves them.
+pub fn edge_strength(edges: f32, theme: &Theme, reduced: bool) -> f32 {
+    let t = &theme.temperature;
+    let level = edges.abs().min(1.0);
+    let strength = if level <= 0.5 {
+        level * 2.0 * t.edges_straining
+    } else {
+        t.edges_straining + (level - 0.5) * 2.0 * (t.edges_harmful - t.edges_straining)
+    };
+    let strength = strength.clamp(0.0, 1.0);
+    if reduced { strength / 2.0 } else { strength }
+}
+
+/// Frost (`edges` below 0) or heat (above 0) creeping in from the edges of the screen,
+/// `strength` from `edge_strength`.
+pub fn paint_edges(
+    painter: &mut Painter<'_>,
+    screen: Rect,
+    theme: &Theme,
+    edges: f32,
+    strength: f32,
+) {
     if strength <= 0.01 {
         return;
     }

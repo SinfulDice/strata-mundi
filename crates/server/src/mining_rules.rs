@@ -13,6 +13,8 @@ pub struct MiningRules {
     loot: Vec<LootTable>,
     /// Tool of each item, by `ItemId`.
     tools: Vec<Option<ToolDef>>,
+    /// Name of each block, by `BlockId` (a fire that works blocks, by its name).
+    names: Vec<strata_core::id::Identifier>,
     /// Crack stages of the packs: progress is reported when the stage changes.
     pub crack_stages: usize,
 }
@@ -32,6 +34,11 @@ impl MiningRules {
                 })
                 .collect(),
             tools: tools(&content.items),
+            names: content
+                .blocks
+                .iter()
+                .map(|(_, name, _)| name.clone())
+                .collect(),
             crack_stages: content.crack_stages.len().max(1),
         }
     }
@@ -53,6 +60,12 @@ impl MiningRules {
     /// What using the `held` tool on `block` turns it into (a hoe on dirt).
     pub fn worked(&self, block: BlockId, held: Option<&ToolDef>) -> Option<Worked> {
         self.block(block)?.worked_by(&held?.kinds)
+    }
+
+    /// What lighting `fire` on `block` turns it into (an unlit campfire lit again).
+    pub fn lit(&self, block: BlockId, fire: BlockId) -> Option<Worked> {
+        let fire = self.names.get(usize::from(fire.0))?;
+        self.block(block)?.worked_by([fire])
     }
 
     /// How far around `block` breaking it with `held` also breaks its like (a sickle).

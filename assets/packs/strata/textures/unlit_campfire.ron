@@ -1,0 +1,31 @@
+// Campfire put out: the crossed logs, charred, on grey ash in the ring of stones.
+Sprite(
+    colors: {
+        'B': ("oak_bark", 2),
+        'b': ("oak_bark", 1),
+        'd': ("oak_bark", 0),
+        'c': ("charcoal", 1),
+        'k': ("charcoal", 0),
+        'a': ("stone", 3),
+        'S': ("stone", 2),
+        's': ("stone", 1),
+    },
+    rows: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "..Bbd.kcck.dbB..",
+        "...BBbbccbbBB...",
+        "..sBbBbddbBbBs..",
+        ".SsdbdcacadbdsS.",
+        "SsSsSsSsSsSsSsSs",
+    ],
+)

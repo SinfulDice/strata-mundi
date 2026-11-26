@@ -17,6 +17,8 @@ pub struct TemperatureRules {
     /// surroundings' (0: at once).
     pub smoothing: f32,
     pub zones: Zones,
+    /// Share of a source's heat felt with a solid block between it and the body.
+    pub walls: f32,
     /// Degrees shown beyond the harmful zones at both ends of the HUD gauge.
     pub gauge_span: f32,
     /// By day and by night, for a biome the list does not name.
@@ -36,7 +38,8 @@ pub struct TemperatureRules {
 }
 
 /// Thresholds between the zones: below `freezing` it hurts, below `cold` it strains, up
-/// to `hot` it is comfortable, above `scorching` it hurts.
+/// to `hot` it is comfortable, above `scorching` it hurts. A body leaves its zone only
+/// `margin` degrees past its bounds (no flicker on a threshold).
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Zones {
@@ -44,6 +47,8 @@ pub struct Zones {
     pub cold: f32,
     pub hot: f32,
     pub scorching: f32,
+    #[serde(default)]
+    pub margin: f32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
@@ -141,6 +146,24 @@ impl TemperatureRules {
         }
     }
 
+    /// The zone of `felt` for a body that was in `previous`: it stays there until `felt`
+    /// is `margin` degrees beyond its bounds.
+    pub fn zone_from(&self, previous: TemperatureZone, felt: f32) -> TemperatureZone {
+        let z = &self.zones;
+        let (low, high) = match previous {
+            TemperatureZone::Freezing => (f32::NEG_INFINITY, z.freezing),
+            TemperatureZone::Cold => (z.freezing, z.cold),
+            TemperatureZone::Comfortable => (z.cold, z.hot),
+            TemperatureZone::Hot => (z.hot, z.scorching),
+            TemperatureZone::Scorching => (z.scorching, f32::INFINITY),
+        };
+        if felt >= low - z.margin && felt <= high + z.margin {
+            previous
+        } else {
+            self.zone(felt)
+        }
+    }
+
     /// The middle of the comfortable zone, where clothing brings one back to.
     pub fn comfort(&self) -> f32 {
         (self.zones.cold + self.zones.hot) / 2.0
@@ -204,6 +227,8 @@ impl TemperatureRules {
         z.cold = finite(z.cold, 8.0).max(z.freezing);
         z.hot = finite(z.hot, 30.0).max(z.cold);
         z.scorching = finite(z.scorching, 42.0).max(z.hot);
+        z.margin = finite(z.margin, 0.0).clamp(0.0, 5.0);
+        self.walls = finite(self.walls, 0.0).clamp(0.0, 1.0);
         self.sample_every = self.sample_every.clamp(1, 200);
         self.smoothing = finite(self.smoothing, 0.0).clamp(0.0, 600.0);
         self.gauge_span = finite(self.gauge_span, 10.0).clamp(1.0, 100.0);
@@ -240,7 +265,9 @@ impl Default for TemperatureRules {
                 cold: 8.0,
                 hot: 30.0,
                 scorching: 42.0,
+                margin: 0.5,
             },
+            walls: 0.25,
             gauge_span: 10.0,
             default_biome: mild,
             biomes: BTreeMap::new(),

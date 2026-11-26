@@ -218,7 +218,8 @@ impl Game {
         self.vitals_tick(loader);
         changes.extend(self.mining_tick(loader));
         changes.extend(self.furnaces_tick(loader));
-        for pos in loader.take_arrived() {
+        let arrived = loader.take_arrived();
+        for &pos in &arrived {
             self.wake_column_furnaces(pos);
             if let Some(column) = loader.column(pos) {
                 self.updates.wake_fires(column);
@@ -227,6 +228,7 @@ impl Game {
         let mut world = Bounded { loader, border };
         let ticked = changes.len();
         self.updates.tick(&mut world, &mut changes);
+        self.forget_heat(&changes, !arrived.is_empty());
         wake_boats(&mut self.ecs, &self.rules, &changes);
         self.settle_block_entities(loader, &changes[ticked..]);
         changes

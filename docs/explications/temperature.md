@@ -28,8 +28,9 @@ graph TD
 
 - **Zones** : glacial (< −4), froid (−4 à 8), agréable (8 à 30), chaud (30 à 42), brûlant (> 42). Les dégâts passent par la même fonction que les autres (`take_hit`) : la résistance au gel (`strata:cold_resistance`) et la résistance au feu (`strata:fire_resistance`) les réduisent, portées ou données par un effet (potion, sort).
 - **Mouillé** : dans l'eau, l'humidité passe à 1 ; dehors, elle redescend à 0 en 60 secondes (trois fois plus vite près d'une source de chaleur).
-- **Sources de chaleur** : chaque bloc chauffant a sa force et sa portée dans `heat_sources/` ; seule la plus forte compte (cent torches ne font pas un four). Les fours ne chauffent qu'allumés.
-- **Coût** : la mesure (un cube de 13 × 13 × 13 blocs autour du corps et une colonne au-dessus de la tête) n'a lieu qu'une fois par seconde ; le reste du temps, seuls l'humidité et le compteur de dégâts avancent. Option de monde « Température » pour tout couper ; en créatif, rien n'est calculé.
+- **Sources de chaleur** : chaque bloc chauffant a sa force et sa portée dans `heat_sources/` ; seule la plus forte compte (cent torches ne font pas un four), et un bloc solide entre elle et le corps n'en laisse passer qu'un quart. Les fours ne chauffent qu'allumés ; un feu de camp s'éteint à la pelle et se rallume au briquet.
+- **Zones sans clignotement** : on ne quitte une zone qu'à 0,5 °C au-delà de ses bornes.
+- **Coût** : la mesure n'a lieu qu'une fois par seconde par corps, chacun à son tick. Pour la chaleur, on ne regarde que les tranches de 16³ blocs dont la palette contient une source, et le résultat est gardé tant que le corps reste dans la même case et que rien ne change autour (≈ 0,1 µs dans une grotte froide, 4 µs dans une pièce chauffée). Le reste du temps, seuls l'humidité et le compteur de dégâts avancent. Option de monde « Température » pour tout couper ; en créatif, rien n'est calculé.
 - **HUD** : une échelle colorée (bleu → vert → rouge) au-dessus de la barre d'objets, avec un repère blanc ; loin du confort, une ligne « Froid 3 °C » ; quand la zone empire, un conseil pendant 8 secondes, en haut de l'écran. Les bords de l'écran se givrent ou rougeoient (option Interface « Givre et chaleur sur les bords »).
 
 Tout se règle dans les packs : `temperature.ron` (zones, biomes, nuit, altitude, eau, abri, vêtements, effets), `heat_sources/`, `damage_types/freezing.ron` et `overheating.ron`.
@@ -43,7 +44,7 @@ Tout se règle dans les packs : `temperature.ron` (zones, biomes, nuit, altitude
 
 ## Où c'est dans le code
 
-- `crates/core/src/survival/temperature/` : `rules.rs` (`temperature.ron`, zones, échelle du HUD), `felt.rs` (contributions, `BodyTemperature` : lissage, humidité, dégâts), `heat.rs` (`heat_sources/`).
+- `crates/core/src/survival/temperature/` : `rules.rs` (`temperature.ron`, zones et marge, échelle du HUD), `felt.rs` (contributions), `body.rs` (`BodyTemperature` : lissage, zone, humidité, dégâts), `heat.rs` (`heat_sources/`), `scan.rs` (source la plus forte, murs) ; banc `crates/core/benches/temperature.rs`.
 - `crates/server/src/game/temperature.rs` : mesure autour du corps, effets sur les besoins et la vitesse ; `vitals_view.rs` (message au client), `vitals_save.rs` (sauvegarde).
 - `crates/client/src/screens/hud_temperature.rs` (ligne, conseil, bords), `ui/widgets/gauge.rs` (échelle à repère), `gameplay/vitals.rs` (conseil et bords qui apparaissent doucement).
 - Tests : `core/survival/temperature/tests.rs`, `server/game/temperature_tests.rs`.
@@ -51,7 +52,8 @@ Tout se règle dans les packs : `temperature.ron` (zones, biomes, nuit, altitude
 <details><summary>Côté Rust</summary>
 
 - **`Option<f32>` pour « pas encore mesuré »** : `felt: None` veut dire « prendre la première mesure telle quelle » ; pas besoin d'un booléen à côté.
-- **`#[serde(skip)]`** : la cible et le compteur de dégâts ne sont pas sauvegardés, seuls la température et l'humidité le sont.
+- **`#[serde(skip)]`** : la zone et le compteur de dégâts ne sont pas sauvegardés, seuls la température et l'humidité le sont.
+- **Durées de vie (`Surroundings<'a>`)** : la structure emprunte le nom du biome au lieu de le copier ; `'a` dit au compilateur qu'elle ne doit pas vivre plus longtemps que ce nom.
 - **Lissage exponentiel** : `felt += (cible − felt) × (1 − e^(−t/τ))` ; le résultat ne dépend pas du nombre de mesures, seulement du temps écoulé.
 - **`Arc::clone(&self.rules.survival)`** : on garde les règles dans une variable locale pour pouvoir modifier les composants du jeu en même temps (le vérificateur d'emprunts refuse sinon de lire `self.rules` et d'écrire `self.ecs`).
 

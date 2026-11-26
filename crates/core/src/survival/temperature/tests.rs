@@ -20,9 +20,14 @@ fn rules() -> TemperatureRules {
     content().survival.temperature
 }
 
-fn noon(biome: &str) -> Surroundings {
+/// A leaked identifier: test surroundings borrow theirs.
+fn named(text: &str) -> &'static Identifier {
+    Box::leak(Box::new(id(text)))
+}
+
+fn noon(biome: &str) -> Surroundings<'static> {
     Surroundings {
-        biome: Some(id(biome)),
+        biome: Some(named(biome)),
         height: 100.0,
         daylight: 1.0,
         ..Surroundings::default()
@@ -33,8 +38,8 @@ fn felt(rules: &TemperatureRules, around: &Surroundings, wetness: f32, worn: Ins
     total(&contributions(rules, around, wetness, worn))
 }
 
-fn part_of(parts: &[Contribution], name: &'static str) -> Option<f32> {
-    let name = crate::survival::engine(name);
+fn part_of(parts: &[Contribution<'_>], name: &'static str) -> Option<f32> {
+    let name = PartName::Engine(name);
     parts.iter().find(|p| p.name == name).map(|p| p.degrees)
 }
 
@@ -81,7 +86,7 @@ fn nights_are_colder_and_a_roof_keeps_some_warmth() {
     assert_eq!(open, 12.0, "the plains' night");
     let dusk = Surroundings {
         daylight: 0.5,
-        ..night.clone()
+        ..night
     };
     assert_eq!(felt(&rules, &dusk, 0.0, Insulation::default()), 16.0);
     night.sheltered = true;
@@ -114,18 +119,19 @@ fn water_cools_and_drying_takes_time() {
     assert_eq!(felt(&rules, &plains, 1.0, Insulation::default()), 14.0);
     let diving = Surroundings {
         immersed: true,
-        ..plains.clone()
+        ..plains
     };
     assert_eq!(felt(&rules, &diving, 1.0, Insulation::default()), 8.0);
     let mut body = BodyTemperature::default();
-    body.soak(true, false, &rules);
+    body.soak(true, &rules);
     assert_eq!(body.wetness, 1.0);
     for _ in 0..600 {
-        body.soak(false, false, &rules);
+        body.soak(false, &rules);
     }
     assert!((body.wetness - 0.5).abs() < 1e-3, "half dry after 30 s");
     for _ in 0..200 {
-        body.soak(false, true, &rules);
+        body.heat = 1.0;
+        body.soak(false, &rules);
     }
     assert!(body.wetness < 1e-3, "heat dries three times faster");
 }
@@ -199,11 +205,17 @@ fn extra_contributions_and_dimensions_add_up() {
     let mut rules = rules();
     rules.dimensions.insert(id("mod:ember"), 25.0);
     let mut around = noon("strata:plains");
-    around.dimension = Some(id("mod:ember"));
-    around.extra.push((id("mod:blizzard"), -10.0));
+    around.dimension = Some(named("mod:ember"));
+    let blizzard = [(id("mod:blizzard"), -10.0)];
+    around.extra = &blizzard;
     let parts = contributions(&rules, &around, 0.0, Insulation::default());
     assert_eq!(total(&parts), 35.0);
-    assert!(parts.iter().any(|p| p.name == id("mod:blizzard")));
+    assert!(
+        parts
+            .iter()
+            .any(|p| p.name == PartName::Named(&blizzard[0].0))
+    );
+    assert_eq!(target(&rules, &around, 0.0, Insulation::default()), 35.0);
 }
 
 #[test]
@@ -297,4 +309,142 @@ fn broken_rules_are_kept_in_order() {
     assert!(rules.zones.scorching >= rules.zones.hot);
     assert_eq!(rules.sample_every, 1);
     assert_eq!(rules.smoothing, 0.0);
+}
+
+#[test]
+fn a_zone_is_left_only_past_its_margin() {
+    let rules = rules();
+    assert_eq!(rules.zones.margin, 0.5);
+    let cold = TemperatureZone::Cold;
+    assert_eq!(rules.zone_from(cold, 8.3), cold, "just past the threshold");
+    assert_eq!(rules.zone_from(cold, 8.6), TemperatureZone::Comfortable);
+    let comfortable = TemperatureZone::Comfortable;
+    assert_eq!(rules.zone_from(comfortable, 7.7), comfortable);
+    assert_eq!(rules.zone_from(comfortable, 7.4), cold);
+    assert_eq!(
+        rules.zone_from(comfortable, -20.0),
+        TemperatureZone::Freezing
+    );
+    let mut body = BodyTemperature::at(7.0);
+    for felt in [8.2, 7.8, 8.4, 7.9] {
+        body.follow(
+            felt,
+            20,
+            &TemperatureRules {
+                smoothing: 0.0,
+                ..rules.clone()
+            },
+        );
+        assert_eq!(body.zone(&rules), cold, "{felt}: no flicker");
+    }
+}
+
+#[test]
+fn negative_clothing_takes_one_further_from_comfort() {
+    let rules = rules();
+    let tundra = noon("strata:snowy_tundra");
+    let cursed = Insulation {
+        cold: -2.0,
+        heat: 0.0,
+    };
+    assert_eq!(felt(&rules, &tundra, 0.0, cursed), -9.0);
+    let desert = noon("strata:desert");
+    let stifling = Insulation {
+        cold: 0.0,
+        heat: -2.0,
+    };
+    assert_eq!(felt(&rules, &desert, 0.0, stifling), 46.0);
+}
+
+mod scan {
+    use super::*;
+    use crate::chunk::Column;
+    use crate::coords::{BlockPos, ColumnPos};
+    use glam::DVec3;
+    use std::collections::HashMap;
+
+    struct World {
+        columns: HashMap<ColumnPos, Column>,
+    }
+
+    impl World {
+        fn new() -> Self {
+            let columns = (-1..=1)
+                .flat_map(|x| (-1..=1).map(move |z| ColumnPos { x, z }))
+                .map(|pos| (pos, Column::empty(pos)))
+                .collect();
+            Self { columns }
+        }
+
+        fn set(&mut self, pos: BlockPos, block: crate::content::BlockId) {
+            let column = self.columns.get_mut(&pos.column()).unwrap();
+            column.set(
+                pos.x.rem_euclid(16) as u32,
+                pos.y,
+                pos.z.rem_euclid(16) as u32,
+                block,
+            );
+        }
+
+        fn find(&self, content: &Content, centre: DVec3) -> Option<HeatFound> {
+            let solid = |pos: BlockPos| {
+                let column = self.columns.get(&pos.column());
+                let block = column.map(|c| {
+                    c.get(
+                        pos.x.rem_euclid(16) as u32,
+                        pos.y,
+                        pos.z.rem_euclid(16) as u32,
+                    )
+                });
+                block.is_some_and(|b| content.blocks.get(b).is_some_and(|b| b.solid))
+            };
+            let survival = &content.survival;
+            strongest_heat(
+                &survival.heat,
+                survival.temperature.walls,
+                centre,
+                |pos| self.columns.get(&pos),
+                solid,
+            )
+        }
+    }
+
+    #[test]
+    fn the_strongest_source_counts_and_walls_hold_heat_back() {
+        let content = content();
+        let block = |name: &str| content.blocks.key(&id(name)).unwrap();
+        let mut world = World::new();
+        let centre = DVec3::new(0.5, 70.9, 0.5);
+        assert_eq!(world.find(&content, centre), None);
+        world.set(BlockPos::new(2, 70, 0), block("strata:torch"));
+        world.set(BlockPos::new(-3, 70, 0), block("strata:campfire"));
+        let found = world.find(&content, centre).unwrap();
+        assert_eq!(
+            found.source,
+            BlockPos::new(-3, 70, 0),
+            "the campfire beats the torch"
+        );
+        let open = found.warmth;
+        world.set(BlockPos::new(-2, 70, 0), block("strata:stone"));
+        world.set(BlockPos::new(-2, 71, 0), block("strata:stone"));
+        let walled = world.find(&content, centre).unwrap();
+        assert!(
+            (walled.warmth - open * 0.25).abs() < 1e-4,
+            "{} vs {open}",
+            walled.warmth
+        );
+        world.set(BlockPos::new(-3, 70, 0), block("strata:unlit_campfire"));
+        let torch = world.find(&content, centre).unwrap();
+        assert_eq!(
+            torch.source,
+            BlockPos::new(2, 70, 0),
+            "a campfire put out is cold"
+        );
+        world.set(BlockPos::new(20, 70, 0), block("strata:lava"));
+        assert_eq!(
+            world.find(&content, centre).unwrap().source,
+            torch.source,
+            "beyond reach"
+        );
+    }
 }

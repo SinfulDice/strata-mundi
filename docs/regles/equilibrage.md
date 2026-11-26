@@ -361,7 +361,7 @@ Température ressentie en °C = somme de contributions nommées ; elle suit l'am
 
 | Zone | Seuils | Effet |
 |---|---|---|
-| Glacial | < −4 °C | effets du froid + 1 PV / 4 s (gel, `strata:cold_resistance`) |
+| Glacial | < −4 °C (on ne quitte une zone qu'à 0,5 °C au-delà de ses bornes) | effets du froid + 1 PV / 4 s (gel, `strata:cold_resistance`) |
 | Froid | −4 à 8 °C | vitesse × 0,85 ; +0,003 d'épuisement de faim par tick (≈ 1 point de saturation ou de faim / 67 s) |
 | Agréable | 8 à 30 °C | — |
 | Chaud | 30 à 42 °C | +0,004 d'épuisement de soif par tick (soif ≈ 2,6 × plus rapide au repos) ; endurance regagnée × 0,5 |
@@ -373,12 +373,12 @@ Température ressentie en °C = somme de contributions nommées ; elle suit l'am
 | Nuit | (nuit − jour) × (1 − lumière du jour) |
 | Altitude | −0,06 °C par bloc au-dessus de y = 140 (sommet à y 270 : −7,8) |
 | Eau | mouillé −6 × humidité (sèche en 60 s, 20 s près d'une source de chaleur) ; tête sous l'eau −6 de plus |
-| Chaleur (la plus forte seulement) | lave +20 sur 6 blocs ; feu de camp +14 sur 6 ; feu +12 sur 5 ; four, fumoir, haut fourneau allumés +10 sur 4 ; torche, lanterne +4 sur 2,5 ; décroît linéairement avec la distance |
+| Chaleur (la plus forte seulement ; 25 % à travers un bloc solide) | lave +20 sur 6 blocs ; feu de camp +14 sur 6 ; feu +12 sur 5 ; four, fumoir, haut fourneau allumés +10 sur 4 ; torche, lanterne +4 sur 2,5 ; décroît linéairement avec la distance |
 | Abri (bloc solide ≤ 12 au-dessus) | garde 50 % de la baisse de nuit ; retire 50 % de la chaleur du jour au-delà de 30 °C |
 | Vêtements | 3 °C par point vers le confort (19 °C), sans le dépasser : cape de laine 4 (+12), tissu 2/4 pièces +1/+3, cuir 4 pièces +1 ; la laine au chaud ajoute 50 % de sa chaleur ; `strata:heat_insulation` refroidit de même |
 | Dimension | décalage par dimension (aucun en v0.3) |
 
-Feu de camp : 3 bûches + 3 bâtons + 1 charbon (de bois) → 1 ; lumière 15 ; contact 1 PV / 0,5 s (feu, sans brûlure).
+Feu de camp : 3 bûches + 3 bâtons + 1 charbon (de bois) → 1 ; lumière 15 ; contact 1 PV / 0,5 s (feu, sans brûlure) ; la pelle l'éteint, le briquet le rallume (1 usage).
 
 ## Outils d'équilibrage (créés en v0.3, enrichis à chaque version)
 
