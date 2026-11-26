@@ -238,7 +238,10 @@ impl Needs {
         };
         if tick_timer(&mut self.timers.regen, wounded && quenched && fed, every) {
             let healed = health.heal(h.regen_amount);
-            self.add_exhaustion(healed * h.regen_cost, rules, options);
+            // Healing tires (hunger) but does not dry: thirst has no saturation to soak it.
+            if options.hunger {
+                self.exhaustion += healed * h.regen_cost;
+            }
         }
     }
 

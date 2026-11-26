@@ -308,7 +308,7 @@ Pas de recette directe des tiers supérieurs : un sac ne sert jamais d'ingrédie
 | Amélioration de sac (famille `strata:storage`, tag `strata:backpacks`) | Coût | Valeurs |
 |---|---|---|
 | Ramassage | 4 cuirs, 4 fer, 1 pépite d'or | ce qui est ramassé entre d'abord, à travers le filtre |
-| Nourrissage | 4 cuirs, 4 fer, 1 champignon brun | branché au jalon 8 (faim) |
+| Nourrissage | 4 cuirs, 4 fer, 1 champignon brun | mange un aliment du sac quand rien ne serait gâché |
 | Établi intégré | 4 cuirs, 4 fer, 1 établi | grille 3×3 dans l'écran du sac |
 | Réservoir | 4 cuirs, 4 fer, 1 seau | 8 seaux d'un liquide (borné à 64 par le moteur) |
 
@@ -322,6 +322,38 @@ Tri, filtre, compression, destruction et aimant vont aussi dans un sac (aimant :
 | Sacoche à potions | 9 | `strata:potions` (vide jusqu'à l'alchimie) | 3 cuirs + 1 verre |
 
 Manque pour plus tard : les tiers Ignium, Nihilium et Siderium (v0.10-v0.11) n'ont ni objets ni fichiers de tier (coffres, fours et sacs à dos).
+
+## Jauges de survie (v0.3, `survival.ron`, `consumables/`, `damage_types/`, `status_effects/`, `contacts/`)
+
+Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
+
+| Jauge | Valeurs |
+|---|---|
+| Vie | 20 (+4 anneau de vitalité) ; régénère 1 PV / 4 s à faim ≥ 18, 1 PV / 0,5 s faim pleine avec saturation ; 6 d'épuisement par PV |
+| Faim | 20, saturation de départ 5 ; 4 d'épuisement = 1 point ; sprint 0,1/bloc, saut 0,05, saut en sprint 0,2, nage 0,01/bloc, bloc cassé 0,005, attaque 0,1 ; pas de sprint à 6 ou moins ; à 0 : 1 PV / 4 s, plancher 1 |
+| Soif | 20 ; 75 % de l'épuisement (hors soins) + 0,0025 par tick (≈ 1 point / 80 s au repos) ; à 0 : 1 PV / 4 s, plancher 1 |
+| Endurance | 100 ; sprint 0,6/tick, saut 6, esquive 20, attaque 10 ; +1/tick après 15 ticks ; reprise du sprint à 25 ; maximum −2,5 % (intermédiaire) / −5 % (lourde) par pièce |
+| Souffle | 15 s (+5 amulette) ; noyade 2 PV / s |
+| Chute | 1 PV par bloc au-delà de 3 |
+| Armure | 4 % par point de protection, 80 % au plus ; résistances en % (stat `strata:fire_resistance`) |
+| Invulnérabilité | 10 ticks |
+| Lave / feu | 4 / 1 PV au contact + brûlure 8 / 4 s (1 PV / s, éteinte dans l'eau) ; suffocation 1 PV / 0,5 s |
+
+| Objet | Faim | Saturation | Soif | Durée | Effet | Recette / obtention |
+|---|---|---|---|---|---|---|
+| Baies | 2 | 0,4 | — | 0,8 s | — | buisson sans faucille (1/2) |
+| Pomme | 4 | 2,4 | — | 1,6 s | — | feuilles de chêne sans cisailles (1/20) |
+| Pomme cuite | 5 | 6 | — | 1,6 s | — | fumoir / four |
+| Champignon grillé | 4 | 4,8 | — | 1,6 s | — | champignon brun, fumoir / four |
+| Ragoût de champignons | 6 | 7,2 | — | 1,6 s | soin ×0,5, 10 s | bol + champignons brun et rouge (rend le bol) |
+| Bouteille d'eau | — | — | 6 | 1,6 s | — | bouteille remplie (eau douce) ou eau salée bouillie |
+| Bouteille d'eau salée | — | — | −3 | 1,6 s | — | bouteille remplie en océan/plage |
+| Gourde d'eau (4 gorgées) | — | — | 5 | 1,2 s | — | gourde (3 cuirs + 1 fibre) |
+| Boire à la source (accroupi) | — | — | 2 (−1 salée) | — | — | — |
+| Bandage | — | — | — | 2 s | soin 1 PV/s, 6 s ; arrête le saignement | tissu + fibre → 2 |
+| Trousse de soin | — | — | — | 3 s | soin 2 PV/s, 7 s ; arrête le saignement | cuir + 3 bandages + pépite de fer |
+
+Bol : 3 planches → 4 ; bouteille en verre : 3 verres → 3.
 
 ## Outils d'équilibrage (créés en v0.3, enrichis à chaque version)
 

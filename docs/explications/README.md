@@ -46,6 +46,7 @@ Ce dossier explique **comment marche Strata Mundi**, pour quelqu'un qui découvr
 35. [Accessoires, ensembles, mobilité et joaillier](accessoires-et-sets.md) : cinq cases d'accessoires, calcul unique de ce qui est porté, non-cumul, bonus d'ensemble en pack, double saut, esquive, escalade, établi à liste de recettes.
 36. [Stations de travail](stations.md) : une station par matériau, forge (charbon), tannerie, métier à tisser et joaillier sur un même établi à liste, écran propre à chaque établi (disposition et couleur en pack), liste qui défile.
 37. [Rangement](rangement.md) : coffres, tonneaux et fours améliorables avec un seul système d'améliorations (objets posés dans les cases d'un bloc), tiers et kits sur place, coffre double, tri, filtre, compression, destruction, aimant, écran qui défile.
+38. [Jauges de survie](jauges.md) : vie, faim et saturation, soif et eau salée, endurance, souffle, dégâts et résistances, effets non cumulables, manger en maintenant le clic, HUD.
 
 Les autres systèmes (chunks, génération, packs, sauvegarde, interface, réglages…) ont leur fichier dès qu'ils apparaissent.
 

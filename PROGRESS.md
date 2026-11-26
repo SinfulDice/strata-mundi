@@ -25,6 +25,9 @@
     - Note pour J8 : brancher la brique `Feed` (`Upkeep::feed` d'un sac porté) sur la faim. Note pour J10 : à la mort, un sac tombe entier (contenu dans l'objet) ; la tombe le garde tel quel.
     - Note pour J11 : l'option de monde « Aimants » (`WorldMeta::storage_magnets`) doit devenir modifiable par `/gamerule`.
   - [ ] J8 Jauges de survie (vie, faim, soif, température, endurance, dégâts, soins, HUD)
+    - [x] J8a vie, faim/saturation, soif (bouteilles, gourde, eau salée à purifier, boire accroupi à la source), endurance (armure lourde), souffle, dégâts (chute, noyade, lave, feu, suffocation, faim, soif, saignement) avec armure, résistances et invulnérabilité, effets non cumulables, nourriture et soins en pack, manger en maintenant le clic, nourrissage du sac, HUD (barres déplaçables, éclair et secousse réglables), options de monde, sauvegarde, évanouissement provisoire au lieu de la mort (D099-D101)
+    - [ ] J8b température (emplacement `temperature` déjà dans le HUD, stat `strata:insulation` prête, résistances par stat comme `strata:fire_resistance`)
+    - Note pour J10 : remplacer `Game::faint` par la mort ; attaques = `Exertion::attacks` et `Game::hurt` ; usure de l'armure sous les coups ; effet `strata:bleeding` prêt pour les armes. Note pour J9 : barre `experience` déjà dans le HUD (jauge optionnelle, `Bars::gauge`). Note : la jauge de progression du clic droit n'a pas pu être capturée sous Xvfb (le clic droit simulé n'arrive pas au jeu) ; testée côté serveur.
   - [ ] J9 Expérience
   - [ ] J10 Combat simple et mort (lit, tombe, messages, statistiques)
   - [ ] J11 Options de monde et modes (intégrité structurelle, gamemode, gamerule, spectateur, aventure, commandes autorisées)
