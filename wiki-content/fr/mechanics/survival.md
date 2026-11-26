@@ -27,3 +27,7 @@ Chute (au-delà de trois blocs), noyade, lave, feu (et brûlure qui continue jus
 ## Le découvrir en jeu
 
 Les infobulles des aliments, boissons et soins disent ce qu'ils donnent ; celles des bouteilles et gourdes vides disent où les remplir.
+
+## Température
+
+On a aussi chaud ou froid selon le biome, l'heure, l'altitude, l'eau, les feux proches, un toit et ses vêtements : voir la page Température.

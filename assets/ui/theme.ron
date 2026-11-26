@@ -34,5 +34,5 @@ Theme(
     hurt: "#c0201870",
     // Edges of the screen when cold (frost) or hot (heat), stronger in the harmful zones.
     frost: "#dcefff90",
-    heat: "#ff8c3070",
+    heat: "#ff8c30a8",
 )

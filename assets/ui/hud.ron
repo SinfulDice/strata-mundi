@@ -26,7 +26,7 @@ Screen(
             (1.0, "temperature_scorching"),
         ]),
         Label(id: "temperature_label", anchor: Bottom, at: (-46, -52), text: "@temperature"),
-        Label(id: "temperature_hint", anchor: Bottom, at: (0, -92), text: "@temperature_hint", boxed: true, wrap: Some(220)),
+        Label(id: "temperature_hint", anchor: Top, at: (0, 22), text: "@temperature_hint", boxed: true, wrap: Some(220)),
         Label(id: "mount", anchor: Bottom, at: (0, -48), text: "@mount", boxed: true),
         Label(id: "area", anchor: Bottom, at: (0, -62), text: "@area", boxed: true),
         Label(id: "notice", anchor: Center, at: (0, -36), text: "@notice", boxed: true),

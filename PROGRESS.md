@@ -4,6 +4,7 @@
 
 - **Version en cours** : v0.3 — Survie. Détail : `docs/versions/v0.3.md`.
 - **Jalon en cours** : 8 — Jauges de survie
+- **Prochaine tâche** : Windows en un exe (voir Tâches intercalées), puis J9.
   - [x] J1 Objets et inventaire (piles, durabilité, métadonnées, 27+9+4+1, glisser-déposer, tri, verrouillage, dépôt rapide, recherche, objets lâchés, coffres, tonneaux)
   - [x] J2 Récolte (temps de casse, fissures, tables de butin, outil requis)
   - [x] J3 Craft (2×2, établi, recettes en pack, livre de recettes, fours/fumoir/haut fourneau, tailleur de pierre, fours améliorables)
@@ -24,9 +25,10 @@
     - [x] J7b sac à dos (case du dos, contenu dans l'objet, touche B / croix haut et clic droit, posé comme un bloc sans jamais perdre son contenu, tiers cuir → diamant par kit sur le sac posé, ramassage, nourrissage préparé, établi intégré, réservoir, pas de sac dans un sac), bourses et sacoches par tag, sauvegarde par nom des piles portées, wiki, D097-D098
     - Note pour J8 : brancher la brique `Feed` (`Upkeep::feed` d'un sac porté) sur la faim. Note pour J10 : à la mort, un sac tombe entier (contenu dans l'objet) ; la tombe le garde tel quel.
     - Note pour J11 : l'option de monde « Aimants » (`WorldMeta::storage_magnets`) doit devenir modifiable par `/gamerule`.
-  - [ ] J8 Jauges de survie (vie, faim, soif, température, endurance, dégâts, soins, HUD)
+  - [x] J8 Jauges de survie (vie, faim, soif, température, endurance, dégâts, soins, HUD)
     - [x] J8a vie, faim/saturation, soif (bouteilles, gourde, eau salée à purifier, boire accroupi à la source), endurance (armure lourde), souffle, dégâts (chute, noyade, lave, feu, suffocation, faim, soif, saignement) avec armure, résistances et invulnérabilité, effets non cumulables, nourriture et soins en pack, manger en maintenant le clic, nourrissage du sac, HUD (barres déplaçables, éclair et secousse réglables), options de monde, sauvegarde, évanouissement provisoire au lieu de la mort (D099-D101)
-    - [ ] J8b température (emplacement `temperature` déjà dans le HUD, stat `strata:insulation` prête, résistances par stat comme `strata:fire_resistance`)
+    - [x] J8b température (contributions nommées en pack : biome jour/nuit, nuit, altitude, eau et humidité, source de chaleur la plus forte, abri, vêtements, dimension, contributions en plus ; lissage ; zones froid/chaud puis gel/coup de chaleur avec résistances ; échelle du HUD, ligne, conseil, bords givrés ou chauds réglables ; option de monde ; sauvegarde ; feu de camp ; wiki « Température », D102)
+    - Note pour J14 : feu de camp prêt (chaleur, lumière) ; la cuisson sur le feu de camp reste à faire. Note pour v0.5 : météo et saisons = contributions dans `Surroundings::extra`.
     - Note pour J10 : remplacer `Game::faint` par la mort ; attaques = `Exertion::attacks` et `Game::hurt` ; usure de l'armure sous les coups ; effet `strata:bleeding` prêt pour les armes. Note pour J9 : barre `experience` déjà dans le HUD (jauge optionnelle, `Bars::gauge`). Note : la jauge de progression du clic droit n'a pas pu être capturée sous Xvfb (le clic droit simulé n'arrive pas au jeu) ; testée côté serveur.
   - [ ] J9 Expérience
   - [ ] J10 Combat simple et mort (lit, tombe, messages, statistiques)

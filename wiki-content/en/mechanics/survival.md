@@ -27,3 +27,7 @@ At zero health, for now, you **faint** and wake up at the starting point with al
 ## Finding out in game
 
 The tooltips of food, drinks and care items tell what they give; those of empty bottles and waterskins tell where to fill them.
+
+## Temperature
+
+You also feel hot or cold depending on the biome, the time, the height, water, nearby fires, a roof and your clothes: see the Temperature page.

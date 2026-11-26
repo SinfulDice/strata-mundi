@@ -30,6 +30,8 @@ graph TD
 - **Les effets** (saignement, soin, brûlure) durent quelques secondes ; un même effet n'est jamais là deux fois : le plus fort reste.
 - **Manger** : on maintient le clic droit ; le client dit « je commence » et « j'arrête », le serveur compte le temps et décide.
 
+La température (froid, chaud, abri, vêtements) a son propre fichier : [temperature.md](temperature.md).
+
 Tout se règle dans les packs : `survival.ron` pour les nombres, `consumables/` pour ce que donne chaque aliment, `damage_types/`, `status_effects/`, `contacts/` (lave, feu), `fills/` (bouteilles). À la création du monde, faim, soif et endurance se coupent et leur vitesse se règle.
 
 ## Où c'est dans le code
