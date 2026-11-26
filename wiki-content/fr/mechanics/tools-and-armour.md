@@ -19,8 +19,8 @@ Les outils en bois et en pierre sont connus dès le départ.
 Quatre cases : tête, torse, jambes, pieds. Trois **poids** :
 
 - **légère** (cuir, tissu) : protège peu, ne gêne pas ;
-- **intermédiaire** (mailles, écailles) : protège mieux et coûtera un peu d'endurance et de mana ;
-- **lourde** (plates) : protège le plus, mais chaque pièce **ralentit la marche** de 2,5 % (10 % pour l'ensemble) et coûtera davantage d'endurance et de mana.
+- **intermédiaire** (mailles, écailles) : protège mieux et retire un peu d'endurance (2,5 % par pièce) et de mana ;
+- **lourde** (plates) : protège le plus, mais chaque pièce **ralentit la marche** de 2,5 % (10 % pour l'ensemble) et retire davantage d'endurance (5 % par pièce) et de mana.
 
 Le fer et l'or existent en mailles et en plates, le diamant en écailles et en plates. Les mailles se font avec des anneaux (un lingot en donne deux), les écailles de diamant avec un diamant (deux écailles). La **protection** totale s'affiche dans l'inventaire.
 

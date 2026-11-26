@@ -25,7 +25,7 @@ Four tiers: leather (27 slots, 1 upgrade slot), iron (45, 2), gold (63, 3), diam
 Its upgrades are the chests' (sorting, filter, compression, destruction, magnet: it then draws items to you) and its own:
 
 - **Pickup**: what you pick up goes into the backpack first, if its filter lets it in (and its destruction applies).
-- **Feeding**: will feed you from what it holds when you are hungry (hunger comes with the survival gauges).
+- **Feeding**: feeds you from what it holds when you are hungry, wasting nothing (not dishes served in a bowl).
 - **Built-in crafting**: a 3×3 grid in the backpack's screen.
 - **Tank**: holds up to 8 buckets of one liquid; with a full bucket in hand, the « Held bucket » button pours it in, with an empty one it fills it.
 

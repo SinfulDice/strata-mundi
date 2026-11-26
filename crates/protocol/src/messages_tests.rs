@@ -206,3 +206,48 @@ fn inventory_messages_survive_serialization() {
         assert_eq!(round_trip(&message), message);
     }
 }
+
+#[test]
+fn survival_messages_survive_serialization() {
+    let vitals = ServerMessage::Vitals(Box::new(crate::VitalsView {
+        health: 13.5,
+        max_health: 24.0,
+        food: Some(17.0),
+        max_food: 20.0,
+        saturation: 3.0,
+        thirst: None,
+        max_thirst: 20.0,
+        stamina: Some(40.0),
+        max_stamina: 80.0,
+        breath: 120,
+        max_breath: 400,
+        can_sprint: false,
+        effects: vec![crate::EffectView {
+            effect: "strata:bleeding".parse().unwrap(),
+            seconds_left: 12,
+            harmful: true,
+        }],
+    }));
+    let hurt = ServerMessage::Hurt(crate::HurtView {
+        kind: "strata:fall".parse().unwrap(),
+        amount: 4.0,
+        shakes: true,
+    });
+    for message in [vitals, hurt, ServerMessage::Fainted] {
+        assert_eq!(round_trip(&message), message);
+    }
+    let item = ItemId(7);
+    let pos = BlockPos::new(1, 62, -3);
+    for action in [
+        WorldAction::StartUse { item, slot: 3 },
+        WorldAction::StopUse,
+        WorldAction::Fill { item, pos },
+        WorldAction::Drink { pos },
+    ] {
+        let message = ClientMessage::Action {
+            id: ActionId(9),
+            action,
+        };
+        assert_eq!(round_trip(&message), message);
+    }
+}

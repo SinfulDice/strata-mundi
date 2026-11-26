@@ -25,7 +25,7 @@ Quatre tiers : cuir (27 cases, 1 emplacement d'amélioration), fer (45, 2), or (
 Ses améliorations sont celles des coffres (tri, filtre, compression, destruction, aimant : il attire alors les objets vers vous) et les siennes :
 
 - **Ramassage** : ce que vous ramassez entre d'abord dans le sac, s'il passe son filtre (et sa destruction s'applique).
-- **Nourrissage** : vous nourrira de ce qu'il contient quand vous aurez faim (la faim arrive avec les jauges de survie).
+- **Nourrissage** : vous nourrit de ce qu'il contient quand vous avez faim, sans rien gâcher (pas les plats servis dans un bol).
 - **Établi intégré** : une grille 3×3 dans l'écran du sac.
 - **Réservoir** : garde jusqu'à 8 seaux d'un liquide ; avec un seau plein en main, le bouton « Seau tenu » le vide dedans, avec un seau vide il le remplit.
 

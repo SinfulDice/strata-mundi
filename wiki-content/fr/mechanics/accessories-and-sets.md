@@ -2,8 +2,8 @@
 
 À côté de l'armure, l'inventaire a cinq cases fixes : **deux anneaux**, **une amulette**, **une ceinture** et **une cape**. Les bottes spéciales vont dans la case des bottes. Les anneaux, l'amulette et les ceintures se fabriquent au **joaillier**, la cape au **métier à tisser** :
 
-- **Anneau de vitalité** : plus de vie (elle comptera dès que la vie existera).
-- **Amulette de respiration courte** : un peu plus longtemps sous l'eau (dès que la noyade existera).
+- **Anneau de vitalité** : 4 points de vie en plus.
+- **Amulette de respiration courte** : 5 secondes de souffle en plus sous l'eau.
 - **Ceinture à fioles** : des emplacements de potion, pour quand les potions viendront.
 - **Cape de laine** : protège du froid (dès que la température existera).
 

@@ -2,8 +2,8 @@
 
 Next to the armour, the inventory has five fixed slots: **two rings**, **an amulet**, **a belt** and **a cloak**. Special boots go in the boots slot. Rings, the amulet and belts are made at the **jeweller**, the cloak at the **loom**:
 
-- **Ring of Vitality**: more health (it will count once health exists).
-- **Amulet of Short Breath**: a little longer under water (once drowning exists).
+- **Ring of Vitality**: 4 more health points.
+- **Amulet of Short Breath**: 5 more seconds of breath under water.
 - **Vial Belt**: potion slots, for when potions come.
 - **Wool Cloak**: keeps the cold out (once temperature exists).
 

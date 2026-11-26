@@ -181,3 +181,53 @@ pub fn player_bars(game: &Gameplay, empty_mana: bool) -> Bars {
         sample: false,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use strata_protocol::VitalsView;
+
+    fn vitals() -> VitalsView {
+        VitalsView {
+            health: 10.0,
+            max_health: 20.0,
+            food: Some(15.0),
+            max_food: 20.0,
+            thirst: None,
+            max_thirst: 20.0,
+            stamina: Some(50.0),
+            max_stamina: 100.0,
+            breath: 300,
+            max_breath: 300,
+            can_sprint: true,
+            ..VitalsView::default()
+        }
+    }
+
+    #[test]
+    fn bars_follow_the_gauges_and_hide_what_is_off() {
+        let mut bars = Bars {
+            vitals: Some(vitals()),
+            ..Bars::default()
+        };
+        assert_eq!(bars.gauge("health"), Some(0.5));
+        assert_eq!(bars.gauge("food"), Some(0.75));
+        assert_eq!(bars.gauge("thirst"), None, "thirst off");
+        assert_eq!(bars.gauge("breath"), None, "full breath");
+        assert_eq!(bars.gauge("mana"), None);
+        assert_eq!(bars.gauge("temperature"), None);
+        bars.empty_mana = true;
+        assert_eq!(bars.gauge("mana"), Some(0.0));
+        if let Some(view) = &mut bars.vitals {
+            view.breath = 150;
+        }
+        assert_eq!(bars.gauge("breath"), Some(0.5));
+        bars.vitals = None;
+        assert_eq!(bars.gauge("health"), None, "creative");
+        let sample = Bars {
+            sample: true,
+            ..Bars::default()
+        };
+        assert!(sample.gauge("experience").is_some());
+    }
+}

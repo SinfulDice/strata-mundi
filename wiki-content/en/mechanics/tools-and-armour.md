@@ -19,8 +19,8 @@ Wooden and stone tools are known from the start.
 Four slots: head, chest, legs, feet. Three **weights**:
 
 - **light** (leather, cloth): little protection, no hindrance;
-- **medium** (mail, scales): better protection, and will cost a little stamina and mana;
-- **heavy** (plates): the most protection, but each piece **slows walking** by 2.5 % (10 % for the full set) and will cost more stamina and mana.
+- **medium** (mail, scales): better protection, and takes a little stamina (2.5 % per piece) and mana away;
+- **heavy** (plates): the most protection, but each piece **slows walking** by 2.5 % (10 % for the full set) and takes more stamina (5 % per piece) and mana away.
 
 Iron and gold come as mail and plate, diamond as scales and plate. Mail is made of rings (one ingot gives two), diamond scales of a diamond (two scales). Total **protection** is shown in the inventory.
 
