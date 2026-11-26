@@ -61,6 +61,8 @@ const CODE_KEYS: &[&str] = &[
     "hud-fainted",
     "hud-effect",
     "hud-effects-sample",
+    "hud-effect-separator",
+    "ui-percent",
     "survival-food-line",
     "survival-thirst-line",
     "survival-salty-line",

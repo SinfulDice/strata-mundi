@@ -1,0 +1,2 @@
+// Burning after lava or flames: slow harm over time, going through the short invulnerability.
+DamageType(resistance: Some("strata:fire_resistance"), ignores_invulnerability: true)

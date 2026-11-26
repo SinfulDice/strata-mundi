@@ -31,7 +31,7 @@ use strata_protocol::{
 mod messages;
 mod vitals;
 
-pub use vitals::{ClientUse, ClientVitals};
+pub use vitals::ClientVitals;
 
 /// Field of view widening while sprinting, and how fast it eases in and out (per second).
 const SPRINT_ZOOM: f32 = 1.1;
@@ -170,7 +170,7 @@ impl Gameplay {
             input,
             &mut self.inventory,
         );
-        self.vitals.advance(dt);
+        self.vitals.advance(dt, &self.info.content);
         let intent = intent
             .or_else(|| self.fill_or_drink(input))
             .or_else(|| self.use_consumable(input));

@@ -1,6 +1,7 @@
 use super::*;
 use crate::content::Content;
 use crate::pack::PackSet;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 fn content() -> Content {
@@ -329,4 +330,90 @@ fn bleeding_hurts_until_cured_and_burning_ends_in_water() {
     });
     effects.tick(defs, true);
     assert!(effects.0.is_empty());
+}
+
+fn fire() -> (SurvivalRules, StatusEffectDef, DamageType) {
+    let potion = StatusEffectDef {
+        harmful: false,
+        heal: None,
+        damage: None,
+        ends_in_water: false,
+        stats: vec![(id("strata:fire_resistance"), 50.0)],
+    };
+    let kind = DamageType {
+        armor: false,
+        resistance: Some(id("strata:fire_resistance")),
+        ignores_invulnerability: false,
+        shakes: true,
+    };
+    (SurvivalRules::default(), potion, kind)
+}
+
+#[test]
+fn a_worn_resistance_or_an_effect_the_stronger_counts() {
+    let (rules, potion, kind) = fire();
+    let defs = BTreeMap::from([(id("strata:potion"), potion)]);
+    let mut worn = BTreeMap::new();
+    worn.insert(id("strata:fire_resistance"), 25.0);
+    let hit = |defences: &Defences<'_>| {
+        let mut health = Health::full(20.0);
+        take_hit(&mut health, Some(&kind), 8.0, defences, (&rules, &defs))
+    };
+    let worn_only = Defences {
+        worn: Some(&worn),
+        ..Defences::default()
+    };
+    assert_eq!(hit(&worn_only), 6.0, "worn: 25 %");
+    let mut effects = StatusEffects::default();
+    effects.give(&EffectGrant {
+        effect: id("strata:potion"),
+        seconds: 10.0,
+        strength: 1.0,
+    });
+    let both = Defences {
+        worn: Some(&worn),
+        effects: Some(&effects),
+        ..Defences::default()
+    };
+    assert_eq!(hit(&both), 4.0, "the effect's 50 % wins, never 75 %");
+    worn.insert(id("strata:fire_resistance"), 75.0);
+    let strong = Defences {
+        worn: Some(&worn),
+        effects: Some(&effects),
+        ..Defences::default()
+    };
+    assert_eq!(hit(&strong), 2.0, "the worn 75 % wins");
+}
+
+#[test]
+fn armour_never_takes_more_than_its_cap() {
+    let mut rules = SurvivalRules::default();
+    rules.armor.max = 0.5;
+    let kind = DamageType {
+        armor: true,
+        resistance: None,
+        ignores_invulnerability: false,
+        shakes: true,
+    };
+    let defences = Defences {
+        protection: 30,
+        ..Defences::default()
+    };
+    let mut health = Health::full(20.0);
+    let dealt = take_hit(
+        &mut health,
+        Some(&kind),
+        10.0,
+        &defences,
+        (&rules, &BTreeMap::new()),
+    );
+    assert_eq!(dealt, 5.0);
+    let plain = take_hit(
+        &mut Health::full(20.0),
+        None,
+        10.0,
+        &defences,
+        (&rules, &BTreeMap::new()),
+    );
+    assert_eq!(plain, 10.0, "unknown kind: no armour");
 }

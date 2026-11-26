@@ -227,6 +227,7 @@ fn survival_messages_survive_serialization() {
             seconds_left: 12,
             harmful: true,
         }],
+        using: Some((ItemId(2), 10)),
     }));
     let hurt = ServerMessage::Hurt(crate::HurtView {
         kind: "strata:fall".parse().unwrap(),

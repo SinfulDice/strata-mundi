@@ -1,6 +1,7 @@
 //! The survival gauges as the HUD shows them, and the harm the player takes.
 
 use serde::{Deserialize, Serialize};
+use strata_core::content::ItemId;
 use strata_core::id::Identifier;
 
 /// Health, needs and effects of the player, sent when they change.
@@ -22,6 +23,8 @@ pub struct VitalsView {
     /// Sprinting allowed (the client's prediction walks otherwise).
     pub can_sprint: bool,
     pub effects: Vec<EffectView>,
+    /// The item being eaten, drunk or applied, and the ticks left of this use.
+    pub using: Option<(ItemId, u16)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

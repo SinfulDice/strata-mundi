@@ -51,13 +51,12 @@ pub struct HungerRules {
     /// Exhaustion that costs one point of saturation, or of food once saturation is gone.
     pub per_point: f32,
     /// Exhaustion per block sprinted, per jump, per sprinting jump, per block swum, per
-    /// block broken, per attack.
+    /// block broken (attacks come with combat, milestone 10).
     pub sprint: f32,
     pub jump: f32,
     pub sprint_jump: f32,
     pub swim: f32,
     pub mine: f32,
-    pub attack: f32,
     /// At or below this food, the player cannot sprint.
     pub sprint_min: f32,
 }
@@ -85,10 +84,9 @@ pub struct StaminaRules {
     /// Stamina back per tick, once `delay` ticks have passed since it was spent.
     pub regen: f32,
     pub delay: u16,
-    /// Per tick of sprint, per jump, per attack, per dash.
+    /// Per tick of sprint, per jump, per dash.
     pub sprint: f32,
     pub jump: f32,
-    pub attack: f32,
     pub dash: f32,
     /// Once out of breath, sprinting comes back at this much stamina.
     pub resume: f32,
@@ -158,7 +156,6 @@ impl Default for SurvivalRules {
                 sprint_jump: 0.2,
                 swim: 0.01,
                 mine: 0.005,
-                attack: 0.1,
                 sprint_min: 6.0,
             },
             thirst: ThirstRules {
@@ -176,7 +173,6 @@ impl Default for SurvivalRules {
                 delay: 15,
                 sprint: 0.6,
                 jump: 6.0,
-                attack: 10.0,
                 dash: 20.0,
                 resume: 25.0,
             },

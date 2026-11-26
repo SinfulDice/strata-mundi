@@ -57,14 +57,18 @@ impl IntegratedServer {
     }
 
     fn start(connection: ServerConnection, config: ServerConfig) -> std::io::Result<Self> {
-        let persistence = Persistence::new(config.world, Arc::clone(&config.content));
-        let spawn = config.generator.spawn_point();
-        tracing::info!(?spawn, "spawn point chosen");
-        let spawn = DVec3::new(
-            f64::from(spawn.x) + 0.5,
-            f64::from(spawn.y),
-            f64::from(spawn.z) + 0.5,
-        );
+        let mut persistence = Persistence::new(config.world, Arc::clone(&config.content));
+        let generator = &config.generator;
+        let spawn = *persistence.meta.spawn.get_or_insert_with(|| {
+            let spawn = generator.spawn_point();
+            tracing::info!(?spawn, "spawn point chosen");
+            [
+                f64::from(spawn.x) + 0.5,
+                f64::from(spawn.y),
+                f64::from(spawn.z) + 0.5,
+            ]
+        });
+        let spawn = DVec3::from_array(spawn);
         let start = persistence.player_start(&config.dimension, || spawn);
         let meta = &persistence.meta;
         let mut game = Game::new(

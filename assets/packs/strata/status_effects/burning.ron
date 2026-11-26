@@ -1,2 +1,2 @@
 // On fire after lava or flames: one point a second; water puts it out.
-StatusEffect(harmful: true, damage: Some((kind: "strata:fire", amount: 1.0, every: 20)), ends_in_water: true)
+StatusEffect(harmful: true, damage: Some((kind: "strata:burning", amount: 1.0, every: 20)), ends_in_water: true)

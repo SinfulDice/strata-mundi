@@ -23,5 +23,11 @@ pub struct Theme {
     #[serde(default)]
     pub bars: std::collections::BTreeMap<String, HexColor>,
     /// The flash over the screen when hurt.
+    #[serde(default = "hurt_red")]
     pub hurt: HexColor,
+}
+
+/// A translucent red, for themes written before the survival gauges.
+fn hurt_red() -> HexColor {
+    HexColor(strata_core::texture::Rgba([192, 32, 24, 112]))
 }

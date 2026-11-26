@@ -17,7 +17,7 @@ pub struct HudModel<'a> {
     /// Sounds heard lately, oldest first.
     pub subtitles: Vec<LogLine>,
     /// The survival bars (none in creative); sample values in the editor.
-    pub bars: Bars,
+    pub bars: Bars<'a>,
     /// Status effects, translated, with their time left.
     pub effects: Option<String>,
     /// The notice after fainting.
@@ -25,9 +25,9 @@ pub struct HudModel<'a> {
 }
 
 /// How full each bar of the HUD is.
-#[derive(Debug, Clone, Default)]
-pub struct Bars {
-    pub vitals: Option<strata_protocol::VitalsView>,
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Bars<'a> {
+    pub vitals: Option<&'a strata_protocol::VitalsView>,
     /// The bite or sip going on.
     pub using: Option<f32>,
     /// Show the mana bar, empty, before magic exists (option).
@@ -36,7 +36,7 @@ pub struct Bars {
     pub sample: bool,
 }
 
-impl Bars {
+impl Bars<'_> {
     fn gauge(&self, id: &str) -> Option<f32> {
         if self.sample {
             return (id != "use").then_some(0.7);
@@ -44,7 +44,7 @@ impl Bars {
         if id == "use" {
             return self.using;
         }
-        let vitals = self.vitals.as_ref()?;
+        let vitals = self.vitals?;
         let fraction = |value: f32, max: f32| value / max.max(1.0);
         match id {
             "health" => Some(fraction(vitals.health, vitals.max_health)),
@@ -148,8 +148,18 @@ pub fn aimed_block_name(game: &Gameplay, content: &Content, language: &str) -> O
 }
 
 /// The effects on the player, translated: « Saignement 12 s · Soin 4 s ».
+/// Made again only when the gauges change.
 pub fn effect_line(game: &Gameplay, content: &Content, language: &str) -> Option<String> {
     let view = game.vitals.view.as_ref().filter(|_| !game.is_creative())?;
+    game.vitals
+        .effects_line(language, || effects_text(view, content, language))
+}
+
+fn effects_text(
+    view: &strata_protocol::VitalsView,
+    content: &Content,
+    language: &str,
+) -> Option<String> {
     let translations = &content.translations;
     let parts: Vec<String> = view
         .effects
@@ -164,19 +174,16 @@ pub fn effect_line(game: &Gameplay, content: &Content, language: &str) -> Option
             )
         })
         .collect();
-    (!parts.is_empty()).then(|| parts.join(" · "))
+    let separator = translations.text(language, "hud-effect-separator");
+    (!parts.is_empty()).then(|| parts.join(&separator))
 }
 
 /// The survival bars of the player (none in creative).
-pub fn player_bars(game: &Gameplay, empty_mana: bool) -> Bars {
+pub fn player_bars<'a>(game: &'a Gameplay, content: &Content, empty_mana: bool) -> Bars<'a> {
     let survival = !game.is_creative();
     Bars {
-        vitals: game.vitals.view.clone().filter(|_| survival),
-        using: game
-            .vitals
-            .using
-            .as_ref()
-            .map(crate::gameplay::ClientUse::progress),
+        vitals: game.vitals.view.as_ref().filter(|_| survival),
+        using: game.vitals.use_progress(content).filter(|_| survival),
         empty_mana: empty_mana && survival,
         sample: false,
     }
@@ -206,8 +213,9 @@ mod tests {
 
     #[test]
     fn bars_follow_the_gauges_and_hide_what_is_off() {
+        let full = vitals();
         let mut bars = Bars {
-            vitals: Some(vitals()),
+            vitals: Some(&full),
             ..Bars::default()
         };
         assert_eq!(bars.gauge("health"), Some(0.5));
@@ -218,9 +226,9 @@ mod tests {
         assert_eq!(bars.gauge("temperature"), None);
         bars.empty_mana = true;
         assert_eq!(bars.gauge("mana"), Some(0.0));
-        if let Some(view) = &mut bars.vitals {
-            view.breath = 150;
-        }
+        let mut diving = vitals();
+        diving.breath = 150;
+        bars.vitals = Some(&diving);
         assert_eq!(bars.gauge("breath"), Some(0.5));
         bars.vitals = None;
         assert_eq!(bars.gauge("health"), None, "creative");

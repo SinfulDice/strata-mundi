@@ -223,6 +223,7 @@ pub fn create(
         gear_mobility: new.gear_mobility,
         storage_magnets: new.storage_magnets,
         survival: new.survival,
+        spawn: None,
         generation: new.generation.clone().bounded(),
     };
     folder.write_meta(&meta)?;

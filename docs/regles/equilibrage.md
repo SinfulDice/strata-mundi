@@ -330,14 +330,14 @@ Valeurs de départ, à ajuster avec la crate `balance` (jalon 17).
 | Jauge | Valeurs |
 |---|---|
 | Vie | 20 (+4 anneau de vitalité) ; régénère 1 PV / 4 s à faim ≥ 18, 1 PV / 0,5 s faim pleine avec saturation ; 6 d'épuisement par PV |
-| Faim | 20, saturation de départ 5 ; 4 d'épuisement = 1 point ; sprint 0,1/bloc, saut 0,05, saut en sprint 0,2, nage 0,01/bloc, bloc cassé 0,005, attaque 0,1 ; pas de sprint à 6 ou moins ; à 0 : 1 PV / 4 s, plancher 1 |
+| Faim | 20, saturation de départ 5 ; 4 d'épuisement = 1 point ; sprint 0,1/bloc, saut 0,05, saut en sprint 0,2, nage 0,01/bloc, bloc cassé 0,005 (attaques : jalon 10) ; pas de sprint à 6 ou moins ; à 0 : 1 PV / 4 s, plancher 1 |
 | Soif | 20 ; 75 % de l'épuisement (hors soins) + 0,0025 par tick (≈ 1 point / 80 s au repos) ; à 0 : 1 PV / 4 s, plancher 1 |
-| Endurance | 100 ; sprint 0,6/tick, saut 6, esquive 20, attaque 10 ; +1/tick après 15 ticks ; reprise du sprint à 25 ; maximum −2,5 % (intermédiaire) / −5 % (lourde) par pièce |
+| Endurance | 100 ; sprint 0,6/tick, saut 6, esquive 20 (attaques : jalon 10) ; +1/tick après 15 ticks ; reprise du sprint à 25 ; maximum −2,5 % (intermédiaire) / −5 % (lourde) par pièce |
 | Souffle | 15 s (+5 amulette) ; noyade 2 PV / s |
 | Chute | 1 PV par bloc au-delà de 3 |
 | Armure | 4 % par point de protection, 80 % au plus ; résistances en % (stat `strata:fire_resistance`) |
 | Invulnérabilité | 10 ticks |
-| Lave / feu | 4 / 1 PV au contact + brûlure 8 / 4 s (1 PV / s, éteinte dans l'eau) ; suffocation 1 PV / 0,5 s |
+| Lave / feu | 4 / 1 PV toutes les 0,5 s au contact + brûlure 8 / 4 s (1 PV / s, seule à traverser l'invulnérabilité, éteinte dans l'eau) ; suffocation 1 PV / 0,5 s |
 
 | Objet | Faim | Saturation | Soif | Durée | Effet | Recette / obtention |
 |---|---|---|---|---|---|---|

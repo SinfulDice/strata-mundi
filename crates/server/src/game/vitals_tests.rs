@@ -1,18 +1,19 @@
 #![allow(clippy::unwrap_used)]
 
 use super::storage_tests::{item, survival};
-use super::tests::{World, block, hold, wait, world};
+use super::tests::{World, block, wait, world};
 use super::*;
 use strata_core::inventory::{ARMOR, ItemStack};
+use strata_core::physics::MoveInput;
 use strata_core::survival::{EffectGrant, SurvivalOptions, engine};
 use strata_protocol::ServerMessage;
 
-fn id(text: &str) -> strata_core::id::Identifier {
+pub(super) fn id(text: &str) -> strata_core::id::Identifier {
     text.parse().unwrap()
 }
 
 /// Runs `ticks` ticks, one `input` each.
-fn walk(w: &mut World, input: MoveInput, ticks: u32) {
+pub(super) fn walk(w: &mut World, input: MoveInput, ticks: u32) {
     for _ in 0..ticks {
         let sequence = w.game.last_sequence() + 1;
         w.game.queue_input(sequence, input);
@@ -20,19 +21,19 @@ fn walk(w: &mut World, input: MoveInput, ticks: u32) {
     }
 }
 
-fn health(w: &World) -> f32 {
+pub(super) fn health(w: &World) -> f32 {
     w.game.ecs.healths.get(w.game.player).unwrap().current
 }
 
-fn set_health(w: &mut World, value: f32) {
+pub(super) fn set_health(w: &mut World, value: f32) {
     w.game.ecs.healths.get_mut(w.game.player).unwrap().current = value;
 }
 
-fn needs(w: &mut World) -> &mut strata_core::survival::Needs {
+pub(super) fn needs(w: &mut World) -> &mut strata_core::survival::Needs {
     w.game.ecs.needs.get_mut(w.game.player).unwrap()
 }
 
-fn hurts(w: &mut World) -> Vec<(String, f32)> {
+pub(super) fn hurts(w: &mut World) -> Vec<(String, f32)> {
     w.game
         .take_messages()
         .into_iter()
@@ -43,26 +44,26 @@ fn hurts(w: &mut World) -> Vec<(String, f32)> {
         .collect()
 }
 
-fn put_block(w: &mut World, pos: BlockPos, name: &str) {
+pub(super) fn put_block(w: &mut World, pos: BlockPos, name: &str) {
     let block = block(&w.content, name);
     w.loader.set_block(pos, block);
 }
 
-fn place_body(w: &mut World, at: DVec3) {
+pub(super) fn place_body(w: &mut World, at: DVec3) {
     let body = w.game.ecs.bodies.get_mut(w.game.player).unwrap();
     body.position = at;
     body.velocity = DVec3::ZERO;
     body.on_ground = false;
 }
 
-fn give_hand(w: &mut World, name: &str, count: u16) {
+pub(super) fn give_hand(w: &mut World, name: &str, count: u16) {
     let stack = ItemStack::new(item(w, name), count, &w.game.rules);
     w.game
         .with_inventory(|inventory, _| *inventory.selected_slot_mut() = Some(stack));
 }
 
 /// Holds the use button on the item in hand until it is consumed once.
-fn consume_held(w: &mut World) {
+pub(super) fn consume_held(w: &mut World) {
     let held = w.game.held_item().unwrap();
     let ticks = w.game.rules.survival.consumables[&held].ticks;
     w.game.start_use(held, 0);
@@ -157,7 +158,7 @@ fn water_drowns_lava_and_fire_burn_and_blocks_suffocate() {
 
     let mut w = survival();
     put_block(&mut w, BlockPos::new(8, 64, 8), "strata:lava");
-    wait(&mut w, 2);
+    wait(&mut w, 10);
     let lava = hurts(&mut w);
     assert!(
         lava.iter().any(|(kind, _)| kind == "strata:lava"),
@@ -168,7 +169,7 @@ fn water_drowns_lava_and_fire_burn_and_blocks_suffocate() {
 
     let mut w = survival();
     put_block(&mut w, BlockPos::new(8, 64, 8), "strata:fire");
-    wait(&mut w, 2);
+    wait(&mut w, 10);
     assert!(hurts(&mut w).iter().any(|(kind, _)| kind == "strata:fire"));
 
     let mut w = survival();
@@ -199,10 +200,10 @@ fn starving_and_thirst_hurt_slowly_and_never_kill_alone() {
 fn invulnerability_holds_back_a_second_hit() {
     let mut w = survival();
     let fall = engine("fall");
-    assert_eq!(w.game.hurt(&fall, 4.0), 4.0);
-    assert_eq!(w.game.hurt(&fall, 3.0), 0.0);
+    assert_eq!(w.game.hurt(w.game.player, &fall, 4.0), 4.0);
+    assert_eq!(w.game.hurt(w.game.player, &fall, 3.0), 0.0);
     wait(&mut w, 11);
-    assert_eq!(w.game.hurt(&fall, 3.0), 3.0);
+    assert_eq!(w.game.hurt(w.game.player, &fall, 3.0), 3.0);
 }
 
 #[test]
@@ -230,7 +231,7 @@ fn fire_resistance_from_an_effect_lessens_burns() {
             seconds: 10.0,
             strength: 1.0,
         });
-    assert_eq!(w.game.hurt(&id("strata:lava"), 4.0), 2.0);
+    assert_eq!(w.game.hurt(w.game.player, &id("strata:lava"), 4.0), 2.0);
 }
 
 #[test]
@@ -239,7 +240,7 @@ fn at_zero_health_the_player_wakes_at_the_spawn_keeping_everything() {
     w.game.set_spawn(DVec3::new(2.5, 64.0, 2.5));
     give_hand(&mut w, "strata:stone", 5);
     place_body(&mut w, DVec3::new(8.5, 64.0, 8.5));
-    w.game.hurt(&engine("fall"), 100.0);
+    w.game.hurt(w.game.player, &engine("fall"), 100.0);
     wait(&mut w, 1);
     assert_eq!(health(&w), 20.0);
     assert_eq!(
@@ -248,131 +249,6 @@ fn at_zero_health_the_player_wakes_at_the_spawn_keeping_everything() {
     );
     assert_eq!(w.game.held_item(), Some(item(&w, "strata:stone")));
     assert!(w.game.take_messages().contains(&ServerMessage::Fainted));
-}
-
-#[test]
-fn food_is_eaten_by_holding_the_button_and_leaves_its_bowl() {
-    let mut w = survival();
-    needs(&mut w).food = 10.0;
-    give_hand(&mut w, "strata:mushroom_stew", 1);
-    let held = w.game.held_item().unwrap();
-    w.game.start_use(held, 0);
-    wait(&mut w, 10);
-    w.game.stop_use();
-    wait(&mut w, 40);
-    assert_eq!(needs(&mut w).food, 10.0, "let go too soon");
-    consume_held(&mut w);
-    assert_eq!(needs(&mut w).food, 16.0);
-    assert_eq!(w.game.held_item(), Some(item(&w, "strata:bowl")));
-    let effects = w.game.ecs.effects.get(w.game.player).unwrap();
-    assert!(effects.has(&id("strata:healing")));
-    needs(&mut w).food = 20.0;
-    give_hand(&mut w, "strata:apple", 3);
-    consume_held(&mut w);
-    assert_eq!(
-        w.game.inventory().selected_stack().unwrap().count,
-        3,
-        "not hungry"
-    );
-}
-
-#[test]
-fn bandages_stop_bleeding_and_healing_never_stacks() {
-    let mut w = survival();
-    set_health(&mut w, 8.0);
-    let effects = w.game.ecs.effects.get_mut(w.game.player).unwrap();
-    effects.give(&EffectGrant {
-        effect: id("strata:bleeding"),
-        seconds: 60.0,
-        strength: 1.0,
-    });
-    effects.give(&EffectGrant {
-        effect: id("strata:healing"),
-        seconds: 10.0,
-        strength: 0.5,
-    });
-    give_hand(&mut w, "strata:bandage", 2);
-    consume_held(&mut w);
-    let effects = w.game.ecs.effects.get(w.game.player).unwrap();
-    assert!(!effects.has(&id("strata:bleeding")));
-    let healing: Vec<_> = (effects.0.iter())
-        .filter(|e| e.effect == id("strata:healing"))
-        .collect();
-    assert_eq!(healing.len(), 1);
-    assert_eq!(
-        healing[0].strength, 1.0,
-        "the bandage is stronger than the stew"
-    );
-    let before = health(&w);
-    wait(&mut w, 60);
-    assert!(health(&w) > before);
-}
-
-#[test]
-fn bottles_fill_salty_by_the_sea_and_the_smoker_purifies() {
-    let mut w = survival();
-    let water = BlockPos::new(8, 63, 10);
-    put_block(&mut w, water, "strata:water");
-    give_hand(&mut w, "strata:glass_bottle", 2);
-    let bottle = item(&w, "strata:glass_bottle");
-    w.game.set_biomes(vec![id("strata:plains")]);
-    assert!(w.game.fill_held(&w.loader, bottle, water));
-    assert_eq!(w.game.inventory().selected_stack().unwrap().count, 1);
-    wait(&mut w, 2);
-    w.game.set_biomes(vec![id("strata:ocean")]);
-    assert!(w.game.fill_held(&w.loader, bottle, water));
-    assert_eq!(
-        w.game.held_item(),
-        Some(item(&w, "strata:salt_water_bottle"))
-    );
-    let fresh = item(&w, "strata:water_bottle");
-    assert!(
-        w.game
-            .inventory()
-            .slots
-            .slots
-            .iter()
-            .flatten()
-            .any(|s| s.item == fresh)
-    );
-    let salty = item(&w, "strata:salt_water_bottle");
-    let smoker = [id("strata:food")];
-    let recipe = w.game.rules.cooking.recipe_for(salty, &smoker).unwrap();
-    assert_eq!(recipe.result, fresh);
-    needs(&mut w).thirst = 10.0;
-    consume_held(&mut w);
-    assert_eq!(needs(&mut w).thirst, 7.0, "salt water dries one out");
-    assert_eq!(w.game.held_item(), Some(bottle));
-}
-
-#[test]
-fn a_waterskin_gives_four_sips_and_one_drinks_at_the_source_sneaking() {
-    let mut w = survival();
-    needs(&mut w).thirst = 0.0;
-    give_hand(&mut w, "strata:waterskin_of_water", 1);
-    for _ in 0..3 {
-        consume_held(&mut w);
-        assert_eq!(
-            w.game.held_item(),
-            Some(item(&w, "strata:waterskin_of_water"))
-        );
-    }
-    consume_held(&mut w);
-    assert_eq!(w.game.held_item(), Some(item(&w, "strata:waterskin")));
-    assert_eq!(needs(&mut w).thirst, 20.0);
-    needs(&mut w).thirst = 5.0;
-    hold(&mut w, None);
-    let water = BlockPos::new(8, 63, 10);
-    put_block(&mut w, water, "strata:water");
-    w.game.set_biomes(vec![id("strata:river")]);
-    assert!(!w.game.drink_at(&w.loader, water), "standing up");
-    let sneak = MoveInput {
-        sneak: true,
-        ..MoveInput::default()
-    };
-    walk(&mut w, sneak, 3);
-    assert!(w.game.drink_at(&w.loader, water));
-    assert_eq!(needs(&mut w).thirst, 7.0);
 }
 
 #[test]
@@ -386,7 +262,7 @@ fn creative_players_never_hunger_nor_get_hurt() {
     };
     walk(&mut w, sprint, 40);
     assert_eq!(needs(&mut w).food, 10.0);
-    assert_eq!(w.game.hurt(&engine("fall"), 10.0), 0.0);
+    assert_eq!(w.game.hurt(w.game.player, &engine("fall"), 10.0), 0.0);
     put_block(&mut w, BlockPos::new(8, 64, 8), "strata:lava");
     wait(&mut w, 20);
     assert_eq!(health(&w), 20.0);
@@ -461,4 +337,13 @@ fn breaking_blocks_is_effort() {
     super::tests::mine(&mut w, pos);
     let after = needs(&mut w).exhaustion + needs(&mut w).saturation;
     assert!(after > before, "{after} > {before}");
+}
+
+#[test]
+fn touching_fire_hurts_at_its_pace_not_every_tick() {
+    let mut w = survival();
+    put_block(&mut w, BlockPos::new(8, 64, 8), "strata:fire");
+    wait(&mut w, 20);
+    let taken = 20.0 - health(&w);
+    assert!(taken > 0.0 && taken <= 4.0, "{taken} in one second");
 }

@@ -5,6 +5,7 @@
 mod defs;
 mod describe;
 mod effects;
+mod harm;
 mod health;
 mod load;
 mod needs;
@@ -15,6 +16,7 @@ pub use defs::{
     StatusEffectDef,
 };
 pub use effects::{ActiveEffect, EffectPulse, StatusEffects};
+pub use harm::{Defences, resistance, take_hit};
 pub use health::{Health, fall_damage, reduced};
 pub use needs::{Exertion, NeedHarm, Needs, NeedsContext, SurvivalOptions, breath_ticks};
 pub use rules::SurvivalRules;
@@ -73,6 +75,7 @@ pub struct Fill {
 pub struct Contact {
     pub damage: Identifier,
     pub amount: f32,
+    pub every: u16,
     pub effect: Option<EffectGrant>,
 }
 

@@ -2,13 +2,24 @@
 //! and `contacts/`, and checking what they name.
 
 use super::defs::{ConsumeDef, ContactDef, DamageType, EffectGrant, FillDef, StatusEffectDef};
-use super::{Consumable, Contact, Fill, Survival, SurvivalRules};
+use super::{Consumable, Contact, Fill, Survival, SurvivalRules, engine};
 use crate::content::{Block, BlockId, FluidLevel, Item, ItemId, Registry};
 use crate::id::Identifier;
 use crate::pack::{PackError, PackSet, Sourced, read_ron};
 use crate::upgrade::ItemStatDef;
 use std::collections::BTreeMap;
 use std::path::Path;
+
+/// Kinds of damage the engine deals itself: a pack set that defines damage types must
+/// define these (lava and fire come from `contacts/`, named there).
+const ENGINE_DAMAGE: [&str; 6] = [
+    "fall",
+    "starvation",
+    "dehydration",
+    "drowning",
+    "suffocation",
+    "burning",
+];
 
 pub(crate) struct Known<'a> {
     pub items: &'a Registry<ItemId, Item>,
@@ -87,6 +98,14 @@ fn load_damage(
         }
         damage.insert(id, value);
     }
+    if !damage.is_empty() {
+        for name in ENGINE_DAMAGE {
+            if !damage.contains_key(&engine(name)) {
+                let path = Path::new("damage_types").join(format!("{name}.ron"));
+                errors.push(PackError::invalid(&path, "missing: the engine deals it"));
+            }
+        }
+    }
     damage
 }
 
@@ -107,6 +126,9 @@ fn load_effects(
                 format!("unknown damage `{}`", hurt.kind),
             ));
             value.damage = None;
+        }
+        for (_, value) in value.stats.iter_mut() {
+            *value = if value.is_finite() { *value } else { 0.0 };
         }
         value.stats.retain(|(stat, _)| {
             let known_stat = known.stats.contains_key(stat);
@@ -152,6 +174,7 @@ fn load_contacts(
         let contact = Contact {
             damage: value.damage,
             amount: finite(value.amount),
+            every: value.every.max(1),
             effect,
         };
         // Every block of the family (a lit or turned variant) hurts the same.
@@ -221,6 +244,12 @@ impl Checker<'_> {
         errors: &mut Vec<PackError>,
     ) -> Option<(ItemId, Consumable)> {
         let item = self.item(id, &source, errors)?;
+        let stacks = self.known.items.get(item).is_some_and(|i| i.max_stack > 1);
+        if value.sips.is_some() && stacks {
+            let message = format!("`{id}` has sips but stacks: sips need `max_stack: 1`");
+            errors.push(PackError::invalid(&source, message));
+            return None;
+        }
         let leaves = match &value.leaves {
             Some(left) => Some(self.item(left, &source, errors)?),
             None => None,

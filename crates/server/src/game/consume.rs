@@ -49,8 +49,16 @@ impl Game {
         }
     }
 
-    /// Food when not full, water when thirsty; care items and salt water always.
+    /// Food when not full, water when thirsty; care only when wounded or with an effect it
+    /// cures; salt water (`always`, nothing to give) whenever.
     fn would_help(&self, consumable: &Consumable) -> bool {
+        let care = !consumable.effects.is_empty() || !consumable.cures.is_empty();
+        if consumable.always && care {
+            let wounded = (self.ecs.healths.get(self.player)).is_some_and(|h| h.current < h.max);
+            let effects = self.ecs.effects.get(self.player);
+            let cured = effects.is_some_and(|e| consumable.cures.iter().any(|c| e.has(c)));
+            return wounded || cured;
+        }
         if consumable.always {
             return true;
         }
@@ -166,7 +174,13 @@ impl Game {
         } else {
             fill.fresh
         };
-        self.exchange_held(filled);
+        if self.is_creative() {
+            let stack = ItemStack::new(filled, 1, &self.rules);
+            let left = self.give(stack);
+            self.throw_all(left);
+        } else {
+            self.exchange_held(filled);
+        }
         true
     }
 
@@ -179,7 +193,9 @@ impl Game {
             .get(self.player)
             .is_some_and(|c| c.sneaking);
         let source = survival.drink_source.is_some() && loader.block(pos) == survival.drink_source;
-        if !source || !sneaking || self.held_item().is_some() || !self.in_reach(pos) {
+        let empty_hand = (self.ecs.inventories.get(self.player))
+            .is_some_and(|inventory| inventory.selected_stack().is_none());
+        if !source || !sneaking || !empty_hand || !self.in_reach(pos) {
             return false;
         }
         let drinking = &survival.rules.drinking;

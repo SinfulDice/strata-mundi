@@ -1,6 +1,7 @@
 //! The options screen: one tab per family of settings, one row per setting, with a short
 //! description of what it does to performance. Changes apply at once.
 
+mod lists;
 mod packs;
 mod ranges;
 mod values;

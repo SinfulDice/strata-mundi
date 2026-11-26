@@ -6,6 +6,7 @@ use super::Gameplay;
 use crate::audio::{Audio, Cue};
 use crate::input::{Action, InputState};
 use crate::interaction::aim_source;
+use std::cell::RefCell;
 use strata_core::content::{Content, ItemId, SoundId};
 use strata_protocol::{HurtView, VitalsView, WorldAction};
 
@@ -27,30 +28,13 @@ pub struct ClientVitals {
     hurt_shakes: bool,
     /// Seconds left of the fainting notice.
     pub fainted: f32,
-    /// The item held down with the use button.
-    pub using: Option<ClientUse>,
-    sounds: Vec<SoundId>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct ClientUse {
-    pub item: ItemId,
-    pub slot: usize,
-    /// Seconds held, and seconds one use takes.
-    pub held: f32,
-    pub needed: f32,
-    pub sound: Option<SoundId>,
+    /// The item and hotbar slot the use button was pressed on (to say when it stops).
+    pressing: Option<(ItemId, usize)>,
+    /// Seconds since the last bite or sip heard.
     since_sound: f32,
-}
-
-impl ClientUse {
-    /// How far the current bite is, 0 to 1 (it starts again while held).
-    pub fn progress(&self) -> f32 {
-        if self.needed <= 0.0 {
-            return 0.0;
-        }
-        (self.held % self.needed) / self.needed
-    }
+    sounds: Vec<SoundId>,
+    /// The effects line of the HUD in a language, made again when the gauges change.
+    effects_line: RefCell<Option<(String, Option<String>)>>,
 }
 
 impl ClientVitals {
@@ -66,7 +50,30 @@ impl ClientVitals {
 
     pub fn faint(&mut self) {
         self.fainted = FAINT_SECONDS;
-        self.using = None;
+    }
+
+    /// How far the bite or sip the server counts is, 0 to 1.
+    pub fn use_progress(&self, content: &Content) -> Option<f32> {
+        let (item, left) = self.view.as_ref()?.using?;
+        let needed = content.survival.consumables.get(&item)?.ticks.max(1);
+        Some(1.0 - f32::from(left.min(needed)) / f32::from(needed))
+    }
+
+    /// The effects line in `language`, made by `make` only when the gauges changed.
+    pub fn effects_line(
+        &self,
+        language: &str,
+        make: impl FnOnce() -> Option<String>,
+    ) -> Option<String> {
+        let mut cached = self.effects_line.borrow_mut();
+        match cached.as_ref() {
+            Some((known, line)) if known == language => line.clone(),
+            _ => {
+                let line = make();
+                *cached = Some((language.to_owned(), line.clone()));
+                line
+            }
+        }
     }
 
     /// Red flash opacity, 0 to 1.
@@ -87,16 +94,21 @@ impl ClientVitals {
         wave * fade * self.hurt_strength * MAX_SHAKE * percent.min(100) as f32 / 100.0
     }
 
-    pub(super) fn advance(&mut self, dt: f32) {
+    pub(super) fn advance(&mut self, dt: f32, content: &Content) {
         self.hurt = (self.hurt - dt).max(0.0);
         self.fainted = (self.fainted - dt).max(0.0);
-        if let Some(using) = &mut self.using {
-            using.held += dt;
-            using.since_sound += dt;
-            if using.since_sound >= USE_SOUND_EVERY {
-                using.since_sound = 0.0;
-                self.sounds.extend(using.sound);
-            }
+        let using = self.view.as_ref().and_then(|view| view.using);
+        let Some((item, _)) = using else {
+            self.since_sound = USE_SOUND_EVERY;
+            return;
+        };
+        self.since_sound += dt;
+        if self.since_sound >= USE_SOUND_EVERY {
+            self.since_sound = 0.0;
+            let sound = (content.survival.consumables.get(&item))
+                .and_then(|c| c.sound.as_ref())
+                .and_then(|id| content.sounds.registry.key(id));
+            self.sounds.extend(sound);
         }
     }
 }
@@ -111,6 +123,7 @@ impl Gameplay {
             player.movement.can_sprint = view.can_sprint;
         }
         self.vitals.view = Some(view);
+        self.vitals.effects_line.replace(None);
     }
 
     /// An empty bottle used on water fills; sneaking with an empty hand, one drinks.
@@ -138,31 +151,21 @@ impl Gameplay {
     }
 
     /// Holding the use button with something to eat, drink or apply in hand consumes it
-    /// (the server counts the time); letting go, or another item, stops.
+    /// (the server counts the time and says how far it is); letting go, or another item,
+    /// stops.
     pub(super) fn use_consumable(&mut self, input: &InputState) -> Option<WorldAction> {
         let content = &self.info.content;
         let slot = self.inventory.selected_index();
         let held = self.inventory.selected();
-        let consumable =
-            held.and_then(|item| Some((item, content.survival.consumables.get(&item)?)));
+        let consumable = held.filter(|item| content.survival.consumables.contains_key(item));
         let holding = input.is_held(Action::Use) && self.interaction.entity.is_none();
-        let same = |using: &ClientUse| Some(using.item) == held && using.slot == slot;
-        match (self.vitals.using, consumable) {
-            (Some(using), _) if !holding || !same(&using) => {
-                self.vitals.using = None;
+        match (self.vitals.pressing, consumable) {
+            (Some(pressed), _) if !holding || Some(pressed) != held.map(|item| (item, slot)) => {
+                self.vitals.pressing = None;
                 Some(WorldAction::StopUse)
             }
-            (None, Some((item, consumable))) if input.just_pressed(Action::Use) => {
-                let sound =
-                    (consumable.sound.as_ref()).and_then(|id| content.sounds.registry.key(id));
-                self.vitals.using = Some(ClientUse {
-                    item,
-                    slot,
-                    held: 0.0,
-                    needed: f32::from(consumable.ticks) / 20.0,
-                    sound,
-                    since_sound: 0.0,
-                });
+            (None, Some(item)) if input.just_pressed(Action::Use) => {
+                self.vitals.pressing = Some((item, slot));
                 Some(WorldAction::StartUse {
                     item,
                     slot: u8::try_from(slot).unwrap_or(u8::MAX),

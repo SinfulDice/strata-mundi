@@ -45,8 +45,9 @@ pub struct StatusEffectDef {
     /// Ends in water (burning).
     #[serde(default)]
     pub ends_in_water: bool,
-    /// Stats it gives while it lasts (`item_stats/`, added, times the strength), like
-    /// equipment: a resistance potion gives `strata:fire_resistance`.
+    /// Stats it gives while it lasts (`item_stats/`, times the strength): of the effects
+    /// and the equipment giving one stat, the strongest counts (a resistance potion gives
+    /// `strata:fire_resistance`).
     #[serde(default)]
     pub stats: Vec<(Identifier, f32)>,
 }
@@ -123,6 +124,9 @@ fn bite() -> u16 {
 pub struct ContactDef {
     pub damage: Identifier,
     pub amount: f32,
+    /// Ticks between two hits while touching it.
+    #[serde(default = "contact_every")]
+    pub every: u16,
     #[serde(default)]
     pub effect: Option<EffectGrant>,
 }
@@ -135,4 +139,8 @@ pub struct FillDef {
     pub liquid: Identifier,
     pub fresh: Identifier,
     pub salty: Identifier,
+}
+
+fn contact_every() -> u16 {
+    10
 }

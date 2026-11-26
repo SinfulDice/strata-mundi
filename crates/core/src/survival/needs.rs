@@ -59,7 +59,6 @@ pub struct Exertion {
     pub sprint_jumps: u8,
     pub swum: f32,
     pub mined: u16,
-    pub attacks: u8,
     pub dashes: u8,
 }
 
@@ -139,13 +138,11 @@ impl Needs {
             + f32::from(effort.jumps) * hunger.jump
             + f32::from(effort.sprint_jumps) * hunger.sprint_jump
             + effort.swum * hunger.swim
-            + f32::from(effort.mined) * hunger.mine
-            + f32::from(effort.attacks) * hunger.attack;
+            + f32::from(effort.mined) * hunger.mine;
         self.add_exhaustion(exhaustion * factor, rules, &context.options);
         let stamina = &rules.stamina;
         let spent = f32::from(effort.sprint_ticks) * stamina.sprint
             + f32::from(effort.jumps + effort.sprint_jumps) * stamina.jump
-            + f32::from(effort.attacks) * stamina.attack
             + f32::from(effort.dashes) * stamina.dash;
         if spent > 0.0 && context.options.stamina {
             self.stamina = (self.stamina - spent).max(0.0);

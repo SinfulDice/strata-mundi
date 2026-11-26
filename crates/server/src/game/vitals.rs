@@ -4,16 +4,16 @@
 
 use super::Game;
 use super::terrain::WorldTerrain;
+use crate::ecs::Entity;
 use crate::loader::ColumnLoader;
 use glam::DVec3;
 use strata_core::coords::BlockPos;
 use strata_core::physics::{Body, Terrain};
 use strata_core::survival::{
     Contact, EffectPulse, Exertion, Health, NeedHarm, Needs, NeedsContext, StatusEffects,
-    SurvivalOptions, breath_ticks, engine, fall_damage,
+    SurvivalOptions, engine, fall_damage,
 };
 use strata_core::worn::WornStat;
-use strata_protocol::{EffectView, ServerMessage, VitalsView};
 
 /// What the body is in this tick.
 #[derive(Debug, Default)]
@@ -52,22 +52,27 @@ impl Game {
     }
 
     pub(super) fn vitals_tick(&mut self, loader: &ColumnLoader) {
-        let creative = self.is_creative();
-        let (effort, fallen) = self.take_effort();
-        if !creative {
-            let around = self.surroundings(loader);
-            self.needs_tick(&around, &effort);
-            self.effects_tick(around.wet);
-            self.hazards_tick(&around, fallen);
-            self.feed_from_bags();
-            if self
-                .ecs
-                .healths
-                .get(self.player)
-                .is_some_and(Health::is_dead)
-            {
-                self.faint(loader);
+        let living: Vec<Entity> = self.ecs.healths.iter().map(|(e, _)| e).collect();
+        for entity in living {
+            let (effort, fallen) = self.take_effort(entity);
+            if self.is_creative_entity(entity) {
+                continue;
             }
+            let around = self.surroundings(entity, loader);
+            self.needs_tick(entity, &around, &effort);
+            self.effects_tick(entity, around.wet);
+            self.hazards_tick(entity, &around, fallen);
+        }
+        if !self.is_creative() {
+            self.feed_from_bags();
+        }
+        if self
+            .ecs
+            .healths
+            .get(self.player)
+            .is_some_and(Health::is_dead)
+        {
+            self.faint(loader);
         }
         self.use_tick();
         self.refresh_sprint();
@@ -75,34 +80,35 @@ impl Game {
     }
 
     /// The effort counted since the last tick, and the last fall, spent now.
-    fn take_effort(&mut self) -> (Exertion, f64) {
+    fn take_effort(&mut self, entity: Entity) -> (Exertion, f64) {
         self.ecs
             .controls
-            .get_mut(self.player)
+            .get_mut(entity)
             .map_or((Exertion::default(), 0.0), |control| {
                 let effort = std::mem::take(&mut control.exertion);
                 (effort, std::mem::take(&mut control.fallen))
             })
     }
 
-    fn needs_tick(&mut self, around: &Surroundings, effort: &Exertion) {
-        let equipment = self.equipment();
+    /// Health follows what is worn; a body with needs (a player) wears them down.
+    fn needs_tick(&mut self, entity: Entity, around: &Surroundings, effort: &Exertion) {
+        let equipment = self.worn_by(entity);
+        let worn = |stat| equipment.as_ref().map_or(0.0, |e| e.stats.get(stat));
         let rules = &self.rules.survival.rules;
-        let max_health = rules.health.max + equipment.stats.get(WornStat::MaxHealth);
         let context = NeedsContext {
             options: self.survival_options,
             underwater: around.underwater,
-            extra_breath: equipment.stats.get(WornStat::Breath),
-            stamina_burden: equipment.stats.burden.stamina,
+            extra_breath: worn(WornStat::Breath),
+            stamina_burden: equipment.as_ref().map_or(0.0, |e| e.stats.burden.stamina),
         };
-        let (Some(needs), Some(health)) = (
-            self.ecs.needs.get_mut(self.player),
-            self.ecs.healths.get_mut(self.player),
-        ) else {
+        let Some(health) = self.ecs.healths.get_mut(entity) else {
             return;
         };
-        health.set_max(max_health);
+        health.set_max(rules.health.max + worn(WornStat::MaxHealth));
         health.tick();
+        let Some(needs) = self.ecs.needs.get_mut(entity) else {
+            return;
+        };
         needs.exert(effort, rules, &context);
         let harm = needs.tick(health, rules, &context);
         for (kind, amount) in harm {
@@ -111,44 +117,48 @@ impl Game {
                 NeedHarm::Dehydration => "dehydration",
                 NeedHarm::Drowning => "drowning",
             };
-            self.hurt(&engine(kind), amount);
+            self.hurt(entity, &engine(kind), amount);
         }
     }
 
-    fn effects_tick(&mut self, wet: bool) {
+    fn effects_tick(&mut self, entity: Entity, wet: bool) {
         let defs = &self.rules.survival.effects;
-        let Some(effects) = self.ecs.effects.get_mut(self.player) else {
+        let Some(effects) = self.ecs.effects.get_mut(entity) else {
             return;
         };
         for pulse in effects.tick(defs, wet) {
             match pulse {
                 EffectPulse::Heal(amount) => {
-                    if let Some(health) = self.ecs.healths.get_mut(self.player) {
+                    if let Some(health) = self.ecs.healths.get_mut(entity) {
                         health.heal(amount);
                     }
                 }
                 EffectPulse::Damage { kind, amount } => {
-                    self.hurt(&kind, amount);
+                    self.hurt(entity, &kind, amount);
                 }
             }
         }
     }
 
-    fn hazards_tick(&mut self, around: &Surroundings, fallen: f64) {
+    /// Falls, a head in a block, and the blocks touched, each at its own pace.
+    fn hazards_tick(&mut self, entity: Entity, around: &Surroundings, fallen: f64) {
         let rules = &self.rules.survival.rules;
         let fall = fall_damage(fallen, &rules.fall);
         let suffocation = rules.suffocation_damage;
         let every = u64::from(rules.suffocation_every);
         if fall > 0.0 {
-            self.hurt(&engine("fall"), fall);
+            self.hurt(entity, &engine("fall"), fall);
         }
         if around.buried && self.tick.is_multiple_of(every) {
-            self.hurt(&engine("suffocation"), suffocation);
+            self.hurt(entity, &engine("suffocation"), suffocation);
         }
         for contact in &around.contacts {
-            self.hurt(&contact.damage, contact.amount);
+            if !self.tick.is_multiple_of(u64::from(contact.every.max(1))) {
+                continue;
+            }
+            self.hurt(entity, &contact.damage, contact.amount);
             if let (Some(grant), Some(effects)) =
-                (&contact.effect, self.ecs.effects.get_mut(self.player))
+                (&contact.effect, self.ecs.effects.get_mut(entity))
             {
                 effects.give(grant);
             }
@@ -156,8 +166,8 @@ impl Game {
     }
 
     /// Water at the eyes and around the body, a block at the eyes, the blocks touched.
-    fn surroundings(&self, loader: &ColumnLoader) -> Surroundings {
-        let Some(body) = self.player_body().copied() else {
+    fn surroundings(&self, entity: Entity, loader: &ColumnLoader) -> Surroundings {
+        let Some(body) = self.ecs.bodies.get(entity).copied() else {
             return Surroundings::default();
         };
         let terrain = WorldTerrain {
@@ -190,79 +200,6 @@ impl Game {
         }
         around
     }
-
-    /// Sprinting needs stamina and food; the client's prediction is told with the gauges.
-    fn refresh_sprint(&mut self) {
-        let creative = self.is_creative();
-        let rules = &self.rules.survival.rules;
-        let options = self.survival_options;
-        let allowed = creative
-            || self
-                .ecs
-                .needs
-                .get(self.player)
-                .is_none_or(|needs| needs.can_sprint(rules, &options));
-        if let Some(control) = self.ecs.controls.get_mut(self.player) {
-            control.movement.can_sprint = allowed;
-        }
-    }
-
-    /// The gauges as the HUD shows them.
-    pub fn vitals_view(&self) -> Option<VitalsView> {
-        let health = self.ecs.healths.get(self.player)?;
-        let needs = self.ecs.needs.get(self.player)?;
-        let equipment = self.equipment();
-        let rules = &self.rules.survival.rules;
-        let options = self.survival_options;
-        let survival = !self.is_creative();
-        let shown = |on: bool, value: f32| (survival && on).then_some(value.round());
-        let max_breath = breath_ticks(rules, equipment.stats.get(WornStat::Breath));
-        let max_stamina = Needs::max_stamina(rules, equipment.stats.burden.stamina);
-        let effects = self.ecs.effects.get(self.player);
-        let effects = effects.map_or_else(Vec::new, |effects| self.effect_views(effects));
-        Some(VitalsView {
-            health: health.current,
-            max_health: health.max,
-            food: shown(options.hunger, needs.food),
-            max_food: rules.hunger.max,
-            saturation: needs.saturation.round(),
-            thirst: shown(options.thirst, needs.thirst),
-            max_thirst: rules.thirst.max,
-            stamina: shown(options.stamina, needs.stamina),
-            max_stamina: max_stamina.round(),
-            breath: needs.breath.min(max_breath) / 10 * 10,
-            max_breath,
-            can_sprint: self
-                .ecs
-                .controls
-                .get(self.player)
-                .is_none_or(|c| c.movement.can_sprint),
-            effects,
-        })
-    }
-
-    fn effect_views(&self, effects: &StatusEffects) -> Vec<EffectView> {
-        let defs = &self.rules.survival.effects;
-        effects
-            .0
-            .iter()
-            .map(|active| EffectView {
-                effect: active.effect.clone(),
-                seconds_left: active.ticks_left.div_ceil(20),
-                harmful: defs.get(&active.effect).is_some_and(|def| def.harmful),
-            })
-            .collect()
-    }
-
-    fn send_vitals(&mut self) {
-        let view = self.vitals_view();
-        if view.is_some() && view != self.vitals_sent {
-            self.vitals_sent.clone_from(&view);
-            if let Some(view) = view {
-                self.messages.push(ServerMessage::Vitals(Box::new(view)));
-            }
-        }
-    }
 }
 
 fn cell_of(point: DVec3) -> BlockPos {
@@ -286,53 +223,13 @@ fn touched_cells(body: &Body) -> impl Iterator<Item = BlockPos> {
 /// Keeps one contact per kind of damage: the strongest.
 fn strongest(contacts: &mut Vec<Contact>, contact: &Contact) {
     match contacts.iter_mut().find(|c| c.damage == contact.damage) {
-        Some(known) if known.amount < contact.amount => *known = contact.clone(),
+        Some(known)
+            if known.amount * f32::from(contact.every)
+                < contact.amount * f32::from(known.every) =>
+        {
+            *known = contact.clone();
+        }
         Some(_) => {}
         None => contacts.push(contact.clone()),
-    }
-}
-
-impl Game {
-    /// The gauges to save.
-    pub fn saved_vitals(&self) -> Option<crate::save::SavedVitals> {
-        Some(crate::save::SavedVitals {
-            health: self.ecs.healths.get(self.player)?.current,
-            needs: self.ecs.needs.get(self.player)?.clone(),
-            effects: self
-                .ecs
-                .effects
-                .get(self.player)
-                .cloned()
-                .unwrap_or_default(),
-        })
-    }
-
-    /// Gauges read from a save, kept within their bounds (a broken value starts full).
-    pub fn restore_vitals(&mut self, saved: crate::save::SavedVitals) {
-        let rules = &self.rules.survival.rules;
-        let full = Needs::full(rules);
-        let mut needs = saved.needs;
-        let bounded = |value: f32, max: f32, fallback: f32| {
-            if value.is_finite() {
-                value.clamp(0.0, max)
-            } else {
-                fallback
-            }
-        };
-        needs.food = bounded(needs.food, rules.hunger.max, full.food);
-        needs.saturation = bounded(needs.saturation, needs.food, full.saturation);
-        needs.exhaustion = bounded(needs.exhaustion, rules.hunger.per_point, 0.0);
-        needs.thirst = bounded(needs.thirst, rules.thirst.max, full.thirst);
-        needs.thirst_exhaustion = bounded(needs.thirst_exhaustion, rules.thirst.per_point, 0.0);
-        needs.stamina = bounded(needs.stamina, rules.stamina.max, full.stamina);
-        let max = rules.health.max + self.equipment().stats.get(WornStat::MaxHealth);
-        let mut health = Health::full(max.max(1.0));
-        health.current = bounded(saved.health, health.max, health.max);
-        if health.is_dead() {
-            health.current = health.max;
-        }
-        self.ecs.healths.insert(self.player, health);
-        self.ecs.needs.insert(self.player, needs);
-        self.ecs.effects.insert(self.player, saved.effects);
     }
 }

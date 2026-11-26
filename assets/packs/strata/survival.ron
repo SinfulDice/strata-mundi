@@ -22,7 +22,6 @@ Survival(
         sprint_jump: 0.2,
         swim: 0.01,
         mine: 0.005,
-        attack: 0.1,
         sprint_min: 6.0,
     ),
     thirst: (
@@ -40,7 +39,6 @@ Survival(
         delay: 15,
         sprint: 0.6,
         jump: 6.0,
-        attack: 10.0,
         dash: 20.0,
         resume: 25.0,
     ),

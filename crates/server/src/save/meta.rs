@@ -56,6 +56,10 @@ pub struct WorldMeta {
     /// World option: magnet upgrades of chests and barrels draw the items lying around.
     #[serde(default = "yes")]
     pub storage_magnets: bool,
+    /// Where players start and wake after fainting (feet), found once by the generator;
+    /// older worlds find it at their next opening.
+    #[serde(default)]
+    pub spawn: Option<[f64; 3]>,
     /// World options: hunger, thirst and stamina, and how fast they go down.
     #[serde(default)]
     pub survival: SurvivalOptions,

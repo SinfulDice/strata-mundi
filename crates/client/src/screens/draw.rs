@@ -84,7 +84,7 @@ impl Screens {
                         .is_riding()
                         .then(|| content.translations.text(&language, "hud-dismount")),
                     subtitles: subtitle_lines(subtitles, content, &language),
-                    bars: player_bars(game, self.settings.interface.show_empty_mana),
+                    bars: player_bars(game, content, self.settings.interface.show_empty_mana),
                     effects: effect_line(game, content, &language),
                     notice: (game.vitals.fainted > 0.0)
                         .then(|| content.translations.text(&language, "hud-fainted")),
